@@ -1,0 +1,345 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Title",
+        "description": "Title",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8080"
+        }
+    ],
+    "paths": {
+        "/api/siswa/mi": {
+            "post": {
+                "description": "Tambah siswa MI baru",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "nis",
+                                    "nisn",
+                                    "nama_lengkap",
+                                    "jenis_kelamin",
+                                    "tempat_lahir",
+                                    "tanggal_lahir",
+                                    "agama",
+                                    "alamat",
+                                    "id_jenjang",
+                                    "id_kelas",
+                                    "id_kategori",
+                                    "status"
+                                ],
+                                "properties": {
+                                    "nis": {
+                                        "type": "string"
+                                    },
+                                    "nisn": {
+                                        "type": "string"
+                                    },
+                                    "nama_lengkap": {
+                                        "type": "string"
+                                    },
+                                    "jenis_kelamin": {
+                                        "type": "string"
+                                    },
+                                    "tempat_lahir": {
+                                        "type": "string"
+                                    },
+                                    "tanggal_lahir": {
+                                        "type": "string"
+                                    },
+                                    "agama": {
+                                        "type": "string"
+                                    },
+                                    "alamat": {
+                                        "type": "string"
+                                    },
+                                    "id_ayah": {
+                                        "type": "number"
+                                    },
+                                    "id_ibu": {
+                                        "type": "number"
+                                    },
+                                    "id_wali": {
+                                        "type": "number"
+                                    },
+                                    "id_jenjang": {
+                                        "type": "number"
+                                    },
+                                    "id_kelas": {
+                                        "type": "number"
+                                    },
+                                    "id_kategori": {
+                                        "type": "number"
+                                    },
+                                    "asal_sekolah": {
+                                        "type": "string"
+                                    },
+                                    "kelas_diterima": {
+                                        "type": "string"
+                                    },
+                                    "tahun_diterima": {
+                                        "type": "string"
+                                    },
+                                    "status": {
+                                        "type": "string"
+                                    },
+                                    "keterangan": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success menambah siswa MI",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "success": {
+                                        "description": "Success menambah siswa MI",
+                                        "value": {
+                                            "data": {
+                                                "nis": "000000",
+                                                "nisn": "000000",
+                                                "nama_lengkap": "Fathurrahman",
+                                                "jenis_kelamin": "Laki-laki",
+                                                "tempat_lahir": "Mempawah",
+                                                "tanggal_lahir": "2005-06-10",
+                                                "agama": "Islam",
+                                                "alamat": "Mempawah",
+                                                "id_ayah": 1,
+                                                "id_ibu": 2,
+                                                "id_wali": 1,
+                                                "id_jenjang": 1,
+                                                "id_kelas": 1,
+                                                "id_kategori": 1,
+                                                "asal_sekolah": "",
+                                                "kelas_diterima": "",
+                                                "tahun_diterima": "",
+                                                "status": "Aktif",
+                                                "keterangan": ""
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "nis": {
+                                                    "type": "string"
+                                                },
+                                                "nisn": {
+                                                    "type": "string"
+                                                },
+                                                "nama_lengkap": {
+                                                    "type": "string"
+                                                },
+                                                "jenis_kelamin": {
+                                                    "type": "string"
+                                                },
+                                                "tempat_lahir": {
+                                                    "type": "string"
+                                                },
+                                                "tanggal_lahir": {
+                                                    "type": "string"
+                                                },
+                                                "agama": {
+                                                    "type": "string"
+                                                },
+                                                "alamat": {
+                                                    "type": "string"
+                                                },
+                                                "id_ayah": {
+                                                    "type": "number"
+                                                },
+                                                "id_ibu": {
+                                                    "type": "number"
+                                                },
+                                                "id_wali": {
+                                                    "type": "number"
+                                                },
+                                                "id_jenjang": {
+                                                    "type": "number"
+                                                },
+                                                "id_kelas": {
+                                                    "type": "number"
+                                                },
+                                                "id_kategori": {
+                                                    "type": "number"
+                                                },
+                                                "asal_sekolah": {
+                                                    "type": "string"
+                                                },
+                                                "kelas_diterima": {
+                                                    "type": "string"
+                                                },
+                                                "tahun_diterima": {
+                                                    "type": "string"
+                                                },
+                                                "status": {
+                                                    "type": "string"
+                                                },
+                                                "keterangan": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "description": "Cari siswa MI",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+
+                }
+            }
+        },
+        "/api/siswa/mi/{nis}": {
+            "get": {
+                "description": "Dapatkan siswa MI",
+                "responses": {
+                    "200": {
+                        "description": "Success menambah siswa MI",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "success": {
+                                        "description": "Success menambah siswa MI",
+                                        "value": {
+                                            "data": {
+                                                "nis": "000000",
+                                                "nisn": "000000",
+                                                "nama_lengkap": "Fathurrahman",
+                                                "jenis_kelamin": "Laki-laki",
+                                                "tempat_lahir": "Mempawah",
+                                                "tanggal_lahir": "2005-06-10",
+                                                "agama": "Islam",
+                                                "alamat": "Mempawah",
+                                                "id_ayah": 1,
+                                                "id_ibu": 2,
+                                                "id_wali": 1,
+                                                "id_jenjang": 1,
+                                                "id_kelas": 1,
+                                                "id_kategori": 1,
+                                                "asal_sekolah": "",
+                                                "kelas_diterima": "",
+                                                "tahun_diterima": "",
+                                                "status": "Aktif",
+                                                "keterangan": ""
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "nis": {
+                                                    "type": "string"
+                                                },
+                                                "nisn": {
+                                                    "type": "string"
+                                                },
+                                                "nama_lengkap": {
+                                                    "type": "string"
+                                                },
+                                                "jenis_kelamin": {
+                                                    "type": "string"
+                                                },
+                                                "tempat_lahir": {
+                                                    "type": "string"
+                                                },
+                                                "tanggal_lahir": {
+                                                    "type": "string"
+                                                },
+                                                "agama": {
+                                                    "type": "string"
+                                                },
+                                                "alamat": {
+                                                    "type": "string"
+                                                },
+                                                "id_ayah": {
+                                                    "type": "number"
+                                                },
+                                                "id_ibu": {
+                                                    "type": "number"
+                                                },
+                                                "id_wali": {
+                                                    "type": "number"
+                                                },
+                                                "id_jenjang": {
+                                                    "type": "number"
+                                                },
+                                                "id_kelas": {
+                                                    "type": "number"
+                                                },
+                                                "id_kategori": {
+                                                    "type": "number"
+                                                },
+                                                "asal_sekolah": {
+                                                    "type": "string"
+                                                },
+                                                "kelas_diterima": {
+                                                    "type": "string"
+                                                },
+                                                "tahun_diterima": {
+                                                    "type": "string"
+                                                },
+                                                "status": {
+                                                    "type": "string"
+                                                },
+                                                "keterangan": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update siswa MI"
+            },
+            "delete": {
+                "description": "Hapus siswa MI"
+            }
+        }
+    }
+}
