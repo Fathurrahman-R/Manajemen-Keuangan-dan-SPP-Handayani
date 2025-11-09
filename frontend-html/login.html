@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SPP School</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <!-- Logo/Header -->
+        <div class="text-center mb-8">
+            <div class="h-16 w-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <i class="fas fa-graduation-cap text-3xl text-blue-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-white mb-2">SPP School</h1>
+            <p class="text-blue-100">Sistem Informasi Pembayaran SPP</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="bg-white rounded-lg shadow-xl p-8">
+            <div class="text-center mb-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-2">Login Wali Murid</h2>
+                <p class="text-sm text-gray-600">Masuk untuk cek tagihan SPP dan status pembayaran</p>
+            </div>
+
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label for="nis" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nomor Induk Siswa (NIS)
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-user text-gray-400"></i>
+                        </div>
+                        <input
+                            type="text"
+                            id="nis"
+                            name="nis"
+                            required
+                            class="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Masukkan NIS siswa"
+                        >
+                    </div>
+                </div>
+
+                <div>
+                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nomor Telepon Wali
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-phone text-gray-400"></i>
+                        </div>
+                        <input
+                            type="tel"
+                            id="phone"
+                            name="phone"
+                            required
+                            class="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Masukkan nomor telepon wali"
+                        >
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center">
+                        <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <span class="ml-2 text-sm text-gray-600">Ingat saya</span>
+                    </label>
+                    <a href="#" class="text-sm text-blue-600 hover:text-blue-800">
+                        Lupa password?
+                    </a>
+                </div>
+
+                <button
+                    type="submit"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
+                >
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Login</span>
+                </button>
+            </form>
+
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <div class="text-center">
+                    <p class="text-sm text-gray-600 mb-2">Login sebagai admin?</p>
+                    <a href="index.html" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                        Masuk ke Dashboard Admin
+                    </a>
+                </div>
+            </div>
+
+            <!-- Demo Info
+            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                <p class="text-xs text-blue-800 mb-2">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Demo Login Wali Murid:
+                </p>
+                <div class="text-xs text-blue-700 space-y-1">
+                    <p><strong>NIS:</strong> 2023001</p>
+                    <p><strong>Telepon:</strong> 081234567890</p>
+                </div>
+            </div>
+        </div> -->
+
+        <!-- Footer -->
+        <div class="text-center mt-8">
+            <p class="text-blue-100 text-sm">
+                © 2025 Marshell Fitriawan. All rights reserved.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const nis = document.getElementById('nis').value;
+            const phone = document.getElementById('phone').value;
+            
+            // Demo validation
+            if (nis === '2023001' && phone === '081234567890') {
+                // Redirect to parent dashboard
+                window.location.href = 'wali-murid.html';
+            } else {
+                alert('NIS atau nomor telepon tidak valid. Silakan coba lagi.');
+            }
+        });
+    </script>
+</body>
+</html>
