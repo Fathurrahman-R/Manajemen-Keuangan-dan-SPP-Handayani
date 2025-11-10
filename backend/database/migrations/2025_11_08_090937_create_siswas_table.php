@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('siswas', function (Blueprint $table) {
-            $table->string('nis',20)->primary()->nullable(false);
+            $table->id();
+            $table->string('nis',20)->unique()->nullable(false);
             $table->string('nisn',20)->unique()->nullable(false);
             $table->string('nama',100)->nullable(false);
             $table->enum('jenis_kelamin',['Laki-laki','Perempuan'])->nullable(false);
