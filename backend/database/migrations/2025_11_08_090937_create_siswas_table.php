@@ -21,24 +21,18 @@ return new class extends Migration
             $table->date('tanggal_lahir')->nullable(false);
             $table->string('agama',50)->nullable(false);
             $table->text('alamat')->nullable(false);
-            $table->unsignedBigInteger('ayah')->nullable()->default(null);
-            $table->unsignedBigInteger('ibu')->nullable()->default(null);
-            $table->unsignedBigInteger('wali')->nullable(false);
+            $table->foreignId('ayah_id')->nullable()->constrained('walis');
+            $table->foreignId('ibu_id')->nullable()->constrained('walis');
+            $table->foreignId('wali_id')->nullable()->constrained('walis');
             $table->enum('jenjang',['TK','MI','KB'])->nullable(false);
-            $table->unsignedBigInteger('kelas')->nullable(false);
-            $table->unsignedBigInteger('kategori')->nullable(false);
+            $table->foreignId('kelas_id')->nullable()->constrained('kelas');
+            $table->foreignId('kategori_id')->nullable()->constrained('kategoris');
             $table->string('asal_sekolah',150)->nullable()->default(null);
             $table->string('kelas_diterima',10)->nullable()->default(null);
             $table->year('tahun_diterima')->nullable()->default(null);
             $table->enum('status',['Aktif','Lulus','Pindah','Keluar'])->nullable()->default('Aktif');
             $table->text('keterangan')->nullable()->default(null);
             $table->timestamps();
-
-            $table->foreign('ayah')->on('walis')->references('id')->onDelete('cascade')->onUpdate('cascade');
-            $table->foreign('ibu')->on('walis')->references('id')->onDelete('cascade')->onUpdate('cascade');
-            $table->foreign('wali')->on('walis')->references('id')->onDelete('cascade')->onUpdate('cascade');
-            $table->foreign('kelas')->on('kelas')->references('id')->onDelete('cascade')->onUpdate('cascade');
-            $table->foreign('kategori')->on('kategoris')->references('id')->onDelete('cascade')->onUpdate('cascade');
         });
     }
 

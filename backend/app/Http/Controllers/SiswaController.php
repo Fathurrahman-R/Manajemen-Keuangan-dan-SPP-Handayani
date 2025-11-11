@@ -47,10 +47,27 @@ class SiswaController extends Controller
     public function index(string $jenjang)
     {
         $auth = Auth::user();
-        $siswa = Siswa::where('jenjang',strtoupper($jenjang))->get();
+        $siswa = Siswa::with([
+            'ayah',
+            'ibu',
+            'wali',
+            'kelas',
+            'kategori'
+        ])->where('jenjang',strtoupper($jenjang))->get();
 
-        $resource = $this->resolveRequest($jenjang);
-        return $resource->collection($siswa);
+        if($siswa->isEmpty())
+        {
+            throw new HttpResponseException(response([
+                "errors" => [
+                    "message"=>[
+                        "belum ada data siswa dengan jenjang tersebut."
+                    ]
+                ]
+            ],404));
+        }
+
+        $resource = $this->resolveResource($jenjang);
+        return $resource::collection($siswa);
     }
 
     public function create(string $jenjang)
@@ -60,12 +77,18 @@ class SiswaController extends Controller
         $data = $request->validated();
 
         // cek nis terdaftar
-        if(Siswa::where('nis',$data['nis'])->where('jenjang',strtoupper($jenjang))->count()==1 || Siswa::where('nisn', $data['nisn'])->where('jenjang',strtoupper($jenjang))->count()==1)
-        {
+        $exists = Siswa::where('jenjang', strtoupper($jenjang))
+            ->where(function ($q) use ($data) {
+                $q->where('nis', $data['nis'])
+                    ->orWhere('nisn', $data['nisn']);
+            })
+            ->exists();
+
+        if ($exists) {
             throw new HttpResponseException(response([
                 "errors" => [
-                    "message"=>[
-                        "siswa dengan nis/nisn tersebut sudah terdaftar."
+                    "message" => [
+                        "Siswa dengan NIS/NISN tersebut sudah terdaftar."
                     ]
                 ]
             ], 400));
@@ -77,6 +100,7 @@ class SiswaController extends Controller
         $user->password = Hash::make($data['tanggal_lahir']);
         $siswa->save();
         $user->save();
+        $siswa->load(['ayah', 'ibu', 'wali', 'kelas', 'kategori']);
         $resource = $this->resolveResource($jenjang);
         return (new $resource($siswa))->response()->setStatusCode(201);
     }
@@ -90,7 +114,8 @@ class SiswaController extends Controller
         $siswa = Siswa::where('id',$id)->first();
         $siswa->update($data);
 
-        return (new SiswaMIResource($siswa))->response()->setStatusCode(200);
+        $resource = $this->resolveResource($jenjang);
+        return (new $resource($siswa))->response()->setStatusCode(200);
     }
 
     public function get(string $jenjang, string $id)
@@ -98,8 +123,8 @@ class SiswaController extends Controller
         $auth = Auth::user();
 
         $siswa = Siswa::where('id',$id)->where('jenjang', $jenjang)->first();
-
-        return (new SiswaMIResource($siswa))->response()->setStatusCode(200);
+        $resource = $this->resolveResource($jenjang);
+        return (new $resource($siswa))->response()->setStatusCode(200);
     }
 
     public function delete(string $jenjang, string $id)
@@ -108,9 +133,7 @@ class SiswaController extends Controller
         $siswa = Siswa::where('id',$id)->where('jenjang', $jenjang)->first();
         $siswa->delete();
         return response([
-            'data'=>[
-                true
-            ]
+            'data'=>true
         ])->setStatusCode(200);
     }
 }

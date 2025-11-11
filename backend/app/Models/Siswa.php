@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Siswa extends Model
 {
+    use HasFactory;
+
     protected $table = 'siswas';
     protected $primaryKey = 'id';
     public $incrementing = true;
@@ -20,16 +23,38 @@ class Siswa extends Model
         'tanggal_lahir',
         'agama',
         'alamat',
-        'ayah',
-        'ibu',
-        'wali',
+        'ayah_id',
+        'ibu_id',
+        'wali_id',
         'jenjang',
-        'kelas',
-        'kategori',
+        'kelas_id',
+        'kategori_id',
         'asal_sekolah',
         'kelas_diterima',
         'tahun_diterima',
         'status',
         'keterangan',
     ];
+
+    public function ayah(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Wali::class);
+    }
+    public function ibu(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Wali::class);
+    }
+    public function wali(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Wali::class);
+    }
+    public function kelas()
+    {
+        return $this->belongsTo(Kelas::class);
+    }
+    public function kategori()
+    {
+        return $this->belongsTo(Kategori::class);
+    }
+
 }

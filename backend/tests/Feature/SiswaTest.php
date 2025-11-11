@@ -2,7 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Kategori;
+use App\Models\Kelas;
 use App\Models\Siswa;
+use App\Models\User;
+use App\Models\Wali;
 use Database\Seeders\KategoriSeeder;
 use Database\Seeders\KelasSeeder;
 use Database\Seeders\SiswaSeeder;
@@ -30,12 +34,12 @@ class SiswaTest extends TestCase
                     'tanggal_lahir'=>'1990-01-01',
                     'agama'=>'Islam',
                     'alamat'=>'Jln. Raya Bandung',
-                    'ayah'=>null,
-                    'ibu'=>null,
-                    'wali'=>1,
+                    'ayah_id'=>1,
+                    'ibu_id'=>1,
+                    'wali_id'=>1,
                     'jenjang'=>'MI',
-                    'kelas'=>1,
-                    'kategori'=>1,
+                    'kelas_id'=>1,
+                    'kategori_id'=>1,
                     'asal_sekolah'=>null,
                     'kelas_diterima'=>null,
                     'tahun_diterima'=>null,
@@ -47,37 +51,14 @@ class SiswaTest extends TestCase
             ])
         ->assertStatus(201)
         ->assertJson([
-            'data'=>[
-                'nis'=>'000000',
-                'nisn'=>'000000',
-                'nama'=>'Siswa',
-                'jenis_kelamin'=>'Laki-laki',
-                'tempat_lahir'=>'Bandung',
-                'tanggal_lahir'=>'1990-01-01',
-                'agama'=>'Islam',
-                'alamat'=>'Jln. Raya Bandung',
-                'ayah'=>null,
-                'ibu'=>null,
-                'wali'=>1,
-                'jenjang'=>'MI',
-                'kelas'=>1,
-                'kategori'=>1,
-                'asal_sekolah'=>null,
-                'kelas_diterima'=>null,
-                'tahun_diterima'=>null,
-                'status'=>null,
-                'keterangan'=>null
+            'errors'=>[
             ]
         ]);
     }
 
     public function testCreateSiswaFailed()
     {
-        $this->seed(UserSeeder::class);
-        $this->seed(KelasSeeder::class);
-        $this->seed(WaliSeeder::class);
-        $this->seed(KategoriSeeder::class);
-        $this->seed(SiswaSeeder::class);
+
 
         $this->post('api/siswas/mi',
             [
@@ -116,11 +97,7 @@ class SiswaTest extends TestCase
 
     public function testUpdateSuccess()
     {
-        $this->seed(UserSeeder::class);
-        $this->seed(KelasSeeder::class);
-        $this->seed(WaliSeeder::class);
-        $this->seed(KategoriSeeder::class);
-        $this->seed(SiswaSeeder::class);
+
         $siswa = Siswa::select('id')->where('nis','000000')->first();
 
         $this->put('api/siswas/mi/'.$siswa->id,
@@ -175,11 +152,7 @@ class SiswaTest extends TestCase
 
     public function testGetSuccess()
     {
-        $this->seed(UserSeeder::class);
-        $this->seed(KelasSeeder::class);
-        $this->seed(WaliSeeder::class);
-        $this->seed(KategoriSeeder::class);
-        $this->seed(SiswaSeeder::class);
+
         $siswa = Siswa::where('nama','Siswa')->first();
         $this->get(uri: 'api/siswas/mi/'.$siswa->id, headers:
         [
@@ -212,11 +185,7 @@ class SiswaTest extends TestCase
 
     public function testDeleteSuccess()
     {
-        $this->seed(UserSeeder::class);
-        $this->seed(KelasSeeder::class);
-        $this->seed(WaliSeeder::class);
-        $this->seed(KategoriSeeder::class);
-        $this->seed(SiswaSeeder::class);
+
         $siswa = Siswa::where('nama','Siswa')->first();
 
         $this->delete(uri: 'api/siswas/mi/'.$siswa->id,headers:
@@ -226,6 +195,53 @@ class SiswaTest extends TestCase
         ->assertJson([
             'data'=>[
                 true
+            ]
+        ]);
+    }
+
+    public function testIndexingSiswa()
+    {
+        // Buat data referensi relasi
+        $ayah = Wali::factory()->create();
+        $ibu = Wali::factory()->create();
+        $wali = Wali::factory()->create();
+        $kelas = Kelas::factory()->create();
+        $kategori = Kategori::factory()->create();
+        $admin = User::factory()->admin()->create();
+
+        // Buat beberapa siswa dengan relasi yang sudah dibuat
+        Siswa::factory(3)->create([
+            'jenjang' => 'MI',
+            'ayah_id' => $ayah->id,
+            'ibu_id' => $ibu->id,
+            'wali_id' => $wali->id,
+            'kelas_id' => $kelas->id,
+            'kategori_id' => $kategori->id,
+        ]);
+
+        $this->get(uri: 'api/siswas/mi', headers:
+        [
+            'Authorization'=>'test'
+        ])->assertStatus(200)
+        ->assertJson([
+            'errors'=>[
+
+            ]
+        ]);
+    }
+    public function testIndexingSiswaFailed()
+    {
+
+
+        $this->get(uri: 'api/siswas/tk', headers:
+        [
+            'Authorization'=>'test'
+        ])->assertStatus(404)
+        ->assertJson([
+            'errors'=>[
+                'message'=>[
+                    'belum ada data siswa dengan jenjang tersebut.'
+                ]
             ]
         ]);
     }

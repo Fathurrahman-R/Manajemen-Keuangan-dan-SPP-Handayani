@@ -15,6 +15,7 @@ class KelasSeeder extends Seeder
     {
         Kelas::create([
             'id' => 1,
+            'jenjang' => 'MI',
             'nama' => 'Kelas 1',
         ]);
     }

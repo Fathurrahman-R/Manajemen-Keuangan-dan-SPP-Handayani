@@ -1,7 +1,7 @@
 {
     "openapi": "3.1.0",
     "info": {
-        "title": "Title",
+        "title": "Siswa API",
         "description": "Title",
         "version": "1.0.0"
     },
@@ -11,7 +11,7 @@
         }
     ],
     "paths": {
-        "/api/siswa/mi": {
+        "/api/siswa/{jenjang}": {
             "post": {
                 "description": "Tambah siswa MI baru",
                 "parameters": [
@@ -211,19 +211,163 @@
                 }
             },
             "get": {
-                "description": "Cari siswa MI",
+                "description": "Indexing siswa MI",
                 "parameters": [
                     {
                         "name": "Authorization",
                         "in": "header"
+                    },
+                    {
+                        "name": "jenjang",
+                        "in": "path"
                     }
                 ],
                 "responses": {
-
+                    "200": {
+                        "description": "Success indexing data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "*": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "number"
+                                                        },
+                                                        "nis": {
+                                                            "type": "string"
+                                                        },
+                                                        "nisn": {
+                                                            "type": "string"
+                                                        },
+                                                        "nama": {
+                                                            "type": "string"
+                                                        },
+                                                        "jenis_kelamin": {
+                                                            "type": "string"
+                                                        },
+                                                        "tempat_lahir": {
+                                                            "type": "string"
+                                                        },
+                                                        "tanggal_lahir": {
+                                                            "type": "string"
+                                                        },
+                                                        "agama": {
+                                                            "type": "string"
+                                                        },
+                                                        "alamat": {
+                                                            "type": "string"
+                                                        },
+                                                        "ayah_id": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "number"
+                                                                },
+                                                                "nama": {
+                                                                    "type": "string"
+                                                                },
+                                                                "pendidikan_terakhir": {
+                                                                    "type": "string"
+                                                                },
+                                                                "pekerjaan": {
+                                                                    "type": "string"
+                                                                }
+                                                            }
+                                                        },
+                                                        "ibu_id": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "number"
+                                                                },
+                                                                "nama": {
+                                                                    "type": "string"
+                                                                },
+                                                                "pendidikan_terakhir": {
+                                                                    "type": "string"
+                                                                },
+                                                                "pekerjaan": {
+                                                                    "type": "string"
+                                                                }
+                                                            }
+                                                        },
+                                                        "wali_id": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "number"
+                                                                },
+                                                                "nama": {
+                                                                    "type": "string"
+                                                                },
+                                                                "pendidikan_terakhir": {
+                                                                    "type": "string"
+                                                                },
+                                                                "pekerjaan": {
+                                                                    "type": "string"
+                                                                }
+                                                            }
+                                                        },
+                                                        "janjang": {},
+                                                        "kelas_id": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "number"
+                                                                },
+                                                                "jenjang": {
+                                                                    "type": "string"
+                                                                },
+                                                                "nama": {
+                                                                    "type": "string"
+                                                                }
+                                                            }
+                                                        },
+                                                        "kategori_id": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "number"
+                                                                },
+                                                                "nama": {
+                                                                    "type": "string"
+                                                                }
+                                                            }
+                                                        },
+                                                        "asal_sekolah": {
+                                                            "type": "string"
+                                                        },
+                                                        "kelas_diterima": {
+                                                            "type": "string"
+                                                        },
+                                                        "tahun_diterima": {
+                                                            "type": "string"
+                                                        },
+                                                        "status": {
+                                                            "type": "string"
+                                                        },
+                                                        "keterangan": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         },
-        "/api/siswa/mi/{nis}": {
+        "/api/siswa/{jenjang}/{id}": {
             "get": {
                 "description": "Dapatkan siswa MI",
                 "responses": {

@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Wali extends Model
 {
+    use HasFactory;
     protected $table = 'walis';
     protected $primaryKey = 'id';
     protected $keyType = 'int';
@@ -21,4 +23,9 @@ class Wali extends Model
         'no_hp',
         'ket',
     ];
+
+    public function siswa()
+    {
+        return $this->hasMany(Siswa::class);
+    }
 }

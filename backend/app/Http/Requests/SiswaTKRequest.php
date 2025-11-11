@@ -6,7 +6,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class SiswaMIRequest extends FormRequest
+class SiswaTKRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,10 +25,6 @@ class SiswaMIRequest extends FormRequest
     {
         return [
             'nis'=>[
-                'required',
-                'max:20'
-            ],
-            'nisn'=>[
                 'required',
                 'max:20'
             ],
@@ -54,12 +50,6 @@ class SiswaMIRequest extends FormRequest
             'alamat'=>[
                 'required'
             ],
-            'ayah_id'=>[
-                'nullable'
-            ],
-            'ibu_id'=>[
-                'nullable'
-            ],
             'wali_id'=>[
                 'required'
             ],
@@ -71,18 +61,6 @@ class SiswaMIRequest extends FormRequest
             ],
             'kategori_id'=>[
                 'required'
-            ],
-            'asal_sekolah'=>[
-                'nullable',
-                'max:150'
-            ],
-            'kelas_diterima'=>[
-                'nullable',
-                'max:10'
-            ],
-            'tahun_diterima'=>[
-                'nullable',
-                'date_format:Y'
             ],
             'status'=>[
 
