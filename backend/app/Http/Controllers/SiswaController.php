@@ -94,12 +94,14 @@ class SiswaController extends Controller
             ], 400));
         }
 
-        $siswa = new Siswa($data);
         $user = new User();
         $user->username = $data['nis'];
         $user->password = Hash::make($data['tanggal_lahir']);
-        $siswa->save();
         $user->save();
+        $siswa = new Siswa($data);
+        $siswa->jenjang = strtoupper($jenjang);
+        $siswa->save();
+        $siswa->refresh();
         $siswa->load(['ayah', 'ibu', 'wali', 'kelas', 'kategori']);
         $resource = $this->resolveResource($jenjang);
         return (new $resource($siswa))->response()->setStatusCode(201);

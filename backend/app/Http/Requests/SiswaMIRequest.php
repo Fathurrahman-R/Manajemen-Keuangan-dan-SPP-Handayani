@@ -63,9 +63,6 @@ class SiswaMIRequest extends FormRequest
             'wali_id'=>[
                 'required'
             ],
-            'jenjang'=>[
-                'required'
-            ],
             'kelas_id'=>[
                 'required'
             ],
@@ -85,7 +82,7 @@ class SiswaMIRequest extends FormRequest
                 'date_format:Y'
             ],
             'status'=>[
-
+                "nullable"
             ],
             'keterangan'=>[
                 'nullable'

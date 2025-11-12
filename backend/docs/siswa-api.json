@@ -18,11 +18,39 @@
                     {
                         "name": "Authorization",
                         "in": "header"
+                    },
+                    {
+                        "name": "jenjang",
+                        "in": "path"
                     }
                 ],
                 "requestBody": {
                     "content": {
                         "application/json": {
+                            "examples": {
+                                "siswa MI": {
+                                    "description": "create siswa MI",
+                                    "value": {
+                                        "nis": "000001",
+                                        "nisn": "000001",
+                                        "nama": "Siswa Factory",
+                                        "jenis_kelamin": "Laki-laki",
+                                        "tempat_lahir": "Bandung",
+                                        "tanggal_lahir": "2010-01-01",
+                                        "agama": "Islam",
+                                        "alamat": "Jln. Raya Bandung",
+                                        "ayah_id": 13,
+                                        "ibu_id": 14,
+                                        "wali_id": 13,
+                                        "jenjang": "MI",
+                                        "kelas_id": 5,
+                                        "kategori_id": 5,
+                                        "asal_sekolah": "MI Handayani",
+                                        "kelas_diterima": "1",
+                                        "tahun_diterima": "2019"
+                                    }
+                                }
+                            },
                             "schema": {
                                 "type": "object",
                                 "required": [
@@ -34,10 +62,10 @@
                                     "tanggal_lahir",
                                     "agama",
                                     "alamat",
-                                    "id_jenjang",
-                                    "id_kelas",
-                                    "id_kategori",
-                                    "status"
+                                    "wali_id",
+                                    "jenjang",
+                                    "kelas_id",
+                                    "kategori_id"
                                 ],
                                 "properties": {
                                     "nis": {
@@ -64,22 +92,22 @@
                                     "alamat": {
                                         "type": "string"
                                     },
-                                    "id_ayah": {
+                                    "ayah_id": {
                                         "type": "number"
                                     },
-                                    "id_ibu": {
+                                    "ibu_id": {
                                         "type": "number"
                                     },
-                                    "id_wali": {
+                                    "wali_id": {
                                         "type": "number"
                                     },
-                                    "id_jenjang": {
+                                    "jenjang": {
+                                        "type": "string"
+                                    },
+                                    "kelas_id": {
                                         "type": "number"
                                     },
-                                    "id_kelas": {
-                                        "type": "number"
-                                    },
-                                    "id_kategori": {
+                                    "kategori_id": {
                                         "type": "number"
                                     },
                                     "asal_sekolah": {
@@ -104,7 +132,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Success menambah siswa MI",
+                        "description": "Success menambah data",
                         "content": {
                             "application/json": {
                                 "examples": {
@@ -112,25 +140,48 @@
                                         "description": "Success menambah siswa MI",
                                         "value": {
                                             "data": {
-                                                "nis": "000000",
-                                                "nisn": "000000",
-                                                "nama_lengkap": "Fathurrahman",
+                                                "id": 17,
+                                                "nis": "000001",
+                                                "nisn": "000001",
+                                                "nama": "Siswa Factory",
                                                 "jenis_kelamin": "Laki-laki",
-                                                "tempat_lahir": "Mempawah",
-                                                "tanggal_lahir": "2005-06-10",
+                                                "tempat_lahir": "Bandung",
+                                                "tanggal_lahir": "2010-01-01",
                                                 "agama": "Islam",
-                                                "alamat": "Mempawah",
-                                                "id_ayah": 1,
-                                                "id_ibu": 2,
-                                                "id_wali": 1,
-                                                "id_jenjang": 1,
-                                                "id_kelas": 1,
-                                                "id_kategori": 1,
-                                                "asal_sekolah": "",
-                                                "kelas_diterima": "",
-                                                "tahun_diterima": "",
+                                                "alamat": "Jln. Raya Bandung",
+                                                "ayah_id": {
+                                                    "id": 31,
+                                                    "nama": "Alexandrea Reilly",
+                                                    "pendidikan_terakhir": "D3",
+                                                    "pekerjaan": "Gas Compressor Operator"
+                                                },
+                                                "ibu_id": {
+                                                    "id": 32,
+                                                    "nama": "Caesar Streich",
+                                                    "pendidikan_terakhir": "D4",
+                                                    "pekerjaan": "Human Resource Director"
+                                                },
+                                                "wali_id": {
+                                                    "id": 33,
+                                                    "nama": "Kathryne Hansen",
+                                                    "pendidikan_terakhir": "S1",
+                                                    "pekerjaan": "Auditor"
+                                                },
+                                                "jenjang": "MI",
+                                                "kelas_id": {
+                                                    "id": 10,
+                                                    "jenjang": "MI",
+                                                    "nama": "Dr. Joshua Champlin"
+                                                },
+                                                "kategori_id": {
+                                                    "id": 10,
+                                                    "nama": "Piatu"
+                                                },
+                                                "asal_sekolah": "MI Handayani",
+                                                "kelas_diterima": "1",
+                                                "tahun_diterima": "2021",
                                                 "status": "Aktif",
-                                                "keterangan": ""
+                                                "keterangan": null
                                             }
                                         }
                                     }
@@ -141,13 +192,16 @@
                                         "data": {
                                             "type": "object",
                                             "properties": {
+                                                "id": {
+                                                    "type": "number"
+                                                },
                                                 "nis": {
                                                     "type": "string"
                                                 },
                                                 "nisn": {
                                                     "type": "string"
                                                 },
-                                                "nama_lengkap": {
+                                                "nama": {
                                                     "type": "string"
                                                 },
                                                 "jenis_kelamin": {
@@ -165,23 +219,82 @@
                                                 "alamat": {
                                                     "type": "string"
                                                 },
-                                                "id_ayah": {
-                                                    "type": "number"
+                                                "ayah_id": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "number"
+                                                        },
+                                                        "nama": {
+                                                            "type": "string"
+                                                        },
+                                                        "pendidikan_terakhir": {
+                                                            "type": "string"
+                                                        },
+                                                        "pekerjaan": {
+                                                            "type": "string"
+                                                        }
+                                                    }
                                                 },
-                                                "id_ibu": {
-                                                    "type": "number"
+                                                "ibu_id": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "number"
+                                                        },
+                                                        "nama": {
+                                                            "type": "string"
+                                                        },
+                                                        "pendidikan_terakhir": {
+                                                            "type": "string"
+                                                        },
+                                                        "pekerjaan": {
+                                                            "type": "string"
+                                                        }
+                                                    }
                                                 },
-                                                "id_wali": {
-                                                    "type": "number"
+                                                "wali_id": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "number"
+                                                        },
+                                                        "nama": {
+                                                            "type": "string"
+                                                        },
+                                                        "pendidikan_terakhir": {
+                                                            "type": "string"
+                                                        },
+                                                        "pekerjaan": {
+                                                            "type": "string"
+                                                        }
+                                                    }
                                                 },
-                                                "id_jenjang": {
-                                                    "type": "number"
+                                                "janjang": {},
+                                                "kelas_id": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "number"
+                                                        },
+                                                        "jenjang": {
+                                                            "type": "string"
+                                                        },
+                                                        "nama": {
+                                                            "type": "string"
+                                                        }
+                                                    }
                                                 },
-                                                "id_kelas": {
-                                                    "type": "number"
-                                                },
-                                                "id_kategori": {
-                                                    "type": "number"
+                                                "kategori_id": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "number"
+                                                        },
+                                                        "nama": {
+                                                            "type": "string"
+                                                        }
+                                                    }
                                                 },
                                                 "asal_sekolah": {
                                                     "type": "string"
@@ -207,6 +320,149 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "description": "Login diperlukan",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "auth error": {
+                                        "description": "Unauthorized",
+                                        "value": {
+                                            "errors": {
+                                                "message": [
+                                                    "unauthorized."
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "errors": {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "array"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validasi data",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "validation error": {
+                                        "description": "validation error",
+                                        "value": {
+                                            "errors": {
+                                                "nis": [
+                                                    "The nis field is required."
+                                                ],
+                                                "nisn": [
+                                                    "The nisn field is required."
+                                                ],
+                                                "nama": [
+                                                    "The nama field is required."
+                                                ],
+                                                "jenis_kelamin": [
+                                                    "The jenis kelamin field is required."
+                                                ],
+                                                "tempat_lahir": [
+                                                    "The tempat lahir field is required."
+                                                ],
+                                                "tanggal_lahir": [
+                                                    "The tanggal lahir field is required."
+                                                ],
+                                                "agama": [
+                                                    "The agama field is required."
+                                                ],
+                                                "alamat": [
+                                                    "The alamat field is required."
+                                                ],
+                                                "jenjang": [
+                                                    "The jenjang field is required."
+                                                ]
+                                            }
+                                        }
+                                    }
+
+                                },
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "errors": {
+                                            "type": "object",
+                                            "properties": {
+                                                "nis": {
+                                                    "type": "array"
+                                                },
+                                                "nisn": {
+                                                    "type": "array"
+                                                },
+                                                "nama": {
+                                                    "type": "array"
+                                                },
+                                                "jenis_kelamin": {
+                                                    "type": "array"
+                                                },
+                                                "tempat_lahir": {
+                                                    "type": "array"
+                                                },
+                                                "tanggal_lahir": {
+                                                    "type": "array"
+                                                },
+                                                "agama": {
+                                                    "type": "array"
+                                                },
+                                                "alamat": {
+                                                    "type": "array"
+                                                },
+                                                "ayah_id": {
+                                                    "type": "array"
+                                                },
+                                                "ibu_id": {
+                                                    "type": "array"
+                                                },
+                                                "wali_id": {
+                                                    "type": "array"
+                                                },
+                                                "jenjang": {
+                                                    "type": "array"
+                                                },
+                                                "kelas_id": {
+                                                    "type": "array"
+                                                },
+                                                "kategori_id": {
+                                                    "type": "array"
+                                                },
+                                                "asal_sekolah": {
+                                                    "type": "array"
+                                                },
+                                                "kelas_diterima": {
+                                                    "type": "array"
+                                                },
+                                                "tahun_diterima": {
+                                                    "type": "array"
+                                                },
+                                                "status": {
+                                                    "type": "array"
+                                                },
+                                                "keterangan": {
+                                                    "type": "array"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             },
@@ -224,9 +480,150 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success indexing data",
+                        "description": "Berhasil mengambil data siswa",
                         "content": {
                             "application/json": {
+                                "examples": {
+                                    "siswa MI": {
+                                        "description": "data collection siswa MI",
+                                        "value": {
+                                            "data": [
+                                                {
+                                                    "id": 8,
+                                                    "nis": "679494",
+                                                    "nisn": "035333",
+                                                    "nama": "Bud Hills",
+                                                    "jenis_kelamin": "Perempuan",
+                                                    "tempat_lahir": "New Hosea",
+                                                    "tanggal_lahir": "1980-02-24",
+                                                    "agama": "Islam",
+                                                    "alamat": "16811 Pfeffer Hills\nBlaisebury, LA 75590-7497",
+                                                    "ayah_id": {
+                                                        "id": 22,
+                                                        "nama": "Cicero Mayert",
+                                                        "pendidikan_terakhir": "D1",
+                                                        "pekerjaan": "Artillery Officer"
+                                                    },
+                                                    "ibu_id": {
+                                                        "id": 23,
+                                                        "nama": "Rebeca Bruen",
+                                                        "pendidikan_terakhir": "D1",
+                                                        "pekerjaan": "Welder"
+                                                    },
+                                                    "wali_id": {
+                                                        "id": 24,
+                                                        "nama": "Mabel Pacocha Sr.",
+                                                        "pendidikan_terakhir": "SMK",
+                                                        "pekerjaan": "Assessor"
+                                                    },
+                                                    "jenjang": "MI",
+                                                    "kelas_id": {
+                                                        "id": 8,
+                                                        "jenjang": "TK",
+                                                        "nama": "Jessie Haag"
+                                                    },
+                                                    "kategori_id": {
+                                                        "id": 8,
+                                                        "nama": "Bersaudara"
+                                                    },
+                                                    "asal_sekolah": null,
+                                                    "kelas_diterima": null,
+                                                    "tahun_diterima": null,
+                                                    "status": "Aktif",
+                                                    "keterangan": null
+                                                },
+                                                {
+                                                    "id": 9,
+                                                    "nis": "678715",
+                                                    "nisn": "264310",
+                                                    "nama": "Garland Leffler",
+                                                    "jenis_kelamin": "Laki-laki",
+                                                    "tempat_lahir": "South Carole",
+                                                    "tanggal_lahir": "1977-04-30",
+                                                    "agama": "Islam",
+                                                    "alamat": "13861 Chaya Lights Apt. 405\nMustafaton, GA 67235",
+                                                    "ayah_id": {
+                                                        "id": 22,
+                                                        "nama": "Cicero Mayert",
+                                                        "pendidikan_terakhir": "D1",
+                                                        "pekerjaan": "Artillery Officer"
+                                                    },
+                                                    "ibu_id": {
+                                                        "id": 23,
+                                                        "nama": "Rebeca Bruen",
+                                                        "pendidikan_terakhir": "D1",
+                                                        "pekerjaan": "Welder"
+                                                    },
+                                                    "wali_id": {
+                                                        "id": 24,
+                                                        "nama": "Mabel Pacocha Sr.",
+                                                        "pendidikan_terakhir": "SMK",
+                                                        "pekerjaan": "Assessor"
+                                                    },
+                                                    "jenjang": "MI",
+                                                    "kelas_id": {
+                                                        "id": 8,
+                                                        "jenjang": "TK",
+                                                        "nama": "Jessie Haag"
+                                                    },
+                                                    "kategori_id": {
+                                                        "id": 8,
+                                                        "nama": "Bersaudara"
+                                                    },
+                                                    "asal_sekolah": null,
+                                                    "kelas_diterima": null,
+                                                    "tahun_diterima": null,
+                                                    "status": "Aktif",
+                                                    "keterangan": null
+                                                },
+                                                {
+                                                    "id": 10,
+                                                    "nis": "861312",
+                                                    "nisn": "396095",
+                                                    "nama": "Cecil Schneider",
+                                                    "jenis_kelamin": "Perempuan",
+                                                    "tempat_lahir": "Lake Elfrieda",
+                                                    "tanggal_lahir": "1999-10-14",
+                                                    "agama": "Islam",
+                                                    "alamat": "75257 Kerluke Locks Suite 338\nNorth Lauriestad, ND 31122-5940",
+                                                    "ayah_id": {
+                                                        "id": 22,
+                                                        "nama": "Cicero Mayert",
+                                                        "pendidikan_terakhir": "D1",
+                                                        "pekerjaan": "Artillery Officer"
+                                                    },
+                                                    "ibu_id": {
+                                                        "id": 23,
+                                                        "nama": "Rebeca Bruen",
+                                                        "pendidikan_terakhir": "D1",
+                                                        "pekerjaan": "Welder"
+                                                    },
+                                                    "wali_id": {
+                                                        "id": 24,
+                                                        "nama": "Mabel Pacocha Sr.",
+                                                        "pendidikan_terakhir": "SMK",
+                                                        "pekerjaan": "Assessor"
+                                                    },
+                                                    "jenjang": "MI",
+                                                    "kelas_id": {
+                                                        "id": 8,
+                                                        "jenjang": "TK",
+                                                        "nama": "Jessie Haag"
+                                                    },
+                                                    "kategori_id": {
+                                                        "id": 8,
+                                                        "nama": "Bersaudara"
+                                                    },
+                                                    "asal_sekolah": null,
+                                                    "kelas_diterima": null,
+                                                    "tahun_diterima": null,
+                                                    "status": "Aktif",
+                                                    "keterangan": null
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
                                 "schema": {
                                     "type": "object",
                                     "properties": {
@@ -314,7 +711,9 @@
                                                                 }
                                                             }
                                                         },
-                                                        "janjang": {},
+                                                        "janjang": {
+                                                            "type": "string"
+                                                        },
                                                         "kelas_id": {
                                                             "type": "object",
                                                             "properties": {
@@ -358,6 +757,152 @@
                                                     }
                                                 }
                                             }
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validasi data",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "validation error": {
+                                        "description": "validation error",
+                                        "value": {
+                                            "errors": {
+                                                "nis": [
+                                                    "The nis field is required."
+                                                ],
+                                                "nisn": [
+                                                    "The nisn field is required."
+                                                ],
+                                                "nama": [
+                                                    "The nama field is required."
+                                                ],
+                                                "jenis_kelamin": [
+                                                    "The jenis kelamin field is required."
+                                                ],
+                                                "tempat_lahir": [
+                                                    "The tempat lahir field is required."
+                                                ],
+                                                "tanggal_lahir": [
+                                                    "The tanggal lahir field is required."
+                                                ],
+                                                "agama": [
+                                                    "The agama field is required."
+                                                ],
+                                                "alamat": [
+                                                    "The alamat field is required."
+                                                ],
+                                                "jenjang": [
+                                                    "The jenjang field is required."
+                                                ]
+                                            }
+                                        }
+                                    }
+
+                                },
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "errors": {
+                                            "type": "object",
+                                            "properties": {
+                                                "nis": {
+                                                    "type": "array"
+                                                },
+                                                "nisn": {
+                                                    "type": "array"
+                                                },
+                                                "nama": {
+                                                    "type": "array"
+                                                },
+                                                "jenis_kelamin": {
+                                                    "type": "array"
+                                                },
+                                                "tempat_lahir": {
+                                                    "type": "array"
+                                                },
+                                                "tanggal_lahir": {
+                                                    "type": "array"
+                                                },
+                                                "agama": {
+                                                    "type": "array"
+                                                },
+                                                "alamat": {
+                                                    "type": "array"
+                                                },
+                                                "ayah_id": {
+                                                    "type": "array"
+                                                },
+                                                "ibu_id": {
+                                                    "type": "array"
+                                                },
+                                                "wali_id": {
+                                                    "type": "array"
+                                                },
+                                                "jenjang": {
+                                                    "type": "array"
+                                                },
+                                                "kelas_id": {
+                                                    "type": "array"
+                                                },
+                                                "kategori_id": {
+                                                    "type": "array"
+                                                },
+                                                "asal_sekolah": {
+                                                    "type": "array"
+                                                },
+                                                "kelas_diterima": {
+                                                    "type": "array"
+                                                },
+                                                "tahun_diterima": {
+                                                    "type": "array"
+                                                },
+                                                "status": {
+                                                    "type": "array"
+                                                },
+                                                "keterangan": {
+                                                    "type": "array"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Gagal mengambil data siswa",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "siswa MI": {
+                                        "description": "belum ada data",
+                                        "value": {
+                                            "errors": {
+                                                "message": [
+                                                    "belum ada data siswa dengan jenjang tersebut."
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "array"
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -372,33 +917,56 @@
                 "description": "Dapatkan siswa MI",
                 "responses": {
                     "200": {
-                        "description": "Success menambah siswa MI",
+                        "description": "Success mendapatkan siswa MI",
                         "content": {
                             "application/json": {
                                 "examples": {
                                     "success": {
-                                        "description": "Success menambah siswa MI",
+                                        "description": "Success mendapatkan siswa MI",
                                         "value": {
                                             "data": {
-                                                "nis": "000000",
-                                                "nisn": "000000",
-                                                "nama_lengkap": "Fathurrahman",
+                                                "id": 16,
+                                                "nis": "228560",
+                                                "nisn": "663326",
+                                                "nama": "Dallas Langosh",
                                                 "jenis_kelamin": "Laki-laki",
-                                                "tempat_lahir": "Mempawah",
-                                                "tanggal_lahir": "2005-06-10",
+                                                "tempat_lahir": "Lake Nils",
+                                                "tanggal_lahir": "1981-05-05",
                                                 "agama": "Islam",
-                                                "alamat": "Mempawah",
-                                                "id_ayah": 1,
-                                                "id_ibu": 2,
-                                                "id_wali": 1,
-                                                "id_jenjang": 1,
-                                                "id_kelas": 1,
-                                                "id_kategori": 1,
-                                                "asal_sekolah": "",
-                                                "kelas_diterima": "",
-                                                "tahun_diterima": "",
+                                                "alamat": "547 Sammy Lakes Suite 590\nAldaberg, NV 28018-4108",
+                                                "ayah_id": {
+                                                    "id": 34,
+                                                    "nama": "Bryce Murray MD",
+                                                    "pendidikan_terakhir": "S2",
+                                                    "pekerjaan": "Health Specialties Teacher"
+                                                },
+                                                "ibu_id": {
+                                                    "id": 35,
+                                                    "nama": "Jose Bruen",
+                                                    "pendidikan_terakhir": "D1",
+                                                    "pekerjaan": "Radiologic Technologist"
+                                                },
+                                                "wali_id": {
+                                                    "id": 36,
+                                                    "nama": "Cleta Rath",
+                                                    "pendidikan_terakhir": "SMK",
+                                                    "pekerjaan": "Rail Transportation Worker"
+                                                },
+                                                "jenjang": "MI",
+                                                "kelas_id": {
+                                                    "id": 12,
+                                                    "jenjang": "TK",
+                                                    "nama": "Elenor Kertzmann"
+                                                },
+                                                "kategori_id": {
+                                                    "id": 12,
+                                                    "nama": "Bersaudara"
+                                                },
+                                                "asal_sekolah": null,
+                                                "kelas_diterima": null,
+                                                "tahun_diterima": null,
                                                 "status": "Aktif",
-                                                "keterangan": ""
+                                                "keterangan": null
                                             }
                                         }
                                     }
@@ -433,23 +1001,23 @@
                                                 "alamat": {
                                                     "type": "string"
                                                 },
-                                                "id_ayah": {
-                                                    "type": "number"
+                                                "ayah_id": {
+                                                    "type": "array"
                                                 },
-                                                "id_ibu": {
-                                                    "type": "number"
+                                                "ibu_id": {
+                                                    "type": "array"
                                                 },
-                                                "id_wali": {
-                                                    "type": "number"
+                                                "wali_id": {
+                                                    "type": "array"
                                                 },
-                                                "id_jenjang": {
-                                                    "type": "number"
+                                                "jenjang": {
+                                                    "type": "string"
                                                 },
-                                                "id_kelas": {
-                                                    "type": "number"
+                                                "kelas_id": {
+                                                    "type": "array"
                                                 },
-                                                "id_kategori": {
-                                                    "type": "number"
+                                                "kategori_id": {
+                                                    "type": "array"
                                                 },
                                                 "asal_sekolah": {
                                                     "type": "string"
@@ -479,10 +1047,361 @@
                 }
             },
             "put": {
-                "description": "Update siswa MI"
+                "description": "Update siswa MI",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header"
+                    },
+                    {
+                        "name": "jenjang",
+                        "in": "path"
+                    },
+                    {
+                        "name": "id",
+                        "in": "path"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "examples": {
+                                "siswa MI": {
+                                    "description": "create siswa MI",
+                                    "value": {
+                                        "nis": "000001",
+                                        "nisn": "000001",
+                                        "nama": "Siswa Factory",
+                                        "jenis_kelamin": "Laki-laki",
+                                        "tempat_lahir": "Bandung",
+                                        "tanggal_lahir": "2010-01-01",
+                                        "agama": "Islam",
+                                        "alamat": "Jln. Raya Bandung",
+                                        "ayah_id": 13,
+                                        "ibu_id": 14,
+                                        "wali_id": 13,
+                                        "jenjang": "MI",
+                                        "kelas_id": 5,
+                                        "kategori_id": 5,
+                                        "asal_sekolah": "MI Handayani",
+                                        "kelas_diterima": "1",
+                                        "tahun_diterima": "2019"
+                                    }
+                                }
+                            },
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "nis",
+                                    "nisn",
+                                    "nama_lengkap",
+                                    "jenis_kelamin",
+                                    "tempat_lahir",
+                                    "tanggal_lahir",
+                                    "agama",
+                                    "alamat",
+                                    "wali_id",
+                                    "jenjang",
+                                    "kelas_id",
+                                    "kategori_id"
+                                ],
+                                "properties": {
+                                    "nis": {
+                                        "type": "string"
+                                    },
+                                    "nisn": {
+                                        "type": "string"
+                                    },
+                                    "nama_lengkap": {
+                                        "type": "string"
+                                    },
+                                    "jenis_kelamin": {
+                                        "type": "string"
+                                    },
+                                    "tempat_lahir": {
+                                        "type": "string"
+                                    },
+                                    "tanggal_lahir": {
+                                        "type": "string"
+                                    },
+                                    "agama": {
+                                        "type": "string"
+                                    },
+                                    "alamat": {
+                                        "type": "string"
+                                    },
+                                    "ayah_id": {
+                                        "type": "number"
+                                    },
+                                    "ibu_id": {
+                                        "type": "number"
+                                    },
+                                    "wali_id": {
+                                        "type": "number"
+                                    },
+                                    "jenjang": {
+                                        "type": "string"
+                                    },
+                                    "kelas_id": {
+                                        "type": "number"
+                                    },
+                                    "kategori_id": {
+                                        "type": "number"
+                                    },
+                                    "asal_sekolah": {
+                                        "type": "string"
+                                    },
+                                    "kelas_diterima": {
+                                        "type": "string"
+                                    },
+                                    "tahun_diterima": {
+                                        "type": "string"
+                                    },
+                                    "status": {
+                                        "type": "string"
+                                    },
+                                    "keterangan": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success update siswa",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "success": {
+                                        "description": "success update siswa",
+                                        "value": {
+                                            "data": {
+                                                "id": 21,
+                                                "nis": "250300",
+                                                "nisn": "484222",
+                                                "nama": "Fathurrahman",
+                                                "jenis_kelamin": "Perempuan",
+                                                "tempat_lahir": "Lake Jonatanberg",
+                                                "tanggal_lahir": "1984-05-15",
+                                                "agama": "Islam",
+                                                "alamat": "5713 Ward Falls\nKuhnview, KY 32098",
+                                                "ayah_id": {
+                                                    "id": 49,
+                                                    "nama": "Samantha Beatty",
+                                                    "pendidikan_terakhir": "D1",
+                                                    "pekerjaan": "Manager of Food Preparation"
+                                                },
+                                                "ibu_id": {
+                                                    "id": 50,
+                                                    "nama": "Prof. Gerhard Corwin I",
+                                                    "pendidikan_terakhir": "D4",
+                                                    "pekerjaan": "Protective Service Worker"
+                                                },
+                                                "wali_id": {
+                                                    "id": 51,
+                                                    "nama": "Estella Reilly",
+                                                    "pendidikan_terakhir": "D2",
+                                                    "pekerjaan": "Underground Mining"
+                                                },
+                                                "jenjang": "MI",
+                                                "kelas_id": {
+                                                    "id": 17,
+                                                    "jenjang": "MI",
+                                                    "nama": "Ursula Leuschke"
+                                                },
+                                                "kategori_id": {
+                                                    "id": 17,
+                                                    "nama": "Bersaudara"
+                                                },
+                                                "asal_sekolah": "MI Handayani",
+                                                "kelas_diterima": "1",
+                                                "tahun_diterima": "2020",
+                                                "status": "Aktif",
+                                                "keterangan": null
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "number"
+                                                },
+                                                "nis": {
+                                                    "type": "string"
+                                                },
+                                                "nisn": {
+                                                    "type": "string"
+                                                },
+                                                "nama": {
+                                                    "type": "string"
+                                                },
+                                                "jenis_kelamin": {
+                                                    "type": "string"
+                                                },
+                                                "tempat_lahir": {
+                                                    "type": "string"
+                                                },
+                                                "tanggal_lahir": {
+                                                    "type": "string"
+                                                },
+                                                "agama": {
+                                                    "type": "string"
+                                                },
+                                                "alamat": {
+                                                    "type": "string"
+                                                },
+                                                "ayah_id": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "number"
+                                                        },
+                                                        "nama": {
+                                                            "type": "string"
+                                                        },
+                                                        "pendidikan_terakhir": {
+                                                            "type": "string"
+                                                        },
+                                                        "pekerjaan": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                },
+                                                "ibu_id": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "number"
+                                                        },
+                                                        "nama": {
+                                                            "type": "string"
+                                                        },
+                                                        "pendidikan_terakhir": {
+                                                            "type": "string"
+                                                        },
+                                                        "pekerjaan": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                },
+                                                "wali_id": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "number"
+                                                        },
+                                                        "nama": {
+                                                            "type": "string"
+                                                        },
+                                                        "pendidikan_terakhir": {
+                                                            "type": "string"
+                                                        },
+                                                        "pekerjaan": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                },
+                                                "janjang": {},
+                                                "kelas_id": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "number"
+                                                        },
+                                                        "jenjang": {
+                                                            "type": "string"
+                                                        },
+                                                        "nama": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                },
+                                                "kategori_id": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "number"
+                                                        },
+                                                        "nama": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                },
+                                                "asal_sekolah": {
+                                                    "type": "string"
+                                                },
+                                                "kelas_diterima": {
+                                                    "type": "string"
+                                                },
+                                                "tahun_diterima": {
+                                                    "type": "string"
+                                                },
+                                                "status": {
+                                                    "type": "string"
+                                                },
+                                                "keterangan": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             },
             "delete": {
-                "description": "Hapus siswa MI"
+                "description": "Hapus siswa MI",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header"
+                    },
+                    {
+                        "name": "jenjang",
+                        "in": "path"
+                    },
+                    {
+                        "name": "id",
+                        "in": "path"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success delete siswa",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "bool"
+                                        }
+                                    }
+                                },
+                                "examples": {
+                                    "success": {
+                                        "description": "success delete siswa",
+                                        "value": {
+                                            "data": true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

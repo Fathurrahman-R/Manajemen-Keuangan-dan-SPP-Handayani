@@ -53,9 +53,6 @@ class SiswaKBRequest extends FormRequest
             'wali_id'=>[
                 'required'
             ],
-            'jenjang'=>[
-                'required'
-            ],
             'kelas_id'=>[
                 'required'
             ],
