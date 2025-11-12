@@ -13,7 +13,7 @@ class Kelas extends Model
     protected $keyType = 'int';
     public $incrementing = true;
     public $timestamps = true;
-    protected $fillable = ['jenjang','nama_kelas'];
+    protected $fillable = ['jenjang','nama'];
 
     public function siswa()
     {

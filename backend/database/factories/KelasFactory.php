@@ -13,7 +13,7 @@ class KelasFactory extends Factory
     {
         return [
             'jenjang'=>$this->faker->randomElement(['TK','MI','KB']),
-            'nama'=>$this->faker->name(),
+            'nama'=>'KELAS 1',
         ];
     }
 }

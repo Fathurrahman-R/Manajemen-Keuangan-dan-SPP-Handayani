@@ -13,7 +13,7 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'username' => $this->faker->unique()->userName(),
+            'username' => 'admin',
             'password' => Hash::make('password'),
             'role' => 'admin',
             'token' => 'test'

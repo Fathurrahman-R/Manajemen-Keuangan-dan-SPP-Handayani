@@ -22,7 +22,7 @@ class UserTest extends TestCase
             'Authorization'=>$token
         ])->assertStatus(201)
         ->assertJson([
-            "data"=>[
+            "errors"=>[
                 "username"=>"3202316079",
             ]
         ]);

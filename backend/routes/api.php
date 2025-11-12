@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\JenjangController;
+use App\Http\Controllers\KelasController;
 use App\Http\Controllers\SiswaController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
@@ -15,10 +16,22 @@ Route::middleware(\App\Http\Middleware\ApiAuthMiddleware::class)->group(function
         Route::patch('/users/current',[UserController::class,"update"]);
         Route::delete('users/logout',[UserController::class,"logout"]);
 
-        Route::get('/siswas/{jenjang}',[SiswaController::class,'index']);
-        Route::post('/siswas/{jenjang}',[SiswaController::class,'create']);
-        Route::put('/siswas/{jenjang}/{id}',[SiswaController::class,'update']);
-        Route::get('/siswas/{jenjang}/{id}',[SiswaController::class,'get']);
-        Route::delete('/siswas/{jenjang}/{id}',[SiswaController::class,'delete']);
+        Route::prefix('/siswa')->group(function(){
+            Route::get('/{jenjang}',[SiswaController::class,'index']);
+            Route::post('/{jenjang}',[SiswaController::class,'create']);
+            Route::put('/{jenjang}/{id}',[SiswaController::class,'update']);
+            Route::get('/{jenjang}/{id}',[SiswaController::class,'get']);
+            Route::delete('/{jenjang}/{id}',[SiswaController::class,'delete']);
+
+        });
+
+        Route::prefix('/kelas')->group(function(){
+            Route::get('/{jenjang}',[KelasController::class,'index']);
+            Route::post('/{jenjang}',[KelasController::class,'create']);
+            Route::put('/{jenjang}/{id}',[KelasController::class,'update']);
+            Route::get('/{jenjang}/{id}',[KelasController::class,'get']);
+            Route::delete('/{jenjang}/{id}',[KelasController::class,'delete']);
+        });
+
     });
 });
