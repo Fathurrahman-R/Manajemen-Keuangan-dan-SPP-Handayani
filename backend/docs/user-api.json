@@ -14,6 +14,12 @@
         "/api/users": {
             "post": {
                 "description": "Register new user",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header"
+                    }
+                ],
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -23,14 +29,14 @@
                                     "value": {
                                         "username": "Admin",
                                         "password": "rahasia",
-                                        "name": "Admin keuangan"
+                                        "role": "Admin keuangan"
                                     }
                                 }
                             },
                             "schema": {
                                 "type": "object",
                                 "required": [
-                                    "name", "password","username"
+                                    "password","username"
                                 ],
                                 "properties": {
                                     "username": {
@@ -39,7 +45,7 @@
                                     "password": {
                                         "type": "string"
                                     },
-                                    "name": {
+                                    "role": {
                                         "type": "string"
                                     }
                                 }
@@ -59,7 +65,7 @@
                                             "errors": {
                                                 "username": [],
                                                 "password": [],
-                                                "name": []
+                                                "role": []
                                             }
                                         }
                                     }
@@ -78,7 +84,7 @@
                                             "data": {
                                                 "id": 1,
                                                 "username": "Admin",
-                                                "name": "Admin keuangan"
+                                                "role": "admin"
                                             }
                                         }
                                     }
@@ -95,7 +101,7 @@
                                                 "username": {
                                                     "type": "string"
                                                 },
-                                                "name": {
+                                                "role": {
                                                     "type": "string"
                                                 }
                                             }
@@ -148,7 +154,7 @@
                                                 "username": {
                                                     "type": "string"
                                                 },
-                                                "name": {
+                                                "role": {
                                                     "type": "string"
                                                 },
                                                 "token": {
@@ -234,7 +240,7 @@
                                                 "username": {
                                                     "type": "string"
                                                 },
-                                                "name": {
+                                                "role": {
                                                     "type": "string"
                                                 }
                                             }
@@ -283,7 +289,7 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "name": {
+                                    "role": {
                                         "type": "string"
                                     },
                                     "password": {
@@ -311,7 +317,7 @@
                                                 "username": {
                                                     "type": "string"
                                                 },
-                                                "name": {
+                                                "role": {
                                                     "type": "string"
                                                 }
                                             }
