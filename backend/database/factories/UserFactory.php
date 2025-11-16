@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Siswa;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -23,6 +24,7 @@ class UserFactory extends Factory
     public function siswa(): static
     {
         return $this->state(fn (array $attributes) => [
+            'username' => '000001',
             'role' => 'user',
         ]);
     }

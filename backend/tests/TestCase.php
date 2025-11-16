@@ -16,5 +16,8 @@ abstract class TestCase extends BaseTestCase
        DB::delete('delete from kategoris');
        DB::delete('delete from kelas');
        DB::delete('delete from walis');
+       DB::delete('delete from tagihans');
+       DB::delete('delete from jenis_tagihans');
+       DB::delete('delete from pembayarans');
    }
 }

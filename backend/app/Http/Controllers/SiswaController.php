@@ -133,7 +133,9 @@ class SiswaController extends Controller
     {
         $auth = Auth::user();
         $siswa = Siswa::where('id',$id)->where('jenjang', $jenjang)->first();
+        $user = User::where('username',$siswa->nis)->first();
         $siswa->delete();
+        $user->delete();
         return response([
             'data'=>true
         ])->setStatusCode(200);

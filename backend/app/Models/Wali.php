@@ -26,6 +26,8 @@ class Wali extends Model
 
     public function siswa()
     {
-        return $this->hasMany(Siswa::class);
+        return $this->hasMany(Siswa::class, 'ayah_id')
+            ->orWhere('ibu_id', $this->id)
+            ->orWhere('wali_id', $this->id);
     }
 }

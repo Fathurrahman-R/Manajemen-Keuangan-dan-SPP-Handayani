@@ -1,15 +1,19 @@
 <?php
 
-use App\Http\Controllers\JenjangController;
+use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\KelasController;
+use App\Http\Controllers\PembayaranController;
 use App\Http\Controllers\SiswaController;
+use App\Http\Controllers\TagihanController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WaliController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::post("/users/login",[UserController::class,"login"]);
 
 Route::middleware(\App\Http\Middleware\ApiAuthMiddleware::class)->group(function(){
+    Route::get('/tagihan',[TagihanController::class,'index']);
     Route::middleware(\App\Http\Middleware\ApiRoleMiddleware::class.':admin')->group(function(){
         Route::post("/users",[UserController::class,"register"]);
         Route::get("/users/current",[UserController::class,"get"]);
@@ -33,5 +37,30 @@ Route::middleware(\App\Http\Middleware\ApiAuthMiddleware::class)->group(function
             Route::delete('/{jenjang}/{id}',[KelasController::class,'delete']);
         });
 
+        Route::prefix('/kategori')->group(function(){
+            Route::get('/',[KategoriController::class,'index']);
+            Route::post('/',[KategoriController::class,'create']);
+            Route::put('/{id}',[KategoriController::class,'update']);
+            Route::get('/{id}',[KategoriController::class,'get']);
+            Route::delete('/{id}',[KategoriController::class,'delete']);
+        });
+
+        Route::prefix('/wali')->group(function(){
+            Route::get('/',[WaliController::class,'index']);
+            Route::post('/',[WaliController::class,'create']);
+            Route::put('/{id}',[WaliController::class,'update']);
+            Route::get('/{id}',[WaliController::class,'get']);
+            Route::delete('/{id}',[WaliController::class,'delete']);
+        });
+
+        Route::prefix('/tagihan')->group(function(){
+            Route::post('/',[TagihanController::class,'create']);
+            Route::patch('/lunas/{kode_tagihan}',[TagihanController::class,'lunas']);
+            Route::patch('/bayar/{kode_tagihan}',[TagihanController::class,'bayar']);
+        });
+
+        Route::prefix('/pembayaran')->group(function(){
+            Route::post('/bayar/{kode_tagihan}',[PembayaranController::class,'bayar']);
+        });
     });
 });

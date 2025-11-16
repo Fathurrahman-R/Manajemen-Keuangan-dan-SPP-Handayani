@@ -5,15 +5,16 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Facades\Auth;
 
-class KategoriRequest extends FormRequest
+class WaliRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return $this->user()!=null;
+        return Auth::user() != null;
     }
 
     /**
@@ -29,6 +30,32 @@ class KategoriRequest extends FormRequest
                 'string',
                 'max:100'
             ],
+            'jenis_kelamin' => [
+                'required',
+                'string',
+            ],
+            'agama' => [
+                'required',
+                'string',
+                'max:50'
+            ],
+            'pendidikan_terakhir' => [
+                'required',
+                'string',
+                'max:100'
+            ],
+            'pekerjaan' => [
+                'string',
+                'max:100'
+            ],
+            'alamat' => [
+                'required',
+            ],
+            'no_hp' => [
+                'required',
+                'max:20'
+            ],
+            'keterangan'=> []
         ];
     }
 

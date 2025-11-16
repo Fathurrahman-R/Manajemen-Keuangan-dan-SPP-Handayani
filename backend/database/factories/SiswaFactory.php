@@ -16,7 +16,9 @@ class SiswaFactory extends Factory
     {
         return [
             'nis' => $this->faker->unique()->numerify('######'),
+//            'nis' => '000001',
             'nisn' => $this->faker->unique()->numerify('######'),
+//            'nisn' => '000001',
             'nama' => $this->faker->name(),
             'jenis_kelamin' => $this->faker->randomElement(['Laki-laki', 'Perempuan']),
             'tempat_lahir' => $this->faker->city(),
@@ -38,5 +40,15 @@ class SiswaFactory extends Factory
             'status' => 'Aktif',
             'keterangan' => null,
         ];
+    }
+
+    public function custom()
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'nis' =>'000001',
+                'nisn' =>'000001',
+            ];
+        });
     }
 }

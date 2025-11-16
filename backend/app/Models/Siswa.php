@@ -56,5 +56,9 @@ class Siswa extends Model
     {
         return $this->belongsTo(Kategori::class);
     }
+    public function tagihan()
+    {
+        return $this->hasMany(Tagihan::class,'nis','nis');
+    }
 
 }

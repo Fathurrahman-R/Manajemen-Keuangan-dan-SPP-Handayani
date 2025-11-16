@@ -15,12 +15,12 @@ class KategoriController extends Controller
     {
         $auth = Auth::user();
         $kategori = Kategori::all();
-        if(!$kategori)
+        if($kategori->isEmpty())
         {
             throw new HttpResponseException(response([
                 'errors'=>[
                     'message'=>[
-                        'belum ada kategori.'
+                        'belum ada data kategori.'
                     ]
                 ]
             ],404));
@@ -32,8 +32,8 @@ class KategoriController extends Controller
     {
         $auth = Auth::user();
         $data = $request->validated();
-        $kategori = new Kategori();
-        $kategori->save($data);
+        $kategori = new Kategori($data);
+        $kategori->save();
         return (new KategoriResource($kategori))->response()->setStatusCode(201);
     }
 
@@ -86,6 +86,16 @@ class KategoriController extends Controller
                     ]
                 ]
             ],404));
+        }
+        if($kategori->siswa()->exists())
+        {
+            throw new HttpResponseException(response([
+                'errors'=>[
+                    'message'=>[
+                        'kategori digunakan pada data siswa.'
+                    ]
+                ]
+            ],400));
         }
         $kategori->delete();
         return response([

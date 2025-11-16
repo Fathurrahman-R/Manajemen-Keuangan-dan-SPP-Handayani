@@ -21,7 +21,7 @@ class KelasController extends Controller
             throw new HttpResponseException(response()->json([
                 'errors'=>[
                     'message'=>[
-                        'tidak ada data kelas.'
+                        'belum ada data kelas.'
                     ]
                 ]
             ],400));
@@ -119,6 +119,17 @@ class KelasController extends Controller
                     ]
                 ]
             ],404));
+        }
+
+        if($kelas->siswa()->exists())
+        {
+            throw new HttpResponseException(response([
+                'errors'=>[
+                    'message'=>[
+                        'kelas digunakan pada data siswa.'
+                    ]
+                ]
+            ],400));
         }
 
         $kelas->delete();

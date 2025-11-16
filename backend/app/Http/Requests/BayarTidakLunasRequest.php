@@ -2,18 +2,17 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Facades\Auth;
 
-class KategoriRequest extends FormRequest
+class BayarTidakLunasRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return $this->user()!=null;
+        return Auth::user() !== null;
     }
 
     /**
@@ -24,18 +23,12 @@ class KategoriRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nama' => [
+            'jumlah'=>[
                 'required',
-                'string',
-                'max:100'
+            ],
+            'metode'=>[
+                'required',
             ],
         ];
-    }
-
-    protected function failedValidation(Validator $validator)
-    {
-        throw new HttpResponseException(response([
-            "errors" => $validator->getMessageBag()
-        ],400));
     }
 }

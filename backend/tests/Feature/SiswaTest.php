@@ -20,7 +20,7 @@ class SiswaTest extends TestCase
 {
     public function testCreateSiswaSuccess()
     {
-        $admin = User::factory()->admin()->create();
+//        $admin = User::factory()->admin()->create();
 
         // buat data referensi relasi
         $ayah = \App\Models\Wali::factory()->create();
@@ -29,7 +29,7 @@ class SiswaTest extends TestCase
         $kelas = \App\Models\Kelas::factory()->create();
         $kategori = \App\Models\Kategori::factory()->create();
 
-        $response = $this->post('api/siswas/mi', [
+        $response = $this->post('api/siswa/mi', [
             'nis' => '000001',
             'nisn' => '000001',
             'nama' => 'Siswa Factory',
@@ -180,33 +180,32 @@ class SiswaTest extends TestCase
     public function testDeleteSuccess()
     {
 
-        User::factory()->admin()->create();
-        $ayah = Wali::factory()->create();
-        $ibu = Wali::factory()->create();
-        $wali = Wali::factory()->create();
-        $kelas = Kelas::factory()->create();
-        $kategori = Kategori::factory()->create();
-        $siswa = Siswa::factory()->create([
-            'ayah_id' => $ayah->id,
-            'ibu_id' => $ibu->id,
-            'wali_id' => $wali->id,
-            'jenjang'=> 'MI',
-            'kelas_id' => $kelas->id,
-            'kategori_id' => $kategori->id,
-            'asal_sekolah'=>'MI Handayani',
-            'kelas_diterima'=>'1',
-            'tahun_diterima'=>'2020',
-            'keterangan'=>null
-        ]);
+//        User::factory()->admin()->create();
+//        $ayah = Wali::factory()->create();
+//        $ibu = Wali::factory()->create();
+//        $wali = Wali::factory()->create();
+//        $kelas = Kelas::factory()->create();
+//        $kategori = Kategori::factory()->create();
+//        $siswa = Siswa::factory()->create([
+//            'ayah_id' => $ayah->id,
+//            'ibu_id' => $ibu->id,
+//            'wali_id' => $wali->id,
+//            'jenjang'=> 'MI',
+//            'kelas_id' => $kelas->id,
+//            'kategori_id' => $kategori->id,
+//            'asal_sekolah'=>'MI Handayani',
+//            'kelas_diterima'=>'1',
+//            'tahun_diterima'=>'2020',
+//            'keterangan'=>null
+//        ]);
+        $siswa = Siswa::where('nis','000001')->first();
 
-        $this->delete(uri: 'api/siswas/mi/'.$siswa->id,headers:
+        $this->delete(uri: 'api/siswa/mi/'.$siswa->id,headers:
         [
             'Authorization'=>'test'
         ])->assertStatus(200)
         ->assertJson([
-            'errors'=>[
-                true
-            ]
+            'errors'=>true
         ]);
     }
 

@@ -5,15 +5,16 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Facades\Auth;
 
-class KategoriRequest extends FormRequest
+class JenisTagihanRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return $this->user()!=null;
+        return Auth::user() != null;
     }
 
     /**
@@ -24,11 +25,22 @@ class KategoriRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nama' => [
+            'nama'=>[
                 'required',
                 'string',
-                'max:100'
+                'min:3',
+                'max:100',
             ],
+            'jatuh_tempo'=>[
+                'required',
+                'date',
+            ],
+            'jumlah'=>[
+                'required',
+                'numeric',
+                'min:4',
+                'max:12',
+            ]
         ];
     }
 
