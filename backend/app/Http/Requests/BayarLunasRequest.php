@@ -7,7 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 
-class BayarTidakLunasRequest extends FormRequest
+class BayarLunasRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,9 +25,6 @@ class BayarTidakLunasRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'jumlah'=>[
-                'required',
-            ],
             'metode'=>[
                 'required',
             ],

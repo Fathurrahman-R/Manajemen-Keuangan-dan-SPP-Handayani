@@ -21,7 +21,7 @@ class Pembayaran extends Model
         'tanggal',
         'metode',
         'jumlah',
-        'kwitansi'
+        'pembayar'
     ];
 
     public function tagihan()

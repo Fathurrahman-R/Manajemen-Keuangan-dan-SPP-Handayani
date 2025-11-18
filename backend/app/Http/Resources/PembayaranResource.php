@@ -20,7 +20,7 @@ class PembayaranResource extends JsonResource
             'tanggal'=>$this->tanggal,
             'metode'=>$this->metode,
             'jumlah'=>$this->jumlah,
-            'kwitansi'=>$this->kwitansi
+            'pembayar'=>$this->pembayar
         ];
     }
 }
