@@ -2,6 +2,15 @@
 
 namespace Tests;
 
+use App\Models\AppSetting;
+use App\Models\JenisTagihan;
+use App\Models\Kategori;
+use App\Models\Kelas;
+use App\Models\Pembayaran;
+use App\Models\Siswa;
+use App\Models\Tagihan;
+use App\Models\User;
+use App\Models\Wali;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\DB;
 
@@ -20,4 +29,74 @@ abstract class TestCase extends BaseTestCase
        DB::delete('delete from jenis_tagihans');
        DB::delete('delete from pembayarans');
    }
+
+   protected function createPembayaranCicil()
+   {
+       $user = User::factory()->create();
+       $wali = Wali::factory()->create();
+       $kelas = Kelas::factory()->create();
+       $kategori = Kategori::factory()->create();
+       $jt = JenisTagihan::factory()->create([
+           'nama'=>'SPP',
+           'jumlah'=>100000
+       ]);
+       $siswa = Siswa::factory()
+           ->for($wali,'ayah')
+           ->for($wali,'ibu')
+           ->for($wali,'wali')
+           ->for($kelas,'kelas')
+           ->for($kategori,'kategori')
+           ->create([
+               'jenjang'=>'MI'
+           ]);
+       $tagihan = Tagihan::factory()
+           ->for($siswa, 'siswa')
+           ->for($jt,'jenis_tagihan')
+           ->create([
+               'tmp'=>50000
+           ]);
+       $pembayaran = Pembayaran::factory()
+           ->for($tagihan,'tagihan')
+           ->create([
+               'jumlah'=>50000,
+               'metode'=>'Tunai',
+               'pembayar'=>$wali->nama
+           ]);
+       $setting = AppSetting::factory()->create();
+       return compact('user','pembayaran');
+   }
+   protected function createPembayaranLunas()
+   {
+       $user = User::factory()->create();
+       $wali = Wali::factory()->create();
+       $kelas = Kelas::factory()->create();
+       $kategori = Kategori::factory()->create();
+       $jt = JenisTagihan::factory()->create([
+           'nama'=>'SPP',
+           'jumlah'=>100000
+       ]);
+       $siswa = Siswa::factory()
+           ->for($wali,'ayah')
+           ->for($wali,'ibu')
+           ->for($wali,'wali')
+           ->for($kelas,'kelas')
+           ->for($kategori,'kategori')
+           ->create([
+               'jenjang'=>'MI'
+           ]);
+       $tagihan = Tagihan::factory()
+           ->for($siswa, 'siswa')
+           ->for($jt,'jenis_tagihan')
+           ->create();
+       $pembayaran = Pembayaran::factory()
+           ->for($tagihan,'tagihan')
+           ->create([
+               'jumlah'=>$jt->jumlah,
+               'metode'=>'Tunai',
+               'pembayar'=>$wali->nama
+           ]);
+       $setting = AppSetting::factory()->create();
+       return compact('user','pembayaran');
+   }
+
 }

@@ -14,7 +14,7 @@ class KategoriTest extends TestCase
     public function testIndexSuccess()
     {
         $user = User::factory()->create();
-//        Kategori::factory(4)->create();
+        Kategori::factory(4)->create();
         $this->get(uri: 'api/kategori',
             headers:['Authorization' => $user->token])
         ->assertStatus(200)

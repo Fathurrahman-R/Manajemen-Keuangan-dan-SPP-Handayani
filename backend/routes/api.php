@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AppSettingController;
 use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\KelasController;
 use App\Http\Controllers\PembayaranController;
@@ -55,12 +56,14 @@ Route::middleware(\App\Http\Middleware\ApiAuthMiddleware::class)->group(function
 
         Route::prefix('/tagihan')->group(function(){
             Route::post('/',[TagihanController::class,'create']);
-            Route::patch('/lunas/{kode_tagihan}',[TagihanController::class,'lunas']);
-            Route::patch('/bayar/{kode_tagihan}',[TagihanController::class,'bayar']);
         });
 
         Route::prefix('/pembayaran')->group(function(){
             Route::post('/bayar/{kode_tagihan}',[PembayaranController::class,'bayar']);
+            Route::post('/lunas/{kode_tagihan}',[PembayaranController::class,'lunas']);
+            Route::get('/kwitansi/{kode_tagihan}',[PembayaranController::class,'kwitansi']);
         });
+
+        Route::put('/setting',[AppSettingController::class,'update']);
     });
 });

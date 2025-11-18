@@ -17,7 +17,7 @@ class KelasTest extends TestCase
             'jenjang'=>'MI'
         ]);
 
-        $this->get(uri: 'api/kelas/tk',headers:
+        $this->get(uri: 'api/kelas/mi',headers:
         [
             'Authorization'=>'test'
         ])->assertStatus(200)
