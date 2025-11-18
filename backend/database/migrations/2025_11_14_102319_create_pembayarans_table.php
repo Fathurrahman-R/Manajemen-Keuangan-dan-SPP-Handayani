@@ -17,7 +17,7 @@ return new class extends Migration
             $table->date('tanggal')->nullable(false)->default(now());
             $table->enum('metode',['Tunai','Non-Tunai'])->default('Tunai')->nullable(false);
             $table->decimal('jumlah',12,2)->nullable()->default(0);
-            $table->string('kwitansi',100)->nullable();
+            $table->string('pembayar',100)->nullable(false);
             $table->timestamps();
         });
     }
