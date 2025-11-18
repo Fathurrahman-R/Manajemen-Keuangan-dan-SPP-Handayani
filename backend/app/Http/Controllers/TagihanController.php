@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BayarLunasRequest;
 use App\Http\Requests\BayarTidakLunasRequest;
 use App\Http\Requests\TagihanRequest;
 use App\Http\Resources\TagihanResource;
@@ -30,7 +31,7 @@ class TagihanController extends Controller
             });
         }
 
-        $tagihan = $query->get();
+        $tagihan = $query->paginate(request('per_page',30));
 
         if ($tagihan->isEmpty()) {
             throw new HttpResponseException(response([
@@ -79,7 +80,7 @@ class TagihanController extends Controller
         return TagihanResource::collection($created);
     }
 
-    public function lunas(Request $request, string $kode_tagihan)
+    public static function lunas(BayarLunasRequest $request, string $kode_tagihan)
     {
         $tagihan = Tagihan::with([
             'siswa',
@@ -94,10 +95,12 @@ class TagihanController extends Controller
                 ]
             ],404));
         }
+        $jumlah = $tagihan->jenis_tagihan->jumlah;
         $tagihan->update([
-            'status'=>'Lunas'
+            'status'=>'Lunas',
+            'tmp'=>$jumlah
         ]);
-        return (new TagihanResource($tagihan))->response()->setStatusCode(200);
+        return $jumlah;
     }
 
     public static function bayar(BayarTidakLunasRequest $request, string $kode_tagihan)

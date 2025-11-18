@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\JenisTagihan;
 use App\Models\Siswa;
+use App\Models\Tagihan;
 use App\Services\GenerateKodeTagihan;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -12,11 +13,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class TagihanFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
+    protected $model = Tagihan::class;
     public function definition(): array
     {
         return [
