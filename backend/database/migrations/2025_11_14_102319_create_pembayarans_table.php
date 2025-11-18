@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('pembayarans', function (Blueprint $table) {
             $table->char('kode_pembayaran',30)->primary();
-            $table->char('kode_tagihan',30)->unique()->nullable(false);
+            $table->char('kode_tagihan',30)->nullable(false);
             $table->date('tanggal')->nullable(false)->default(now());
             $table->enum('metode',['Tunai','Non-Tunai'])->default('Tunai')->nullable(false);
             $table->decimal('jumlah',12,2)->nullable()->default(0);
