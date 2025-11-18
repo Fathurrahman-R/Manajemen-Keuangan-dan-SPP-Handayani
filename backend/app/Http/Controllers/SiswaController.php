@@ -53,7 +53,7 @@ class SiswaController extends Controller
             'wali',
             'kelas',
             'kategori'
-        ])->where('jenjang',strtoupper($jenjang))->get();
+        ])->where('jenjang',strtoupper($jenjang))->paginate(request('per_page',30));
 
         if($siswa->isEmpty())
         {
@@ -79,8 +79,7 @@ class SiswaController extends Controller
         // cek nis terdaftar
         $exists = Siswa::where('jenjang', strtoupper($jenjang))
             ->where(function ($q) use ($data) {
-                $q->where('nis', $data['nis'])
-                    ->orWhere('nisn', $data['nisn']);
+                $q->where('nis', $data['nis']);
             })
             ->exists();
 
@@ -88,7 +87,7 @@ class SiswaController extends Controller
             throw new HttpResponseException(response([
                 "errors" => [
                     "message" => [
-                        "Siswa dengan NIS/NISN tersebut sudah terdaftar."
+                        "Siswa dengan NIS tersebut sudah terdaftar."
                     ]
                 ]
             ], 400));
@@ -124,7 +123,7 @@ class SiswaController extends Controller
     {
         $auth = Auth::user();
 
-        $siswa = Siswa::where('id',$id)->where('jenjang', $jenjang)->first();
+        $siswa = Siswa::where('jenjang', strtoupper($jenjang))->find($id);
         $resource = $this->resolveResource($jenjang);
         return (new $resource($siswa))->response()->setStatusCode(200);
     }

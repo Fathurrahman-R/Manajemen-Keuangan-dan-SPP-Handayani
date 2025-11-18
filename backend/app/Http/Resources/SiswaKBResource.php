@@ -23,7 +23,7 @@ class SiswaKBResource extends JsonResource
             'tanggal_lahir'=>$this->tanggal_lahir,
             'agama'=>$this->agama,
             'alamat'=>$this->alamat,
-            'wali'=>$this->whenLoaded('wali', new WaliMIResource($this->wali)),
+            'wali'=>$this->whenLoaded('wali', new WaliResource($this->wali)),
             'jenjang'=>$this->jenjang,
             'kelas'=>$this->whenLoaded('kelas', new KelasResource($this->kelas)),
             'kategori'=>$this->whenLoaded('kategori', new KategoriResource($this->kategori)),

@@ -20,7 +20,7 @@ class SiswaTest extends TestCase
 {
     public function testCreateSiswaSuccess()
     {
-//        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->create();
 
         // buat data referensi relasi
         $ayah = \App\Models\Wali::factory()->create();
@@ -41,7 +41,6 @@ class SiswaTest extends TestCase
             'ayah_id' => $ayah->id,
             'ibu_id' => $ibu->id,
             'wali_id' => $wali->id,
-            'jenjang'=> 'MI',
             'kelas_id' => $kelas->id,
             'kategori_id' => $kategori->id,
         ], [
@@ -166,7 +165,7 @@ class SiswaTest extends TestCase
             'kelas_id' => $kelas->id,
             'kategori_id' => $kategori->id,
         ]);
-        $this->get(uri: 'api/siswas/mi/'.$siswa->id, headers:
+        $this->get(uri: 'api/siswa/mi/'.$siswa->id, headers:
         [
             'Authorization'=>'test'
         ])->assertStatus(200)
@@ -220,7 +219,7 @@ class SiswaTest extends TestCase
         $admin = User::factory()->admin()->create();
 
         // Buat beberapa siswa dengan relasi yang sudah dibuat
-        Siswa::factory(3)->create([
+        Siswa::factory(100)->create([
             'jenjang' => 'MI',
             'ayah_id' => $ayah->id,
             'ibu_id' => $ibu->id,
