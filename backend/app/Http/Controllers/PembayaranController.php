@@ -30,7 +30,7 @@ class PembayaranController extends Controller
             });
         }
 
-        $pembayaran = $query->get();
+        $pembayaran = $query->paginate(request('per_page', 30));
 
         if ($pembayaran->isEmpty()) {
             throw new HttpResponseException(response([
@@ -40,7 +40,47 @@ class PembayaranController extends Controller
             ], 404));
         }
 
-        return TagihanResource::collection($pembayaran);
+        return PembayaranResource::collection($pembayaran);
+    }
+    public function delete(string $kode_pembayaran)
+    {
+        $data = Pembayaran::with([
+            'tagihan'=>function($q){
+                $q->select(['kode_tagihan','tmp']);
+            }])
+            ->select(['kode_pembayaran','kode_tagihan','jumlah'])
+            ->find($kode_pembayaran);
+
+        $tagihan = Tagihan::with([
+            'jenis_tagihan'=>function($q){
+                $q->select(['id','jumlah']);
+            }
+        ])
+            ->select(['kode_tagihan','jenis_tagihan_id','tmp'])
+            ->find($data->tagihan->kode_tagihan);
+
+        if(!$tagihan or !$data)
+        {
+            throw new HttpResponseException(response([
+                "errors" => [
+                    "message" => ["data tidak ditemukan."]
+                ]
+            ],404));
+        }
+
+        $tmp = $data->tagihan->tmp - $data["jumlah"];
+        $status = ($tmp == $tagihan->jenis_tagihan->jumlah)?'Lunas':'Belum Lunas';
+        $tagihan->update([
+            "tmp" => $tmp,
+            "status" => $status
+        ]);
+        $data->delete();
+        return response([
+            "data"=>true,
+            "tmp old"=> $data->tagihan->tmp,
+            "jumlah bayar"=>$data["jumlah"],
+            "tmp new"=>$tmp
+        ])->setStatusCode(200);
     }
     public function lunas(BayarLunasRequest $request, string $kode_tagihan)
     {
@@ -61,22 +101,26 @@ class PembayaranController extends Controller
     {
         $data = $request->validated();
         $tagihan = Tagihan::with([
-            'siswa'=>function($q){
-                $q->select('nis','nama');
+            'siswa' => function ($q) {
+                $q->select(['nis', 'nama']);
             },
-            'jenis_tagihan'=>function($q){
-                $q->select('id','jumlah');
+            'jenis_tagihan' => function ($q) {
+                $q->select(['id', 'jumlah']);
             },
-        ])->select(['kode_tagihan','tmp'])->find($kode_tagihan);
+        ])
+            ->select(['kode_tagihan', 'tmp', 'jenis_tagihan_id', 'nis']) // ← WAJIB!
+            ->find($kode_tagihan);
 
-        $akumulasi = $tagihan->tmp + $data['jumlah'];
-        $biaya_tagihan = $tagihan->jumlah;
+        $akumulasi = $tagihan['tmp'] + $data['jumlah'];
+        $biaya_tagihan = $tagihan->jenis_tagihan->jumlah;
 
         if($akumulasi > $biaya_tagihan){
             throw new HttpResponseException(response([
                 "errors" => [
                     "message"=>[
-                        'jumlah pembayaran melebihi sisa/jumlah biaya tagihan.'
+                        'jumlah pembayaran melebihi sisa/jumlah biaya tagihan.',
+                        "akumulasi: {$akumulasi}",
+                        "biaya tagihan: {$biaya_tagihan}"
                     ]
                 ]
             ],400));
