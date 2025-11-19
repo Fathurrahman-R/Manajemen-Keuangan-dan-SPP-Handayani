@@ -20,11 +20,26 @@ class SiswaController extends Controller
             'KB' => app(\App\Http\Requests\SiswaKBRequest::class),
             default => throw new HttpResponseException(response([
                 "errors" => [
-                    "message"=>[
+                    "message" => [
                         "jenjang tidak ditemukan."
                     ]
                 ]
-            ],404)),
+            ], 404)),
+        };
+    }
+    protected function resolveUpdateRequest(string $jenjang)
+    {
+        return match (strtoupper($jenjang)) {
+            'TK' => app(\App\Http\Requests\SiswaTKUpdateRequest::class),
+            'MI' => app(\App\Http\Requests\SiswaMIUpdateRequest::class),
+            'KB' => app(\App\Http\Requests\SiswaKBUpdateRequest::class),
+            default => throw new HttpResponseException(response([
+                "errors" => [
+                    "message" => [
+                        "jenjang tidak ditemukan."
+                    ]
+                ]
+            ], 404)),
         };
     }
 
@@ -36,35 +51,53 @@ class SiswaController extends Controller
             'KB' => \App\Http\Resources\SiswaKBResource::class,
             default => throw new HttpResponseException(response([
                 "errors" => [
-                    "message"=>[
+                    "message" => [
                         "jenjang tidak ditemukan."
                     ]
                 ]
-            ],404)),
+            ], 404)),
         };
     }
 
     public function index(string $jenjang)
     {
         $auth = Auth::user();
-        $siswa = Siswa::with([
+        $baseQuery = Siswa::with([
             'ayah',
             'ibu',
             'wali',
             'kelas',
             'kategori'
-        ])->where('jenjang',strtoupper($jenjang))->paginate(request('per_page',30));
+        ])->where('jenjang', strtoupper($jenjang));
 
-        if($siswa->isEmpty())
-        {
+        // cek apakah belum ada data sama sekali untuk jenjang tersebut
+        if (!$baseQuery->clone()->exists()) {
             throw new HttpResponseException(response([
                 "errors" => [
-                    "message"=>[
+                    "message" => [
                         "belum ada data siswa dengan jenjang tersebut."
                     ]
                 ]
-            ],404));
+            ], 404));
         }
+
+        $query = clone $baseQuery;
+
+        // search by nama | nis | nisn (khusus MI)
+        $term = request('search', request('q'));
+        if ($term) {
+            $query->where(function ($q) use ($term, $jenjang) {
+                $q->where('nama', 'like', "{$term}%")
+                    ->orWhere('nis', 'like', "{$term}%");
+                if (strtoupper($jenjang) === 'MI') {
+                    $q->orWhere('nisn', 'like', "{$term}%");
+                }
+            });
+        }
+
+        $siswa = $query->paginate(request('per_page', 30));
+        // jika ada data di jenjang tsb tetapi hasil search kosong,
+        // kembalikan 200 dengan data kosong (paginator tetap)
 
         $resource = $this->resolveResource($jenjang);
         return $resource::collection($siswa);
@@ -87,7 +120,7 @@ class SiswaController extends Controller
             throw new HttpResponseException(response([
                 "errors" => [
                     "message" => [
-                        "Siswa dengan NIS tersebut sudah terdaftar."
+                        "siswa dengan NIS tersebut sudah terdaftar."
                     ]
                 ]
             ], 400));
@@ -109,10 +142,20 @@ class SiswaController extends Controller
     public function update(string $jenjang, string $id)
     {
         $auth = Auth::user();
-        $request = $this->resolveRequest($jenjang);
+        $request = $this->resolveUpdateRequest($jenjang);
         $data = $request->validated();
 
-        $siswa = Siswa::where('id',$id)->first();
+        $siswa = Siswa::where('id', $id)->first();
+        if (!$siswa || strtoupper($siswa->jenjang) !== strtoupper($jenjang)) {
+            throw new HttpResponseException(response([
+                "errors" => [
+                    "message" => [
+                        "siswa tidak ditemukan."
+                    ]
+                ]
+            ], 404));
+        }
+        $siswa->jenjang = strtoupper($jenjang);
         $siswa->update($data);
 
         $resource = $this->resolveResource($jenjang);
@@ -124,6 +167,15 @@ class SiswaController extends Controller
         $auth = Auth::user();
 
         $siswa = Siswa::where('jenjang', strtoupper($jenjang))->find($id);
+        if (!$siswa) {
+            throw new HttpResponseException(response([
+                "errors" => [
+                    "message" => [
+                        "siswa tidak ditemukan."
+                    ]
+                ]
+            ], 404));
+        }
         $resource = $this->resolveResource($jenjang);
         return (new $resource($siswa))->response()->setStatusCode(200);
     }
@@ -131,12 +183,28 @@ class SiswaController extends Controller
     public function delete(string $jenjang, string $id)
     {
         $auth = Auth::user();
-        $siswa = Siswa::where('id',$id)->where('jenjang', $jenjang)->first();
-        $user = User::where('username',$siswa->nis)->first();
+        $siswa = Siswa::where('id', $id)->where('jenjang', $jenjang)->first();
+
+        if (!$siswa) {
+            throw new HttpResponseException(response([
+                "errors" => [
+                    "message" => [
+                        "siswa tidak ditemukan."
+                    ]
+                ]
+            ], 404));
+        }
+
+        $user = User::where('username', $siswa->nis)->first();
+
+        if ($user) {
+            $user->delete();
+        }
+
         $siswa->delete();
-        $user->delete();
+
         return response([
-            'data'=>true
+            'data' => true
         ])->setStatusCode(200);
     }
 }

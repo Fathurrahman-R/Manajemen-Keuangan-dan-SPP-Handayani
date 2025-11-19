@@ -6,7 +6,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class SiswaMIRequest extends FormRequest
+class SiswaTKUpdateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,18 +24,6 @@ class SiswaMIRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nis' => [
-                'required',
-                'max:20',
-                'regex:/^[0-9]+$/',
-                'min:4'
-            ],
-            'nisn' => [
-                'required',
-                'max:20',
-                'regex:/^[0-9]+$/',
-                'min:4'
-            ],
             'nama' => [
                 'required',
                 'max:100',
@@ -63,14 +51,6 @@ class SiswaMIRequest extends FormRequest
             'alamat' => [
                 'required'
             ],
-            'ayah_id' => [
-                'nullable',
-                'exists:walis,id'
-            ],
-            'ibu_id' => [
-                'nullable',
-                'exists:walis,id'
-            ],
             'wali_id' => [
                 'required',
                 'exists:walis,id'
@@ -82,19 +62,6 @@ class SiswaMIRequest extends FormRequest
             'kategori_id' => [
                 'required',
                 'exists:kategoris,id'
-            ],
-            'asal_sekolah' => [
-                'nullable',
-                'max:150'
-            ],
-            'kelas_diterima' => [
-                'nullable',
-                'max:10'
-            ],
-            'tahun_diterima' => [
-                'nullable',
-                'date_format:Y',
-                'before_or_equal:' . date('Y')
             ],
             'status' => [
                 'nullable',

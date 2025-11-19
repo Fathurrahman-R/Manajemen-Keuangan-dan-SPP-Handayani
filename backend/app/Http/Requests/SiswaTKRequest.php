@@ -24,45 +24,56 @@ class SiswaTKRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nis'=>[
+            'nis' => [
                 'required',
-                'max:20'
+                'max:20',
+                'regex:/^[0-9]+$/',
+                'min:4'
             ],
-            'nama'=>[
+            'nama' => [
+                'required',
+                'max:100',
+                'regex:/^[A-Za-zÀ-ÿ\'\s]+$/u'
+            ],
+            'jenis_kelamin' => [
+                'required',
+                'in:Laki-laki,Perempuan'
+            ],
+            'tempat_lahir' => [
                 'required',
                 'max:100'
             ],
-            'jenis_kelamin'=>[
+            'tanggal_lahir' => [
                 'required',
+                'date',
+                'before:today',
+                'after:1989-12-30'
             ],
-            'tempat_lahir'=>[
+            'agama' => [
                 'required',
-                'max:100'
-            ],
-            'tanggal_lahir'=>[
-                'required',
-                'date'
-            ],
-            'agama'=>[
-                'required',
-                'max:50'
-            ],
-            'alamat'=>[
-                'required'
-            ],
-            'wali_id'=>[
-                'required'
-            ],
-            'kelas_id'=>[
-                'required'
-            ],
-            'kategori_id'=>[
-                'required'
-            ],
-            'status'=>[
+                'max:50',
 
             ],
-            'keterangan'=>[
+            'alamat' => [
+                'required'
+            ],
+            'wali_id' => [
+                'required',
+                'exists:walis,id'
+            ],
+            'kelas_id' => [
+                'required',
+                'exists:kelas,id'
+            ],
+            'kategori_id' => [
+                'required',
+                'exists:kategoris,id'
+            ],
+            'status' => [
+                'nullable',
+                'in:Aktif,Lulus,Pindah,Keluar'
+            ],
+            'keterangan' => [
                 'nullable'
             ],
         ];
@@ -72,6 +83,6 @@ class SiswaTKRequest extends FormRequest
     {
         throw new HttpResponseException(response([
             "errors" => $validator->getMessageBag()
-        ],400));
+        ], 400));
     }
 }

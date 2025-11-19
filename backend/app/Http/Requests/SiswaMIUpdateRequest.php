@@ -6,7 +6,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class SiswaMIRequest extends FormRequest
+class SiswaMIUpdateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,18 +24,6 @@ class SiswaMIRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nis' => [
-                'required',
-                'max:20',
-                'regex:/^[0-9]+$/',
-                'min:4'
-            ],
-            'nisn' => [
-                'required',
-                'max:20',
-                'regex:/^[0-9]+$/',
-                'min:4'
-            ],
             'nama' => [
                 'required',
                 'max:100',
