@@ -6,6 +6,7 @@ use App\Http\Requests\BayarLunasRequest;
 use App\Http\Requests\BayarTidakLunasRequest;
 use App\Http\Requests\TagihanRequest;
 use App\Http\Resources\TagihanResource;
+use App\Models\Pembayaran;
 use App\Models\Siswa;
 use App\Models\Tagihan;
 use App\Services\GenerateKodeTagihan;
@@ -78,6 +79,32 @@ class TagihanController extends Controller
         }
 
         return TagihanResource::collection($created);
+    }
+
+    public function delete(string $kode_tagihan)
+    {
+        $tagihan = Tagihan::query()->find($kode_tagihan);
+        $pembayaran = Pembayaran::query()->find($kode_tagihan);
+        if (!$tagihan) {
+            throw new HttpResponseException(response([
+                "errors" => [
+                    "message" => ["tagihan tidak ditemukan."]
+                ]
+            ],404));
+        }
+        if($pembayaran)
+        {
+            throw new HttpResponseException(response([
+                "errors" => [
+                    "message" => ["tagihan ini sudah memiliki data pembayaran."]
+                ]
+            ],400));
+        }
+        $tagihan->delete();
+        return response([
+            "data"=>true
+        ])->setStatusCode(200);
+
     }
 
     public static function lunas(BayarLunasRequest $request, string $kode_tagihan)

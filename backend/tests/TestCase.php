@@ -7,6 +7,7 @@ use App\Models\JenisTagihan;
 use App\Models\Kategori;
 use App\Models\Kelas;
 use App\Models\Pembayaran;
+use App\Models\Pengeluaran;
 use App\Models\Siswa;
 use App\Models\Tagihan;
 use App\Models\User;
@@ -28,6 +29,7 @@ abstract class TestCase extends BaseTestCase
         DB::delete('delete from tagihans');
         DB::delete('delete from jenis_tagihans');
         DB::delete('delete from pembayarans');
+        DB::delete('delete from pengeluarans');
     }
 
     /**
@@ -164,5 +166,148 @@ abstract class TestCase extends BaseTestCase
             ]);
         $setting = AppSetting::factory()->create();
         return compact('user', 'pembayaran');
+    }
+    protected function createTagihan()
+    {
+        $user = User::factory()->create();
+        $jt = JenisTagihan::factory()->create([
+            'nama' => 'Pendaftaran',
+            'jumlah' => 50000
+        ]);
+        $kelas = Kelas::factory()->create();
+        $kategori = Kategori::factory()->create();
+        $wali = Wali::factory()->create();
+        $siswa = Siswa::factory()
+            ->for($wali, 'wali')
+            ->for($kelas, 'kelas')
+            ->for($kategori, 'kategori')
+            ->create();
+        $tagihan = Tagihan::factory()
+            ->for($siswa, 'siswa')
+            ->for($jt, 'jenis_tagihan')
+            ->create();
+        return compact('user', 'tagihan');
+    }
+    protected function createKasHarian()
+    {
+        $user = User::factory()->create();
+        $wali = Wali::factory()->create();
+        $kelas = Kelas::factory()->create();
+        $kategori = Kategori::factory()->create();
+        $jt = JenisTagihan::factory()->create([
+            'nama' => 'SPP',
+            'jumlah' => 100000
+        ]);
+        $siswa = Siswa::factory()
+            ->for($wali, 'ayah')
+            ->for($wali, 'ibu')
+            ->for($wali, 'wali')
+            ->for($kelas, 'kelas')
+            ->for($kategori, 'kategori')
+            ->create([
+                'jenjang' => 'MI'
+            ]);
+        $tagihan = Tagihan::factory()
+            ->for($siswa, 'siswa')
+            ->for($jt, 'jenis_tagihan')
+            ->create();
+        // Pemasukan & Pengeluaran dalam bulan Januari 2025
+        Pembayaran::factory()
+            ->for($tagihan, 'tagihan')
+            ->create([
+                'tanggal' => '2025-01-01',
+                'jumlah' => $jt->jumlah,
+                'metode' => 'Tunai',
+                'pembayar' => $wali->nama
+            ]);
+        // Tambahan pemasukan di Januari
+        Pembayaran::factory()
+            ->for($tagihan, 'tagihan')
+            ->create([
+                'tanggal' => '2025-01-10',
+                'jumlah' => 50000,
+                'metode' => 'Tunai',
+                'pembayar' => $wali->nama
+            ]);
+        // Pemasukan di bulan lain (Februari) — memastikan tidak mempengaruhi saldo Januari
+        Pembayaran::factory()
+            ->for($tagihan, 'tagihan')
+            ->create([
+                'tanggal' => '2025-02-01',
+                'jumlah' => $jt->jumlah,
+                'metode' => 'Tunai',
+                'pembayar' => $wali->nama
+            ]);
+        Pengeluaran::factory()->create([
+            'tanggal' => '2025-01-01',
+            'jumlah' => 50000,
+        ]);
+        // Pengeluaran tambahan di Januari
+        Pengeluaran::factory()->create([
+            'tanggal' => '2025-01-05',
+            'jumlah' => 25000,
+        ]);
+        return compact('user');
+    }
+
+    protected function createRekapBulanan()
+    {
+        $user = User::factory()->create();
+        $wali = Wali::factory()->create();
+        $kelas = Kelas::factory()->create();
+        $kategori = Kategori::factory()->create();
+        $jt = JenisTagihan::factory()->create([
+            'nama' => 'SPP',
+            'jumlah' => 100000
+        ]);
+        $siswa = Siswa::factory()
+            ->for($wali, 'wali')
+            ->for($kelas, 'kelas')
+            ->for($kategori, 'kategori')
+            ->create([
+                'jenjang' => 'MI'
+            ]);
+        $tagihan = Tagihan::factory()
+            ->for($siswa, 'siswa')
+            ->for($jt, 'jenis_tagihan')
+            ->create();
+
+        // Pemasukan Jan & Feb
+        Pembayaran::factory()->for($tagihan, 'tagihan')->create([
+            'tanggal' => '2025-01-01',
+            'jumlah' => 100000,
+            'metode' => 'Tunai'
+        ]);
+        Pembayaran::factory()->for($tagihan, 'tagihan')->create([
+            'tanggal' => '2025-02-01',
+            'jumlah' => 150000,
+            'metode' => 'Tunai'
+        ]);
+
+        // Pengeluaran Jan & Feb
+        Pengeluaran::factory()->create([
+            'tanggal' => '2025-01-15',
+            'jumlah' => 40000,
+        ]);
+        Pengeluaran::factory()->create([
+            'tanggal' => '2025-02-10',
+            'jumlah' => 50000,
+        ]);
+        Pengeluaran::factory()->create([
+            'tanggal' => '2026-01-01',
+            'jumlah' => 10000,
+        ]);
+
+        return compact('user');
+    }
+
+    protected function createAdminWithToken(): \App\Models\User
+    {
+        /** @var \App\Models\User $admin */
+        $admin = \App\Models\User::factory()->admin()->create();
+        $admin->token = \Illuminate\Support\Str::uuid()->toString();
+        $admin->save();
+
+        return $admin;
     }
 }

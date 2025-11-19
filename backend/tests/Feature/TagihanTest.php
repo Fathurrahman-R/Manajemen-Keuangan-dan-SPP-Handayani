@@ -73,6 +73,21 @@ class TagihanTest extends TestCase
                 'jumlah'=>10000
             ],
             headers: ['Authorization' => $user->token])
+        ->assertStatus(404)
+        ->assertJson([
+            'errors'=>[]
+        ]);
+    }
+    public function testDeleteTagihanSuccess()
+    {
+        $scenario = $this->createTagihan();
+        $user = $scenario['user'];
+        $tagihan = $scenario['tagihan'];
+
+        $this->delete(
+            uri: 'api/tagihan/'.$tagihan->kode_tagihan,
+            headers: ['Authorization' => $user->token]
+        )
         ->assertStatus(200)
         ->assertJson([
             'errors'=>[]
