@@ -21,6 +21,13 @@ class UserController extends Controller
     {
         $data = $request->validated();
         $user = Auth::user();
+        if (!$user) {
+            throw new HttpResponseException(response([
+                'errors' => [
+                    'message' => ['unauthorized.']
+                ]
+            ], 401));
+        }
 
         if (User::query()->where('username', $data['username'])->count() == 1) {
             throw new HttpResponseException(response([
@@ -63,6 +70,13 @@ class UserController extends Controller
     public function get(Request $request): UserResource
     {
         $user = Auth::user();
+        if (!$user) {
+            throw new HttpResponseException(response([
+                'errors' => [
+                    'message' => ['unauthorized.']
+                ]
+            ], 401));
+        }
 
         return new UserResource($user);
     }
@@ -71,6 +85,13 @@ class UserController extends Controller
     {
         $data = $request->validated();
         $user = Auth::user();
+        if (!$user) {
+            throw new HttpResponseException(response([
+                'errors' => [
+                    'message' => ['unauthorized.']
+                ]
+            ], 401));
+        }
 
         if (isset($data['password'])) {
             $user->password = Hash::make($data['password']);
@@ -83,12 +104,18 @@ class UserController extends Controller
     public function logout(Request $request): JsonResponse
     {
         $user = Auth::user();
+        if (!$user) {
+            throw new HttpResponseException(response([
+                'errors' => [
+                    'message' => ['unauthorized.']
+                ]
+            ], 401));
+        }
         $user->token = null;
         $user->save();
 
         return response()->json([
-            "data"=>true
+            "data" => true
         ], 200);
-
     }
 }

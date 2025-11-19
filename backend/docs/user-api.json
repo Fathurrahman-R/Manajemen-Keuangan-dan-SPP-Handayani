@@ -29,7 +29,7 @@
                                     "value": {
                                         "username": "Admin",
                                         "password": "rahasia",
-                                        "role": "Admin keuangan"
+                                        "role": "admin"
                                     }
                                 }
                             },
@@ -108,6 +108,25 @@
                                         },
                                         "errors": {
                                             "type": "object"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization error",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "authorization needed": {
+                                        "description": "User Unauthorized",
+                                        "value": {
+                                            "errors": {
+                                                "message": [
+                                                    "unauthorized."
+                                                ]
+                                            }
                                         }
                                     }
                                 }
@@ -341,6 +360,25 @@
                                             "errors": {
                                                 "name": [
                                                     "The name field must not be greater than 100 characters."
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization error",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "authorization needed": {
+                                        "description": "User Unauthorized",
+                                        "value": {
+                                            "errors": {
+                                                "message": [
+                                                    "unauthorized."
                                                 ]
                                             }
                                         }

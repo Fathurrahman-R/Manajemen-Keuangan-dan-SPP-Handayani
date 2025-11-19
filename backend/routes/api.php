@@ -59,9 +59,11 @@ Route::middleware(\App\Http\Middleware\ApiAuthMiddleware::class)->group(function
         });
 
         Route::prefix('/pembayaran')->group(function(){
+            Route::get('/',[PembayaranController::class,'index']);
             Route::post('/bayar/{kode_tagihan}',[PembayaranController::class,'bayar']);
             Route::post('/lunas/{kode_tagihan}',[PembayaranController::class,'lunas']);
             Route::get('/kwitansi/{kode_tagihan}',[PembayaranController::class,'kwitansi']);
+            Route::delete('/{kode_pembayaran}',[PembayaranController::class,'delete']);
         });
 
         Route::put('/setting',[AppSettingController::class,'update']);
