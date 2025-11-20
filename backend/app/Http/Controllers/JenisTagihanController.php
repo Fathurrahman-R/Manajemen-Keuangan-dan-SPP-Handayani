@@ -6,95 +6,92 @@ use App\Http\Requests\JenisTagihanRequest;
 use App\Http\Resources\JenisTagihanResource;
 use App\Models\JenisTagihan;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\QueryException;
+use Throwable;
 
 class JenisTagihanController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
-        $jt = JenisTagihan::all();
-
-        if ($jt->isEmpty()) {
-            throw new HttpResponseException(response([
-                "errors"=>[
-                    "message"=>[
-                        'belum ada jenis tagihan.'
-                    ]
-                ]
-            ],404));
-        }
-
+        $jt = JenisTagihan::query()->get();
+        // Kembalikan ke bentuk asli: langsung koleksi resource
         return JenisTagihanResource::collection($jt);
     }
 
     public function create(JenisTagihanRequest $request)
     {
-        $user = Auth::user();
         $data = $request->validated();
-
-        $jt = new JenisTagihan($data);
-        $jt->save();
-        return (new  JenisTagihanResource($jt))->response()->setStatusCode(201);
+        try {
+            $jt = JenisTagihan::query()->create($data);
+        } catch (QueryException|Throwable $e) {
+            throw new HttpResponseException(response([
+                'errors' => [
+                    'message' => ['gagal menyimpan jenis tagihan.']
+                ]
+            ], 500));
+        }
+        // Bentuk asli: Resource response 201
+        return (new JenisTagihanResource($jt))->response()->setStatusCode(201);
     }
 
     public function get(string $id)
     {
-        $user = Auth::user();
         $jt = JenisTagihan::query()->find($id);
-
-        if(!$jt)
-        {
+        if (!$jt) {
             throw new HttpResponseException(response([
-                "errors"=>[
-                    "message"=>[
-                        'jenis tagihan tidak ditemukan.'
-                    ]
+                'errors' => [
+                    'message' => ['jenis tagihan tidak ditemukan.']
                 ]
-            ],404));
+            ], 404));
         }
-
+        // Bentuk asli: Resource response 200
         return (new JenisTagihanResource($jt))->response()->setStatusCode(200);
     }
 
     public function update(JenisTagihanRequest $request, string $id)
     {
-        $user = Auth::user();
-        $data = $request->validated();
         $jt = JenisTagihan::query()->find($id);
-        if(!$jt)
-        {
+        if (!$jt) {
             throw new HttpResponseException(response([
-                "errors"=>[
-                    "message"=>[
-                        'jenis tagihan tidak ditemukan.'
-                    ]
+                'errors' => [
+                    'message' => ['jenis tagihan tidak ditemukan.']
                 ]
-            ],404));
+            ], 404));
         }
-
-        $jt->update($data);
+        $data = $request->validated();
+        try {
+            $jt->update($data);
+        } catch (QueryException|Throwable $e) {
+            throw new HttpResponseException(response([
+                'errors' => [
+                    'message' => ['gagal update jenis tagihan.']
+                ]
+            ], 500));
+        }
+        // Bentuk asli: Resource response 200
         return (new JenisTagihanResource($jt))->response()->setStatusCode(200);
     }
 
     public function delete(string $id)
     {
-        $user = Auth::user();
         $jt = JenisTagihan::query()->find($id);
-        if(!$jt)
-        {
+        if (!$jt) {
             throw new HttpResponseException(response([
-                "errors"=>[
-                    "message"=>[
-                        'jenis tagihan tidak ditemukan.'
-                    ]
+                'errors' => [
+                    'message' => ['jenis tagihan tidak ditemukan.']
                 ]
-            ],404));
+            ], 404));
         }
-        $jt->delete();
-        return response([
-            "data"=>true
-        ])->setStatusCode(200);
+        try {
+            $jt->delete();
+        } catch (QueryException|Throwable $e) {
+            throw new HttpResponseException(response([
+                'errors' => [
+                    'message' => ['jenis tagihan digunakan dan tidak dapat dihapus.']
+                ]
+            ], 409));
+        }
+        // Bentuk asli: data true status 200
+        return response(['data' => true])->setStatusCode(200);
     }
 }
