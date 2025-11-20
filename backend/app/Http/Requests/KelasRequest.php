@@ -24,17 +24,28 @@ class KelasRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nama'=>[
+            'nama' => [
                 'required',
+                'string',
+                'min:1',
                 'max:100'
             ]
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('nama')) {
+            $this->merge([
+                'nama' => strtoupper(trim($this->input('nama')))
+            ]);
+        }
     }
 
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response([
             "errors" => $validator->getMessageBag()
-        ],400));
+        ], 400));
     }
 }

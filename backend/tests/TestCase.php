@@ -369,4 +369,117 @@ abstract class TestCase extends BaseTestCase
         $p['no_hp'] = 'invalid#phone';
         return $p;
     }
+
+    // --- Kelas scenarios & payload builders ---
+    protected function createKelasIndexScenario(string $jenjang = 'MI', int $count = 3): array
+    {
+        $user = User::factory()->create();
+        Kelas::factory()->count($count)->create([
+            'jenjang' => $jenjang,
+        ]);
+        return compact('user');
+    }
+
+    protected function createKelasCrudScenario(string $jenjang = 'MI'): array
+    {
+        $user = User::factory()->create();
+        $kelas = Kelas::factory()->create([
+            'jenjang' => $jenjang,
+            'nama' => 'KELAS 1'
+        ]);
+        return compact('user', 'kelas');
+    }
+
+    protected function createKelasWithSiswaScenario(string $jenjang = 'MI'): array
+    {
+        $user = User::factory()->create();
+        $kelas = Kelas::factory()->create([
+            'jenjang' => $jenjang,
+        ]);
+        $wali = Wali::factory()->create();
+        $kategori = Kategori::factory()->create();
+        Siswa::factory()->create([
+            'jenjang' => $jenjang,
+            'wali_id' => $wali->id,
+            'kelas_id' => $kelas->id,
+            'kategori_id' => $kategori->id,
+        ]);
+        return compact('user', 'kelas');
+    }
+
+    protected function buildKelasValidPayload(): array
+    {
+        return [
+            'nama' => 'Kelas 2'
+        ];
+    }
+
+    protected function buildKelasInvalidPayloadMissingNama(): array
+    {
+        return [];
+    }
+
+    protected function buildKelasInvalidPayloadLongNama(): array
+    {
+        return [
+            'nama' => str_repeat('A', 101)
+        ];
+    }
+
+    protected function buildKelasDuplicatePayload(string $existingName): array
+    {
+        return [
+            'nama' => $existingName
+        ];
+    }
+
+    // --- Kategori scenarios & payload builders ---
+    protected function createKategoriIndexScenario(int $count = 3): array
+    {
+        $user = User::factory()->create();
+        Kategori::factory()->count($count)->create();
+        return compact('user');
+    }
+
+    protected function createKategoriCrudScenario(): array
+    {
+        $user = User::factory()->create();
+        $kategori = Kategori::factory()->create(['nama' => 'BERSAUDARA']);
+        return compact('user', 'kategori');
+    }
+
+    protected function createKategoriWithSiswaScenario(): array
+    {
+        $user = User::factory()->create();
+        $kategori = Kategori::factory()->create(['nama' => 'YATIM']);
+        $wali = Wali::factory()->create();
+        $kelas = Kelas::factory()->create(['jenjang' => 'MI']);
+        Siswa::factory()->create([
+            'jenjang' => 'MI',
+            'wali_id' => $wali->id,
+            'kelas_id' => $kelas->id,
+            'kategori_id' => $kategori->id
+        ]);
+        return compact('user', 'kategori');
+    }
+
+    protected function buildKategoriValidPayload(): array
+    {
+        return ['nama' => 'BERSAUDARA'];
+    }
+
+    protected function buildKategoriInvalidMissingNamaPayload(): array
+    {
+        return [];
+    }
+
+    protected function buildKategoriInvalidLongNamaPayload(): array
+    {
+        return ['nama' => str_repeat('A', 101)];
+    }
+
+    protected function buildKategoriDuplicatePayload(string $existingName): array
+    {
+        return ['nama' => $existingName];
+    }
 }
