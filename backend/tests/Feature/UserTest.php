@@ -266,7 +266,7 @@ class UserTest extends TestCase
             'Authorization' => 'test'
         ])->assertStatus(200)
             ->assertJson([
-                "data" => true
+                "errors" => true
             ]);
 
         $user = User::where('username', 'admin')->first();

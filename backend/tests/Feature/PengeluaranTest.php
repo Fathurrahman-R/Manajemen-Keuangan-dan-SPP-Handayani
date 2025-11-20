@@ -196,7 +196,7 @@ class PengeluaranTest extends TestCase
         $admin = $this->createAdminWithToken();
         $pengeluaran = Pengeluaran::factory()->create();
 
-        $this->delete(uri:'/api/pengeluaran/' . $pengeluaran->id, headers:[
+        $this->delete(uri: '/api/pengeluaran/' . $pengeluaran->id, headers: [
             'Authorization' => $admin->token,
         ])->assertStatus(200)
             ->assertJson([
@@ -211,7 +211,7 @@ class PengeluaranTest extends TestCase
     {
         $admin = $this->createAdminWithToken();
 
-        $this->delete(uri:'/api/pengeluaran/999999', headers:[
+        $this->delete(uri: '/api/pengeluaran/999999', headers: [
             'Authorization' => $admin->token,
         ])->assertStatus(200)
             ->assertJson([

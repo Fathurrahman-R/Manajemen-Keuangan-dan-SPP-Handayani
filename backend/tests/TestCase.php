@@ -310,4 +310,63 @@ abstract class TestCase extends BaseTestCase
 
         return $admin;
     }
+
+    // --- Wali scenarios & payload builders ---
+    protected function createWaliIndexScenario(int $count = 3): array
+    {
+        $user = \App\Models\User::factory()->create();
+        \App\Models\Wali::factory()->count($count)->create();
+        return compact('user');
+    }
+
+    protected function createWaliSearchScenario(): array
+    {
+        $user = \App\Models\User::factory()->create();
+        \App\Models\Wali::factory()->create(['nama' => 'Budi Santoso']);
+        \App\Models\Wali::factory()->create(['nama' => 'Andi Wijaya']);
+        return compact('user');
+    }
+
+    protected function createWaliForCrud(): array
+    {
+        $user = \App\Models\User::factory()->create();
+        $wali = \App\Models\Wali::factory()->create();
+        $siswa = \App\Models\Siswa::factory()->create([
+            'wali_id' => $wali->id,
+        ]);
+        return compact('user', 'wali');
+    }
+
+    protected function buildWaliValidPayload(): array
+    {
+        return [
+            'nama' => 'Ayah',
+            'jenis_kelamin' => 'Laki-laki',
+            'agama' => 'Islam',
+            'pendidikan_terakhir' => 'SMA',
+            'pekerjaan' => 'Wiraswasta',
+            'alamat' => 'Pontianak',
+            'no_hp' => '081122334455',
+            'keterangan' => null,
+        ];
+    }
+
+    protected function buildWaliInvalidRequiredPayload(): array
+    {
+        return [];
+    }
+
+    protected function buildWaliInvalidJenisKelaminPayload(): array
+    {
+        $p = $this->buildWaliValidPayload();
+        $p['jenis_kelamin'] = 'Unknown';
+        return $p;
+    }
+
+    protected function buildWaliInvalidNoHpPayload(): array
+    {
+        $p = $this->buildWaliValidPayload();
+        $p['no_hp'] = 'invalid#phone';
+        return $p;
+    }
 }
