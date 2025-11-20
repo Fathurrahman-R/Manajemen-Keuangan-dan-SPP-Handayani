@@ -13,11 +13,16 @@
     "paths": {
         "/api/users": {
             "post": {
-                "description": "Register new user",
+                "description": "Register new user (Deprecated: user dibuat otomatis dari create siswa)",
+                "deprecated": true,
                 "parameters": [
                     {
                         "name": "Authorization",
-                        "in": "header"
+                        "in": "header",
+                        "description": "User token dari database",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "requestBody": {
@@ -34,21 +39,7 @@
                                 }
                             },
                             "schema": {
-                                "type": "object",
-                                "required": [
-                                    "password","username"
-                                ],
-                                "properties": {
-                                    "username": {
-                                        "type": "string"
-                                    },
-                                    "password": {
-                                        "type": "string"
-                                    },
-                                    "role": {
-                                        "type": "string"
-                                    }
-                                }
+                                "$ref": "#/components/schemas/UserRegisterRequest"
                             }
                         }
                     }
@@ -58,6 +49,9 @@
                         "description": "Validation error",
                         "content": {
                             "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                },
                                 "examples": {
                                     "validation error": {
                                         "description": "Validation error",
@@ -93,21 +87,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object",
-                                            "properties": {
-                                                "id": {
-                                                    "type": "number"
-                                                },
-                                                "username": {
-                                                    "type": "string"
-                                                },
-                                                "role": {
-                                                    "type": "string"
-                                                }
-                                            }
-                                        },
-                                        "errors": {
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/User"
                                         }
                                     }
                                 }
@@ -118,6 +98,9 @@
                         "description": "Authorization error",
                         "content": {
                             "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
                                 "examples": {
                                     "authorization needed": {
                                         "description": "User Unauthorized",
@@ -143,15 +126,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "username": {
-                                        "type": "string"
-                                    },
-                                    "password": {
-                                        "type": "string"
-                                    }
-                                }
+                                "$ref": "#/components/schemas/UserLoginRequest"
                             }
                         }
                     }
@@ -165,24 +140,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object",
-                                            "properties": {
-                                                "id": {
-                                                    "type": "number"
-                                                },
-                                                "username": {
-                                                    "type": "string"
-                                                },
-                                                "role": {
-                                                    "type": "string"
-                                                },
-                                                "token": {
-                                                    "type": "string"
-                                                }
-                                            }
-                                        },
-                                        "errors": {
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/UserWithToken"
                                         }
                                     }
                                 }
@@ -193,12 +151,15 @@
                         "description": "Username or password not found",
                         "content": {
                             "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
                                 "examples": {
                                     "wrong username": {
                                         "description": "Username or password not found",
                                         "value": {
                                             "errors": {
-                                                "message":[
+                                                "message": [
                                                     "username or password is wrong"
                                                 ]
                                             }
@@ -212,6 +173,9 @@
                         "description": "Validation error",
                         "content": {
                             "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                },
                                 "examples": {
                                     "validation error": {
                                         "description": "Validation error",
@@ -239,7 +203,11 @@
                 "parameters": [
                     {
                         "name": "Authorization",
-                        "in": "header"
+                        "in": "header",
+                        "description": "User token dari database",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
@@ -251,31 +219,20 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object",
-                                            "properties": {
-                                                "id": {
-                                                    "type": "number"
-                                                },
-                                                "username": {
-                                                    "type": "string"
-                                                },
-                                                "role": {
-                                                    "type": "string"
-                                                }
-                                            }
-                                        },
-                                        "errors": {
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/User"
                                         }
                                     }
                                 }
                             }
                         }
                     },
-                    "401":{
+                    "401": {
                         "description": "Unauthorized",
                         "content": {
                             "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
                                 "examples": {
                                     "invalid token": {
                                         "description": "unauthorized",
@@ -298,7 +255,11 @@
                 "parameters": [
                     {
                         "name": "Authorization",
-                        "in": "header"
+                        "in": "header",
+                        "description": "User token dari database",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "requestBody": {
@@ -306,15 +267,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "role": {
-                                        "type": "string"
-                                    },
-                                    "password": {
-                                        "type": "string"
-                                    }
-                                }
+                                "$ref": "#/components/schemas/UserUpdateCurrentRequest"
                             }
                         }
                     }
@@ -328,21 +281,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object",
-                                            "properties": {
-                                                "id": {
-                                                    "type": "number"
-                                                },
-                                                "username": {
-                                                    "type": "string"
-                                                },
-                                                "role": {
-                                                    "type": "string"
-                                                }
-                                            }
-                                        },
-                                        "errors": {
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/User"
                                         }
                                     }
                                 }
@@ -353,6 +292,9 @@
                         "description": "Validation error",
                         "content": {
                             "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                },
                                 "examples": {
                                     "name length": {
                                         "description": "name is greater than 100",
@@ -372,6 +314,9 @@
                         "description": "Authorization error",
                         "content": {
                             "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
                                 "examples": {
                                     "authorization needed": {
                                         "description": "User Unauthorized",
@@ -396,7 +341,11 @@
                 "parameters": [
                     {
                         "name": "Authorization",
-                        "in": "header"
+                        "in": "header",
+                        "description": "User token dari database",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
@@ -415,6 +364,107 @@
                                         }
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "User": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "number"
+                    },
+                    "username": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    }
+                }
+            },
+            "UserWithToken": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "number"
+                    },
+                    "username": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "token": {
+                        "type": "string"
+                    }
+                }
+            },
+            "UserRegisterRequest": {
+                "type": "object",
+                "required": [
+                    "username",
+                    "password"
+                ],
+                "properties": {
+                    "username": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    }
+                }
+            },
+            "UserLoginRequest": {
+                "type": "object",
+                "required": [
+                    "username",
+                    "password"
+                ],
+                "properties": {
+                    "username": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    }
+                }
+            },
+            "UserUpdateCurrentRequest": {
+                "type": "object",
+                "properties": {
+                    "role": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ErrorResponse": {
+                "type": "object",
+                "properties": {
+                    "errors": {
+                        "type": "object"
+                    }
+                }
+            },
+            "ValidationErrorResponse": {
+                "type": "object",
+                "properties": {
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
                             }
                         }
                     }
