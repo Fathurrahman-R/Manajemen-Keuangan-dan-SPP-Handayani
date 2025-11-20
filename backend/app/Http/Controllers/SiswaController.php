@@ -70,17 +70,6 @@ class SiswaController extends Controller
             'kategori'
         ])->where('jenjang', strtoupper($jenjang));
 
-        // cek apakah belum ada data sama sekali untuk jenjang tersebut
-        if (!$baseQuery->clone()->exists()) {
-            throw new HttpResponseException(response([
-                "errors" => [
-                    "message" => [
-                        "belum ada data siswa dengan jenjang tersebut."
-                    ]
-                ]
-            ], 404));
-        }
-
         $query = clone $baseQuery;
 
         // search by nama | nis | nisn (khusus MI)

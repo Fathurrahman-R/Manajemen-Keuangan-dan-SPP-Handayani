@@ -250,7 +250,7 @@ class SiswaTest extends TestCase
         $scenario = $this->createSiswaMiScenario();
         $admin = $scenario['admin'];
 
-        $this->get(uri: 'api/siswa/mi', headers: [
+        $this->get(uri: 'api/siswa/tk', headers: [
             'Authorization' => $admin->token
         ])->assertStatus(200)
             ->assertJson(['errors']);
