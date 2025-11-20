@@ -1,0 +1,659 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Kelas API",
+        "description": "Dokumentasi endpoint Kelas (MI/TK/KB). Semua endpoint membutuhkan header Authorization token user.",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8080"
+        }
+    ],
+    "paths": {
+        "/api/kelas/{jenjang}": {
+            "get": {
+                "description": "Listing kelas berdasarkan jenjang. Mengembalikan array bisa kosong.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Authorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/JenjangPath"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Berhasil ambil daftar kelas (bisa kosong).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Kelas"
+                                            }
+                                        }
+                                    }
+                                },
+                                "examples": {
+                                    "nonEmpty": {
+                                        "value": {
+                                            "data": [
+                                                {
+                                                    "id": 1,
+                                                    "jenjang": "MI",
+                                                    "nama": "KELAS 1"
+                                                },
+                                                {
+                                                    "id": 2,
+                                                    "jenjang": "MI",
+                                                    "nama": "KELAS 2"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "empty": {
+                                        "value": {
+                                            "data": []
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Jenjang tidak valid.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "jenjang tidak valid."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "unauthorized."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Tambah kelas baru untuk jenjang tertentu.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Authorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/JenjangPath"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/KelasCreateRequest"
+                            },
+                            "example": {
+                                "nama": "KELAS 1"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Berhasil menambahkan kelas.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Kelas"
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "data": {
+                                        "id": 10,
+                                        "jenjang": "MI",
+                                        "nama": "KELAS 1"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validasi gagal atau duplikasi nama.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                },
+                                "examples": {
+                                    "missingNama": {
+                                        "value": {
+                                            "errors": {
+                                                "nama": [
+                                                    "The nama field is required."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "duplicate": {
+                                        "value": {
+                                            "errors": {
+                                                "message": [
+                                                    "nama kelas sudah ada."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "jenjangInvalid": {
+                                        "value": {
+                                            "errors": {
+                                                "message": [
+                                                    "jenjang tidak valid."
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "unauthorized."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/kelas/{jenjang}/{id}": {
+            "get": {
+                "description": "Ambil detail satu kelas.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Authorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/JenjangPath"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IdPath"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detail kelas ditemukan.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Kelas"
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "data": {
+                                        "id": 1,
+                                        "jenjang": "MI",
+                                        "nama": "KELAS 1"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Kelas tidak ditemukan.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "kelas tidak ditemukan."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Jenjang tidak valid.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "jenjang tidak valid."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "unauthorized."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update penuh data kelas (field nama wajib).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Authorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/JenjangPath"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IdPath"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/KelasUpdateRequest"
+                            },
+                            "example": {
+                                "nama": "KELAS 2"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Update berhasil.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Kelas"
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "data": {
+                                        "id": 1,
+                                        "jenjang": "MI",
+                                        "nama": "KELAS 2"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Kelas tidak ditemukan.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "kelas tidak ditemukan."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validasi gagal / duplikasi / jenjang invalid.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                },
+                                "examples": {
+                                    "duplicate": {
+                                        "value": {
+                                            "errors": {
+                                                "message": [
+                                                    "nama kelas sudah ada."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "jenjangInvalid": {
+                                        "value": {
+                                            "errors": {
+                                                "message": [
+                                                    "jenjang tidak valid."
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "unauthorized."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Hapus kelas. Gagal jika masih dipakai oleh siswa.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Authorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/JenjangPath"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IdPath"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Berhasil dihapus.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DeleteResponse"
+                                },
+                                "example": {
+                                    "data": true
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Kelas tidak ditemukan.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "kelas tidak ditemukan."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Masih digunakan oleh siswa / jenjang invalid.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "examples": {
+                                    "used": {
+                                        "value": {
+                                            "errors": {
+                                                "message": [
+                                                    "kelas digunakan pada data siswa."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "jenjangInvalid": {
+                                        "value": {
+                                            "errors": {
+                                                "message": [
+                                                    "jenjang tidak valid."
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "unauthorized."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "parameters": {
+            "Authorization": {
+                "name": "Authorization",
+                "in": "header",
+                "description": "User token dari database",
+                "schema": {
+                    "type": "string",
+                    "example": "test"
+                }
+            },
+            "JenjangPath": {
+                "name": "jenjang",
+                "in": "path",
+                "description": "Jenjang kelas (MI/TK/KB).",
+                "schema": {
+                    "type": "string",
+                    "enum": [
+                        "MI",
+                        "TK",
+                        "KB"
+                    ],
+                    "example": "MI"
+                }
+            },
+            "IdPath": {
+                "name": "id",
+                "in": "path",
+                "description": "ID kelas.",
+                "schema": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "schemas": {
+            "Kelas": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "jenjang": {
+                        "type": "string",
+                        "enum": [
+                            "MI",
+                            "TK",
+                            "KB"
+                        ]
+                    },
+                    "nama": {
+                        "type": "string",
+                        "maxLength": 100
+                    }
+                },
+                "required": [
+                    "id",
+                    "jenjang",
+                    "nama"
+                ],
+                "example": {
+                    "id": 1,
+                    "jenjang": "MI",
+                    "nama": "KELAS 1"
+                }
+            },
+            "KelasCreateRequest": {
+                "type": "object",
+                "properties": {
+                    "nama": {
+                        "type": "string",
+                        "maxLength": 100
+                    }
+                },
+                "required": [
+                    "nama"
+                ],
+                "example": {
+                    "nama": "KELAS 1"
+                }
+            },
+            "KelasUpdateRequest": {
+                "type": "object",
+                "properties": {
+                    "nama": {
+                        "type": "string",
+                        "maxLength": 100
+                    }
+                },
+                "required": [
+                    "nama"
+                ],
+                "example": {
+                    "nama": "KELAS 2"
+                }
+            },
+            "DeleteResponse": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "type": [
+                            "boolean",
+                            "object"
+                        ],
+                        "description": "Pada implementasi saat ini mengembalikan boolean true."
+                    }
+                },
+                "example": {
+                    "data": true
+                }
+            },
+            "ErrorResponse": {
+                "type": "object",
+                "properties": {
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "example": {
+                            "message": [
+                                "unauthorized."
+                            ]
+                        }
+                    }
+                }
+            },
+            "ValidationErrorResponse": {
+                "type": "object",
+                "properties": {
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "example": {
+                            "nama": [
+                                "The nama field is required."
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

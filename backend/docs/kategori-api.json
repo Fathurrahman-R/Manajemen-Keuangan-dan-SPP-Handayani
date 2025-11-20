@@ -1,0 +1,559 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Kategori API",
+        "description": "Dokumentasi endpoint Kategori. Semua endpoint membutuhkan header Authorization (token user).",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8080"
+        }
+    ],
+    "paths": {
+        "/api/kategori": {
+            "get": {
+                "description": "Listing kategori. Mengembalikan array (bisa kosong).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Authorization"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Berhasil ambil daftar kategori.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Kategori"
+                                            }
+                                        }
+                                    }
+                                },
+                                "examples": {
+                                    "nonEmpty": {
+                                        "value": {
+                                            "data": [
+                                                {
+                                                    "id": 1,
+                                                    "nama": "BERSAUDARA"
+                                                },
+                                                {
+                                                    "id": 2,
+                                                    "nama": "YATIM"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "empty": {
+                                        "value": {
+                                            "data": []
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "unauthorized."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Tambah kategori baru.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Authorization"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/KategoriCreateRequest"
+                            },
+                            "example": {
+                                "nama": "BERSAUDARA"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Berhasil menambahkan kategori.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Kategori"
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "data": {
+                                        "id": 10,
+                                        "nama": "BERSAUDARA"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validasi gagal / duplikasi nama.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                },
+                                "examples": {
+                                    "missingNama": {
+                                        "value": {
+                                            "errors": {
+                                                "nama": [
+                                                    "The nama field is required."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "namaTooLong": {
+                                        "value": {
+                                            "errors": {
+                                                "nama": [
+                                                    "The nama may not be greater than 100 characters."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "duplicate": {
+                                        "value": {
+                                            "errors": {
+                                                "message": [
+                                                    "nama kategori sudah ada."
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "unauthorized."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/kategori/{id}": {
+            "get": {
+                "description": "Ambil detail satu kategori.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Authorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IdPath"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detail kategori ditemukan.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Kategori"
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "data": {
+                                        "id": 1,
+                                        "nama": "YATIM"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Kategori tidak ditemukan.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "kategori tidak ditemukan."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "unauthorized."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update penuh data kategori (field nama wajib).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Authorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IdPath"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/KategoriUpdateRequest"
+                            },
+                            "example": {
+                                "nama": "YATIM"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Update berhasil.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Kategori"
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "data": {
+                                        "id": 1,
+                                        "nama": "YATIM"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Kategori tidak ditemukan.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "kategori tidak ditemukan."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validasi gagal / duplikasi.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                },
+                                "examples": {
+                                    "duplicate": {
+                                        "value": {
+                                            "errors": {
+                                                "message": [
+                                                    "nama kategori sudah ada."
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "unauthorized."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Hapus kategori. Gagal jika masih dipakai oleh siswa.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Authorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IdPath"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Berhasil dihapus.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DeleteResponse"
+                                },
+                                "example": {
+                                    "data": true
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Kategori tidak ditemukan.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "kategori tidak ditemukan."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Masih digunakan oleh siswa.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "kategori digunakan pada data siswa."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "unauthorized."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "parameters": {
+            "Authorization": {
+                "name": "Authorization",
+                "in": "header",
+                "description": "User token dari database",
+                "schema": {
+                    "type": "string",
+                    "example": "test"
+                }
+            },
+            "IdPath": {
+                "name": "id",
+                "in": "path",
+                "description": "ID kategori.",
+                "schema": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "schemas": {
+            "Kategori": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "nama": {
+                        "type": "string",
+                        "maxLength": 100
+                    }
+                },
+                "required": [
+                    "id",
+                    "nama"
+                ],
+                "example": {
+                    "id": 1,
+                    "nama": "BERSAUDARA"
+                }
+            },
+            "KategoriCreateRequest": {
+                "type": "object",
+                "properties": {
+                    "nama": {
+                        "type": "string",
+                        "maxLength": 100
+                    }
+                },
+                "required": [
+                    "nama"
+                ],
+                "example": {
+                    "nama": "BERSAUDARA"
+                }
+            },
+            "KategoriUpdateRequest": {
+                "type": "object",
+                "properties": {
+                    "nama": {
+                        "type": "string",
+                        "maxLength": 100
+                    }
+                },
+                "required": [
+                    "nama"
+                ],
+                "example": {
+                    "nama": "YATIM"
+                }
+            },
+            "DeleteResponse": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "type": [
+                            "boolean",
+                            "object"
+                        ],
+                        "description": "Implementasi saat ini boolean true."
+                    }
+                },
+                "example": {
+                    "data": true
+                }
+            },
+            "ErrorResponse": {
+                "type": "object",
+                "properties": {
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "example": {
+                            "message": [
+                                "unauthorized."
+                            ]
+                        }
+                    }
+                }
+            },
+            "ValidationErrorResponse": {
+                "type": "object",
+                "properties": {
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "example": {
+                            "nama": [
+                                "The nama field is required."
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
