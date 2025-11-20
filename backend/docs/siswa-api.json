@@ -13,15 +13,28 @@
     "paths": {
         "/api/siswa/{jenjang}": {
             "post": {
-                "description": "Tambah siswa MI baru",
+                "description": "Tambah data siswa baru (jenjang ditentukan di path)",
                 "parameters": [
                     {
                         "name": "Authorization",
-                        "in": "header"
+                        "in": "header",
+                        "description": "User token dari database",
+                        "schema": {
+                            "type": "string"
+                        }
                     },
                     {
                         "name": "jenjang",
-                        "in": "path"
+                        "in": "path",
+                        "description": "Jenjang siswa",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "MI",
+                                "TK",
+                                "KB"
+                            ]
+                        }
                     }
                 ],
                 "requestBody": {
@@ -81,87 +94,24 @@
                                 }
                             },
                             "schema": {
-                                "type": "object",
-                                "required": [
-                                    "nis",
-                                    "nama_lengkap",
-                                    "jenis_kelamin",
-                                    "tempat_lahir",
-                                    "tanggal_lahir",
-                                    "agama",
-                                    "alamat",
-                                    "wali_id",
-                                    "kelas_id",
-                                    "kategori_id"
-                                ],
-                                "properties": {
-                                    "nis": {
-                                        "type": "string"
-                                    },
-                                    "nisn": {
-                                        "type": "string"
-                                    },
-                                    "nama_lengkap": {
-                                        "type": "string"
-                                    },
-                                    "jenis_kelamin": {
-                                        "type": "string"
-                                    },
-                                    "tempat_lahir": {
-                                        "type": "string"
-                                    },
-                                    "tanggal_lahir": {
-                                        "type": "string"
-                                    },
-                                    "agama": {
-                                        "type": "string"
-                                    },
-                                    "alamat": {
-                                        "type": "string"
-                                    },
-                                    "ayah_id": {
-                                        "type": "number"
-                                    },
-                                    "ibu_id": {
-                                        "type": "number"
-                                    },
-                                    "wali_id": {
-                                        "type": "number"
-                                    },
-                                    "jenjang": {
-                                        "type": "string"
-                                    },
-                                    "kelas_id": {
-                                        "type": "number"
-                                    },
-                                    "kategori_id": {
-                                        "type": "number"
-                                    },
-                                    "asal_sekolah": {
-                                        "type": "string"
-                                    },
-                                    "kelas_diterima": {
-                                        "type": "string"
-                                    },
-                                    "tahun_diterima": {
-                                        "type": "string"
-                                    },
-                                    "status": {
-                                        "type": "string"
-                                    },
-                                    "keterangan": {
-                                        "type": "string"
-                                    }
-                                }
+                                "$ref": "#/components/schemas/SiswaCreateRequest"
                             }
                         }
                     }
                 },
                 "responses": {
-                    "200": {
-                        "description": "Success menambah data",
+                    "201": {
+                        "description": "Berhasil membuat data siswa",
                         "content": {
                             "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Siswa"
+                                        }
+                                    }
+                                },
                                 "examples": {
                                     "success MI": {
                                         "description": "Success menambah siswa MI",
@@ -268,7 +218,7 @@
                                     "success KB": {
                                         "description": "Success menambah siswa KB",
                                         "value": {
-                                            "data":{
+                                            "data": {
                                                 "id": 2331,
                                                 "nis": "000001",
                                                 "nama": "Siswa KB",
@@ -455,7 +405,6 @@
                                             }
                                         }
                                     }
-
                                 }
                             }
                         }
@@ -463,22 +412,81 @@
                 }
             },
             "get": {
-                "description": "Indexing siswa MI",
+                "description": "Listing siswa (paginasi + optional search parameter)",
                 "parameters": [
                     {
                         "name": "Authorization",
-                        "in": "header"
+                        "in": "header",
+                        "description": "User token dari database",
+                        "schema": {
+                            "type": "string"
+                        }
                     },
                     {
                         "name": "jenjang",
-                        "in": "path"
+                        "in": "path",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "MI",
+                                "TK",
+                                "KB"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "default": 30
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "nis",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "nisn",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Berhasil mengambil data siswa",
+                        "description": "Berhasil mengambil daftar siswa",
                         "content": {
                             "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Siswa"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    }
+                                },
                                 "examples": {
                                     "succcess siswa MI": {
                                         "description": "Metadata Paginate and collection siswa MI",
@@ -862,56 +870,45 @@
                                                 "total": 5
                                             }
                                         }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Gagal mengambil data siswa",
-                        "content": {
-                            "application/json": {
-                                "examples": {
-                                    "siswa MI": {
-                                        "description": "belum ada data",
-                                        "value": {
-                                            "errors": {
-                                                "message": [
-                                                    "belum ada data siswa dengan jenjang tersebut."
-                                                ]
-                                            }
-                                        }
                                     },
-                                    "siswa TK": {
-                                        "description": "belum ada data",
+                                    "data kosong": {
+                                        "description": "Belum ada data pada jenjang tersebut/data search kosong",
                                         "value": {
-                                            "errors": {
-                                                "message": [
-                                                    "belum ada data siswa dengan jenjang tersebut."
-                                                ]
-                                            }
-                                        }
-                                    },
-                                    "siswa KB": {
-                                        "description": "belum ada data",
-                                        "value": {
-                                            "errors": {
-                                                "message": [
-                                                    "belum ada data siswa dengan jenjang tersebut."
-                                                ]
-                                            }
-                                        }
-                                    }
-                                },
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "object",
-                                            "properties": {
-                                                "message": {
-                                                    "type": "array"
-                                                }
+                                            "data": [],
+                                            "links": {
+                                                "first": "http://localhost:8000/api/siswa/tk?page=1",
+                                                "last": "http://localhost:8000/api/siswa/tk?page=1",
+                                                "prev": null,
+                                                "next": null
+                                            },
+                                            "meta": {
+                                                "current_page": 1,
+                                                "from": null,
+                                                "last_page": 1,
+                                                "links": [
+                                                    {
+                                                        "url": null,
+                                                        "label": "&laquo; Previous",
+                                                        "page": null,
+                                                        "active": false
+                                                    },
+                                                    {
+                                                        "url": "http://localhost:8000/api/siswa/tk?page=1",
+                                                        "label": "1",
+                                                        "page": 1,
+                                                        "active": true
+                                                    },
+                                                    {
+                                                        "url": null,
+                                                        "label": "Next &raquo;",
+                                                        "page": null,
+                                                        "active": false
+                                                    }
+                                                ],
+                                                "path": "http://localhost:8000/api/siswa/tk",
+                                                "per_page": 30,
+                                                "to": null,
+                                                "total": 0
                                             }
                                         }
                                     }
@@ -943,19 +940,35 @@
         },
         "/api/siswa/{jenjang}?search={nama}": {
             "get": {
-                "description": "Search siswa by nama",
+                "deprecated": true,
+                "description": "Search siswa by nama (deprecated). Gunakan GET /api/siswa/{jenjang} dengan query 'search'=nama.",
                 "parameters": [
                     {
                         "name": "Authorization",
-                        "in": "header"
+                        "in": "header",
+                        "description": "User token dari database",
+                        "schema": {
+                            "type": "string"
+                        }
                     },
                     {
                         "name": "jenjang",
-                        "in": "path"
+                        "in": "path",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "MI",
+                                "TK",
+                                "KB"
+                            ]
+                        }
                     },
                     {
                         "name": "nama",
-                        "in": "query"
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
@@ -963,6 +976,23 @@
                         "description": "Search response",
                         "content": {
                             "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Siswa"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    }
+                                },
                                 "examples": {
                                     "siswa MI": {
                                         "description": "Search data ditemukan",
@@ -1284,19 +1314,35 @@
         },
         "/api/siswa/{jenjang}?search={nis}": {
             "get": {
-                "description": "Search siswa by nis",
+                "deprecated": true,
+                "description": "Search siswa by nis (deprecated). Gunakan GET /api/siswa/{jenjang} dengan query 'nis'.",
                 "parameters": [
                     {
                         "name": "Authorization",
-                        "in": "header"
+                        "in": "header",
+                        "description": "User token dari database",
+                        "schema": {
+                            "type": "string"
+                        }
                     },
                     {
                         "name": "jenjang",
-                        "in": "path"
+                        "in": "path",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "MI",
+                                "TK",
+                                "KB"
+                            ]
+                        }
                     },
                     {
                         "name": "nis",
-                        "in": "query"
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
@@ -1304,6 +1350,23 @@
                         "description": "Search response",
                         "content": {
                             "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Siswa"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    }
+                                },
                                 "examples": {
                                     "siswa MI": {
                                         "description": "Search data ditemukan",
@@ -1625,19 +1688,35 @@
         },
         "/api/siswa/{jenjang}?search={nisn}": {
             "get": {
-                "description": "Search siswa by nisn",
+                "deprecated": true,
+                "description": "Search siswa by nisn (deprecated). Gunakan GET /api/siswa/{jenjang} dengan query 'nisn'.",
                 "parameters": [
                     {
                         "name": "Authorization",
-                        "in": "header"
+                        "in": "header",
+                        "description": "User token dari database",
+                        "schema": {
+                            "type": "string"
+                        }
                     },
                     {
                         "name": "jenjang",
-                        "in": "path"
+                        "in": "path",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "MI",
+                                "TK",
+                                "KB"
+                            ]
+                        }
                     },
                     {
                         "name": "nisn",
-                        "in": "query"
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
@@ -1645,6 +1724,23 @@
                         "description": "Search response",
                         "content": {
                             "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Siswa"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    }
+                                },
                                 "examples": {
                                     "siswa MI": {
                                         "description": "Search data ditemukan",
@@ -1966,26 +2062,50 @@
         },
         "/api/siswa/{jenjang}/{id}": {
             "get": {
-                "description": "Dapatkan siswa",
+                "description": "Ambil detail satu siswa",
                 "parameters": [
                     {
                         "name": "Authorization",
-                        "in": "header"
+                        "in": "header",
+                        "description": "User token dari database",
+                        "schema": {
+                            "type": "string"
+                        }
                     },
                     {
                         "name": "jenjang",
-                        "in": "path"
+                        "in": "path",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "MI",
+                                "TK",
+                                "KB"
+                            ]
+                        }
                     },
                     {
                         "name": "id",
-                        "in": "path"
+                        "in": "path",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success mendapatkan siswa",
+                        "description": "Berhasil mengambil detail siswa",
                         "content": {
                             "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Siswa"
+                                        }
+                                    }
+                                },
                                 "examples": {
                                     "success MI": {
                                         "description": "Success mendapatkan siswa MI",
@@ -2127,76 +2247,6 @@
                                             }
                                         }
                                     }
-                                },
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "object",
-                                            "properties": {
-                                                "nis": {
-                                                    "type": "string"
-                                                },
-                                                "nisn": {
-                                                    "type": "string"
-                                                },
-                                                "nama_lengkap": {
-                                                    "type": "string"
-                                                },
-                                                "jenis_kelamin": {
-                                                    "type": "string"
-                                                },
-                                                "tempat_lahir": {
-                                                    "type": "string"
-                                                },
-                                                "tanggal_lahir": {
-                                                    "type": "string"
-                                                },
-                                                "agama": {
-                                                    "type": "string"
-                                                },
-                                                "alamat": {
-                                                    "type": "string"
-                                                },
-                                                "ayah_id": {
-                                                    "type": "array"
-                                                },
-                                                "ibu_id": {
-                                                    "type": "array"
-                                                },
-                                                "wali_id": {
-                                                    "type": "array"
-                                                },
-                                                "jenjang": {
-                                                    "type": "string"
-                                                },
-                                                "kelas_id": {
-                                                    "type": "array"
-                                                },
-                                                "kategori_id": {
-                                                    "type": "array"
-                                                },
-                                                "asal_sekolah": {
-                                                    "type": "string"
-                                                },
-                                                "kelas_diterima": {
-                                                    "type": "string"
-                                                },
-                                                "tahun_diterima": {
-                                                    "type": "string"
-                                                },
-                                                "status": {
-                                                    "type": "string"
-                                                },
-                                                "keterangan": {
-                                                    "type": "string"
-                                                }
-                                            }
-                                        },
-                                        "errors": {
-                                            "type": "object"
-                                        }
-                                    }
                                 }
                             }
                         }
@@ -2242,19 +2292,35 @@
                 }
             },
             "put": {
-                "description": "Update siswa",
+                "description": "Update penuh data siswa (semua field wajib sesuai required)",
                 "parameters": [
                     {
                         "name": "Authorization",
-                        "in": "header"
+                        "in": "header",
+                        "description": "User token dari database",
+                        "schema": {
+                            "type": "string"
+                        }
                     },
                     {
                         "name": "jenjang",
-                        "in": "path"
+                        "in": "path",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "MI",
+                                "TK",
+                                "KB"
+                            ]
+                        }
                     },
                     {
                         "name": "id",
-                        "in": "path"
+                        "in": "path",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
                     }
                 ],
                 "requestBody": {
@@ -2310,77 +2376,24 @@
                                 }
                             },
                             "schema": {
-                                "type": "object",
-                                "required": [
-                                    "nama_lengkap",
-                                    "jenis_kelamin",
-                                    "tempat_lahir",
-                                    "tanggal_lahir",
-                                    "agama",
-                                    "alamat",
-                                    "wali_id",
-                                    "kelas_id",
-                                    "kategori_id"
-                                ],
-                                "properties": {
-                                    "nama_lengkap": {
-                                        "type": "string"
-                                    },
-                                    "jenis_kelamin": {
-                                        "type": "string"
-                                    },
-                                    "tempat_lahir": {
-                                        "type": "string"
-                                    },
-                                    "tanggal_lahir": {
-                                        "type": "string"
-                                    },
-                                    "agama": {
-                                        "type": "string"
-                                    },
-                                    "alamat": {
-                                        "type": "string"
-                                    },
-                                    "ayah_id": {
-                                        "type": "number"
-                                    },
-                                    "ibu_id": {
-                                        "type": "number"
-                                    },
-                                    "wali_id": {
-                                        "type": "number"
-                                    },
-                                    "kelas_id": {
-                                        "type": "number"
-                                    },
-                                    "kategori_id": {
-                                        "type": "number"
-                                    },
-                                    "asal_sekolah": {
-                                        "type": "string"
-                                    },
-                                    "kelas_diterima": {
-                                        "type": "string"
-                                    },
-                                    "tahun_diterima": {
-                                        "type": "string"
-                                    },
-                                    "status": {
-                                        "type": "string"
-                                    },
-                                    "keterangan": {
-                                        "type": "string"
-                                    }
-                                }
+                                "$ref": "#/components/schemas/SiswaUpdateRequest"
                             }
                         }
                     }
                 },
                 "responses": {
                     "200": {
-                        "description": "Success update siswa",
+                        "description": "Berhasil update data siswa",
                         "content": {
                             "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Siswa"
+                                        }
+                                    }
+                                },
                                 "examples": {
                                     "success siswa MI": {
                                         "description": "success update siswa MI",
@@ -2567,19 +2580,35 @@
                 }
             },
             "delete": {
-                "description": "Hapus siswa MI",
+                "description": "Hapus siswa",
                 "parameters": [
                     {
                         "name": "Authorization",
-                        "in": "header"
+                        "in": "header",
+                        "description": "User token dari database",
+                        "schema": {
+                            "type": "string"
+                        }
                     },
                     {
                         "name": "jenjang",
-                        "in": "path"
+                        "in": "path",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "MI",
+                                "TK",
+                                "KB"
+                            ]
+                        }
                     },
                     {
                         "name": "id",
-                        "in": "path"
+                        "in": "path",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
                     }
                 ],
                 "responses": {
@@ -2641,6 +2670,373 @@
                                         }
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Siswa": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "nis": {
+                        "type": "string",
+                        "maxLength": 20
+                    },
+                    "nisn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 20
+                    },
+                    "nama": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "jenis_kelamin": {
+                        "type": "string",
+                        "enum": [
+                            "Laki-laki",
+                            "Perempuan"
+                        ]
+                    },
+                    "tempat_lahir": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "tanggal_lahir": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                    },
+                    "agama": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "alamat": {
+                        "type": "string"
+                    },
+                    "ayah": {
+                        "type": [
+                            "object",
+                            "null"
+                        ]
+                    },
+                    "ibu": {
+                        "type": [
+                            "object",
+                            "null"
+                        ]
+                    },
+                    "wali": {
+                        "type": [
+                            "object",
+                            "null"
+                        ]
+                    },
+                    "jenjang": {
+                        "type": "string",
+                        "enum": [
+                            "MI",
+                            "TK",
+                            "KB"
+                        ]
+                    },
+                    "kelas": {
+                        "type": [
+                            "object",
+                            "null"
+                        ]
+                    },
+                    "kategori": {
+                        "type": [
+                            "object",
+                            "null"
+                        ]
+                    },
+                    "asal_sekolah": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 150
+                    },
+                    "kelas_diterima": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 10
+                    },
+                    "tahun_diterima": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^\\d{4}$"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "Aktif",
+                            "Tidak Aktif"
+                        ]
+                    },
+                    "keterangan": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                }
+            },
+            "SiswaCreateRequest": {
+                "type": "object",
+                "required": [
+                    "nis",
+                    "nama",
+                    "jenis_kelamin",
+                    "tempat_lahir",
+                    "tanggal_lahir",
+                    "agama",
+                    "alamat",
+                    "wali_id",
+                    "kelas_id",
+                    "kategori_id"
+                ],
+                "properties": {
+                    "nis": {
+                        "type": "string",
+                        "maxLength": 20
+                    },
+                    "nisn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 20
+                    },
+                    "nama": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "jenis_kelamin": {
+                        "type": "string",
+                        "enum": [
+                            "Laki-laki",
+                            "Perempuan"
+                        ]
+                    },
+                    "tempat_lahir": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "tanggal_lahir": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                    },
+                    "agama": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "alamat": {
+                        "type": "string"
+                    },
+                    "ayah_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "ibu_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "wali_id": {
+                        "type": "integer"
+                    },
+                    "kelas_id": {
+                        "type": "integer"
+                    },
+                    "kategori_id": {
+                        "type": "integer"
+                    },
+                    "asal_sekolah": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 150
+                    },
+                    "kelas_diterima": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 10
+                    },
+                    "tahun_diterima": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^\\d{4}$"
+                    },
+                    "status": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "Aktif",
+                            "Tidak Aktif"
+                        ]
+                    },
+                    "keterangan": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                }
+            },
+            "SiswaUpdateRequest": {
+                "type": "object",
+                "required": [
+                    "nis",
+                    "nama",
+                    "jenis_kelamin",
+                    "tempat_lahir",
+                    "tanggal_lahir",
+                    "agama",
+                    "alamat",
+                    "wali_id",
+                    "kelas_id",
+                    "kategori_id"
+                ],
+                "properties": {
+                    "nis": {
+                        "type": "string",
+                        "maxLength": 20
+                    },
+                    "nisn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 20
+                    },
+                    "nama": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "jenis_kelamin": {
+                        "type": "string",
+                        "enum": [
+                            "Laki-laki",
+                            "Perempuan"
+                        ]
+                    },
+                    "tempat_lahir": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "tanggal_lahir": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                    },
+                    "agama": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "alamat": {
+                        "type": "string"
+                    },
+                    "ayah_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "ibu_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "wali_id": {
+                        "type": "integer"
+                    },
+                    "kelas_id": {
+                        "type": "integer"
+                    },
+                    "kategori_id": {
+                        "type": "integer"
+                    },
+                    "asal_sekolah": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 150
+                    },
+                    "kelas_diterima": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 10
+                    },
+                    "tahun_diterima": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^\\d{4}$"
+                    },
+                    "status": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "Aktif",
+                            "Tidak Aktif"
+                        ]
+                    },
+                    "keterangan": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                }
+            },
+            "ErrorResponse": {
+                "type": "object",
+                "properties": {
+                    "errors": {
+                        "type": "object"
+                    }
+                }
+            },
+            "ValidationErrorResponse": {
+                "type": "object",
+                "properties": {
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
                             }
                         }
                     }
