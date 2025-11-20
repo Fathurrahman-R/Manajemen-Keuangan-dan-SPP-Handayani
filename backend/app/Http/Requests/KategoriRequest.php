@@ -13,7 +13,7 @@ class KategoriRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()!=null;
+        return $this->user() != null;
     }
 
     /**
@@ -27,15 +27,25 @@ class KategoriRequest extends FormRequest
             'nama' => [
                 'required',
                 'string',
+                'min:1',
                 'max:100'
             ],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('nama')) {
+            $this->merge([
+                'nama' => strtoupper(trim($this->input('nama')))
+            ]);
+        }
     }
 
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response([
             "errors" => $validator->getMessageBag()
-        ],400));
+        ], 400));
     }
 }
