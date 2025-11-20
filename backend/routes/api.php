@@ -9,6 +9,7 @@ use App\Http\Controllers\SiswaController;
 use App\Http\Controllers\TagihanController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WaliController;
+use App\Http\Controllers\JenisTagihanController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -80,6 +81,14 @@ Route::middleware(\App\Http\Middleware\ApiAuthMiddleware::class)->group(function
         Route::prefix('/laporan')->group(function () {
             Route::get('/kas', [\App\Http\Controllers\KasController::class, 'kasHarian']);
             Route::get('/rekap', [\App\Http\Controllers\KasController::class, 'rekapBulanan']);
+        });
+
+        Route::prefix('/jenis-tagihan')->group(function () {
+            Route::get('/', [JenisTagihanController::class, 'index']);
+            Route::post('/', [JenisTagihanController::class, 'create']);
+            Route::get('/{id}', [JenisTagihanController::class, 'get']);
+            Route::put('/{id}', [JenisTagihanController::class, 'update']);
+            Route::delete('/{id}', [JenisTagihanController::class, 'delete']);
         });
     });
 });
