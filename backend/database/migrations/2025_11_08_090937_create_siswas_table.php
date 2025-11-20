@@ -21,12 +21,12 @@ return new class extends Migration
             $table->date('tanggal_lahir')->nullable(false);
             $table->string('agama',50)->nullable(false);
             $table->text('alamat')->nullable(false);
-            $table->foreignId('ayah_id')->nullable()->constrained('walis')->onDelete('cascade')->onUpdate('cascade');
-            $table->foreignId('ibu_id')->nullable()->constrained('walis')->onDelete('cascade')->onUpdate('cascade');
-            $table->foreignId('wali_id')->nullable()->constrained('walis')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreignId('ayah_id')->nullable()->constrained('walis')->onUpdate('cascade');
+            $table->foreignId('ibu_id')->nullable()->constrained('walis')->onUpdate('cascade');
+            $table->foreignId('wali_id')->nullable()->constrained('walis')->onUpdate('cascade');
             $table->enum('jenjang',['TK','MI','KB'])->nullable(false);
-            $table->foreignId('kelas_id')->nullable()->constrained('kelas')->onDelete('cascade')->onUpdate('cascade');
-            $table->foreignId('kategori_id')->nullable()->constrained('kategoris')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreignId('kelas_id')->nullable()->constrained('kelas')->onUpdate('cascade');
+            $table->foreignId('kategori_id')->nullable()->constrained('kategoris')->onUpdate('cascade');
             $table->string('asal_sekolah',150)->nullable()->default(null);
             $table->string('kelas_diterima',10)->nullable()->default(null);
             $table->year('tahun_diterima')->nullable()->default(null);

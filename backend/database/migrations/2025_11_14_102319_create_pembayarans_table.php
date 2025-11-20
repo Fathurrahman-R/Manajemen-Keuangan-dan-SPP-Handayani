@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('pembayarans', function (Blueprint $table) {
             $table->char('kode_pembayaran',30)->primary()->index();
             $table->char('kode_tagihan',30)->nullable(false)->index();
+            $table->foreign('kode_tagihan')->references('kode_tagihan')->on('tagihans')->onUpdate('cascade');
             $table->date('tanggal')->nullable(false)->default(now())->index();
             $table->enum('metode',['Tunai','Non-Tunai'])->default('Tunai')->nullable(false);
             $table->decimal('jumlah',12,2)->nullable()->default(0);
