@@ -1,0 +1,382 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Jenis Tagihan API",
+        "description": "Dokumentasi endpoint Jenis Tagihan. Semua endpoint membutuhkan header Authorization (token user). Format tanggal jatuh_tempo: Y-m-d.",
+        "version": "1.0.0"
+    },
+    "servers": [
+        { "url": "http://localhost:8080" }
+    ],
+    "paths": {
+        "/api/jenis-tagihan": {
+            "get": {
+                "description": "Listing jenis tagihan. Mengembalikan koleksi resource Laravel. Jika belum ada data, mengembalikan array kosong (status 200).",
+                "parameters": [
+                    { "$ref": "#/components/parameters/Authorization" }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Berhasil ambil daftar jenis tagihan (bisa kosong).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": { "$ref": "#/components/schemas/JenisTagihan" }
+                                },
+                                "examples": {
+                                    "nonEmpty": {
+                                        "value": {
+                                            "data": [
+                                                { "id": 1, "nama": "SPP JANUARI", "jatuh_tempo": "2025-02-01", "jumlah": 75000 },
+                                                { "id": 2, "nama": "SPP FEBRUARI", "jatuh_tempo": "2025-03-01", "jumlah": 85000.5 }
+                                            ]
+                                        }
+                                    },
+                                    "empty": {
+                                        "value": {
+                                            "data": []
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                                "example": { "errors": { "message": ["unauthorized."] } }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Tambah jenis tagihan baru.",
+                "parameters": [
+                    { "$ref": "#/components/parameters/Authorization" }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": { "$ref": "#/components/schemas/JenisTagihanCreateRequest" },
+                            "example": {
+                                "nama": "SPP MARET",
+                                "jatuh_tempo": "2025-04-01",
+                                "jumlah": 90000
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Berhasil menambahkan jenis tagihan.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": { "data": { "$ref": "#/components/schemas/JenisTagihan" } }
+                                },
+                                "example": {
+                                    "data": { "id": 10, "nama": "SPP MARET", "jatuh_tempo": "2025-04-01", "jumlah": 90000 }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validasi gagal.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" },
+                                "examples": {
+                                    "missingFields": {
+                                        "value": {
+                                            "errors": {
+                                                "nama": ["nama wajib diisi."],
+                                                "jatuh_tempo": ["jatuh_tempo wajib diisi."],
+                                                "jumlah": ["jumlah wajib diisi."]
+                                            }
+                                        }
+                                    },
+                                    "namaTooShort": {
+                                        "value": { "errors": { "nama": ["nama minimal 3 karakter."] } }
+                                    },
+                                    "namaTooLong": {
+                                        "value": { "errors": { "nama": ["nama maksimal 100 karakter."] } }
+                                    },
+                                    "invalidDateFormat": {
+                                        "value": { "errors": { "jatuh_tempo": ["format tanggal harus Y-m-d."] } }
+                                    },
+                                    "invalidJumlahNonNumeric": {
+                                        "value": { "errors": { "jumlah": ["jumlah harus numerik."] } }
+                                    },
+                                    "invalidJumlahPattern": {
+                                        "value": { "errors": { "jumlah": ["format jumlah tidak valid (maks 10 digit dan 2 desimal)."] } }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal menyimpan (QueryException).",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                                "example": { "errors": { "message": ["gagal menyimpan jenis tagihan."] } }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                                "example": { "errors": { "message": ["unauthorized."] } }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/jenis-tagihan/{id}": {
+            "get": {
+                "description": "Ambil detail satu jenis tagihan.",
+                "parameters": [
+                    { "$ref": "#/components/parameters/Authorization" },
+                    { "$ref": "#/components/parameters/IdPath" }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detail ditemukan.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": { "data": { "$ref": "#/components/schemas/JenisTagihan" } }
+                                },
+                                "example": {
+                                    "data": { "id": 1, "nama": "SPP JANUARI", "jatuh_tempo": "2025-02-01", "jumlah": 75000 }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Jenis tagihan tidak ditemukan.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                                "example": { "errors": { "message": ["jenis tagihan tidak ditemukan."] } }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                                "example": { "errors": { "message": ["unauthorized."] } }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update data jenis tagihan.",
+                "parameters": [
+                    { "$ref": "#/components/parameters/Authorization" },
+                    { "$ref": "#/components/parameters/IdPath" }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": { "$ref": "#/components/schemas/JenisTagihanUpdateRequest" },
+                            "example": {
+                                "nama": "SPP APRIL",
+                                "jatuh_tempo": "2025-05-01",
+                                "jumlah": 95000
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Update berhasil.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": { "data": { "$ref": "#/components/schemas/JenisTagihan" } }
+                                },
+                                "example": {
+                                    "data": { "id": 5, "nama": "SPP APRIL", "jatuh_tempo": "2025-05-01", "jumlah": 95000 }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Jenis tagihan tidak ditemukan.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                                "example": { "errors": { "message": ["jenis tagihan tidak ditemukan."] } }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validasi gagal.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" },
+                                "examples": {
+                                    "invalidDateFormat": { "value": { "errors": { "jatuh_tempo": ["format tanggal harus Y-m-d."] } } },
+                                    "invalidJumlahPattern": { "value": { "errors": { "jumlah": ["format jumlah tidak valid (maks 10 digit dan 2 desimal)."] } } }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal update (QueryException).",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                                "example": { "errors": { "message": ["gagal update jenis tagihan."] } }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                                "example": { "errors": { "message": ["unauthorized."] } }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Hapus jenis tagihan. Gagal jika digunakan oleh tagihan (FK).",
+                "parameters": [
+                    { "$ref": "#/components/parameters/Authorization" },
+                    { "$ref": "#/components/parameters/IdPath" }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Berhasil dihapus.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/DeleteResponse" },
+                                "example": { "data": true }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Jenis tagihan tidak ditemukan.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                                "example": { "errors": { "message": ["jenis tagihan tidak ditemukan."] } }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Jenis tagihan digunakan dan tidak dapat dihapus (constraint).",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                                "example": { "errors": { "message": ["jenis tagihan digunakan dan tidak dapat dihapus."] } }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                                "example": { "errors": { "message": ["unauthorized."] } }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "parameters": {
+            "Authorization": {
+                "name": "Authorization",
+                "in": "header",
+                "description": "User token dari database",
+                "schema": { "type": "string", "example": "test" }
+            },
+            "IdPath": {
+                "name": "id",
+                "in": "path",
+                "description": "ID jenis tagihan.",
+                "schema": { "type": "integer", "example": 1 }
+            }
+        },
+        "schemas": {
+            "JenisTagihan": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "integer" },
+                    "nama": { "type": "string", "maxLength": 100 },
+                    "jatuh_tempo": { "type": "string", "format": "date", "example": "2025-02-01" },
+                    "jumlah": { "type": "number", "pattern": "^\\d{1,10}(\\.\\d{1,2})?$", "example": 75000 }
+                },
+                "required": ["id","nama","jatuh_tempo","jumlah"],
+                "example": { "id": 1, "nama": "SPP JANUARI", "jatuh_tempo": "2025-02-01", "jumlah": 75000 }
+            },
+            "JenisTagihanCreateRequest": {
+                "type": "object",
+                "properties": {
+                    "nama": { "type": "string", "maxLength": 100 },
+                    "jatuh_tempo": { "type": "string", "format": "date" },
+                    "jumlah": { "type": "number", "pattern": "^\\d{1,10}(\\.\\d{1,2})?$" }
+                },
+                "required": ["nama","jatuh_tempo","jumlah"],
+                "example": { "nama": "SPP MARET", "jatuh_tempo": "2025-04-01", "jumlah": 90000 }
+            },
+            "JenisTagihanUpdateRequest": {
+                "type": "object",
+                "properties": {
+                    "nama": { "type": "string", "maxLength": 100 },
+                    "jatuh_tempo": { "type": "string", "format": "date" },
+                    "jumlah": { "type": "number", "pattern": "^\\d{1,10}(\\.\\d{1,2})?$" }
+                },
+                "required": ["nama","jatuh_tempo","jumlah"],
+                "example": { "nama": "SPP APRIL", "jatuh_tempo": "2025-05-01", "jumlah": 95000 }
+            },
+            "DeleteResponse": {
+                "type": "object",
+                "properties": { "data": { "type": ["boolean","object"], "description": "Implementasi saat ini boolean true." } },
+                "example": { "data": true }
+            },
+            "ErrorResponse": {
+                "type": "object",
+                "properties": {
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": { "type": "array", "items": { "type": "string" } },
+                        "example": { "message": ["unauthorized."] }
+                    }
+                }
+            },
+            "ValidationErrorResponse": {
+                "type": "object",
+                "properties": {
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": { "type": "array", "items": { "type": "string" } },
+                        "example": { "nama": ["nama wajib diisi."] }
+                    }
+                }
+            }
+        }
+    }
+}
