@@ -24,38 +24,50 @@ class WaliRequest extends FormRequest
      */
     public function rules(): array
     {
+        $requiredOrSometimes = $this->isMethod('post') ? 'required' : 'sometimes';
+
         return [
             'nama' => [
-                'required',
+                $requiredOrSometimes,
                 'string',
                 'max:100'
             ],
             'jenis_kelamin' => [
-                'required',
+                $requiredOrSometimes,
                 'string',
+                'in:Laki-laki,Perempuan'
             ],
             'agama' => [
-                'required',
+                $requiredOrSometimes,
                 'string',
                 'max:50'
             ],
             'pendidikan_terakhir' => [
-                'required',
+                $requiredOrSometimes,
                 'string',
                 'max:100'
             ],
             'pekerjaan' => [
+                'sometimes',
+                'nullable',
                 'string',
                 'max:100'
             ],
             'alamat' => [
-                'required',
+                $requiredOrSometimes,
+                'string'
             ],
             'no_hp' => [
-                'required',
-                'max:20'
+                $requiredOrSometimes,
+                'string',
+                'max:20',
+                'regex:/^[0-9+\-\s]+$/'
             ],
-            'keterangan'=> []
+            'keterangan' => [
+                'sometimes',
+                'nullable',
+                'string'
+            ]
         ];
     }
 
@@ -63,6 +75,6 @@ class WaliRequest extends FormRequest
     {
         throw new HttpResponseException(response([
             "errors" => $validator->getMessageBag()
-        ],400));
+        ], 400));
     }
 }

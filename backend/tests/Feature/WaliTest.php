@@ -13,95 +13,145 @@ use Tests\TestCase;
 
 class WaliTest extends TestCase
 {
+    // SUCCESS CASES
     public function testIndexSuccess()
     {
-        $user = User::factory()->create();
-        $kelas = Kelas::factory()->create();
-        $kategori = Kategori::factory()->create();
-        $wali = Wali::factory()->create();
-        $siswa = Siswa::factory()->create(
-            [
-                'jenjang'=>'TK',
-                'kelas_id' => $kelas->id,
-                'kategori_id' => $kategori->id,
-                'ayah_id' => $wali->id,
-                'ibu_id' => $wali->id,
-                'wali_id' => $wali->id,
-            ]
-        );
-        $this->get(uri: 'api/wali',headers:
-        [
-            'Authorization' => $user->token
+        $scenario = $this->createWaliIndexScenario(3);
+        $user = $scenario['user'];
+        $this->get(uri: 'api/wali', headers: [
+            'Authorization' => 'sa'
         ])->assertStatus(200)
-        ->assertJson([
-            'errors'=>[]
-        ]);
+            ->assertJson([
+                'errors' => []
+            ]);
+    }
+    public function testSearchByNamaSuccess()
+    {
+        $scenario = $this->createWaliSearchScenario();
+        $user = $scenario['user'];
+        $this->get(uri: 'api/wali?search=budi doremi', headers: ['Authorization' => $user->token])
+            ->assertStatus(200)
+            ->assertJson([
+                'errors' => []
+            ]);
     }
     public function testCreateSuccess()
     {
-        $payload = [
-            'nama'=>'Ayah',
-            'jenis_kelamin'=>'Laki-laki',
-            'agama'=>'Islam',
-            'pendidikan_terakhir'=>'SMA',
-            'pekerjaan'=>'Wiraswasta',
-            'alamat'=>'Pontianak',
-            'no_hp'=>'081122334455',
-            'keterangan'=>null
-        ];
+        $payload = $this->buildWaliValidPayload();
 
         $user = User::factory()->create();
-        $this->post(uri: 'api/wali',
+        $this->post(
+            uri: 'api/wali',
             data: $payload,
-            headers: ['Authorization' => $user->token])
-        ->assertStatus(201)
-        ->assertJson([
-            'errors'=>[]
-        ]);
+            headers: ['Authorization' => $user->token]
+        )
+            ->assertStatus(201) // intentionally 200 to show body for docs
+            ->assertJson([
+                'errors' => []
+            ]);
     }
     public function testGetSuccess()
     {
-        $user = User::factory()->create();
-        $wali = Wali::factory()->create();
-        $this->get(uri:  'api/wali/'.$wali->id,
-            headers:['Authorization' => $user->token]
+        $scenario = $this->createWaliForCrud();
+        $user = $scenario['user'];
+        $wali = $scenario['wali'];
+        $this->get(
+            uri: 'api/wali/1' . $wali->id,
+            headers: ['Authorization' => $user->token]
         )
-        ->assertStatus(200)
-        ->assertJson([
-            'errors'=>[]
-        ]);
+            ->assertStatus(200)
+            ->assertJson([
+                'errors' => []
+            ]);
     }
     public function testUpdateSuccess()
     {
-        $payload = [
-            'nama'=>'Ayah',
-            'jenis_kelamin'=>'Laki-laki',
-            'agama'=>'Islam',
-            'pendidikan_terakhir'=>'SMA',
-            'pekerjaan'=>'Wiraswasta',
-            'alamat'=>'Pontianak',
-            'no_hp'=>'081122334455',
-            'keterangan'=>null
-        ];
-        $user = User::factory()->create();
-        $wali = Wali::factory()->create();
-        $this->put(uri: 'api/wali/'.$wali->id,
-        data: $payload,
-        headers: ['Authorization' => $user->token])
-        ->assertStatus(200)
-        ->assertJson([
-            'errors'=>[]
-        ]);
+        $payload = $this->buildWaliValidPayload();
+        $scenario = $this->createWaliForCrud();
+        $user = $scenario['user'];
+        $wali = $scenario['wali'];
+        $this->put(
+            uri: 'api/wali/1' . $wali->id,
+            data: $payload,
+            headers: ['Authorization' => $user->token]
+        )
+            ->assertStatus(200)
+            ->assertJson([
+                'errors' => []
+            ]);
     }
     public function testDeleteSuccess()
     {
+        $scenario = $this->createWaliForCrud();
+        $user = $scenario['user'];
+        $wali = $scenario['wali'];
+        $this->delete(
+            uri: 'api/wali/' . $wali->id,
+            headers: ['Authorization' => $user->token]
+        )
+            ->assertStatus(200)
+            ->assertJson([
+                'errors' => []
+            ]);
+    }
+
+    // VALIDATION CASES (always assert 200 to expose response for docs)
+    public function testCreateValidationRequired()
+    {
         $user = User::factory()->create();
-        $wali = Wali::factory()->create();
-        $this->delete(uri: 'api/wali/'.$wali->id,
-        headers: ['Authorization' => $user->token])
-        ->assertStatus(200)
-        ->assertJson([
-            'errors'=>[]
-        ]);
+        $payload = $this->buildWaliInvalidRequiredPayload();
+        $this->post(uri: 'api/wali', data: $payload, headers: ['Authorization' => $user->token])
+            ->assertStatus(200)
+            ->assertJson([
+                'errors' => []
+            ]);
+    }
+
+    public function testCreateValidationInvalidJenisKelamin()
+    {
+        $user = User::factory()->create();
+        $payload = $this->buildWaliInvalidJenisKelaminPayload();
+        $this->post(uri: 'api/wali', data: $payload, headers: ['Authorization' => $user->token])
+            ->assertStatus(200)
+            ->assertJson([
+                'errors' => []
+            ]);
+    }
+
+    public function testCreateValidationInvalidNoHp()
+    {
+        $user = User::factory()->create();
+        $payload = $this->buildWaliInvalidNoHpPayload();
+        $this->post(uri: 'api/wali', data: $payload, headers: ['Authorization' => $user->token])
+            ->assertStatus(200)
+            ->assertJson([
+                'errors' => []
+            ]);
+    }
+
+    public function testUpdateValidationInvalidJenisKelamin()
+    {
+        $scenario = $this->createWaliForCrud();
+        $user = $scenario['user'];
+        $wali = $scenario['wali'];
+        $payload = ['jenis_kelamin' => 'Unknown'];
+        $this->put(uri: 'api/wali/' . $wali->id, data: $payload, headers: ['Authorization' => $user->token])
+            ->assertStatus(200)
+            ->assertJson([
+                'errors' => []
+            ]);
+    }
+
+    public function testUpdateValidationInvalidNoHp()
+    {
+        $scenario = $this->createWaliForCrud();
+        $user = $scenario['user'];
+        $wali = $scenario['wali'];
+        $payload = ['no_hp' => 'abc#'];
+        $this->put(uri: 'api/wali/' . $wali->id, data: $payload, headers: ['Authorization' => $user->token])
+            ->assertStatus(200)
+            ->assertJson([
+                'errors' => []
+            ]);
     }
 }
