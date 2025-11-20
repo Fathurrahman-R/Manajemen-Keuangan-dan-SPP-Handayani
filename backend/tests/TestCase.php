@@ -482,4 +482,95 @@ abstract class TestCase extends BaseTestCase
     {
         return ['nama' => $existingName];
     }
+
+    // Jenis Tagihan helpers
+    protected function createJenisTagihanIndexScenario(int $count = 3): array
+    {
+        $user = User::factory()->admin()->create();
+        $user->token = 'token-index';
+        $user->save();
+        JenisTagihan::factory()->count($count)->create();
+        return compact('user');
+    }
+
+    protected function createJenisTagihanCrudScenario(): array
+    {
+        $user = User::factory()->admin()->create();
+        $user->token = 'token-crud';
+        $user->save();
+        $jt = JenisTagihan::factory()->create([
+            'nama' => 'SPP JANUARI',
+            'jumlah' => 75000,
+        ]);
+        return compact('user','jt');
+    }
+
+    protected function createJenisTagihanWithTagihanScenario(): array
+    {
+        $user = User::factory()->admin()->create();
+        $user->token = 'token-relasi';
+        $user->save();
+        $jt = JenisTagihan::factory()->create([
+            'nama' => 'PENDAFTARAN',
+            'jumlah' => 100000,
+        ]);
+        $siswa = Siswa::factory()->create();
+        Tagihan::factory()->create([
+            'jenis_tagihan_id' => $jt->id,
+            'nis' => $siswa->nis,
+        ]);
+        return compact('user','jt');
+    }
+
+    protected function buildJenisTagihanValidPayload(): array
+    {
+        return [
+            'nama' => 'SPP FEBRUARI',
+            'jatuh_tempo' => now()->addDay()->format('Y-m-d'),
+            'jumlah' => 85000.50,
+        ];
+    }
+
+    protected function buildJenisTagihanInvalidRequiredPayload(): array
+    {
+        return [];
+    }
+
+    protected function buildJenisTagihanInvalidNamaShort(): array
+    {
+        $p = $this->buildJenisTagihanValidPayload();
+        $p['nama'] = 'A';
+        return $p;
+    }
+
+    protected function buildJenisTagihanInvalidNamaLong(): array
+    {
+        $p = $this->buildJenisTagihanValidPayload();
+        $p['nama'] = str_repeat('X', 101);
+        return $p;
+    }
+
+    protected function buildJenisTagihanInvalidJatuhTempoFormat(): array
+    {
+        $p = $this->buildJenisTagihanValidPayload();
+        $p['jatuh_tempo'] = '31-12-2025';
+        return $p;
+    }
+
+    protected function buildJenisTagihanInvalidJumlahNonNumeric(): array
+    {
+        $p = $this->buildJenisTagihanValidPayload();
+        $p['jumlah'] = 'ABC';
+        return $p;
+    }
+
+    protected function buildJenisTagihanInvalidJumlahTooLong(): array
+    {
+        $p = $this->buildJenisTagihanValidPayload();
+        $p['jumlah'] = '1234567890123.00';
+        return $p;
+    }
+
+    // existing helpers for other entities remain below
+    // ...existing code...
 }
