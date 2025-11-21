@@ -158,7 +158,7 @@
                                         "value": {
                                             "errors": {
                                                 "nama": [
-                                                    "The nama field is required."
+                                                    "Nama kelas wajib diisi."
                                                 ]
                                             }
                                         }
@@ -648,7 +648,7 @@
                         },
                         "example": {
                             "nama": [
-                                "The nama field is required."
+                                "Nama kelas wajib diisi."
                             ]
                         }
                     }

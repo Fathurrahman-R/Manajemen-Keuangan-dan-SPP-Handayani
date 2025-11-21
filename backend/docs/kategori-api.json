@@ -132,7 +132,7 @@
                                         "value": {
                                             "errors": {
                                                 "nama": [
-                                                    "The nama field is required."
+                                                    "Nama kategori wajib diisi."
                                                 ]
                                             }
                                         }
@@ -141,7 +141,7 @@
                                         "value": {
                                             "errors": {
                                                 "nama": [
-                                                    "The nama may not be greater than 100 characters."
+                                                    "Nama kategori maksimal 100 karakter."
                                                 ]
                                             }
                                         }
@@ -548,7 +548,7 @@
                         },
                         "example": {
                             "nama": [
-                                "The nama field is required."
+                                "Nama kategori wajib diisi."
                             ]
                         }
                     }

@@ -286,37 +286,37 @@
                                         "value": {
                                             "errors": {
                                                 "nis": [
-                                                    "The nis field is required."
+                                                    "NIS wajib diisi."
                                                 ],
                                                 "nisn": [
-                                                    "The nisn field is required."
+                                                    "NISN wajib diisi."
                                                 ],
                                                 "nama": [
-                                                    "The nama field is required."
+                                                    "Nama wajib diisi."
                                                 ],
                                                 "jenis_kelamin": [
-                                                    "The jenis kelamin field is required."
+                                                    "Jenis kelamin wajib diisi."
                                                 ],
                                                 "tempat_lahir": [
-                                                    "The tempat lahir field is required."
+                                                    "Tempat lahir wajib diisi."
                                                 ],
                                                 "tanggal_lahir": [
-                                                    "The tanggal lahir field is required."
+                                                    "Tanggal lahir wajib diisi."
                                                 ],
                                                 "agama": [
-                                                    "The agama field is required."
+                                                    "Agama wajib diisi."
                                                 ],
                                                 "alamat": [
-                                                    "The alamat field is required."
+                                                    "Alamat wajib diisi."
                                                 ],
                                                 "wali_id": [
-                                                    "The wali id field is required."
+                                                    "Wali wajib diisi."
                                                 ],
                                                 "kelas_id": [
-                                                    "The kelas id field is required."
+                                                    "Kelas wajib diisi."
                                                 ],
                                                 "kategori_id": [
-                                                    "The kategori id field is required."
+                                                    "Kategori wajib diisi."
                                                 ]
                                             }
                                         }
@@ -326,34 +326,34 @@
                                         "value": {
                                             "errors": {
                                                 "nis": [
-                                                    "The nis field is required."
+                                                    "NIS wajib diisi."
                                                 ],
                                                 "nama": [
-                                                    "The nama field is required."
+                                                    "Nama wajib diisi."
                                                 ],
                                                 "jenis_kelamin": [
-                                                    "The jenis kelamin field is required."
+                                                    "Jenis kelamin wajib diisi."
                                                 ],
                                                 "tempat_lahir": [
-                                                    "The tempat lahir field is required."
+                                                    "Tempat lahir wajib diisi."
                                                 ],
                                                 "tanggal_lahir": [
-                                                    "The tanggal lahir field is required."
+                                                    "Tanggal lahir wajib diisi."
                                                 ],
                                                 "agama": [
-                                                    "The agama field is required."
+                                                    "Agama wajib diisi."
                                                 ],
                                                 "alamat": [
-                                                    "The alamat field is required."
+                                                    "Alamat wajib diisi."
                                                 ],
                                                 "wali_id": [
-                                                    "The wali id field is required."
+                                                    "Wali wajib diisi."
                                                 ],
                                                 "kelas_id": [
-                                                    "The kelas id field is required."
+                                                    "Kelas wajib diisi."
                                                 ],
                                                 "kategori_id": [
-                                                    "The kategori id field is required."
+                                                    "Kategori wajib diisi."
                                                 ]
                                             }
                                         }
@@ -363,34 +363,34 @@
                                         "value": {
                                             "errors": {
                                                 "nis": [
-                                                    "The nis field is required."
+                                                    "NIS wajib diisi."
                                                 ],
                                                 "nama": [
-                                                    "The nama field is required."
+                                                    "Nama wajib diisi."
                                                 ],
                                                 "jenis_kelamin": [
-                                                    "The jenis kelamin field is required."
+                                                    "Jenis kelamin wajib diisi."
                                                 ],
                                                 "tempat_lahir": [
-                                                    "The tempat lahir field is required."
+                                                    "Tempat lahir wajib diisi."
                                                 ],
                                                 "tanggal_lahir": [
-                                                    "The tanggal lahir field is required."
+                                                    "Tanggal lahir wajib diisi."
                                                 ],
                                                 "agama": [
-                                                    "The agama field is required."
+                                                    "Agama wajib diisi."
                                                 ],
                                                 "alamat": [
-                                                    "The alamat field is required."
+                                                    "Alamat wajib diisi."
                                                 ],
                                                 "wali_id": [
-                                                    "The wali id field is required."
+                                                    "Wali wajib diisi."
                                                 ],
                                                 "kelas_id": [
-                                                    "The kelas id field is required."
+                                                    "Kelas wajib diisi."
                                                 ],
                                                 "kategori_id": [
-                                                    "The kategori id field is required."
+                                                    "Kategori wajib diisi."
                                                 ]
                                             }
                                         }
@@ -3045,3 +3045,4 @@
         }
     }
 }
+

@@ -57,9 +57,8 @@
                                         "description": "Validation error",
                                         "value": {
                                             "errors": {
-                                                "username": [],
-                                                "password": [],
-                                                "role": []
+                                                "username": ["Username wajib diisi."],
+                                                "password": ["Password wajib diisi."]
                                             }
                                         }
                                     }
@@ -159,9 +158,7 @@
                                         "description": "Username or password not found",
                                         "value": {
                                             "errors": {
-                                                "message": [
-                                                    "username or password is wrong"
-                                                ]
+                                                "message": ["username atau password salah."]
                                             }
                                         }
                                     }
@@ -181,12 +178,8 @@
                                         "description": "Validation error",
                                         "value": {
                                             "errors": {
-                                                "username": [
-                                                    "The username field is required."
-                                                ],
-                                                "password": [
-                                                    "The password field is required."
-                                                ]
+                                                "username": ["Username wajib diisi."],
+                                                "password": ["Password wajib diisi."]
                                             }
                                         }
                                     }
@@ -296,13 +289,11 @@
                                     "$ref": "#/components/schemas/ValidationErrorResponse"
                                 },
                                 "examples": {
-                                    "name length": {
-                                        "description": "name is greater than 100",
+                                    "password length": {
+                                        "description": "password lebih dari 100 karakter",
                                         "value": {
                                             "errors": {
-                                                "name": [
-                                                    "The name field must not be greater than 100 characters."
-                                                ]
+                                                "password": ["Password maksimal 100 karakter."]
                                             }
                                         }
                                     }

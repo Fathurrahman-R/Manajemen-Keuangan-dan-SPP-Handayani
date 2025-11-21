@@ -305,24 +305,12 @@
                                         "description": "Validasi Form request",
                                         "value": {
                                             "errors": {
-                                                "nama": [
-                                                    "The nama field is required."
-                                                ],
-                                                "jenis_kelamin": [
-                                                    "The jenis kelamin field is required."
-                                                ],
-                                                "agama": [
-                                                    "The agama field is required."
-                                                ],
-                                                "pendidikan_terakhir": [
-                                                    "The pendidikan terakhir field is required."
-                                                ],
-                                                "alamat": [
-                                                    "The alamat field is required."
-                                                ],
-                                                "no_hp": [
-                                                    "The no hp field is required."
-                                                ]
+                                                "nama": ["Nama wali wajib diisi."],
+                                                "jenis_kelamin": ["Jenis kelamin wajib diisi."],
+                                                "agama": ["Agama wajib diisi."],
+                                                "pendidikan_terakhir": ["Pendidikan terakhir wajib diisi."],
+                                                "alamat": ["Alamat wajib diisi."],
+                                                "no_hp": ["Nomor HP wajib diisi."]
                                             }
                                         }
                                     }
@@ -626,33 +614,19 @@
                                     "validation required": {
                                         "value": {
                                             "errors": {
-                                                "nama": [
-                                                    "The nama field is required."
-                                                ],
-                                                "jenis_kelamin": [
-                                                    "The jenis kelamin field is required."
-                                                ],
-                                                "agama": [
-                                                    "The agama field is required."
-                                                ],
-                                                "pendidikan_terakhir": [
-                                                    "The pendidikan terakhir field is required."
-                                                ],
-                                                "alamat": [
-                                                    "The alamat field is required."
-                                                ],
-                                                "no_hp": [
-                                                    "The no hp field is required."
-                                                ]
+                                                "nama": ["Nama wali wajib diisi."],
+                                                "jenis_kelamin": ["Jenis kelamin wajib diisi."],
+                                                "agama": ["Agama wajib diisi."],
+                                                "pendidikan_terakhir": ["Pendidikan terakhir wajib diisi."],
+                                                "alamat": ["Alamat wajib diisi."],
+                                                "no_hp": ["Nomor HP wajib diisi."]
                                             }
                                         }
                                     },
                                     "invalid no hp": {
                                         "value": {
                                             "errors": {
-                                                "no_hp": [
-                                                    "The no hp field format is invalid."
-                                                ]
+                                                "no_hp": ["Format nomor HP hanya boleh angka, spasi, plus (+) atau tanda minus (-)."]
                                             }
                                         }
                                     }
