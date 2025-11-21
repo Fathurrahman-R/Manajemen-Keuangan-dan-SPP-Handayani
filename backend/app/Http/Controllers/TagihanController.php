@@ -10,6 +10,7 @@ use App\Models\Pembayaran;
 use App\Models\Siswa;
 use App\Models\Tagihan;
 use App\Services\GenerateKodeTagihan;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,150 +20,138 @@ class TagihanController extends Controller
     public function index()
     {
         $user = Auth::user();
-
-        $query = Tagihan::with([
-            'siswa',
-            'jenis_tagihan',
-        ]);
-
-        // Jika bukan admin, filter berdasarkan relasi tagihan
-        if ($user->role !== 'admin') {
-            $query->whereHas('siswa', function ($q) use ($user) {
-                $q->where('nis', $user->username);
+        $query = Tagihan::query()
+            ->with([
+                'siswa' => function ($q) { $q->select(['id','nis','nama','jenjang','kelas_id','kategori_id']); },
+                'jenis_tagihan' => function ($q) { $q->select(['id','nama','jatuh_tempo','jumlah']); },
+            ])
+            ->select(['kode_tagihan','jenis_tagihan_id','nis','tmp','status']);
+        if ($user && $user->role !== 'admin') {
+            $query->whereHas('siswa', fn($q) => $q->where('nis',$user->username));
+        }
+        $search = request('search');
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('kode_tagihan','like',"%{$search}%")
+                  ->orWhereHas('siswa', function($qs) use ($search){
+                      $qs->where('nama','like',"%{$search}%")
+                         ->orWhere('nis','like',"%{$search}%");
+                  });
             });
         }
-
         $tagihan = $query->paginate(request('per_page',30));
-
-        if ($tagihan->isEmpty()) {
-            throw new HttpResponseException(response([
-                "errors" => [
-                    "message" => ["belum ada data tagihan."]
-                ]
-            ], 404));
-        }
-
+        // Kembalikan langsung koleksi resource (status 200 meski kosong)
         return TagihanResource::collection($tagihan);
+    }
+
+    public function get(string $kode_tagihan)
+    {
+        $tagihan = Tagihan::with([
+            'siswa' => fn($q) => $q->select(['id','nis','nama','jenjang','kelas_id','kategori_id']),
+            'jenis_tagihan' => fn($q) => $q->select(['id','nama','jatuh_tempo','jumlah']),
+        ])->select(['kode_tagihan','jenis_tagihan_id','nis','tmp','status'])->find($kode_tagihan);
+        if (!$tagihan) {
+            throw new HttpResponseException(response([
+                'errors' => ['message' => ['tagihan tidak ditemukan.']]
+            ],404));
+        }
+        return (new TagihanResource($tagihan))->response()->setStatusCode(200);
     }
 
     public function create(TagihanRequest $request)
     {
         $data = $request->validated();
-        $siswa = Siswa::with([
-            'kelas',
-            'kategori'
-        ])
-            ->select(['id', 'nis'])
-            ->whereKelasId($data['kelas_id'])
-            ->whereJenjang($data['jenjang'])
-            ->whereKategoriId($data['kategori_id'])
+        $siswa = Siswa::query()->select(['id','nis'])
+            ->where('kelas_id',$data['kelas_id'])
+            ->where('jenjang',$data['jenjang'])
+            ->where('kategori_id',$data['kategori_id'])
             ->get();
-
         if ($siswa->isEmpty()) {
             throw new HttpResponseException(response([
-                "errors" => [
-                    "message" => [
-                        "siswa tidak ditemukan."
-                    ]
-                ]
-            ], 404));
+                'errors' => ['message' => ['siswa tidak ditemukan.']]
+            ],404));
         }
-
         $created = collect();
         foreach ($siswa as $s) {
-            $tagihan = Tagihan::create([
+            $t = Tagihan::create([
                 'kode_tagihan' => GenerateKodeTagihan::generate(),
                 'jenis_tagihan_id' => $data['jenis_tagihan_id'],
                 'nis' => $s->nis,
             ]);
-            $created->push($tagihan->fresh(['siswa', 'jenis_tagihan']));
+            $created->push($t->fresh([
+                'siswa' => fn($q) => $q->select(['id','nis','nama','jenjang','kelas_id','kategori_id']),
+                'jenis_tagihan' => fn($q) => $q->select(['id','nama','jatuh_tempo','jumlah']),
+            ]));
         }
+        return TagihanResource::collection($created)->response()->setStatusCode(201);
+    }
 
-        return TagihanResource::collection($created);
+    public function update(Request $request, string $kode_tagihan)
+    {
+        $tagihan = Tagihan::find($kode_tagihan);
+        if (!$tagihan) {
+            throw new HttpResponseException(response([
+                'errors' => ['message' => ['tagihan tidak ditemukan.']]
+            ],404));
+        }
+        $tagihan->update(['jenis_tagihan_id' => $request['jenis_tagihan_id']]);
+        $tagihan->load([
+            'siswa' => fn($q) => $q->select(['id','nis','nama','jenjang','kelas_id','kategori_id']),
+            'jenis_tagihan' => fn($q) => $q->select(['id','nama','jatuh_tempo','jumlah']),
+        ]);
+        return (new TagihanResource($tagihan))->response()->setStatusCode(200);
     }
 
     public function delete(string $kode_tagihan)
     {
         $tagihan = Tagihan::query()->find($kode_tagihan);
-        $pembayaran = Pembayaran::query()->find($kode_tagihan);
         if (!$tagihan) {
             throw new HttpResponseException(response([
-                "errors" => [
-                    "message" => ["tagihan tidak ditemukan."]
-                ]
+                'errors' => ['message' => ['tagihan tidak ditemukan.']]
             ],404));
         }
-        if($pembayaran)
-        {
+        try {
+            $tagihan->delete();
+        } catch (QueryException|Throwable $e) {
             throw new HttpResponseException(response([
-                "errors" => [
-                    "message" => ["tagihan ini sudah memiliki data pembayaran."]
-                ]
-            ],400));
+                'errors' => ['message' => ['tagihan sudah dibayar dan tidak dapat dihapus.']]
+            ],409));
         }
-        $tagihan->delete();
-        return response([
-            "data"=>true
-        ])->setStatusCode(200);
-
+        return response(['data' => true])->setStatusCode(200);
     }
 
     public static function lunas(BayarLunasRequest $request, string $kode_tagihan)
     {
-        $tagihan = Tagihan::with([
-            'siswa',
-            'jenis_tagihan'
-        ])->find($kode_tagihan);
-        if(!$tagihan){
+        $tagihan = Tagihan::with(['siswa','jenis_tagihan'])->find($kode_tagihan);
+        if (!$tagihan) {
             throw new HttpResponseException(response([
-                "errors" => [
-                    "message" => [
-                        "tagihan tidak ditemukan."
-                    ]
-                ]
+                'errors' => ['message' => ['tagihan tidak ditemukan.']]
             ],404));
         }
         $jumlah = $tagihan->jenis_tagihan->jumlah;
-        $tagihan->update([
-            'status'=>'Lunas',
-            'tmp'=>$jumlah
-        ]);
+        $tagihan->update(['status' => 'Lunas','tmp' => $jumlah]);
         return $jumlah;
     }
 
     public static function bayar(BayarTidakLunasRequest $request, string $kode_tagihan)
     {
         $data = $request->validated();
-        $tagihan = Tagihan::with([
-            'siswa',
-            'jenis_tagihan'
-        ])->find($kode_tagihan);
-
-        if(!$tagihan){
+        $tagihan = Tagihan::with(['siswa','jenis_tagihan'])->find($kode_tagihan);
+        if (!$tagihan) {
             throw new HttpResponseException(response([
-                "errors" => [
-                    "message" => [
-                        "tagihan tidak ditemukan."
-                    ]
-                ]
+                'errors' => ['message' => ['tagihan tidak ditemukan.']]
             ],404));
         }
         $jumlah_tagihan = $tagihan->jenis_tagihan->jumlah;
-        if($jumlah_tagihan < $data['jumlah']){
+        if ($jumlah_tagihan < $data['jumlah']) {
             throw new HttpResponseException(response([
-                "errors" => [
-                    "message" => [
-                        "jumlah bayar tidak boleh melebihi jumlah tagihan."
-                    ]
-                ]
+                'errors' => ['message' => ['jumlah bayar tidak boleh melebihi jumlah tagihan.']]
             ],400));
         }
-
-        $jumlah = $data['jumlah']==null?$data['jumlah']:$tagihan->tmp+$data['jumlah'];
-
+        $jumlah = $data['jumlah'] == null ? $data['jumlah'] : $tagihan->tmp + $data['jumlah'];
         $tagihan->update([
-            'tmp'=>$jumlah,
-            'status'=>$jumlah_tagihan==$jumlah?"Lunas":"Belum Lunas"
+            'tmp' => $jumlah,
+            'status' => $jumlah_tagihan == $jumlah ? 'Lunas' : 'Belum Lunas'
         ]);
     }
 }
