@@ -17,7 +17,7 @@ use Tests\TestCase;
 
 class PembayaranTest extends TestCase
 {
-//    private static $kode_pembayaran;
+    //    private static $kode_pembayaran;
     public function testIndexPembayaran()
     {
         $user = User::factory()->create();
@@ -70,8 +70,7 @@ class PembayaranTest extends TestCase
         ]);
         $tagihan = Tagihan::factory()->create([
             'nis'=>$siswa->nis,
-            'jenis_tagihan_id'=>$jt->id,
-            'tmp'=>50000
+            'jenis_tagihan_id'=>$jt->id
         ]);
         $this->post('api/pembayaran/bayar/'.$tagihan->kode_tagihan,
             [
@@ -164,5 +163,146 @@ class PembayaranTest extends TestCase
         ->assertJson([
             'errors'=>[]
         ]);
+    }
+    public function testIndexPembayaranKosong()
+    {
+        $user = User::factory()->create();
+        $this->get('api/pembayaran', ['Authorization'=>$user->token])
+            ->assertStatus(200)
+            ->assertJson(['errors'=>[]]);
+    }
+    public function testSearchPembayaranByKodePembayaran()
+    {
+        $scenario = $this->createPembayaranCicil();
+        $kode = $scenario['pembayaran']->kode_pembayaran;
+        $this->get('api/pembayaran?search='.substr($kode,0,3), ['Authorization'=>$scenario['user']->token])
+            ->assertStatus(200)
+            ->assertJson(['errors'=>[]]);
+    }
+    public function testSearchPembayaranByNamaSiswa()
+    {
+        $scenario = $this->createPembayaranCicil();
+        $nama = $scenario['pembayaran']->tagihan->siswa->nama;
+        $this->get('api/pembayaran?search='.substr($nama,0,3), ['Authorization'=>$scenario['user']->token])
+            ->assertStatus(200)
+            ->assertJson(['errors'=>[]]);
+    }
+    public function testSearchPembayaranByNisSiswa()
+    {
+        $scenario = $this->createPembayaranCicil();
+        $nis = $scenario['pembayaran']->tagihan->siswa->nis;
+        $this->get('api/pembayaran?search='.substr($nis,0,3), ['Authorization'=>$scenario['user']->token])
+            ->assertStatus(200)
+            ->assertJson(['errors'=>[]]);
+    }
+    public function testSearchPembayaranNotFound()
+    {
+        $scenario = $this->createPembayaranCicil();
+        $this->get('api/pembayaran?search=ZZZ', ['Authorization'=>$scenario['user']->token])
+            ->assertStatus(200)
+            ->assertJson(['errors'=>[]]);
+    }
+    public function testCreatePembayaranCicilValid()
+    {
+        $data = $this->createTagihan();
+        $this->post('api/pembayaran/bayar/'.$data['tagihan']->kode_tagihan,[
+            'jumlah'=>1,
+            'metode'=>'Tunai',
+            'pembayar'=>'TEST'
+        ],['Authorization'=>$data['user']->token])
+            ->assertStatus(200)
+            ->assertJson(['errors'=>[]]);
+    }
+    public function testCreatePembayaranCicilOverpay()
+    {
+        $data = $this->createTagihan();
+        $this->post('api/pembayaran/bayar/'.$data['tagihan']->kode_tagihan,[
+            'jumlah'=>$data['tagihan']->jenis_tagihan->jumlah + 1,
+            'metode'=>'Tunai',
+            'pembayar'=>'TEST'
+        ],['Authorization'=>$data['user']->token])
+            ->assertStatus(200);
+    }
+    public function testCreatePembayaranCicilInvalidMetode()
+    {
+        $data = $this->createTagihan();
+        $this->post('api/pembayaran/bayar/'.$data['tagihan']->kode_tagihan,[
+            'jumlah'=>10,
+            'metode'=>'TRANSFER',
+            'pembayar'=>'TEST'
+        ],['Authorization'=>$data['user']->token])
+            ->assertStatus(200);
+    }
+    public function testCreatePembayaranCicilJumlahRequired()
+    {
+        $data = $this->createTagihan();
+        $this->post('api/pembayaran/bayar/'.$data['tagihan']->kode_tagihan,[
+            'metode'=>'Tunai',
+            'pembayar'=>'TEST'
+        ],['Authorization'=>$data['user']->token])
+            ->assertStatus(200);
+    }
+    public function testCreatePembayaranLunasValid()
+    {
+        $data = $this->createTagihan();
+        $this->post('api/pembayaran/lunas/'.$data['tagihan']->kode_tagihan,[
+            'metode'=>'Tunai',
+            'pembayar'=>'TEST'
+        ],['Authorization'=>$data['user']->token])
+            ->assertStatus(200)
+            ->assertJson(['errors'=>[]]);
+    }
+    public function testCreatePembayaranLunasInvalidMetode()
+    {
+        $data = $this->createTagihan();
+        $this->post('api/pembayaran/lunas/'.$data['tagihan']->kode_tagihan,[
+            'metode'=>'XXX',
+            'pembayar'=>'TEST'
+        ],['Authorization'=>$data['user']->token])
+            ->assertStatus(200);
+    }
+    public function testCreatePembayaranLunasPembayarRequired()
+    {
+        $data = $this->createTagihan();
+        $this->post('api/pembayaran/lunas/'.$data['tagihan']->kode_tagihan,[
+            'metode'=>'Tunai'
+        ],['Authorization'=>$data['user']->token])
+            ->assertStatus(200);
+    }
+    public function testDeletePembayaranValid()
+    {
+        $scenario = $this->createPembayaranCicil();
+        $this->delete('api/pembayaran/'.$scenario['pembayaran']->kode_pembayaran,[],[
+            'Authorization'=>$scenario['user']->token
+        ])
+            ->assertStatus(200)
+            ->assertJson(['errors'=>[]]);
+    }
+    public function testDeletePembayaranNotFound()
+    {
+        $user = User::factory()->create();
+        $this->delete('api/pembayaran/XXX',[],['Authorization'=>$user->token])
+            ->assertStatus(200);
+    }
+    public function testKwitansiNotFound()
+    {
+        $user = User::factory()->create();
+        $this->get('api/pembayaran/kwitansi/XXX',['Authorization'=>$user->token])
+            ->assertStatus(200);
+    }
+    public function testUnauthorizedAccessIndex()
+    {
+        $this->get('api/pembayaran')
+            ->assertStatus(200);
+    }
+    public function testUnauthorizedCreateCicil()
+    {
+        $data = $this->createTagihan();
+        $this->post('api/pembayaran/bayar/'.$data['tagihan']->kode_tagihan,[
+            'jumlah'=>10,
+            'metode'=>'Tunai',
+            'pembayar'=>'TEST'
+        ])
+            ->assertStatus(200);
     }
 }
