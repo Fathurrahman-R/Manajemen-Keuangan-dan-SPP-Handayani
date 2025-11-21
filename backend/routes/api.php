@@ -57,6 +57,8 @@ Route::middleware(\App\Http\Middleware\ApiAuthMiddleware::class)->group(function
 
         Route::prefix('/tagihan')->group(function () {
             Route::post('/', [TagihanController::class, 'create']);
+            Route::get('/{kode_tagihan}', [TagihanController::class, 'get']);
+            Route::patch('/{kode_tagihan}', [TagihanController::class, 'update']);
             Route::delete('/{kode_tagihan}', [TagihanController::class, 'delete']);
         });
 
