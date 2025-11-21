@@ -26,9 +26,9 @@ class GenerateKeteranganKwitansi
         // Konversi ke nama bulan bahasa Indonesia
         $bulan = Carbon::parse($tanggal)
             ->locale('id')
-            ->translatedFormat('F'); // contoh: "Maret"
+            ->translatedFormat('F Y'); // contoh: "Maret"
 
-        $keterangan = "{$nama_tagihan} {$bulan} {$nama_siswa}";
+        $keterangan = "{$nama_tagihan} {$nama_siswa} {$bulan}";
         return $keterangan;
     }
 }
