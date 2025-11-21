@@ -1,0 +1,942 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Tagihan API",
+        "description": "Dokumentasi endpoint Tagihan. GET /api/tagihan mendukung pencarian kode_tagihan, nama siswa, nis dan pagination per_page. POST /api/tagihan mass create tagihan berdasarkan jenjang, kelas_id, kategori_id (validasi gagal 400). PATCH /api/tagihan/{kode_tagihan} hanya mengubah jenis_tagihan_id.",
+        "version": "1.0.1"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8080"
+        }
+    ],
+    "components": {
+        "parameters": {
+            "Authorization": {
+                "name": "Authorization",
+                "in": "header",
+                "schema": {
+                    "type": "string"
+                },
+                "description": "User token dari database"
+            },
+            "KodeTagihanPath": {
+                "name": "kode_tagihan",
+                "in": "path",
+                "required": true,
+                "schema": {
+                    "type": "string"
+                },
+                "description": "Primary key kode_tagihan."
+            },
+            "SearchQuery": {
+                "name": "search",
+                "in": "query",
+                "required": false,
+                "schema": {
+                    "type": "string"
+                },
+                "description": "Cari partial kode_tagihan / nama siswa / nis."
+            },
+            "PerPageQuery": {
+                "name": "per_page",
+                "in": "query",
+                "required": false,
+                "schema": {
+                    "type": "integer",
+                    "default": 30
+                },
+                "description": "Item per halaman (default 30)."
+            }
+        },
+        "schemas": {
+            "JenisTagihan": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "nama": {
+                        "type": "string"
+                    },
+                    "jatuh_tempo": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "jumlah": {
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "id",
+                    "nama",
+                    "jatuh_tempo",
+                    "jumlah"
+                ]
+            },
+            "TagihanSiswa": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "nis": {
+                        "type": "string"
+                    },
+                    "nama": {
+                        "type": "string"
+                    },
+                    "jenjang": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "kelas": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": [
+                                    "integer"
+                                ]
+                            },
+                            "jenjang": {
+                                "type": [
+                                    "string"
+                                ]
+                            },
+                            "nama": {
+                                "type": [
+                                    "string"
+                                ]
+                            }
+                        }
+                    },
+                    "kategori": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": [
+                                    "integer"
+                                ]
+                            },
+                            "nama": {
+                                "type": [
+                                    "string"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "nis",
+                    "nama"
+                ]
+            },
+            "Tagihan": {
+                "type": "object",
+                "properties": {
+                    "kode_tagihan": {
+                        "type": "string"
+                    },
+                    "jenis_tagihan": {
+                        "$ref": "#/components/schemas/JenisTagihan"
+                    },
+                    "siswa": {
+                        "$ref": "#/components/schemas/TagihanSiswa"
+                    },
+                    "tmp": {
+                        "type": [
+                            "integer",
+                            "number",
+                            "null"
+                        ]
+                    },
+                    "status": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "kode_tagihan",
+                    "jenis_tagihan",
+                    "siswa",
+                    "status"
+                ]
+            },
+            "TagihanCreateRequest": {
+                "type": "object",
+                "properties": {
+                    "jenis_tagihan_id": {
+                        "type": "integer"
+                    },
+                    "jenjang": {
+                        "type": "string",
+                        "enum": [
+                            "MI",
+                            "KB",
+                            "TK"
+                        ]
+                    },
+                    "kelas_id": {
+                        "type": "integer"
+                    },
+                    "kategori_id": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "jenis_tagihan_id",
+                    "jenjang",
+                    "kelas_id",
+                    "kategori_id"
+                ]
+            },
+            "TagihanPatchRequest": {
+                "type": "object",
+                "properties": {
+                    "jenis_tagihan_id": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "jenis_tagihan_id"
+                ],
+                "description": "Hanya jenis_tagihan_id yang digunakan pada PATCH."
+            },
+            "ErrorResponse": {
+                "type": "object",
+                "properties": {
+                    "errors": {
+                        "type": "object",
+                        "properties": {
+                            "message": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "errors"
+                ]
+            },
+            "ValidationErrorResponse": {
+                "type": "object",
+                "properties": {
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "errors"
+                ]
+            },
+            "TagihanPagination": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Tagihan"
+                        }
+                    },
+                    "links": {
+                        "type": "object"
+                    },
+                    "meta": {
+                        "type": "object"
+                    }
+                }
+            },
+            "TagihanCollection": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Tagihan"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "paths": {
+        "/api/tagihan": {
+            "get": {
+                "description": "Listing tagihan (paginate + optional search).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Authorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/SearchQuery"
+                    },
+                    {
+                        "$ref": "#/components/parameters/PerPageQuery"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Berhasil (data bisa kosong).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TagihanPagination"
+                                },
+                                "examples": {
+                                    "nonEmpty": {
+                                        "value": {
+                                            "data": [
+                                                {
+                                                    "kode_tagihan": "TAG-2511-0001",
+                                                    "jenis_tagihan": {
+                                                        "id": 153,
+                                                        "nama": "SPP Januari",
+                                                        "jatuh_tempo": "2022-03-27",
+                                                        "jumlah": "77959.00"
+                                                    },
+                                                    "siswa": {
+                                                        "id": 129,
+                                                        "nis": "010683",
+                                                        "nama": "Coty Connelly",
+                                                        "jenjang": "MI",
+                                                        "kelas": {
+                                                            "id": 145,
+                                                            "jenjang": "TK",
+                                                            "nama": "KELAS 1"
+                                                        },
+                                                        "kategori": {
+                                                            "id": 145,
+                                                            "nama": "Yatim"
+                                                        }
+                                                    },
+                                                    "tmp": "0.00",
+                                                    "status": "Belum Dibayar"
+                                                },
+                                                {
+                                                    "kode_tagihan": "TAG-2511-0002",
+                                                    "jenis_tagihan": {
+                                                        "id": 153,
+                                                        "nama": "SPP Januari",
+                                                        "jatuh_tempo": "2022-03-27",
+                                                        "jumlah": "77959.00"
+                                                    },
+                                                    "siswa": {
+                                                        "id": 130,
+                                                        "nis": "916022",
+                                                        "nama": "Macy Schulist I",
+                                                        "jenjang": "MI",
+                                                        "kelas": {
+                                                            "id": 145,
+                                                            "jenjang": "TK",
+                                                            "nama": "KELAS 1"
+                                                        },
+                                                        "kategori": {
+                                                            "id": 145,
+                                                            "nama": "Yatim"
+                                                        }
+                                                    },
+                                                    "tmp": "0.00",
+                                                    "status": "Belum Dibayar"
+                                                },
+                                                {
+                                                    "kode_tagihan": "TAG-2511-0003",
+                                                    "jenis_tagihan": {
+                                                        "id": 153,
+                                                        "nama": "SPP Januari",
+                                                        "jatuh_tempo": "2022-03-27",
+                                                        "jumlah": "77959.00"
+                                                    },
+                                                    "siswa": {
+                                                        "id": 131,
+                                                        "nis": "712162",
+                                                        "nama": "Mr. Xander Beer DDS",
+                                                        "jenjang": "MI",
+                                                        "kelas": {
+                                                            "id": 145,
+                                                            "jenjang": "TK",
+                                                            "nama": "KELAS 1"
+                                                        },
+                                                        "kategori": {
+                                                            "id": 145,
+                                                            "nama": "Yatim"
+                                                        }
+                                                    },
+                                                    "tmp": "0.00",
+                                                    "status": "Belum Dibayar"
+                                                }
+                                            ],
+                                            "links": {
+                                                "first": "http://localhost:8000/api/tagihan?page=1",
+                                                "last": "http://localhost:8000/api/tagihan?page=1",
+                                                "prev": null,
+                                                "next": null
+                                            },
+                                            "meta": {
+                                                "current_page": 1,
+                                                "from": 1,
+                                                "last_page": 1,
+                                                "links": [
+                                                    {
+                                                        "url": null,
+                                                        "label": "&laquo; Previous",
+                                                        "page": null,
+                                                        "active": false
+                                                    },
+                                                    {
+                                                        "url": "http://localhost:8000/api/tagihan?page=1",
+                                                        "label": "1",
+                                                        "page": 1,
+                                                        "active": true
+                                                    },
+                                                    {
+                                                        "url": null,
+                                                        "label": "Next &raquo;",
+                                                        "page": null,
+                                                        "active": false
+                                                    }
+                                                ],
+                                                "path": "http://localhost:8000/api/tagihan",
+                                                "per_page": 30,
+                                                "to": 3,
+                                                "total": 3
+                                            }
+                                        }
+                                    },
+                                    "empty": {
+                                        "value": {
+                                            "data": [],
+                                            "links": {
+                                                "first": "http://localhost:8000/api/tagihan?page=1",
+                                                "last": "http://localhost:8000/api/tagihan?page=1",
+                                                "prev": null,
+                                                "next": null
+                                            },
+                                            "meta": {
+                                                "current_page": 1,
+                                                "from": null,
+                                                "last_page": 1,
+                                                "links": [
+                                                    {
+                                                        "url": null,
+                                                        "label": "&laquo; Previous",
+                                                        "page": null,
+                                                        "active": false
+                                                    },
+                                                    {
+                                                        "url": "http://localhost:8000/api/tagihan?page=1",
+                                                        "label": "1",
+                                                        "page": 1,
+                                                        "active": true
+                                                    },
+                                                    {
+                                                        "url": null,
+                                                        "label": "Next &raquo;",
+                                                        "page": null,
+                                                        "active": false
+                                                    }
+                                                ],
+                                                "path": "http://localhost:8000/api/tagihan",
+                                                "per_page": 30,
+                                                "to": null,
+                                                "total": 0
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "unauthorized."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Mass create tagihan untuk siswa sesuai filter (jenjang, kelas_id, kategori_id).",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Authorization"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TagihanCreateRequest"
+                            },
+                            "example": {
+                                "jenis_tagihan_id": 155,
+                                "jenjang": "MI",
+                                "kelas_id": 147,
+                                "kategori_id": 147
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Berhasil membuat (koleksi).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TagihanCollection"
+                                },
+                                "examples": {
+                                    "success": {
+                                        "value": {
+                                            "data": [
+                                                {
+                                                    "kode_tagihan": "TAG-2511-0001",
+                                                    "jenis_tagihan": {
+                                                        "id": 155,
+                                                        "nama": "SPP Januari",
+                                                        "jatuh_tempo": "1981-05-21",
+                                                        "jumlah": "81774.00"
+                                                    },
+                                                    "siswa": {
+                                                        "id": 134,
+                                                        "nis": "852477",
+                                                        "nama": "Cornelius Mayert",
+                                                        "jenjang": "MI",
+                                                        "kelas": {
+                                                            "id": 147,
+                                                            "jenjang": "MI",
+                                                            "nama": "KELAS 1"
+                                                        },
+                                                        "kategori": {
+                                                            "id": 147,
+                                                            "nama": "Piatu"
+                                                        }
+                                                    },
+                                                    "tmp": "0.00",
+                                                    "status": "Belum Dibayar"
+                                                },
+                                                {
+                                                    "kode_tagihan": "TAG-2511-0002",
+                                                    "jenis_tagihan": {
+                                                        "id": 155,
+                                                        "nama": "SPP Januari",
+                                                        "jatuh_tempo": "1981-05-21",
+                                                        "jumlah": "81774.00"
+                                                    },
+                                                    "siswa": {
+                                                        "id": 135,
+                                                        "nis": "418165",
+                                                        "nama": "Jordon Raynor",
+                                                        "jenjang": "MI",
+                                                        "kelas": {
+                                                            "id": 147,
+                                                            "jenjang": "MI",
+                                                            "nama": "KELAS 1"
+                                                        },
+                                                        "kategori": {
+                                                            "id": 147,
+                                                            "nama": "Piatu"
+                                                        }
+                                                    },
+                                                    "tmp": "0.00",
+                                                    "status": "Belum Dibayar"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Siswa tidak ditemukan untuk filter.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "siswa tidak ditemukan."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validasi gagal.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                },
+                                "examples": {
+                                    "missingFields": {
+                                        "value": {
+                                            "errors": {
+                                                "jenis_tagihan_id": [
+                                                    "Jenis tagihan wajib diisi."
+                                                ],
+                                                "jenjang": [
+                                                    "Jenjang wajib diisi."
+                                                ],
+                                                "kelas_id": [
+                                                    "Kelas wajib diisi."
+                                                ],
+                                                "kategori_id": [
+                                                    "Kategori wajib diisi."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "invalidJenjang": {
+                                        "value": {
+                                            "errors": {
+                                                "jenjang": [
+                                                    "Jenjang harus salah satu dari MI, KB, atau TK."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "invalidRelasi": {
+                                        "value": {
+                                            "errors": {
+                                                "jenis_tagihan_id": [
+                                                    "Jenis tagihan tidak ditemukan."
+                                                ],
+                                                "kelas_id": [
+                                                    "Kelas tidak ditemukan."
+                                                ],
+                                                "kategori_id": [
+                                                    "Kategori tidak ditemukan."
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "unauthorized."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/tagihan/{kode_tagihan}": {
+            "get": {
+                "description": "Ambil detail satu tagihan.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Authorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/KodeTagihanPath"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detail ditemukan.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Tagihan"
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "data": {
+                                        "kode_tagihan": "TAG-2511-0001",
+                                        "jenis_tagihan": {
+                                            "id": 156,
+                                            "nama": "Pendaftaran",
+                                            "jatuh_tempo": "1972-06-12",
+                                            "jumlah": "50000.00"
+                                        },
+                                        "siswa": {
+                                            "id": 136,
+                                            "nis": "703389",
+                                            "nama": "Anastacio Wilkinson",
+                                            "jenjang": "MI",
+                                            "kelas": {
+                                                "id": 148,
+                                                "jenjang": "MI",
+                                                "nama": "KELAS 1"
+                                            },
+                                            "kategori": {
+                                                "id": 148,
+                                                "nama": "Piatu"
+                                            }
+                                        },
+                                        "tmp": "0.00",
+                                        "status": "Belum Dibayar"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tidak ditemukan.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "tagihan tidak ditemukan."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "unauthorized."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "description": "Ubah jenis_tagihan_id tagihan.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Authorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/KodeTagihanPath"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TagihanPatchRequest"
+                            },
+                            "example": {
+                                "jenis_tagihan_id": 158
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Update berhasil.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Tagihan"
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "data": {
+                                        "kode_tagihan": "TAG-2511-0001",
+                                        "jenis_tagihan": {
+                                            "id": 158,
+                                            "nama": "SPP Maret",
+                                            "jatuh_tempo": "2002-11-05",
+                                            "jumlah": "95346.00"
+                                        },
+                                        "siswa": {
+                                            "id": 137,
+                                            "nis": "976718",
+                                            "nama": "Andy Stoltenberg",
+                                            "jenjang": "MI",
+                                            "kelas": {
+                                                "id": 149,
+                                                "jenjang": "TK",
+                                                "nama": "KELAS 1"
+                                            },
+                                            "kategori": {
+                                                "id": 149,
+                                                "nama": "Yatim"
+                                            }
+                                        },
+                                        "tmp": "0.00",
+                                        "status": "Belum Dibayar"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tidak ditemukan.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "tagihan tidak ditemukan."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "unauthorized."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Hapus tagihan.",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/Authorization"
+                    },
+                    {
+                        "$ref": "#/components/parameters/KodeTagihanPath"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Berhasil dihapus.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                },
+                                "example": {
+                                    "data": true
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tidak ditemukan.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "tagihan tidak ditemukan."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Sudah dibayar / constraint delete gagal.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "tagihan sudah dibayar dan tidak dapat dihapus."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "errors": {
+                                        "message": [
+                                            "unauthorized."
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
