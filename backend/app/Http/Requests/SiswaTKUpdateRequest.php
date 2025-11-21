@@ -73,6 +73,33 @@ class SiswaTKUpdateRequest extends FormRequest
         ];
     }
 
+    public function messages(): array
+    {
+        return [
+            'nama.required' => 'Nama wajib diisi.',
+            'nama.max' => 'Nama maksimal 100 karakter.',
+            'nama.regex' => 'Nama hanya boleh berisi huruf dan spasi.',
+            'jenis_kelamin.required' => 'Jenis kelamin wajib diisi.',
+            'jenis_kelamin.in' => 'Jenis kelamin harus Laki-laki atau Perempuan.',
+            'tempat_lahir.required' => 'Tempat lahir wajib diisi.',
+            'tempat_lahir.max' => 'Tempat lahir maksimal 100 karakter.',
+            'tanggal_lahir.required' => 'Tanggal lahir wajib diisi.',
+            'tanggal_lahir.date' => 'Format tanggal lahir tidak valid.',
+            'tanggal_lahir.before' => 'Tanggal lahir harus sebelum hari ini.',
+            'tanggal_lahir.after' => 'Tanggal lahir terlalu lama.',
+            'agama.required' => 'Agama wajib diisi.',
+            'agama.max' => 'Agama maksimal 50 karakter.',
+            'alamat.required' => 'Alamat wajib diisi.',
+            'wali_id.required' => 'Wali wajib diisi.',
+            'wali_id.exists' => 'Wali tidak ditemukan.',
+            'kelas_id.required' => 'Kelas wajib diisi.',
+            'kelas_id.exists' => 'Kelas tidak ditemukan.',
+            'kategori_id.required' => 'Kategori wajib diisi.',
+            'kategori_id.exists' => 'Kategori tidak ditemukan.',
+            'status.in' => 'Status harus salah satu: Aktif, Lulus, Pindah, Keluar.'
+        ];
+    }
+
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response([

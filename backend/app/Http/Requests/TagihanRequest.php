@@ -14,7 +14,7 @@ class TagihanRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::user() != null;
+        return Auth::user() != null; // otorisasi dasar sudah dihandle middleware
     }
 
     /**
@@ -25,18 +25,36 @@ class TagihanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'jenis_tagihan_id'=>[
+            'jenis_tagihan_id' => [
                 'required',
+                'exists:jenis_tagihans,id'
             ],
-            'jenjang'=>[
+            'jenjang' => [
                 'required',
+                'in:MI,KB,TK'
             ],
-            'kelas_id'=>[
+            'kelas_id' => [
                 'required',
+                'exists:kelas,id'
             ],
-            'kategori_id'=>[
+            'kategori_id' => [
                 'required',
-            ]
+                'exists:kategoris,id'
+            ],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'jenis_tagihan_id.required' => 'Jenis tagihan wajib diisi.',
+            'jenis_tagihan_id.exists' => 'Jenis tagihan tidak ditemukan.',
+            'jenjang.required' => 'Jenjang wajib diisi.',
+            'jenjang.in' => 'Jenjang harus salah satu dari MI, KB, atau TK.',
+            'kelas_id.required' => 'Kelas wajib diisi.',
+            'kelas_id.exists' => 'Kelas tidak ditemukan.',
+            'kategori_id.required' => 'Kategori wajib diisi.',
+            'kategori_id.exists' => 'Kategori tidak ditemukan.',
         ];
     }
 

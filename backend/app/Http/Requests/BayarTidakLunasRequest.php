@@ -27,14 +27,30 @@ class BayarTidakLunasRequest extends FormRequest
         return [
             'jumlah'=>[
                 'required',
+                'numeric',
+                'min:1'
             ],
             'metode'=>[
                 'required',
+                'in:Tunai,Non-Tunai'
             ],
             'pembayar'=>[
                 'required',
                 'max:100'
             ]
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'jumlah.required' => 'Jumlah pembayaran wajib diisi.',
+            'jumlah.numeric' => 'Jumlah pembayaran harus berupa angka.',
+            'jumlah.min' => 'Jumlah pembayaran minimal 1.',
+            'metode.required' => 'Metode pembayaran wajib diisi.',
+            'metode.in' => 'Metode pembayaran harus Tunai atau Non-Tunai.',
+            'pembayar.required' => 'Nama pembayar wajib diisi.',
+            'pembayar.max' => 'Nama pembayar maksimal 100 karakter.'
         ];
     }
 

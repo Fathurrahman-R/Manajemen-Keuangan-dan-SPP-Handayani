@@ -42,6 +42,16 @@ class KategoriRequest extends FormRequest
         }
     }
 
+    public function messages(): array
+    {
+        return [
+            'nama.required' => 'Nama kategori wajib diisi.',
+            'nama.string' => 'Nama kategori harus berupa teks.',
+            'nama.min' => 'Nama kategori minimal 1 karakter.',
+            'nama.max' => 'Nama kategori maksimal 100 karakter.'
+        ];
+    }
+
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response([

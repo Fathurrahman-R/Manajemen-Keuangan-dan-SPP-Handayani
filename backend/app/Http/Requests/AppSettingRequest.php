@@ -4,6 +4,8 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Contracts\Validation\Validator; // ditambahkan
+use Illuminate\Http\Exceptions\HttpResponseException; // ditambahkan
 
 class AppSettingRequest extends FormRequest
 {
@@ -44,7 +46,6 @@ class AppSettingRequest extends FormRequest
             ],
             'telepon'=>[
                 'required',
-                'string',
                 'max:20',
 
             ],
@@ -60,18 +61,52 @@ class AppSettingRequest extends FormRequest
             ],
             'kode_pos'=>[
                 'required',
-                'string',
                 'max:15',
                 'regex:/[0-9]/'
             ],
             'logo'=>[
                 'required',
-                'string',
-                'max:255',
                 'file',
                 'mimes:png',
-                'max:2048',
             ]
         ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'nama_sekolah.required' => 'Nama sekolah wajib diisi.',
+            'nama_sekolah.string' => 'Nama sekolah harus berupa teks.',
+            'nama_sekolah.max' => 'Nama sekolah maksimal 255 karakter.',
+            'lokasi.required' => 'Lokasi wajib diisi.',
+            'lokasi.string' => 'Lokasi harus berupa teks.',
+            'lokasi.max' => 'Lokasi maksimal 100 karakter.',
+            'alamat.required' => 'Alamat wajib diisi.',
+            'email.required' => 'Email wajib diisi.',
+            'email.string' => 'Email harus berupa teks.',
+            'email.email' => 'Format email tidak valid.',
+            'email.max' => 'Email maksimal 100 karakter.',
+            'telepon.required' => 'Telepon wajib diisi.',
+            'telepon.max' => 'Telepon maksimal 20 karakter.',
+            'kepala_sekolah.required' => 'Nama kepala sekolah wajib diisi.',
+            'kepala_sekolah.string' => 'Nama kepala sekolah harus berupa teks.',
+            'kepala_sekolah.max' => 'Nama kepala sekolah maksimal 100 karakter.',
+            'bendahara.required' => 'Nama bendahara wajib diisi.',
+            'bendahara.string' => 'Nama bendahara harus berupa teks.',
+            'bendahara.max' => 'Nama bendahara maksimal 100 karakter.',
+            'kode_pos.required' => 'Kode pos wajib diisi.',
+            'kode_pos.max' => 'Kode pos maksimal 15 karakter.',
+            'kode_pos.regex' => 'Kode pos hanya boleh berisi angka.',
+            'logo.required' => 'Logo wajib diunggah.',
+            'logo.file' => 'Logo harus berupa file.',
+            'logo.mimes' => 'Logo harus berformat PNG.',
+        ];
+    }
+
+    protected function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(response([
+            'errors' => $validator->getMessageBag()
+        ], 400));
     }
 }

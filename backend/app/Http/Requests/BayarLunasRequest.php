@@ -27,11 +27,22 @@ class BayarLunasRequest extends FormRequest
         return [
             'metode'=>[
                 'required',
+                'in:Tunai,Non-Tunai'
             ],
             'pembayar'=>[
                 'required',
                 'max:100'
             ]
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'metode.required' => 'Metode pembayaran wajib diisi.',
+            'metode.in' => 'Metode pembayaran harus Tunai atau Non-Tunai.',
+            'pembayar.required' => 'Nama pembayar wajib diisi.',
+            'pembayar.max' => 'Nama pembayar maksimal 100 karakter.'
         ];
     }
 
