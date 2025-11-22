@@ -70,7 +70,7 @@ class PembayaranController extends Controller
 
         if (!$pembayaran || !$pembayaran->tagihan) {
             throw new HttpResponseException(response([
-                'errors' => [ 'message' => ['data tidak ditemukan.'] ]
+                'errors' => [ 'message' => ['pembayaran tidak ditemukan.'] ]
             ], 404));
         }
 
@@ -98,11 +98,11 @@ class PembayaranController extends Controller
         $pembayaran->delete();
 
         return response([
-            'data' => true,
-            'tmp_old' => $tagihanTmpSebelum,
-            'jumlah_bayar' => $pembayaran->jumlah,
-            'tmp_new' => $tmpBaru,
-            'status_new' => $statusBaru
+            'data' => true
+//            'tmp_old' => $tagihanTmpSebelum,
+//            'jumlah_bayar' => $pembayaran->jumlah,
+//            'tmp_new' => $tmpBaru,
+//            'status_new' => $statusBaru
         ])->setStatusCode(200);
     }
 
@@ -151,8 +151,8 @@ class PembayaranController extends Controller
                 'errors' => [
                     'message' => [
                         'jumlah pembayaran melebihi sisa/jumlah biaya tagihan.',
-                        "akumulasi: {$akumulasi}",
-                        "biaya tagihan: {$biaya_tagihan}"
+//                        "akumulasi: {$akumulasi}",
+//                        "biaya tagihan: {$biaya_tagihan}"
                     ]
                 ]
             ], 400));
