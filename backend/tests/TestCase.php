@@ -250,6 +250,43 @@ abstract class TestCase extends BaseTestCase
         return compact('user');
     }
 
+    protected function createKasHarianWithPrevMonth()
+    {
+        $user = \App\Models\User::factory()->create();
+        // Bulan sebelumnya (Desember 2024)
+        $wali = \App\Models\Wali::factory()->create();
+        $kelas = \App\Models\Kelas::factory()->create();
+        $kategori = \App\Models\Kategori::factory()->create();
+        $jt = \App\Models\JenisTagihan::factory()->create(['nama'=>'SPP','jumlah'=>100000]);
+        $siswa = \App\Models\Siswa::factory()
+            ->for($wali,'wali')
+            ->for($kelas,'kelas')
+            ->for($kategori,'kategori')
+            ->create(['jenjang'=>'MI']);
+        $tagihan = \App\Models\Tagihan::factory()->for($siswa,'siswa')->for($jt,'jenis_tagihan')->create();
+        // Transaksi bulan sebelumnya
+        \App\Models\Pembayaran::factory()->for($tagihan,'tagihan')->create([
+            'tanggal' => '2024-12-15',
+            'jumlah' => 75000,
+            'metode' => 'Tunai'
+        ]);
+        \App\Models\Pengeluaran::factory()->create([
+            'tanggal' => '2024-12-20',
+            'jumlah' => 25000
+        ]);
+        // Transaksi bulan target (Januari 2025)
+        \App\Models\Pembayaran::factory()->for($tagihan,'tagihan')->create([
+            'tanggal' => '2025-01-05',
+            'jumlah' => 50000,
+            'metode' => 'Tunai'
+        ]);
+        \App\Models\Pengeluaran::factory()->create([
+            'tanggal' => '2025-01-10',
+            'jumlah' => 10000
+        ]);
+        return compact('user');
+    }
+
     protected function createRekapBulanan()
     {
         $user = User::factory()->create();
@@ -298,6 +335,43 @@ abstract class TestCase extends BaseTestCase
             'jumlah' => 10000,
         ]);
 
+        return compact('user');
+    }
+
+    protected function createRekapBulananWithPrevYear()
+    {
+        $user = \App\Models\User::factory()->create();
+        $wali = \App\Models\Wali::factory()->create();
+        $kelas = \App\Models\Kelas::factory()->create();
+        $kategori = \App\Models\Kategori::factory()->create();
+        $jt = \App\Models\JenisTagihan::factory()->create(['nama'=>'SPP','jumlah'=>100000]);
+        $siswa = \App\Models\Siswa::factory()->for($wali,'wali')->for($kelas,'kelas')->for($kategori,'kategori')->create(['jenjang'=>'MI']);
+        $tagihan = \App\Models\Tagihan::factory()->for($siswa,'siswa')->for($jt,'jenis_tagihan')->create();
+        // Tahun sebelumnya (2024)
+        \App\Models\Pembayaran::factory()->for($tagihan,'tagihan')->create([
+            'tanggal'=>'2024-11-01',
+            'jumlah'=>60000,
+            'metode'=>'Tunai'
+        ]);
+        \App\Models\Pengeluaran::factory()->create([
+            'tanggal'=>'2024-12-01',
+            'jumlah'=>15000
+        ]);
+        // Tahun target (2025) beberapa bulan
+        \App\Models\Pembayaran::factory()->for($tagihan,'tagihan')->create([
+            'tanggal'=>'2025-01-10',
+            'jumlah'=>50000,
+            'metode'=>'Tunai'
+        ]);
+        \App\Models\Pembayaran::factory()->for($tagihan,'tagihan')->create([
+            'tanggal'=>'2025-02-05',
+            'jumlah'=>40000,
+            'metode'=>'Tunai'
+        ]);
+        \App\Models\Pengeluaran::factory()->create([
+            'tanggal'=>'2025-02-15',
+            'jumlah'=>10000
+        ]);
         return compact('user');
     }
 

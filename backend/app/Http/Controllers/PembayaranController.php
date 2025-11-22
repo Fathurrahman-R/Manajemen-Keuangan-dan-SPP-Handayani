@@ -171,7 +171,7 @@ class PembayaranController extends Controller
         return (new PembayaranResource($pembayaran))->response()->setStatusCode(200);
     }
 
-    public function kwitansi(string $kode_pembayaran)
+    public static function kwitansi(string $kode_pembayaran)
     {
         $pembayaran = Pembayaran::with(['tagihan'])->find($kode_pembayaran);
         if (!$pembayaran) {
@@ -179,6 +179,6 @@ class PembayaranController extends Controller
                 'errors' => [ 'message' => ['pembayaran tidak ditemukan.'] ]
             ], 404));
         }
-        return (new KwitansiResource($pembayaran))->response()->setStatusCode(200);
+        return (new KwitansiResource($pembayaran));
     }
 }
