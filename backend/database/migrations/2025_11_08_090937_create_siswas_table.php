@@ -30,7 +30,7 @@ return new class extends Migration
             $table->string('asal_sekolah',150)->nullable()->default(null);
             $table->string('kelas_diterima',10)->nullable()->default(null);
             $table->year('tahun_diterima')->nullable()->default(null);
-            $table->enum('status',['Aktif','Lulus','Pindah','Keluar'])->nullable(false)->default('Aktif');
+            $table->enum('status',['Aktif','Lulus','Pindah','Keluar'])->nullable()->default('Aktif');
             $table->text('keterangan')->nullable()->default(null);
             $table->timestamps();
         });
