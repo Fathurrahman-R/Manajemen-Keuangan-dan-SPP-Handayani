@@ -24,3 +24,5 @@ Homestead.yaml
 Thumbs.db
 
 /resources/views/vendor/**/*
+
+.env-default
