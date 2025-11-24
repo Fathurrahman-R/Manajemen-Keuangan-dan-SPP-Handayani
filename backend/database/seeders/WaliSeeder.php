@@ -15,7 +15,7 @@ class WaliSeeder extends Seeder
     {
         Wali::create([
             'id' => 1,
-            'nama' => 'Wali 1',
+            'nama' => 'Wali',
             'jenis_kelamin' => 'Laki-laki',
             'agama' => 'Islam',
             'pendidikan_terakhir' => 'SMA',

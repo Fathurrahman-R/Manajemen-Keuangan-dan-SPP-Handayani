@@ -18,7 +18,7 @@ class UserSeeder extends Seeder
            'username'=>'admin',
            'password'=>Hash::make('admin123'),
             'role'=>'admin',
-            'token'=>'test'
+            'token'=>null
         ]);
     }
 }

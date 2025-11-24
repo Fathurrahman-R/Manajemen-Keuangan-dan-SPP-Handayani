@@ -14,8 +14,8 @@ class SiswaSeeder extends Seeder
     public function run(): void
     {
         Siswa::create([
-            'nis'=>'000000',
-            'nisn'=>'000000',
+            'nis'=>'000001',
+            'nisn'=>'000001',
             'nama'=>'Siswa',
             'jenis_kelamin'=>'Laki-laki',
             'tempat_lahir'=>'Bandung',
@@ -28,8 +28,8 @@ class SiswaSeeder extends Seeder
             'jenjang'=>'MI',
             'kelas_id'=>1,
             'kategori_id'=>1,
-            'asal_sekolah'=>null,
-            'kelas_diterima'=>null,
+            'asal_sekolah'=>'MI Handayani',
+            'kelas_diterima'=>'Kelas 1',
             'tahun_diterima'=>null,
             'status'=>null,
             'keterangan'=>null
