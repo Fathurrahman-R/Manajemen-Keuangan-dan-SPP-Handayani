@@ -1,0 +1,222 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Laporan Kas API",
+        "description": "Endpoint untuk laporan kas harian (filter bulan+tahun) dan rekap bulanan (filter tahun). Format tanggal response mengikuti lokal Indonesia sesuai KasResource.",
+        "version": "1.0.0"
+    },
+    "servers": [
+        { "url": "http://localhost:8080" }
+    ],
+    "paths": {
+        "/api/laporan/kas": {
+            "get": {
+                "description": "Menampilkan daftar kas harian untuk satu bulan (running balance per tanggal). Jika tidak ada data mengembalikan array kosong.",
+                "parameters": [
+                    { "$ref": "#/components/parameters/Authorization" },
+                    {
+                        "name": "bulan",
+                        "in": "query",
+                        "description": "Bulan (1-12)",
+                        "required": true,
+                        "schema": { "type": "integer", "example": 1, "minimum": 1, "maximum": 12 }
+                    },
+                    {
+                        "name": "tahun",
+                        "in": "query",
+                        "description": "Tahun 4 digit",
+                        "required": true,
+                        "schema": { "type": "integer", "example": 2025 }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Daftar kas harian (bisa kosong).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": { "$ref": "#/components/schemas/KasHarianItem" }
+                                        }
+                                    },
+                                    "required": ["data"]
+                                },
+                                "examples": {
+                                    "nonEmpty": {
+                                        "value": {
+                                            "data": [
+                                                { "tanggal": "05 Januari 2025", "total_masuk": 1500000, "total_keluar": 0, "saldo": 1500000 },
+                                                { "tanggal": "10 Januari 2025", "total_masuk": 0, "total_keluar": 500000, "saldo": 1000000 },
+                                                { "tanggal": "15 Januari 2025", "total_masuk": 200000, "total_keluar": 0, "saldo": 1200000 }
+                                            ]
+                                        }
+                                    },
+                                    "empty": {
+                                        "value": { "data": [] }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validasi parameter gagal.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ValidationErrorResponseKas" },
+                                "examples": {
+                                    "missingParams": {
+                                        "value": { "errors": { "message": ["parameter bulan dan tahun wajib."] } }
+                                    },
+                                    "invalidMonth": {
+                                        "value": { "errors": { "bulan": ["bulan harus angka antara 1 sampai 12."] } }
+                                    },
+                                    "invalidYear": {
+                                        "value": { "errors": { "tahun": ["tahun harus 4 digit."] } }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                                "example": { "errors": { "message": ["unauthorized."] } }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/laporan/rekap": {
+            "get": {
+                "description": "Menampilkan rekap bulanan dalam satu tahun (running balance akhir tiap bulan). Jika tidak ada data mengembalikan array kosong.",
+                "parameters": [
+                    { "$ref": "#/components/parameters/Authorization" },
+                    {
+                        "name": "tahun",
+                        "in": "query",
+                        "description": "Tahun 4 digit",
+                        "required": true,
+                        "schema": { "type": "integer", "example": 2025 }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Daftar rekap bulanan (bisa kosong).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": { "$ref": "#/components/schemas/RekapBulananItem" }
+                                        }
+                                    },
+                                    "required": ["data"]
+                                },
+                                "examples": {
+                                    "nonEmpty": {
+                                        "value": {
+                                            "data": [
+                                                { "tanggal": "Januari 2025", "total_masuk": 1700000, "total_keluar": 500000, "saldo": 1200000 },
+                                                { "tanggal": "Februari 2025", "total_masuk": 800000, "total_keluar": 300000, "saldo": 1700000 }
+                                            ]
+                                        }
+                                    },
+                                    "empty": {
+                                        "value": { "data": [] }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validasi parameter gagal.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ValidationErrorResponseKas" },
+                                "examples": {
+                                    "missingYear": {
+                                        "value": { "errors": { "message": ["parameter tahun wajib."] } }
+                                    },
+                                    "invalidYear": {
+                                        "value": { "errors": { "tahun": ["tahun harus 4 digit."] } }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                                "example": { "errors": { "message": ["unauthorized."] } }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "parameters": {
+            "Authorization": {
+                "name": "Authorization",
+                "in": "header",
+                "description": "User token dari database",
+                "schema": { "type": "string", "example": "test" }
+            }
+        },
+        "schemas": {
+            "KasHarianItem": {
+                "type": "object",
+                "properties": {
+                    "tanggal": { "type": "string", "example": "05 Januari 2025" },
+                    "total_masuk": { "type": "number", "example": 1500000 },
+                    "total_keluar": { "type": "number", "example": 500000 },
+                    "saldo": { "type": "number", "example": 1000000 }
+                },
+                "required": ["tanggal", "total_masuk", "total_keluar", "saldo"],
+                "example": { "tanggal": "05 Januari 2025", "total_masuk": 1500000, "total_keluar": 0, "saldo": 1500000 }
+            },
+            "RekapBulananItem": {
+                "type": "object",
+                "properties": {
+                    "tanggal": { "type": "string", "example": "Januari 2025" },
+                    "total_masuk": { "type": "number", "example": 1700000 },
+                    "total_keluar": { "type": "number", "example": 500000 },
+                    "saldo": { "type": "number", "example": 1200000 }
+                },
+                "required": ["tanggal", "total_masuk", "total_keluar", "saldo"],
+                "example": { "tanggal": "Januari 2025", "total_masuk": 1700000, "total_keluar": 500000, "saldo": 1200000 }
+            },
+            "ErrorResponse": {
+                "type": "object",
+                "properties": {
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": { "type": "array", "items": { "type": "string" } },
+                        "example": { "message": ["unauthorized."] }
+                    }
+                }
+            },
+            "ValidationErrorResponseKas": {
+                "type": "object",
+                "properties": {
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": { "type": "array", "items": { "type": "string" } },
+                        "example": { "bulan": ["Bulan harus angka antara 1 sampai 12."], "tahun": ["Tahun harus 4 digit."], "message": ["Parameter bulan dan tahun wajib."] }
+                    }
+                }
+            }
+        }
+    }
+}
