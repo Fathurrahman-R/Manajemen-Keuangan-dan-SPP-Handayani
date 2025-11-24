@@ -19,21 +19,21 @@ class KasController extends Controller
         if (!$bulan || !$tahun) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'message' => ['Parameter bulan dan tahun wajib.']
+                    'message' => ['parameter bulan dan tahun wajib.']
                 ]
             ], 400));
         }
         if (!ctype_digit((string)$bulan) || (int)$bulan < 1 || (int)$bulan > 12) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'bulan' => ['Bulan harus angka antara 1 sampai 12.']
+                    'bulan' => ['bulan harus angka antara 1 sampai 12.']
                 ]
             ], 400));
         }
         if (!preg_match('/^\d{4}$/', (string)$tahun)) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'tahun' => ['Tahun harus 4 digit.']
+                    'tahun' => ['tahun harus 4 digit.']
                 ]
             ], 400));
         }
@@ -70,13 +70,13 @@ class KasController extends Controller
             $pengeluaran->keys()->toArray()
         ))->unique()->sort();
 
-        if ($dates->isEmpty()) {
-            throw new HttpResponseException(response()->json([
-                'errors' => [
-                    'message' => ['Data tidak ditemukan untuk filter yang diberikan.']
-                ]
-            ], 404));
-        }
+//        if ($dates->isEmpty()) {
+//            throw new HttpResponseException(response()->json([
+//                'errors' => [
+//                    'message' => ['Data tidak ditemukan untuk filter yang diberikan.']
+//                ]
+//            ], 404));
+//        }
 
         /*
         |--------------------------------------------------------------------------
@@ -119,14 +119,14 @@ class KasController extends Controller
         if (!$tahun) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'message' => ['Parameter tahun wajib.']
+                    'message' => ['parameter tahun wajib.']
                 ]
             ], 400));
         }
         if (!preg_match('/^\d{4}$/', (string)$tahun)) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'tahun' => ['Tahun harus 4 digit.']
+                    'tahun' => ['tahun harus 4 digit.']
                 ]
             ], 400));
         }
@@ -158,13 +158,13 @@ class KasController extends Controller
             $pengeluaran->keys()->toArray()
         ))->unique()->sort();
 
-        if ($months->isEmpty()) {
-            throw new HttpResponseException(response()->json([
-                'errors' => [
-                    'message' => ['Data tidak ditemukan untuk filter yang diberikan.']
-                ]
-            ], 404));
-        }
+//        if ($months->isEmpty()) {
+//            throw new HttpResponseException(response()->json([
+//                'errors' => [
+//                    'message' => ['Data tidak ditemukan untuk filter yang diberikan.']
+//                ]
+//            ], 404));
+//        }
 
         /*
         |--------------------------------------------------------------------------
