@@ -41,7 +41,7 @@ class PembayaranController extends Controller
 
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('kode_pembayaran','like',"{$search}%")
+                $q->where('kode_pembayaran','like',"%{$search}%")
                   ->orWhereHas('tagihan', function ($qq) use ($search) {
                       $qq->where('nis','like',"{$search}%")
                          ->orWhereHas('siswa', function ($qs) use ($search) {
