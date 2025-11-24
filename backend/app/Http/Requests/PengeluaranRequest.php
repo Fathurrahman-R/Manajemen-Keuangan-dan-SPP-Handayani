@@ -37,7 +37,7 @@ class PengeluaranRequest extends FormRequest
             'jumlah' => [
                 $requiredOrSometimes,
                 'numeric',
-                'decimal:12,2',
+                'regex:/^\d{1,11}(\.\d{1,2})?$/'
             ],
         ];
     }
@@ -52,7 +52,7 @@ class PengeluaranRequest extends FormRequest
             'uraian.string' => 'Uraian harus berupa teks.',
             'jumlah.required' => 'Jumlah wajib diisi.',
             'jumlah.numeric' => 'Jumlah harus berupa angka.',
-            'jumlah.decimal' => 'Format jumlah tidak valid (maks 12 digit dan 2 desimal).'
+            'jumlah.regex' => 'Format jumlah tidak valid (maks 12 digit dan 2 desimal).'
         ];
     }
 

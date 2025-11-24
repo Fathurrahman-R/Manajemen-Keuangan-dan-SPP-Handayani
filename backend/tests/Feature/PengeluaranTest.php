@@ -30,7 +30,7 @@ class PengeluaranTest extends TestCase
         $this->post('/api/pengeluaran', [
             'tanggal' => '2025-01-01',
             'uraian' => 'Pembelian ATK',
-            'jumlah' => 50000,
+            'jumlah' => 100000000000,
         ], [
             'Authorization' => $admin->token,
         ])->assertStatus(201)
@@ -46,7 +46,7 @@ class PengeluaranTest extends TestCase
         $this->post('/api/pengeluaran', [
             'tanggal' => '01-01-2025', // invalid format
             'uraian' => 'Pembelian ATK',
-            'jumlah' => 50000,
+            'jumlah' => 500000,
         ], [
             'Authorization' => $admin->token,
         ])->assertStatus(200)
