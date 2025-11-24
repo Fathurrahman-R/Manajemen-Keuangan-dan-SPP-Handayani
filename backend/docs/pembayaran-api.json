@@ -387,8 +387,8 @@
                                     "invalidJumlahType": {
                                         "value": {"errors": {"jumlah": ["Jumlah pembayaran harus berupa angka."]}}
                                     },
-                                    "invalidJumlahMin": {
-                                        "value": {"errors": {"jumlah": ["Jumlah pembayaran minimal 1."]}}
+                                    "invalidJumlahPattern": {
+                                        "value": {"errors": {"jumlah": ["Format jumlah tidak valid (maks 12 digit dan 2 desimal)."]}}
                                     },
                                     "pembayarMax": {
                                         "value": {"errors": {"pembayar": ["Nama pembayar maksimal 100 karakter."]}}
@@ -504,26 +504,19 @@
         },
         "/api/pembayaran/kwitansi/{kode_pembayaran}": {
             "get": {
-                "description": "Ambil data kwitansi pembayaran.",
+                "description": "Menghasilkan file PDF kwitansi.",
                 "parameters": [
                     {"$ref": "#/components/parameters/Authorization"},
                     {"$ref": "#/components/parameters/KodePembayaranPath"}
                 ],
                 "responses": {
                     "200": {
-                        "description": "Berhasil.",
+                        "description": "File PDF berhasil dibuat.",
                         "content": {
-                            "application/json": {
-                                "schema": {"type": "object", "properties": {"data": {"$ref": "#/components/schemas/Kwitansi"}}},
-                                "example": {
-                                    "data": {
-                                        "setting": {"nama_yayasan": "Yayasan ABC", "alamat": "Jl. Contoh No. 1"},
-                                        "tanggal": "2025-11-22",
-                                        "pembayar": "Orang Tua",
-                                        "jumlah": "50000.00",
-                                        "untuk": "Pembayaran SPP Januari (cicil)",
-                                        "sejumlah": "Lima Puluh Ribu Rupiah"
-                                    }
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
                                 }
                             }
                         }
