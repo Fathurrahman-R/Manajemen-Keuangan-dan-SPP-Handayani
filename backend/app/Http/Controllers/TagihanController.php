@@ -39,6 +39,18 @@ class TagihanController extends Controller
                   });
             });
         }
+        $jenjang = request('jenjang');
+        if ($jenjang) {
+            $query->where(function($q) use ($jenjang) {
+                $q->whereHas('siswa',function($qs) use ($jenjang){
+                    $qs->where('jenjang',$jenjang);
+                });
+            });
+        }
+        $status = request('status');
+        if ($status) {
+            $query->where('status',$status);
+        }
         $tagihan = $query->paginate(request('per_page',30));
         // Kembalikan langsung koleksi resource (status 200 meski kosong)
         return TagihanResource::collection($tagihan);
