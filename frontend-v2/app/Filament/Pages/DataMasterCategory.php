@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use Filament\Pages\Page;
 use UnitEnum;
 use BackedEnum;
+use Filament\Support\Enums\Alignment;
 
 class DataMasterCategory extends Page
 {
@@ -15,6 +16,8 @@ class DataMasterCategory extends Page
     protected static ?string $navigationLabel = 'Kategori';
 
     protected static ?string $title = 'Data Kategori';
+
+    protected ?Alignment $headerActionsAlignment = Alignment::End;
 
     protected static ?int $navigationSort = 3;
 }

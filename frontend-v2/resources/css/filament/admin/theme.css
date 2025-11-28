@@ -3,3 +3,7 @@
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';
 @source '../../../../resources/views/livewire/**/*.blade.php';
+
+.fi-sidebar-nav {
+    @apply bg-white shadow-lg
+}
