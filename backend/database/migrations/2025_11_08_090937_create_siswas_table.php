@@ -21,8 +21,8 @@ return new class extends Migration
             $table->date('tanggal_lahir')->nullable(false);
             $table->string('agama',50)->nullable(false);
             $table->text('alamat')->nullable(false);
-            $table->foreignId('ayah_id')->nullable()->constrained('walis')->onUpdate('cascade');
-            $table->foreignId('ibu_id')->nullable()->constrained('walis')->onUpdate('cascade');
+            $table->foreignId('ayah_id')->nullable()->constrained('ayah')->onUpdate('cascade')->onDelete('cascade');
+            $table->foreignId('ibu_id')->nullable()->constrained('ibu')->onUpdate('cascade')->onDelete('cascade');
             $table->foreignId('wali_id')->nullable()->constrained('walis')->onUpdate('cascade');
             $table->enum('jenjang',['TK','MI','KB'])->nullable(false);
             $table->foreignId('kelas_id')->nullable()->constrained('kelas')->onUpdate('cascade');
