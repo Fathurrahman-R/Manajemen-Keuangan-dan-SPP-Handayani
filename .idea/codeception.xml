@@ -6,6 +6,9 @@
         <Configuration>
           <option name="path" value="$PROJECT_DIR$/frontend-v2/tests" />
         </Configuration>
+        <Configuration>
+          <option name="path" value="$PROJECT_DIR$/backend/tests" />
+        </Configuration>
       </list>
     </option>
   </component>

@@ -12,6 +12,7 @@
       <sourceFolder url="file://$MODULE_DIR$/frontend-v2/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/frontend-v2/tests/Feature" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/frontend-v2/tests/Unit" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/backend/spec" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/brick/math" />
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/carbonphp/carbon-doctrine-types" />
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/composer" />
@@ -302,6 +303,9 @@
       <excludeFolder url="file://$MODULE_DIR$/frontend-v2/vendor/webmozart/assert" />
       <excludeFolder url="file://$MODULE_DIR$/frontend-v2/vendor/wire-elements/modal" />
       <excludeFolder url="file://$MODULE_DIR$/frontend-v2/vendor/wireui/phosphoricons" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/dedoc/scramble" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/phpstan/phpdoc-parser" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/spatie/laravel-package-tools" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
