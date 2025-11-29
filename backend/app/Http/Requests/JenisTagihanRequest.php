@@ -30,20 +30,20 @@ class JenisTagihanRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'nama.required' => 'Nama wajib diisi.',
-            'nama.min' => 'Nama minimal 3 karakter.',
-            'nama.max' => 'Nama maksimal 100 karakter.',
-            'jatuh_tempo.required' => 'Jatuh tempo wajib diisi.',
-            'jatuh_tempo.date' => 'Format tanggal tidak valid.',
-            'jatuh_tempo.date_format' => 'Format tanggal harus Y-m-d.',
-            'jumlah.required' => 'Jumlah wajib diisi.',
-            'jumlah.numeric' => 'Jumlah harus numerik.',
-            'jumlah.regex' => 'Format jumlah tidak valid (maks 10 digit dan 2 desimal).',
-        ];
-    }
+//    public function messages(): array
+//    {
+//        return [
+//            'nama.required' => 'Nama wajib diisi.',
+//            'nama.min' => 'Nama minimal 3 karakter.',
+//            'nama.max' => 'Nama maksimal 100 karakter.',
+//            'jatuh_tempo.required' => 'Jatuh tempo wajib diisi.',
+//            'jatuh_tempo.date' => 'Format tanggal tidak valid.',
+//            'jatuh_tempo.date_format' => 'Format tanggal harus Y-m-d.',
+//            'jumlah.required' => 'Jumlah wajib diisi.',
+//            'jumlah.numeric' => 'Jumlah harus numerik.',
+//            'jumlah.regex' => 'Format jumlah tidak valid (maks 10 digit dan 2 desimal).',
+//        ];
+//    }
 
     protected function failedValidation(Validator $validator)
     {

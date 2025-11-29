@@ -29,16 +29,16 @@ class UserLoginRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'username.required' => 'Username wajib diisi.',
-            'username.max' => 'Username maksimal 100 karakter.',
-            'password.required' => 'Password wajib diisi.',
-            'password.min' => 'Password minimal 8 karakter.',
-            'password.max' => 'Password maksimal 100 karakter.'
-        ];
-    }
+//    public function messages(): array
+//    {
+//        return [
+//            'username.required' => 'Username wajib diisi.',
+//            'username.max' => 'Username maksimal 100 karakter.',
+//            'password.required' => 'Password wajib diisi.',
+//            'password.min' => 'Password minimal 8 karakter.',
+//            'password.max' => 'Password maksimal 100 karakter.'
+//        ];
+//    }
 
     protected function failedValidation(Validator $validator)
     {

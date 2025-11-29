@@ -42,15 +42,15 @@ class KelasRequest extends FormRequest
         }
     }
 
-    public function messages(): array
-    {
-        return [
-            'nama.required' => 'Nama kelas wajib diisi.',
-            'nama.string' => 'Nama kelas harus berupa teks.',
-            'nama.min' => 'Nama kelas minimal 1 karakter.',
-            'nama.max' => 'Nama kelas maksimal 100 karakter.'
-        ];
-    }
+//    public function messages(): array
+//    {
+//        return [
+//            'nama.required' => 'Nama kelas wajib diisi.',
+//            'nama.string' => 'Nama kelas harus berupa teks.',
+//            'nama.min' => 'Nama kelas minimal 1 karakter.',
+//            'nama.max' => 'Nama kelas maksimal 100 karakter.'
+//        ];
+//    }
 
     protected function failedValidation(Validator $validator)
     {
