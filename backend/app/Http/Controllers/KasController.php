@@ -5,11 +5,16 @@ namespace App\Http\Controllers;
 use App\Http\Resources\KasResource;
 use App\Models\Pembayaran;
 use App\Models\Pengeluaran;
+use Dedoc\Scramble\Attributes\HeaderParameter;
+use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 
 class KasController extends Controller
 {
+    #[HeaderParameter('Authorization')]
+    #[QueryParameter('bulan', description: 'Filter bulan dalam angka (1-12)', required: true, example: 11)]
+    #[QueryParameter('tahun', description: 'Filter tahun dalam 4 digit', required: true, example: 2025)]
     public function kasHarian(Request $request)
     {
         $bulan = $request->bulan;
@@ -87,19 +92,19 @@ class KasController extends Controller
 
         foreach ($dates as $tanggal) {
 
-            $masuk  = $pemasukan[$tanggal]->total ?? 0;
-            $keluar = $pengeluaran[$tanggal]->total ?? 0;
+            (float)$masuk  = $pemasukan[$tanggal]->total ?? 0;
+            (float)$keluar = $pengeluaran[$tanggal]->total ?? 0;
 
             // ❗ SALDO GLOBAL — sesuai buku kas
-            $saldoGlobal =
+            (float)$saldoGlobal =
                 Pembayaran::whereDate('tanggal', '<=', $tanggal)->sum('jumlah')
                 - Pengeluaran::whereDate('tanggal', '<=', $tanggal)->sum('jumlah');
 
             $kas[] = (object) [
                 'tanggal'      => \Carbon\Carbon::parse($tanggal)->locale('id')->translatedFormat('d F Y'),
-                'total_masuk'  => $masuk,
-                'total_keluar' => $keluar,
-                'saldo'        => $saldoGlobal
+                'total_masuk'  => floatval($masuk),
+                'total_keluar' => floatval($keluar),
+                'saldo'        => floatval($saldoGlobal),
             ];
         }
 
@@ -112,6 +117,9 @@ class KasController extends Controller
 
         return KasResource::collection($kas);
     }
+
+    #[HeaderParameter('Authorization')]
+    #[QueryParameter('tahun', description: 'Filter tahun dalam 4 digit', required: true, example: 2025)]
     public function rekapBulanan(Request $request)
     {
         $tahun = $request->tahun;

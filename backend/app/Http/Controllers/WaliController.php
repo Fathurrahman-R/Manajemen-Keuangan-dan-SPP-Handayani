@@ -9,9 +9,14 @@ use App\Models\Wali;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Dedoc\Scramble\Attributes\HeaderParameter;
+use Dedoc\Scramble\Attributes\QueryParameter;
 
 class WaliController extends Controller
 {
+    #[HeaderParameter('Authorization')]
+    #[QueryParameter('search', description: 'Cari wali berdasarkan nama', required: false, example: 'Budi')]
+    #[QueryParameter('per_page', description: 'Jumlah data per halaman', required: false, example: 30)]
     public function index()
     {
         $search = request('search');
@@ -29,6 +34,7 @@ class WaliController extends Controller
         return WaliResource::collection($paginated);
     }
 
+    #[HeaderParameter('Authorization')]
     public function create(WaliRequest $request)
     {
         $data = $request->validated();
@@ -38,6 +44,7 @@ class WaliController extends Controller
         return (new WaliResource($wali))->response()->setStatusCode(201);
     }
 
+    #[HeaderParameter('Authorization')]
     public function get(string $id)
     {
         $wali = Wali::query()->find($id);
@@ -54,6 +61,7 @@ class WaliController extends Controller
         return (new WaliResource($wali))->response()->setStatusCode(200);
     }
 
+    #[HeaderParameter('Authorization')]
     public function update(WaliRequest $request, string $id)
     {
         $auth = Auth::user();
@@ -73,6 +81,7 @@ class WaliController extends Controller
         return (new WaliResource($wali))->response()->setStatusCode(200);
     }
 
+    #[HeaderParameter('Authorization')]
     public function delete(string $id)
     {
         $wali = Wali::find($id);

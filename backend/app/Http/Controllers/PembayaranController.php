@@ -10,12 +10,17 @@ use App\Http\Resources\TagihanResource;
 use App\Models\Pembayaran;
 use App\Models\Tagihan;
 use App\Services\GenerateKodePembayaran;
+use Dedoc\Scramble\Attributes\HeaderParameter;
+use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class PembayaranController extends Controller
 {
+    #[HeaderParameter('Authorization')]
+    #[QueryParameter('search', description: 'Pencarian kode_pembayaran / nama / nis', required: false, example: 'PAY-2025')]
+    #[QueryParameter('per_page', description: 'Jumlah data per halaman', required: false, example: 30)]
     public function index()
     {
         $user = Auth::user();
@@ -53,10 +58,10 @@ class PembayaranController extends Controller
 
         $pembayaran = $query->paginate($perPage);
 
-        // Jangan lempar 404 bila kosong; kembalikan collection kosong (untuk dokumentasi)
         return PembayaranResource::collection($pembayaran);
     }
 
+    #[HeaderParameter('Authorization')]
     public function delete(string $kode_pembayaran)
     {
         $pembayaran = Pembayaran::with([
@@ -106,6 +111,7 @@ class PembayaranController extends Controller
         ])->setStatusCode(200);
     }
 
+    #[HeaderParameter('Authorization')]
     public function lunas(BayarLunasRequest $request, string $kode_tagihan)
     {
         $data = $request->validated();
@@ -129,6 +135,7 @@ class PembayaranController extends Controller
         return (new PembayaranResource($pembayaran))->response()->setStatusCode(200);
     }
 
+    #[HeaderParameter('Authorization')]
     public function bayar(BayarTidakLunasRequest $request, string $kode_tagihan)
     {
         $data = $request->validated();
@@ -171,6 +178,7 @@ class PembayaranController extends Controller
         return (new PembayaranResource($pembayaran))->response()->setStatusCode(200);
     }
 
+    #[HeaderParameter('Authorization')]
     public static function kwitansi(string $kode_pembayaran)
     {
         $pembayaran = Pembayaran::with(['tagihan'])->find($kode_pembayaran);

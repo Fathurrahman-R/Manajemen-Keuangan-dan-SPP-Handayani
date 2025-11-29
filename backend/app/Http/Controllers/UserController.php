@@ -7,6 +7,7 @@ use App\Http\Requests\UserRegisterRequest;
 use App\Http\Requests\UserUpdateRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
+    #[HeaderParameter('Authorization')]
     public function register(UserRegisterRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -67,6 +69,7 @@ class UserController extends Controller
         return new UserResource($user);
     }
 
+    #[HeaderParameter('Authorization')]
     public function get(Request $request): UserResource
     {
         $user = Auth::user();
@@ -81,6 +84,7 @@ class UserController extends Controller
         return new UserResource($user);
     }
 
+    #[HeaderParameter('Authorization')]
     public function update(UserUpdateRequest $request): UserResource
     {
         $data = $request->validated();
@@ -101,6 +105,7 @@ class UserController extends Controller
         return new UserResource($user);
     }
 
+    #[HeaderParameter('Authorization')]
     public function logout(Request $request): JsonResponse
     {
         $user = Auth::user();

@@ -10,13 +10,20 @@ use App\Models\Pembayaran;
 use App\Models\Siswa;
 use App\Models\Tagihan;
 use App\Services\GenerateKodeTagihan;
+use Dedoc\Scramble\Attributes\HeaderParameter;
+use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Throwable;
 
 class TagihanController extends Controller
 {
+    #[QueryParameter('search', description: 'Pencarian kode_tagihan / nama / nis', required: false, example: 'TAG-2025')]
+    #[QueryParameter('jenjang', description: 'Filter jenjang (TK/MI/KB)', required: false, example: 'MI')]
+    #[QueryParameter('status', description: 'Filter status tagihan (Lunas/Belum Lunas)', required: false, example: 'Belum Lunas')]
+    #[QueryParameter('per_page', description: 'Jumlah data per halaman', required: false, example: 30)]
     public function index()
     {
         $user = Auth::user();
@@ -56,6 +63,7 @@ class TagihanController extends Controller
         return TagihanResource::collection($tagihan);
     }
 
+    #[HeaderParameter('Authorization')]
     public function get(string $kode_tagihan)
     {
         $tagihan = Tagihan::with([
@@ -70,6 +78,7 @@ class TagihanController extends Controller
         return (new TagihanResource($tagihan))->response()->setStatusCode(200);
     }
 
+    #[HeaderParameter('Authorization')]
     public function create(TagihanRequest $request)
     {
         $data = $request->validated();
@@ -98,6 +107,7 @@ class TagihanController extends Controller
         return TagihanResource::collection($created)->response()->setStatusCode(201);
     }
 
+    #[HeaderParameter('Authorization')]
     public function update(Request $request, string $kode_tagihan)
     {
         $tagihan = Tagihan::find($kode_tagihan);
@@ -114,6 +124,7 @@ class TagihanController extends Controller
         return (new TagihanResource($tagihan))->response()->setStatusCode(200);
     }
 
+    #[HeaderParameter('Authorization')]
     public function delete(string $kode_tagihan)
     {
         $tagihan = Tagihan::query()->find($kode_tagihan);
@@ -132,6 +143,7 @@ class TagihanController extends Controller
         return response(['data' => true])->setStatusCode(200);
     }
 
+    #[HeaderParameter('Authorization')]
     public static function lunas(BayarLunasRequest $request, string $kode_tagihan)
     {
         $tagihan = Tagihan::with(['siswa','jenis_tagihan'])->find($kode_tagihan);
@@ -145,6 +157,7 @@ class TagihanController extends Controller
         return $jumlah;
     }
 
+    #[HeaderParameter('Authorization')]
     public static function bayar(BayarTidakLunasRequest $request, string $kode_tagihan)
     {
         $data = $request->validated();
