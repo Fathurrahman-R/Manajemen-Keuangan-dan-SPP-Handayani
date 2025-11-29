@@ -24,6 +24,13 @@ class Pembayaran extends Model
         'pembayar'
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'jumlah' => 'float',
+        ];
+    }
+
     public function tagihan()
     {
         return $this->belongsTo(Tagihan::class, 'kode_tagihan', 'kode_tagihan');
