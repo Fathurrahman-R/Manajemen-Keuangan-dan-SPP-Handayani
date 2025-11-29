@@ -28,12 +28,12 @@ class UserUpdateRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'password.max' => 'Password maksimal 100 karakter.'
-        ];
-    }
+//    public function messages(): array
+//    {
+//        return [
+//            'password.max' => 'Password maksimal 100 karakter.'
+//        ];
+//    }
 
     protected function failedValidation(Validator $validator)
     {
