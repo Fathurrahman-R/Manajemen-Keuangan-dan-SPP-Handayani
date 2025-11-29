@@ -2,9 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\SiswaRequest;
 use App\Http\Resources\SiswaMIResource;
+use App\Http\Resources\SiswaResource;
+use App\Models\Ayah;
+use App\Models\Ibu;
 use App\Models\Siswa;
 use App\Models\User;
+use App\Models\Wali;
+use Dedoc\Scramble\Attributes\HeaderParameter;
+use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,67 +19,13 @@ use Illuminate\Support\Facades\Hash;
 
 class SiswaController extends Controller
 {
-    protected function resolveRequest(string $jenjang)
-    {
-        return match (strtoupper($jenjang)) {
-            'TK' => app(\App\Http\Requests\SiswaTKRequest::class),
-            'MI' => app(\App\Http\Requests\SiswaMIRequest::class),
-            'KB' => app(\App\Http\Requests\SiswaKBRequest::class),
-            default => throw new HttpResponseException(response([
-                "errors" => [
-                    "message" => [
-                        "jenjang tidak ditemukan."
-                    ]
-                ]
-            ], 404)),
-        };
-    }
-    protected function resolveUpdateRequest(string $jenjang)
-    {
-        return match (strtoupper($jenjang)) {
-            'TK' => app(\App\Http\Requests\SiswaTKUpdateRequest::class),
-            'MI' => app(\App\Http\Requests\SiswaMIUpdateRequest::class),
-            'KB' => app(\App\Http\Requests\SiswaKBUpdateRequest::class),
-            default => throw new HttpResponseException(response([
-                "errors" => [
-                    "message" => [
-                        "jenjang tidak ditemukan."
-                    ]
-                ]
-            ], 404)),
-        };
-    }
-
-    protected function resolveResource(string $jenjang)
-    {
-        return match (strtoupper($jenjang)) {
-            'TK' => \App\Http\Resources\SiswaTKResource::class,
-            'MI' => \App\Http\Resources\SiswaMIResource::class,
-            'KB' => \App\Http\Resources\SiswaKBResource::class,
-            default => throw new HttpResponseException(response([
-                "errors" => [
-                    "message" => [
-                        "jenjang tidak ditemukan."
-                    ]
-                ]
-            ], 404)),
-        };
-    }
-
+    #[HeaderParameter('Authorization')]
+    #[QueryParameter('search')]
     public function index(string $jenjang)
     {
-        $auth = Auth::user();
-        $baseQuery = Siswa::with([
-            'ayah',
-            'ibu',
-            'wali',
-            'kelas',
-            'kategori'
-        ])->where('jenjang', strtoupper($jenjang));
-
+        $baseQuery = Siswa::with(['ayah','ibu','wali','kelas','kategori'])
+            ->where('jenjang', strtoupper($jenjang));
         $query = clone $baseQuery;
-
-        // search by nama | nis | nisn (khusus MI)
         $term = request('search', request('q'));
         if ($term) {
             $query->where(function ($q) use ($term, $jenjang) {
@@ -83,117 +36,156 @@ class SiswaController extends Controller
                 }
             });
         }
-
         $siswa = $query->paginate(request('per_page', 30));
-        // jika ada data di jenjang tsb tetapi hasil search kosong,
-        // kembalikan 200 dengan data kosong (paginator tetap)
-
-        $resource = $this->resolveResource($jenjang);
-        return $resource::collection($siswa);
+        return SiswaResource::collection($siswa);
     }
 
-    public function create(string $jenjang)
+    #[HeaderParameter('Authorization')]
+    public function create(SiswaRequest $request,string $jenjang)
     {
-        $auth = Auth::user();
-        $request = $this->resolveRequest($jenjang);
         $data = $request->validated();
 
-        // cek nis terdaftar
         $exists = Siswa::where('jenjang', strtoupper($jenjang))
-            ->where(function ($q) use ($data) {
-                $q->where('nis', $data['nis']);
-            })
+            ->where('nis', $data['nis'])
             ->exists();
-
         if ($exists) {
             throw new HttpResponseException(response([
-                "errors" => [
-                    "message" => [
-                        "siswa dengan NIS tersebut sudah terdaftar."
-                    ]
-                ]
+                "errors" => ["message" => ["siswa dengan NIS tersebut sudah terdaftar."]]
             ], 400));
         }
 
+        // build related models from nested fields
+        if(strtoupper($jenjang)!== 'MI')
+        {
+            $wali = new Wali([
+                'nama' => $data['wali_nama'],
+                'pekerjaan' => $data['wali_pekerjaan'] ?? null,
+                'alamat' => $data['wali_alamat'],
+                'no_hp' => $data['wali_no_hp'],
+                'keterangan' => $data['wali_keterangan'] ?? null,
+            ]);
+            $wali->save();
+            $waliId = $wali->id;
+        }
+
+        $ayahId = null; $ibuId = null; $waliId = null;
+        if (strtoupper($jenjang) === 'MI') {
+            $ayah = new Ayah([
+                'nama' => $data['ayah_nama'],
+                'pendidikan' => $data['ayah_pendidikan'] ?? null,
+                'pekerjaan' => $data['ayah_pekerjaan'] ?? null,
+            ]);
+            $ayah->save();
+            $ayahId = $ayah->id;
+            $ibu = new Ibu([
+                'nama' => $data['ibu_nama'],
+                'pendidikan' => $data['ibu_pendidikan'] ?? null,
+                'pekerjaan' => $data['ibu_pekerjaan'] ?? null,
+            ]);
+            $ibu->save();
+            $ibuId = $ibu->id;
+        }
+
+
+        $siswa = new Siswa($data);
+        $siswa->jenjang = strtoupper($jenjang);
+        if ($ayahId) { $siswa->ayah_id = $ayahId; }
+        if ($ibuId) { $siswa->ibu_id = $ibuId; }
+        if ($waliId) { $siswa->wali_id = $waliId; }
+        $siswa->save();
         $user = new User();
         $user->username = $data['nis'];
         $user->password = Hash::make($data['tanggal_lahir']);
         $user->save();
-        $siswa = new Siswa($data);
-        $siswa->jenjang = strtoupper($jenjang);
-        $siswa->save();
         $siswa->refresh();
-        $siswa->load(['ayah', 'ibu', 'wali', 'kelas', 'kategori']);
-        $resource = $this->resolveResource($jenjang);
-        return (new $resource($siswa))->response()->setStatusCode(201);
+        $siswa->load(['ayah','ibu','wali','kelas','kategori']);
+
+        return (new SiswaResource($siswa))->response()->setStatusCode(201);
     }
 
-    public function update(string $jenjang, string $id)
+    #[HeaderParameter('Authorization')]
+    public function update(SiswaRequest $request, string $jenjang, string $id)
     {
-        $auth = Auth::user();
-        $request = $this->resolveUpdateRequest($jenjang);
         $data = $request->validated();
-
         $siswa = Siswa::where('id', $id)->first();
         if (!$siswa || strtoupper($siswa->jenjang) !== strtoupper($jenjang)) {
             throw new HttpResponseException(response([
-                "errors" => [
-                    "message" => [
-                        "siswa tidak ditemukan."
-                    ]
-                ]
+                "errors" => ["message" => ["siswa tidak ditemukan."]]
             ], 404));
         }
-        $siswa->jenjang = strtoupper($jenjang);
-        $siswa->update($data);
 
-        $resource = $this->resolveResource($jenjang);
-        return (new $resource($siswa))->response()->setStatusCode(200);
+        // update related models
+        if ($siswa->wali_id) {
+            $wali = Wali::find($siswa->wali_id);
+            if ($wali) {
+                $wali->update([
+                    'nama' => $data['wali_nama'],
+                    'pekerjaan' => $data['wali_pekerjaan'] ?? null,
+                    'alamat' => $data['wali_alamat'],
+                    'no_hp' => $data['wali_no_hp'],
+                    'keterangan' => $data['wali_keterangan'] ?? null,
+                ]);
+            }
+        }
+        if (strtoupper($jenjang) === 'MI') {
+            if ($siswa->ayah_id) {
+                $ayah = Ayah::find($siswa->ayah_id);
+                if ($ayah) {
+                    $ayah->update([
+                        'nama' => $data['ayah_nama'],
+                        'pendidikan' => $data['ayah_pendidikan'] ?? null,
+                        'pekerjaan' => $data['ayah_pekerjaan'] ?? null,
+                    ]);
+                }
+            }
+            if ($siswa->ibu_id) {
+                $ibu = Ibu::find($siswa->ibu_id);
+                if ($ibu) {
+                    $ibu->update([
+                        'nama' => $data['ibu_nama'],
+                        'pendidikan' => $data['ibu_pendidikan'] ?? null,
+                        'pekerjaan' => $data['ibu_pekerjaan'] ?? null,
+                    ]);
+                }
+            }
+        }
+
+        // update siswa main fields excluding nested inputs
+        $updateFields = collect($data)->except([
+            'wali_nama','wali_pekerjaan','wali_alamat','wali_no_hp','wali_keterangan',
+            'ayah_nama','ayah_pendidikan','ayah_pekerjaan','ibu_nama','ibu_pendidikan','ibu_pekerjaan'
+        ])->toArray();
+        $siswa->update($updateFields);
+
+        return (new SiswaResource($siswa->load(['ayah','ibu','wali','kelas','kategori'])))->response()->setStatusCode(200);
     }
 
+    #[HeaderParameter('Authorization')]
     public function get(string $jenjang, string $id)
     {
-        $auth = Auth::user();
-
         $siswa = Siswa::where('jenjang', strtoupper($jenjang))->find($id);
         if (!$siswa) {
             throw new HttpResponseException(response([
-                "errors" => [
-                    "message" => [
-                        "siswa tidak ditemukan."
-                    ]
-                ]
+                "errors" => ["message" => ["siswa tidak ditemukan."]]
             ], 404));
         }
-        $resource = $this->resolveResource($jenjang);
-        return (new $resource($siswa))->response()->setStatusCode(200);
+        return (new SiswaResource($siswa->load(['ayah','ibu','wali','kelas','kategori'])))->response()->setStatusCode(200);
     }
 
+    #[HeaderParameter('Authorization')]
     public function delete(string $jenjang, string $id)
     {
-        $auth = Auth::user();
         $siswa = Siswa::where('id', $id)->where('jenjang', $jenjang)->first();
-
         if (!$siswa) {
             throw new HttpResponseException(response([
-                "errors" => [
-                    "message" => [
-                        "siswa tidak ditemukan."
-                    ]
-                ]
+                "errors" => ["message" => ["siswa tidak ditemukan."]]
             ], 404));
         }
-
         $user = User::where('username', $siswa->nis)->first();
+        if ($user) { $user->delete(); }
 
-        if ($user) {
-            $user->delete();
-        }
-
+        // optionally delete related (cascade already on ayah/ibu, wali not cascade) -> keep wali for other siblings? retain.
         $siswa->delete();
-
-        return response([
-            'data' => true
-        ])->setStatusCode(200);
+        return response(['data' => true])->setStatusCode(200);
     }
 }
