@@ -28,7 +28,7 @@ class BayarTidakLunasRequest extends FormRequest
             'jumlah'=>[
                 'required',
                 'numeric',
-                'min:1'
+                'regex:/^\d{1,11}(\.\d{1,2})?$/'
             ],
             'metode'=>[
                 'required',
@@ -41,18 +41,18 @@ class BayarTidakLunasRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'jumlah.required' => 'Jumlah pembayaran wajib diisi.',
-            'jumlah.numeric' => 'Jumlah pembayaran harus berupa angka.',
-            'jumlah.min' => 'Jumlah pembayaran minimal 1.',
-            'metode.required' => 'Metode pembayaran wajib diisi.',
-            'metode.in' => 'Metode pembayaran harus Tunai atau Non-Tunai.',
-            'pembayar.required' => 'Nama pembayar wajib diisi.',
-            'pembayar.max' => 'Nama pembayar maksimal 100 karakter.'
-        ];
-    }
+//    public function messages(): array
+//    {
+//        return [
+//            'jumlah.required' => 'Jumlah pembayaran wajib diisi.',
+//            'jumlah.numeric' => 'Jumlah pembayaran harus berupa angka.',
+//            'jumlah.regex' => 'Format jumlah tidak valid (maks 12 digit dan 2 desimal).',
+//            'metode.required' => 'Metode pembayaran wajib diisi.',
+//            'metode.in' => 'Metode pembayaran harus Tunai atau Non-Tunai.',
+//            'pembayar.required' => 'Nama pembayar wajib diisi.',
+//            'pembayar.max' => 'Nama pembayar maksimal 100 karakter.'
+//        ];
+//    }
 
     protected function failedValidation(Validator $validator)
     {

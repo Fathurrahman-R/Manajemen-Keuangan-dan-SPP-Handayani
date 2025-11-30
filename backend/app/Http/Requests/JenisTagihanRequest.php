@@ -26,24 +26,24 @@ class JenisTagihanRequest extends FormRequest
         return [
             'nama' => ['required','string','min:3','max:100'],
             'jatuh_tempo' => ['required','date','date_format:Y-m-d'],
-            'jumlah' => ['required','numeric','regex:/^\d{1,10}(\.\d{1,2})?$/'],
+            'jumlah' => ['required','numeric','regex:/^\d{1,11}(\.\d{1,2})?$/'],
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'nama.required' => 'nama wajib diisi.',
-            'nama.min' => 'nama minimal 3 karakter.',
-            'nama.max' => 'nama maksimal 100 karakter.',
-            'jatuh_tempo.required' => 'jatuh_tempo wajib diisi.',
-            'jatuh_tempo.date' => 'format tanggal tidak valid.',
-            'jatuh_tempo.date_format' => 'format tanggal harus Y-m-d.',
-            'jumlah.required' => 'jumlah wajib diisi.',
-            'jumlah.numeric' => 'jumlah harus numerik.',
-            'jumlah.regex' => 'format jumlah tidak valid (maks 10 digit dan 2 desimal).',
-        ];
-    }
+//    public function messages(): array
+//    {
+//        return [
+//            'nama.required' => 'Nama wajib diisi.',
+//            'nama.min' => 'Nama minimal 3 karakter.',
+//            'nama.max' => 'Nama maksimal 100 karakter.',
+//            'jatuh_tempo.required' => 'Jatuh tempo wajib diisi.',
+//            'jatuh_tempo.date' => 'Format tanggal tidak valid.',
+//            'jatuh_tempo.date_format' => 'Format tanggal harus Y-m-d.',
+//            'jumlah.required' => 'Jumlah wajib diisi.',
+//            'jumlah.numeric' => 'Jumlah harus numerik.',
+//            'jumlah.regex' => 'Format jumlah tidak valid (maks 10 digit dan 2 desimal).',
+//        ];
+//    }
 
     protected function failedValidation(Validator $validator)
     {

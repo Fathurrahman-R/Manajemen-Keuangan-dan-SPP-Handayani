@@ -5,11 +5,16 @@ namespace App\Http\Controllers;
 use App\Http\Resources\KasResource;
 use App\Models\Pembayaran;
 use App\Models\Pengeluaran;
+use Dedoc\Scramble\Attributes\HeaderParameter;
+use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 
 class KasController extends Controller
 {
+    #[HeaderParameter('Authorization')]
+    #[QueryParameter('bulan', description: 'Filter bulan dalam angka (1-12)', required: true, example: 11)]
+    #[QueryParameter('tahun', description: 'Filter tahun dalam 4 digit', required: true, example: 2025)]
     public function kasHarian(Request $request)
     {
         $bulan = $request->bulan;
@@ -19,21 +24,21 @@ class KasController extends Controller
         if (!$bulan || !$tahun) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'message' => ['Parameter bulan dan tahun wajib.']
+                    'message' => ['parameter bulan dan tahun wajib.']
                 ]
             ], 400));
         }
         if (!ctype_digit((string)$bulan) || (int)$bulan < 1 || (int)$bulan > 12) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'bulan' => ['Bulan harus angka antara 1 sampai 12.']
+                    'bulan' => ['bulan harus angka antara 1 sampai 12.']
                 ]
             ], 400));
         }
         if (!preg_match('/^\d{4}$/', (string)$tahun)) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'tahun' => ['Tahun harus 4 digit.']
+                    'tahun' => ['tahun harus 4 digit.']
                 ]
             ], 400));
         }
@@ -70,13 +75,13 @@ class KasController extends Controller
             $pengeluaran->keys()->toArray()
         ))->unique()->sort();
 
-        if ($dates->isEmpty()) {
-            throw new HttpResponseException(response()->json([
-                'errors' => [
-                    'message' => ['Data tidak ditemukan untuk filter yang diberikan.']
-                ]
-            ], 404));
-        }
+//        if ($dates->isEmpty()) {
+//            throw new HttpResponseException(response()->json([
+//                'errors' => [
+//                    'message' => ['Data tidak ditemukan untuk filter yang diberikan.']
+//                ]
+//            ], 404));
+//        }
 
         /*
         |--------------------------------------------------------------------------
@@ -87,19 +92,19 @@ class KasController extends Controller
 
         foreach ($dates as $tanggal) {
 
-            $masuk  = $pemasukan[$tanggal]->total ?? 0;
-            $keluar = $pengeluaran[$tanggal]->total ?? 0;
+            (float)$masuk  = $pemasukan[$tanggal]->total ?? 0;
+            (float)$keluar = $pengeluaran[$tanggal]->total ?? 0;
 
             // ❗ SALDO GLOBAL — sesuai buku kas
-            $saldoGlobal =
+            (float)$saldoGlobal =
                 Pembayaran::whereDate('tanggal', '<=', $tanggal)->sum('jumlah')
                 - Pengeluaran::whereDate('tanggal', '<=', $tanggal)->sum('jumlah');
 
             $kas[] = (object) [
                 'tanggal'      => \Carbon\Carbon::parse($tanggal)->locale('id')->translatedFormat('d F Y'),
-                'total_masuk'  => $masuk,
-                'total_keluar' => $keluar,
-                'saldo'        => $saldoGlobal
+                'total_masuk'  => floatval($masuk),
+                'total_keluar' => floatval($keluar),
+                'saldo'        => floatval($saldoGlobal),
             ];
         }
 
@@ -112,6 +117,9 @@ class KasController extends Controller
 
         return KasResource::collection($kas);
     }
+
+    #[HeaderParameter('Authorization')]
+    #[QueryParameter('tahun', description: 'Filter tahun dalam 4 digit', required: true, example: 2025)]
     public function rekapBulanan(Request $request)
     {
         $tahun = $request->tahun;
@@ -119,14 +127,14 @@ class KasController extends Controller
         if (!$tahun) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'message' => ['Parameter tahun wajib.']
+                    'message' => ['parameter tahun wajib.']
                 ]
             ], 400));
         }
         if (!preg_match('/^\d{4}$/', (string)$tahun)) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'tahun' => ['Tahun harus 4 digit.']
+                    'tahun' => ['tahun harus 4 digit.']
                 ]
             ], 400));
         }
@@ -158,13 +166,13 @@ class KasController extends Controller
             $pengeluaran->keys()->toArray()
         ))->unique()->sort();
 
-        if ($months->isEmpty()) {
-            throw new HttpResponseException(response()->json([
-                'errors' => [
-                    'message' => ['Data tidak ditemukan untuk filter yang diberikan.']
-                ]
-            ], 404));
-        }
+//        if ($months->isEmpty()) {
+//            throw new HttpResponseException(response()->json([
+//                'errors' => [
+//                    'message' => ['Data tidak ditemukan untuk filter yang diberikan.']
+//                ]
+//            ], 404));
+//        }
 
         /*
         |--------------------------------------------------------------------------

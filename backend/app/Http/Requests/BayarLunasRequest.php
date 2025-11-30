@@ -36,15 +36,15 @@ class BayarLunasRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'metode.required' => 'Metode pembayaran wajib diisi.',
-            'metode.in' => 'Metode pembayaran harus Tunai atau Non-Tunai.',
-            'pembayar.required' => 'Nama pembayar wajib diisi.',
-            'pembayar.max' => 'Nama pembayar maksimal 100 karakter.'
-        ];
-    }
+//    public function messages(): array
+//    {
+//        return [
+//            'metode.required' => 'Metode pembayaran wajib diisi.',
+//            'metode.in' => 'Metode pembayaran harus Tunai atau Non-Tunai.',
+//            'pembayar.required' => 'Nama pembayar wajib diisi.',
+//            'pembayar.max' => 'Nama pembayar maksimal 100 karakter.'
+//        ];
+//    }
 
     protected function failedValidation(Validator $validator)
     {

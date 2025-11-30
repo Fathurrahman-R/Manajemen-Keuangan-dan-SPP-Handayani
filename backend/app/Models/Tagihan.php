@@ -22,6 +22,13 @@ class Tagihan extends Model
         'status'
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'tmp' => 'float',
+        ];
+    }
+
     public function jenis_tagihan()
     {
         return $this->belongsTo(JenisTagihan::class, 'jenis_tagihan_id');

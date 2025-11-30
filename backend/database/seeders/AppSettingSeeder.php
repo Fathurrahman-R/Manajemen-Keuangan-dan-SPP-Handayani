@@ -8,13 +8,13 @@ class AppSettingSeeder extends Seeder
         AppSetting::create([
             'logo' => 'logo.png',
             'kode_pos' => '12345',
-            'bendahara' => 'Siti Bendahara',
-            'kepala_sekolah' => 'Ahmad Kepala',
+            'bendahara' => 'Siti',
+            'kepala_sekolah' => 'Ahmad',
             'telepon' => '081234567890',
             'email' => 'info@sekolahcontoh.test',
-            'alamat' => 'Jl. Pendidikan No. 1',
-            'lokasi' => 'Kecamatan Contoh',
-            'nama_sekolah' => 'SD Islam Contoh',
+            'alamat' => 'Jl. Parit H. Husai 2, Komp. Acisa Asri No.47, Bansir Darat Pontianak Tenggara',
+            'lokasi' => 'Pontianak',
+            'nama_sekolah' => 'LPA Handayani',
         ]);
     }
 }

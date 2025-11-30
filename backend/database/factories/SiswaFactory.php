@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Models\Ayah;
+use App\Models\Ibu;
 use App\Models\Kategori;
 use App\Models\Kelas;
 use App\Models\Siswa;
@@ -30,8 +32,8 @@ class SiswaFactory extends Factory
             'alamat' => $this->faker->address(),
 
             // relasi otomatis
-            'ayah_id' => Wali::factory(),
-            'ibu_id' => Wali::factory(),
+            'ayah_id' => Ayah::factory(),
+            'ibu_id' => Ibu::factory(),
             'wali_id' => Wali::factory(),
             'kelas_id' => Kelas::factory(),
             'kategori_id' => Kategori::factory(),

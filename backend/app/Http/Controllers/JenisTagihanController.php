@@ -8,9 +8,11 @@ use App\Models\JenisTagihan;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Database\QueryException;
 use Throwable;
+use Dedoc\Scramble\Attributes\HeaderParameter;
 
 class JenisTagihanController extends Controller
 {
+    #[HeaderParameter('Authorization')]
     public function index()
     {
         $jt = JenisTagihan::query()->get();
@@ -18,6 +20,7 @@ class JenisTagihanController extends Controller
         return JenisTagihanResource::collection($jt);
     }
 
+    #[HeaderParameter('Authorization')]
     public function create(JenisTagihanRequest $request)
     {
         $data = $request->validated();
@@ -34,6 +37,7 @@ class JenisTagihanController extends Controller
         return (new JenisTagihanResource($jt))->response()->setStatusCode(201);
     }
 
+    #[HeaderParameter('Authorization')]
     public function get(string $id)
     {
         $jt = JenisTagihan::query()->find($id);
@@ -48,6 +52,7 @@ class JenisTagihanController extends Controller
         return (new JenisTagihanResource($jt))->response()->setStatusCode(200);
     }
 
+    #[HeaderParameter('Authorization')]
     public function update(JenisTagihanRequest $request, string $id)
     {
         $jt = JenisTagihan::query()->find($id);
@@ -72,6 +77,7 @@ class JenisTagihanController extends Controller
         return (new JenisTagihanResource($jt))->response()->setStatusCode(200);
     }
 
+    #[HeaderParameter('Authorization')]
     public function delete(string $id)
     {
         $jt = JenisTagihan::query()->find($id);

@@ -69,30 +69,30 @@ class WaliRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'nama.required' => 'Nama wali wajib diisi.',
-            'nama.string' => 'Nama wali harus berupa teks.',
-            'nama.max' => 'Nama wali maksimal 100 karakter.',
-            'jenis_kelamin.required' => 'Jenis kelamin wajib diisi.',
-            'jenis_kelamin.string' => 'Jenis kelamin harus berupa teks.',
-            'jenis_kelamin.in' => 'Jenis kelamin harus Laki-laki atau Perempuan.',
-            'agama.required' => 'Agama wajib diisi.',
-            'agama.string' => 'Agama harus berupa teks.',
-            'agama.max' => 'Agama maksimal 50 karakter.',
-            'pendidikan_terakhir.required' => 'Pendidikan terakhir wajib diisi.',
-            'pendidikan_terakhir.string' => 'Pendidikan terakhir harus berupa teks.',
-            'pendidikan_terakhir.max' => 'Pendidikan terakhir maksimal 100 karakter.',
-            'pekerjaan.string' => 'Pekerjaan harus berupa teks.',
-            'pekerjaan.max' => 'Pekerjaan maksimal 100 karakter.',
-            'alamat.required' => 'Alamat wajib diisi.',
-            'alamat.string' => 'Alamat harus berupa teks.',
-            'no_hp.required' => 'Nomor HP wajib diisi.',
-            'no_hp.max' => 'Nomor HP maksimal 20 karakter.',
-            'no_hp.regex' => 'Format nomor HP hanya boleh angka, spasi, plus (+) atau tanda minus (-).'
-        ];
-    }
+//    public function messages(): array
+//    {
+//        return [
+//            'nama.required' => 'Nama wali wajib diisi.',
+//            'nama.string' => 'Nama wali harus berupa teks.',
+//            'nama.max' => 'Nama wali maksimal 100 karakter.',
+//            'jenis_kelamin.required' => 'Jenis kelamin wajib diisi.',
+//            'jenis_kelamin.string' => 'Jenis kelamin harus berupa teks.',
+//            'jenis_kelamin.in' => 'Jenis kelamin harus Laki-laki atau Perempuan.',
+//            'agama.required' => 'Agama wajib diisi.',
+//            'agama.string' => 'Agama harus berupa teks.',
+//            'agama.max' => 'Agama maksimal 50 karakter.',
+//            'pendidikan_terakhir.required' => 'Pendidikan terakhir wajib diisi.',
+//            'pendidikan_terakhir.string' => 'Pendidikan terakhir harus berupa teks.',
+//            'pendidikan_terakhir.max' => 'Pendidikan terakhir maksimal 100 karakter.',
+//            'pekerjaan.string' => 'Pekerjaan harus berupa teks.',
+//            'pekerjaan.max' => 'Pekerjaan maksimal 100 karakter.',
+//            'alamat.required' => 'Alamat wajib diisi.',
+//            'alamat.string' => 'Alamat harus berupa teks.',
+//            'no_hp.required' => 'Nomor HP wajib diisi.',
+//            'no_hp.max' => 'Nomor HP maksimal 20 karakter.',
+//            'no_hp.regex' => 'Format nomor HP hanya boleh angka, spasi, plus (+) atau tanda minus (-).'
+//        ];
+//    }
 
     protected function failedValidation(Validator $validator)
     {

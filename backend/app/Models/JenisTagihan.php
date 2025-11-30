@@ -21,6 +21,13 @@ class JenisTagihan extends Model
         'jumlah'
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'jumlah' => 'float',
+        ];
+    }
+
     public function tagihan()
     {
         return $this->hasMany(Tagihan::class,'jenis_tagihan_id','id');

@@ -16,6 +16,13 @@ class Pengeluaran extends Model
         'uraian',
         'jumlah',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'jumlah' => 'float',
+        ];
+    }
     protected $primaryKey = 'id';
     protected $keyType = 'int';
     public $incrementing = true;

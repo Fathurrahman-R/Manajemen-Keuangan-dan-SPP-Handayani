@@ -38,6 +38,24 @@
                 },
                 "description": "Cari partial kode_tagihan / nama siswa / nis."
             },
+            "JenjangQuery": {
+                "name": "jenjang",
+                "in": "query",
+                "required": false,
+                "schema": {
+                    "type": "string"
+                },
+                "description": "Filter tagihan berdasarkan jenjang"
+            },
+            "StatusQuery": {
+                "name": "status",
+                "in": "query",
+                "required": false,
+                "schema": {
+                    "type": "string"
+                },
+                "description": "Filter tagihan berdasarkan status"
+            },
             "PerPageQuery": {
                 "name": "per_page",
                 "in": "query",
@@ -280,6 +298,12 @@
                     },
                     {
                         "$ref": "#/components/parameters/SearchQuery"
+                    },
+                    {
+                        "$ref": "#/components/parameters/JenjangQuery"
+                    },
+                    {
+                        "$ref": "#/components/parameters/StatusQuery"
                     },
                     {
                         "$ref": "#/components/parameters/PerPageQuery"

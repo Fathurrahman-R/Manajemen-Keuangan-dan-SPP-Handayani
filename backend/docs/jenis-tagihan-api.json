@@ -95,26 +95,26 @@
                                     "missingFields": {
                                         "value": {
                                             "errors": {
-                                                "nama": ["nama wajib diisi."],
-                                                "jatuh_tempo": ["jatuh_tempo wajib diisi."],
-                                                "jumlah": ["jumlah wajib diisi."]
+                                                "nama": ["Nama wajib diisi."],
+                                                "jatuh_tempo": ["Jatuh tempo wajib diisi."],
+                                                "jumlah": ["Jumlah wajib diisi."]
                                             }
                                         }
                                     },
                                     "namaTooShort": {
-                                        "value": { "errors": { "nama": ["nama minimal 3 karakter."] } }
+                                        "value": { "errors": { "nama": ["Nama minimal 3 karakter."] } }
                                     },
                                     "namaTooLong": {
-                                        "value": { "errors": { "nama": ["nama maksimal 100 karakter."] } }
+                                        "value": { "errors": { "nama": ["Nama maksimal 100 karakter."] } }
                                     },
                                     "invalidDateFormat": {
-                                        "value": { "errors": { "jatuh_tempo": ["format tanggal harus Y-m-d."] } }
+                                        "value": { "errors": { "jatuh_tempo": ["Format tanggal harus Y-m-d."] } }
                                     },
                                     "invalidJumlahNonNumeric": {
-                                        "value": { "errors": { "jumlah": ["jumlah harus numerik."] } }
+                                        "value": { "errors": { "jumlah": ["Jumlah harus numerik."] } }
                                     },
                                     "invalidJumlahPattern": {
-                                        "value": { "errors": { "jumlah": ["format jumlah tidak valid (maks 10 digit dan 2 desimal)."] } }
+                                        "value": { "errors": { "jumlah": ["Format jumlah tidak valid (maks 10 digit dan 2 desimal)."] } }
                                     }
                                 }
                             }
@@ -232,8 +232,8 @@
                             "application/json": {
                                 "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" },
                                 "examples": {
-                                    "invalidDateFormat": { "value": { "errors": { "jatuh_tempo": ["format tanggal harus Y-m-d."] } } },
-                                    "invalidJumlahPattern": { "value": { "errors": { "jumlah": ["format jumlah tidak valid (maks 10 digit dan 2 desimal)."] } } }
+                                    "invalidDateFormat": { "value": { "errors": { "jatuh_tempo": ["Format tanggal harus Y-m-d."] } } },
+                                    "invalidJumlahPattern": { "value": { "errors": { "jumlah": ["Format jumlah tidak valid (maks 10 digit dan 2 desimal)."] } } }
                                 }
                             }
                         }
@@ -373,7 +373,7 @@
                     "errors": {
                         "type": "object",
                         "additionalProperties": { "type": "array", "items": { "type": "string" } },
-                        "example": { "nama": ["nama wajib diisi."] }
+                        "example": { "nama": ["Nama wajib diisi."] }
                     }
                 }
             }

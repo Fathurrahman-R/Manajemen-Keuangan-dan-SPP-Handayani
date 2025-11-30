@@ -37,24 +37,24 @@ class PengeluaranRequest extends FormRequest
             'jumlah' => [
                 $requiredOrSometimes,
                 'numeric',
-                'decimal:12,2',
+                'regex:/^\d{1,11}(\.\d{1,2})?$/'
             ],
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'tanggal.required' => 'Tanggal wajib diisi.',
-            'tanggal.date' => 'Tanggal harus berupa tanggal yang valid.',
-            'tanggal.date_format' => 'Format tanggal harus Y-m-d.',
-            'uraian.required' => 'Uraian wajib diisi.',
-            'uraian.string' => 'Uraian harus berupa teks.',
-            'jumlah.required' => 'Jumlah wajib diisi.',
-            'jumlah.numeric' => 'Jumlah harus berupa angka.',
-            'jumlah.decimal' => 'Format jumlah tidak valid (maks 12 digit dan 2 desimal).'
-        ];
-    }
+//    public function messages(): array
+//    {
+//        return [
+//            'tanggal.required' => 'Tanggal wajib diisi.',
+//            'tanggal.date' => 'Tanggal harus berupa tanggal yang valid.',
+//            'tanggal.date_format' => 'Format tanggal harus Y-m-d.',
+//            'uraian.required' => 'Uraian wajib diisi.',
+//            'uraian.string' => 'Uraian harus berupa teks.',
+//            'jumlah.required' => 'Jumlah wajib diisi.',
+//            'jumlah.numeric' => 'Jumlah harus berupa angka.',
+//            'jumlah.regex' => 'Format jumlah tidak valid (maks 12 digit dan 2 desimal).'
+//        ];
+//    }
 
     protected function failedValidation(Validator $validator)
     {

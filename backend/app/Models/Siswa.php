@@ -35,14 +35,22 @@ class Siswa extends Model
         'status',
         'keterangan',
     ];
+    protected $casts = [
+        'id' => 'integer',
+        'ayah_id' => 'integer',
+        'ibu_id' => 'integer',
+        'wali_id' => 'integer',
+        'kelas_id' => 'integer',
+        'kategori_id' => 'integer',
+    ];
 
     public function ayah(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(Wali::class);
+        return $this->belongsTo(Ayah::class);
     }
     public function ibu(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(Wali::class);
+        return $this->belongsTo(Ibu::class);
     }
     public function wali(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {

@@ -6,9 +6,11 @@ use App\Http\Requests\KategoriRequest;
 use App\Http\Resources\KategoriResource;
 use App\Models\Kategori;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Dedoc\Scramble\Attributes\HeaderParameter;
 
 class KategoriController extends Controller
 {
+    #[HeaderParameter('Authorization')]
     public function index()
     {
         $kategori = Kategori::query()->get();
@@ -16,6 +18,7 @@ class KategoriController extends Controller
         return KategoriResource::collection($kategori);
     }
 
+    #[HeaderParameter('Authorization')]
     public function create(KategoriRequest $request)
     {
         $data = $request->validated();
@@ -35,6 +38,7 @@ class KategoriController extends Controller
         return (new KategoriResource($kategori))->response()->setStatusCode(201);
     }
 
+    #[HeaderParameter('Authorization')]
     public function get(string $id)
     {
         $kategori = Kategori::query()->find($id);
@@ -50,6 +54,7 @@ class KategoriController extends Controller
         return (new KategoriResource($kategori))->response()->setStatusCode(200);
     }
 
+    #[HeaderParameter('Authorization')]
     public function update(KategoriRequest $request, string $id)
     {
         $data = $request->validated();
@@ -80,6 +85,7 @@ class KategoriController extends Controller
         return (new KategoriResource($kategori))->response()->setStatusCode(200);
     }
 
+    #[HeaderParameter('Authorization')]
     public function delete(string $id)
     {
         $kategori = Kategori::query()->find($id);

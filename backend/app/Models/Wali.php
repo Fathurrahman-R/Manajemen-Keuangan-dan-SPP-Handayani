@@ -21,13 +21,15 @@ class Wali extends Model
         'pekerjaan',
         'alamat',
         'no_hp',
-        'ket',
+        'keterangan',
+    ];
+    protected $casts = [
+        'id' => 'integer'
     ];
 
     public function siswa()
     {
-        return $this->hasMany(Siswa::class, 'ayah_id')
-            ->orWhere('ibu_id', $this->id)
-            ->orWhere('wali_id', $this->id);
+        // relasi utama siswa sebagai wali
+        return $this->hasMany(Siswa::class,'wali_id','id');
     }
 }

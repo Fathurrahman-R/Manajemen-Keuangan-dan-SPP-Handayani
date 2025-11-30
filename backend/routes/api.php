@@ -66,7 +66,7 @@ Route::middleware(\App\Http\Middleware\ApiAuthMiddleware::class)->group(function
             Route::get('/', [PembayaranController::class, 'index']);
             Route::post('/bayar/{kode_tagihan}', [PembayaranController::class, 'bayar']);
             Route::post('/lunas/{kode_tagihan}', [PembayaranController::class, 'lunas']);
-            Route::get('pembayaran/kwitansi/{kode_pembayaran}', [\App\Http\Controllers\PdfGeneratorController::class, 'index']);
+            Route::get('/kwitansi/{kode_pembayaran}', [\App\Http\Controllers\PdfGeneratorController::class, 'get']);
             Route::delete('/{kode_pembayaran}', [PembayaranController::class, 'delete']);
         });
 

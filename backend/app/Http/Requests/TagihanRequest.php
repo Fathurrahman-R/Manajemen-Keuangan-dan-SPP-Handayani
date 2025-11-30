@@ -44,19 +44,19 @@ class TagihanRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'jenis_tagihan_id.required' => 'Jenis tagihan wajib diisi.',
-            'jenis_tagihan_id.exists' => 'Jenis tagihan tidak ditemukan.',
-            'jenjang.required' => 'Jenjang wajib diisi.',
-            'jenjang.in' => 'Jenjang harus salah satu dari MI, KB, atau TK.',
-            'kelas_id.required' => 'Kelas wajib diisi.',
-            'kelas_id.exists' => 'Kelas tidak ditemukan.',
-            'kategori_id.required' => 'Kategori wajib diisi.',
-            'kategori_id.exists' => 'Kategori tidak ditemukan.',
-        ];
-    }
+//    public function messages(): array
+//    {
+//        return [
+//            'jenis_tagihan_id.required' => 'Jenis tagihan wajib diisi.',
+//            'jenis_tagihan_id.exists' => 'Jenis tagihan tidak ditemukan.',
+//            'jenjang.required' => 'Jenjang wajib diisi.',
+//            'jenjang.in' => 'Jenjang harus salah satu dari MI, KB, atau TK.',
+//            'kelas_id.required' => 'Kelas wajib diisi.',
+//            'kelas_id.exists' => 'Kelas tidak ditemukan.',
+//            'kategori_id.required' => 'Kategori wajib diisi.',
+//            'kategori_id.exists' => 'Kategori tidak ditemukan.',
+//        ];
+//    }
 
     protected function failedValidation(Validator $validator)
     {

@@ -15,10 +15,10 @@ class KasResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'tanggal'=>$this->tanggal,
-            'total_masuk'=>$this->total_masuk,
-            'total_keluar'=>$this->total_keluar,
-            'saldo'=>$this->saldo
+            'tanggal' => $this->tanggal,
+            'total_masuk' => isset($this->total_masuk) ? (float) $this->total_masuk : 0.0,
+            'total_keluar' => isset($this->total_keluar) ? (float) $this->total_keluar : 0.0,
+            'saldo' => isset($this->saldo) ? (float) $this->saldo : 0.0,
         ];
     }
 }

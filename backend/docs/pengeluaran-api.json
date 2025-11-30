@@ -1,0 +1,435 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Pengeluaran API",
+    "description": "Dokumentasi endpoint Pengeluaran. Semua endpoint memerlukan header Authorization (token user). Format tanggal request: Y-m-d. Tanggal response diformat lokal Indonesia (d F Y).",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "http://localhost:8080" }
+  ],
+  "paths": {
+    "/api/pengeluaran": {
+      "get": {
+        "description": "Listing pengeluaran dengan paginasi dan filter tanggal. Jika belum ada data, mengembalikan data kosong (status 200).",
+        "parameters": [
+          { "$ref": "#/components/parameters/Authorization" },
+          {
+            "name": "start_date",
+            "in": "query",
+            "description": "Filter dari tanggal (Y-m-d)",
+            "schema": { "type": "string", "format": "date", "example": "2025-01-01" }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "description": "Filter sampai tanggal (Y-m-d)",
+            "schema": { "type": "string", "format": "date", "example": "2025-01-31" }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "description": "Jumlah item per halaman (default 30)",
+            "schema": { "type": "integer", "example": 30 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar pengeluaran (bisa kosong).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Pengeluaran" }
+                    },
+                    "links": { "$ref": "#/components/schemas/PaginationLinks" },
+                    "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+                  },
+                  "required": ["data"]
+                },
+                "examples": {
+                  "nonEmpty": {
+                    "value": {
+                      "data": [
+                        { "id": 1, "tanggal": "01 Januari 2025", "uraian": "Pembelian ATK", "jumlah": 500000 },
+                        { "id": 2, "tanggal": "02 Januari 2025", "uraian": "Biaya listrik", "jumlah": 750000 },
+                        { "id": 3, "tanggal": "03 Januari 2025", "uraian": "Biaya internet", "jumlah": 300000 }
+                      ],
+                      "links": [
+                        { "url": null, "label": "Previous", "active": false },
+                        { "url": "http://localhost:8080/api/pengeluaran?page=1", "label": "1", "active": true },
+                        { "url": null, "label": "Next", "active": false }
+                      ],
+                      "meta": {
+                        "current_page": 1,
+                        "from": 1,
+                        "last_page": 1,
+                        "path": "http://localhost:8080/api/pengeluaran",
+                        "per_page": 30,
+                        "to": 3,
+                        "total": 3
+                      }
+                    }
+                  },
+                  "empty": {
+                    "value": {
+                      "data": [],
+                      "links": [
+                        { "url": null, "label": "Previous", "active": false },
+                        { "url": "http://localhost:8080/api/pengeluaran?page=1", "label": "1", "active": true },
+                        { "url": null, "label": "Next", "active": false }
+                      ],
+                      "meta": {
+                        "current_page": 1,
+                        "from": null,
+                        "last_page": 1,
+                        "path": "http://localhost:8080/api/pengeluaran",
+                        "per_page": 30,
+                        "to": null,
+                        "total": 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "errors": { "message": ["unauthorized."] } }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Tambah pengeluaran baru.",
+        "parameters": [ { "$ref": "#/components/parameters/Authorization" } ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PengeluaranCreateRequest" },
+              "example": {
+                "tanggal": "2025-01-01",
+                "uraian": "Pembelian ATK",
+                "jumlah": 500000
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Berhasil menambahkan pengeluaran.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Pengeluaran" },
+                "example": { "id": 10, "tanggal": "01 Januari 2025", "uraian": "Pembelian ATK", "jumlah": 500000 }
+              }
+            }
+          },
+          "400": {
+            "description": "Validasi gagal.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ValidationErrorResponsePengeluaran" },
+                "examples": {
+                  "missingFields": {
+                    "value": {
+                      "errors": {
+                        "tanggal": ["Tanggal wajib diisi."],
+                        "uraian": ["Uraian wajib diisi."],
+                        "jumlah": ["Jumlah wajib diisi."]
+                      }
+                    }
+                  },
+                  "invalidTanggalFormat": {
+                    "value": { "errors": { "tanggal": ["Format tanggal harus Y-m-d."] } }
+                  },
+                  "invalidTanggalType": {
+                    "value": { "errors": { "tanggal": ["Tanggal harus berupa tanggal yang valid."] } }
+                  },
+                  "invalidJumlahNumeric": {
+                    "value": { "errors": { "jumlah": ["Jumlah harus berupa angka."] } }
+                  },
+                  "invalidJumlahPattern": {
+                    "value": { "errors": { "jumlah": ["Format jumlah tidak valid (maks 12 digit dan 2 desimal)."] } }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Gagal menyimpan (QueryException).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "errors": { "message": ["gagal menyimpan pengeluaran."] } }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "errors": { "message": ["unauthorized."] } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pengeluaran/{id}": {
+      "get": {
+        "description": "Ambil detail satu pengeluaran.",
+        "parameters": [
+          { "$ref": "#/components/parameters/Authorization" },
+          { "$ref": "#/components/parameters/IdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detail ditemukan.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Pengeluaran" },
+                "example": { "id": 1, "tanggal": "01 Januari 2025", "uraian": "Pembelian ATK", "jumlah": 500000 }
+              }
+            }
+          },
+          "404": {
+            "description": "Pengeluaran tidak ditemukan.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "errors": { "message": ["pengeluaran tidak ditemukan."] } }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "errors": { "message": ["unauthorized."] } }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "description": "Update data pengeluaran.",
+        "parameters": [
+          { "$ref": "#/components/parameters/Authorization" },
+          { "$ref": "#/components/parameters/IdPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PengeluaranUpdateRequest" },
+              "example": { "uraian": "Perubahan uraian", "jumlah": 600000 }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Update berhasil.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Pengeluaran" },
+                "example": { "id": 5, "tanggal": "01 Januari 2025", "uraian": "Perubahan uraian", "jumlah": 600000 }
+              }
+            }
+          },
+          "404": {
+            "description": "Pengeluaran tidak ditemukan.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "errors": { "message": ["pengeluaran tidak ditemukan."] } }
+              }
+            }
+          },
+          "400": {
+            "description": "Validasi gagal.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ValidationErrorResponsePengeluaran" },
+                "examples": {
+                  "invalidTanggalFormat": { "value": { "errors": { "tanggal": ["Format tanggal harus Y-m-d."] } } },
+                  "invalidJumlahPattern": { "value": { "errors": { "jumlah": ["Format jumlah tidak valid (maks 12 digit dan 2 desimal)."] } } }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Gagal update (QueryException).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "errors": { "message": ["gagal update pengeluaran."] } }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "errors": { "message": ["unauthorized."] } }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Hapus pengeluaran.",
+        "parameters": [
+          { "$ref": "#/components/parameters/Authorization" },
+          { "$ref": "#/components/parameters/IdPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil dihapus.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DeleteResponse" },
+                "example": { "data": true }
+              }
+            }
+          },
+          "404": {
+            "description": "Pengeluaran tidak ditemukan.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "errors": { "message": ["pengeluaran tidak ditemukan."] } }
+              }
+            }
+          },
+          "500": {
+            "description": "Gagal menghapus (QueryException).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "errors": { "message": ["gagal menghapus pengeluaran."] } }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "errors": { "message": ["unauthorized."] } }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "Authorization": {
+        "name": "Authorization",
+        "in": "header",
+        "description": "User token dari database",
+        "schema": { "type": "string", "example": "test" }
+      },
+      "IdPath": {
+        "name": "id",
+        "in": "path",
+        "description": "ID pengeluaran.",
+        "schema": { "type": "integer", "example": 1 }
+      }
+    },
+    "schemas": {
+      "Pengeluaran": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "tanggal": { "type": "string", "example": "01 Januari 2025" },
+          "uraian": { "type": "string", "maxLength": 255 },
+          "jumlah": { "type": "number", "example": 500000 }
+        },
+        "required": ["id", "tanggal", "uraian", "jumlah"],
+        "example": { "id": 1, "tanggal": "01 Januari 2025", "uraian": "Pembelian ATK", "jumlah": 500000 }
+      },
+      "PengeluaranCreateRequest": {
+        "type": "object",
+        "properties": {
+          "tanggal": { "type": "string", "format": "date", "example": "2025-01-01" },
+          "uraian": { "type": "string", "maxLength": 255, "example": "Pembelian ATK" },
+          "jumlah": { "type": "number", "example": 500000 }
+        },
+        "required": ["tanggal", "uraian", "jumlah"],
+        "example": { "tanggal": "2025-01-01", "uraian": "Pembelian ATK", "jumlah": 500000 }
+      },
+      "PengeluaranUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "tanggal": { "type": "string", "format": "date", "example": "2025-02-01" },
+          "uraian": { "type": "string", "maxLength": 255, "example": "Perubahan uraian" },
+          "jumlah": { "type": "number", "example": 600000 }
+        },
+        "example": { "uraian": "Perubahan uraian" }
+      },
+      "PaginationLinks": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "url": { "type": ["string", "null"], "example": "http://localhost:8080/api/pengeluaran?page=1" },
+            "label": { "type": "string", "example": "1" },
+            "active": { "type": "boolean", "example": true }
+          }
+        }
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "properties": {
+          "current_page": { "type": "integer", "example": 1 },
+          "from": { "type": ["integer", "null"], "example": 1 },
+          "last_page": { "type": "integer", "example": 1 },
+          "path": { "type": "string", "example": "http://localhost:8080/api/pengeluaran" },
+          "per_page": { "type": "integer", "example": 30 },
+          "to": { "type": ["integer", "null"], "example": 3 },
+          "total": { "type": "integer", "example": 3 }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "object",
+            "additionalProperties": { "type": "array", "items": { "type": "string" } },
+            "example": { "message": ["pengeluaran tidak ditemukan."] }
+          }
+        }
+      },
+      "ValidationErrorResponsePengeluaran": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "object",
+            "additionalProperties": { "type": "array", "items": { "type": "string" } },
+            "example": { "tanggal": ["Tanggal wajib diisi."], "uraian": ["Uraian wajib diisi."], "jumlah": ["Jumlah wajib diisi."] }
+          }
+        }
+      },
+      "DeleteResponse": {
+        "type": "object",
+        "properties": { "data": { "type": ["boolean", "object"], "description": "Implementasi saat ini boolean true." } },
+        "example": { "data": true }
+      }
+    }
+  }
+}

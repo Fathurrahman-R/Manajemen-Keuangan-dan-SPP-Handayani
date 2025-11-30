@@ -11,7 +11,7 @@ class JenisTagihanSeeder extends Seeder
     {
         JenisTagihan::create([
             'id' => 1,
-            'nama' => 'SPP Januari',
+            'nama' => 'SPP',
             'jatuh_tempo' => now()->addMonth()->format('Y-m-d'),
             'jumlah' => 100000,
         ]);

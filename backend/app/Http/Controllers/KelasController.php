@@ -6,9 +6,11 @@ use App\Http\Requests\KelasRequest;
 use App\Http\Resources\KelasResource;
 use App\Models\Kelas;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Dedoc\Scramble\Attributes\HeaderParameter;
 
 class KelasController extends Controller
 {
+    #[HeaderParameter('Authorization')]
     public function index(string $jenjang)
     {
         $jenjangUp = strtoupper($jenjang);
@@ -23,6 +25,7 @@ class KelasController extends Controller
         return KelasResource::collection($kelas);
     }
 
+    #[HeaderParameter('Authorization')]
     public function create(KelasRequest $request, string $jenjang)
     {
         $jenjangUp = strtoupper($jenjang);
@@ -53,6 +56,7 @@ class KelasController extends Controller
         return (new KelasResource($kelas))->response()->setStatusCode(201);
     }
 
+    #[HeaderParameter('Authorization')]
     public function update(KelasRequest $request, string $jenjang, string $id)
     {
         $jenjangUp = strtoupper($jenjang);
@@ -93,6 +97,7 @@ class KelasController extends Controller
         return (new KelasResource($kelas))->response()->setStatusCode(200);
     }
 
+    #[HeaderParameter('Authorization')]
     public function get(string $jenjang, string $id)
     {
         $jenjangUp = strtoupper($jenjang);
