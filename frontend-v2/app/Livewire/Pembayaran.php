@@ -243,21 +243,6 @@ class Pembayaran extends Component implements HasActions, HasSchemas, HasTable
 
     public function render()
     {
-        $response = Http::withHeaders([
-            'Authorization' => session()->get('data')['token']
-        ])
-            ->get(env('API_URL') . '/pembayaran', [
-                'per_page' => $this->perPage
-            ]);
-
-        if (!$response->ok()) {
-            throw new Exception($response->json()['errors']['message'][0]);
-        }
-
-        $data = $response->json();
-
-        // dd($data['data']);
-
         return view('livewire.pembayaran');
     }
 }

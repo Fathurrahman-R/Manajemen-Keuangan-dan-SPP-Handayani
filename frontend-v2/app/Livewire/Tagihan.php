@@ -40,13 +40,21 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
     {
         return $table
             ->records(
-                function (?string $search, int $page, int $recordsPerPage): LengthAwarePaginator {
+                function (?string $search, int $page, int $recordsPerPage, array $filters): LengthAwarePaginator {
                     $params = [
                         'per_page' => $this->perPage,
                     ];
 
                     if (filled($search)) {
                         $params['search'] = $search;
+                    }
+
+                    if (filled($filters['status']['value'])) {
+                        $params['status'] = $filters['status']['value'];
+                    }
+
+                    if (filled($filters['jenjang']['value'])) {
+                        $params['jenjang'] = $filters['jenjang']['value'];
                     }
 
                     $response = Http::withHeaders([
@@ -84,7 +92,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
             ])
             ->filters([
                 SelectFilter::make('status')
-                    ->multiple()
+                    // ->multiple()
                     ->options([
                         'Lunas' => 'Lunas',
                         'Belum Lunas' => 'Belum Lunas',
@@ -92,7 +100,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                     ]),
                 SelectFilter::make('jenjang')
                     ->label('Jenjang')
-                    ->multiple()
+                    // ->multiple() 
                     ->options([
                         'TK' => 'TK',
                         'SD' => 'SD',

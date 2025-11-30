@@ -39,8 +39,6 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
         return $table
             ->records(
                 function (?string $search, int $page, int $recordsPerPage): LengthAwarePaginator {
-                    $skip = ($page - 1) * $recordsPerPage;
-                    
                     $params = [
                         'per_page' => $this->perPage,
                         'page' => $page
@@ -97,11 +95,11 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                     ->url(fn (array $record): string => 'detail-wali/' . $record['id'])
                     ->color('gray'),
                 Action::make('update') // Unique name for your action
-                    ->tooltip('Ubah Kelas')
+                    ->tooltip('Ubah Wali')
                     ->icon('heroicon-s-pencil-square') // Optional icon
                     ->iconButton()
                     ->color('warning')
-                    ->modalHeading('Ubah Kelas')
+                    ->modalHeading('Ubah Wali')
                     ->modalSubmitActionLabel('Simpan')
                     ->modalCancelActionLabel('Batal')
                     ->modalFooterActionsAlignment(Alignment::End)
