@@ -64,9 +64,9 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
             )
             ->columns([
                 TextColumn::make('tanggal')->label('Tanggal'),
-                TextColumn::make('total_masuk')->label('Total Masuk'),
-                TextColumn::make('total_keluar')->label('Total Keluar'),
-                TextColumn::make('saldo')->label('Saldo'),
+                TextColumn::make('total_masuk')->label('Total Masuk')->money(currency: 'Rp.', decimalPlaces: 0, ),
+                TextColumn::make('total_keluar')->label('Total Keluar')->money(currency: 'Rp.', decimalPlaces: 0, ),
+                TextColumn::make('saldo')->label('Saldo')->money(currency: 'Rp.', decimalPlaces: 0, ),
             ])
             ->filters([
                 Filter::make('date')

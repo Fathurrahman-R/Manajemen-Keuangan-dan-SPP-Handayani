@@ -80,7 +80,7 @@ class Pengeluaran extends Component implements HasActions, HasSchemas, HasTable
             ->columns([
                 TextColumn::make('uraian')->label('Uraian')->searchable(),
                 TextColumn::make('tanggal')->label('Tanggal Pengeluaran')->date('d-m-Y'),
-                TextColumn::make('jumlah')->label('Jumlah'),
+                TextColumn::make('jumlah')->label('Jumlah')->money(currency: 'Rp.', decimalPlaces: 0, ),
             ])
             ->filters([
                 Filter::make('date')

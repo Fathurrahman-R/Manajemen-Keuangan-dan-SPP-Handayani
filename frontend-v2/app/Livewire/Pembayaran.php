@@ -70,10 +70,10 @@ class Pembayaran extends Component implements HasActions, HasSchemas, HasTable
                 TextColumn::make('kode_pembayaran')->label('Kode Pembayaran')->searchable(),
                 TextColumn::make('tanggal')->label('Tanggal Pembayaran'),
                 TextColumn::make('pembayar')->label('Dibayar Oleh'),
-                TextColumn::make('jumlah')->label('Jumlah Pembayaran'),
+                TextColumn::make('jumlah')->label('Jumlah Pembayaran')->money(currency: 'Rp.', decimalPlaces: 0, ),
                 TextColumn::make('kode_tagihan.kode_tagihan')->label('Kode Tagihan'),
                 TextColumn::make('kode_tagihan.jenis_tagihan.nama')->label('Jenis Tagihan'),
-                TextColumn::make('kode_tagihan.jenis_tagihan.jumlah')->label('Jumlah Tagihan'),
+                TextColumn::make('kode_tagihan.jenis_tagihan.jumlah')->label('Jumlah Tagihan')->money(currency: 'Rp.', decimalPlaces: 0, ),
                 TextColumn::make('kode_tagihan.siswa.nama')->label('Nama Siswa'),
                 TextColumn::make('metode')->label('Metode Pembayaran'),
             ])

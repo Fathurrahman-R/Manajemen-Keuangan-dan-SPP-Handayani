@@ -80,9 +80,9 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                 TextColumn::make('siswa.kelas.nama')->label('Kelas'),
                 TextColumn::make('jenis_tagihan.jatuh_tempo')->label('Jatuh Tempo'),
                 TextColumn::make('jenis_tagihan.nama')->label('Jenis Tagihan'),
-                TextColumn::make('jenis_tagihan.jumlah')->label('Jumlah Tagihan'),
-                TextColumn::make('tmp')->label('Jumlah Yang Telah Dibayarkan'),
-                TextColumn::make('sisa')->state(fn(array $record) => $record['jenis_tagihan']['jumlah'] - $record['tmp'])->label('Sisa'),
+                TextColumn::make('jenis_tagihan.jumlah')->label('Jumlah Tagihan')->money(currency: 'Rp.', decimalPlaces: 0, ),
+                TextColumn::make('tmp')->label('Jumlah Yang Telah Dibayarkan')->money(currency: 'Rp.', decimalPlaces: 0, ),
+                TextColumn::make('sisa')->state(fn(array $record) => $record['jenis_tagihan']['jumlah'] - $record['tmp'])->label('Sisa')->money(currency: 'Rp.', decimalPlaces: 0, ),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
@@ -121,7 +121,8 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                     Action::make('installments')
                         ->label('Bayar')
                         ->tooltip('Bayar')
-                        ->modalHeading('Tambah Tagihan')
+                        ->hidden(fn (array $record): bool => $record['status'] === 'Lunas')
+                        ->modalHeading('Bayar Tagihan')
                         ->modalFooterActions(function (Action $action) {
                             return [
                                 $action->getModalSubmitAction()
