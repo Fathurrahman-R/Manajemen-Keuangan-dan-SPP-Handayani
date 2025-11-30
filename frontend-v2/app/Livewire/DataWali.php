@@ -80,7 +80,7 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
             ->emptyStateDescription('Silahkan menambahkan wali')
             ->recordActions([
                 Action::make('view') // Unique name for your action
-                    ->tooltip('View Wali')
+                    ->tooltip('Lihat Wali')
                     ->icon('heroicon-s-eye') // Optional icon
                     ->iconButton()
                     ->fillForm(fn (array $record): array => [
@@ -97,11 +97,11 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                     ->url(fn (array $record): string => 'detail-wali/' . $record['id'])
                     ->color('gray'),
                 Action::make('update') // Unique name for your action
-                    ->tooltip('Edit Kelas')
+                    ->tooltip('Ubah Kelas')
                     ->icon('heroicon-s-pencil-square') // Optional icon
                     ->iconButton()
                     ->color('warning')
-                    ->modalHeading('Edit Kelas')
+                    ->modalHeading('Ubah Kelas')
                     ->modalSubmitActionLabel('Simpan')
                     ->modalCancelActionLabel('Batal')
                     ->modalFooterActionsAlignment(Alignment::End)
@@ -175,7 +175,7 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                         $this->resetTable();
                     }), // Optional color
                 Action::make('delete') // Unique name for your action
-                    ->tooltip('Delete Wali')
+                    ->tooltip('Hapus Wali')
                     ->icon('heroicon-s-trash') // Optional icon
                     ->iconButton()
                     ->color('danger') // Optional color

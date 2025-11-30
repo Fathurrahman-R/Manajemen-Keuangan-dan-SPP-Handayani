@@ -58,11 +58,11 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
             ->emptyStateDescription('Silahkan menambahkan jenis tagihan')
             ->recordActions([
                 Action::make('update') // Unique name for your action
-                    ->tooltip('Edit Jenis Tagihan')
+                    ->tooltip('Ubah Jenis Tagihan')
                     ->icon('heroicon-s-pencil-square') // Optional icon
                     ->iconButton()
                     ->color('warning')
-                    ->modalHeading('Edit Jenis Tagihan')
+                    ->modalHeading('Ubah Jenis Tagihan')
                     ->modalSubmitActionLabel('Simpan')
                     ->modalCancelActionLabel('Batal')
                     ->modalFooterActionsAlignment(Alignment::End)
@@ -105,7 +105,7 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                         $this->resetTable();
                     }), // Optional color
                 Action::make('delete') // Unique name for your action
-                    ->tooltip('Delete Jenis Tagihan')
+                    ->tooltip('Hapus Jenis Tagihan')
                     ->icon('heroicon-s-trash') // Optional icon
                     ->iconButton()
                     ->color('danger') // Optional color

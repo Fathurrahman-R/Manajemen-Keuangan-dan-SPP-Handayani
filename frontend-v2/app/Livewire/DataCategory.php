@@ -49,11 +49,11 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
             ->emptyStateDescription('Silahkan menambahkan kategori')
             ->recordActions([
                 Action::make('update') // Unique name for your action
-                    ->tooltip('Edit Kategori')
+                    ->tooltip('Ubah Kategori')
                     ->icon('heroicon-s-pencil-square') // Optional icon
                     ->iconButton()
                     ->color('warning')
-                    ->modalHeading('Edit Kategori')
+                    ->modalHeading('Ubah Kategori')
                     ->modalFooterActions(function (Action $action) {
                         return [
                             $action->getModalSubmitAction()
@@ -91,7 +91,7 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
                         $this->resetTable();
                     }), // Optional color
                 Action::make('delete') // Unique name for your action
-                    ->tooltip('Delete Kategori')
+                    ->tooltip('Hapus Kategori')
                     ->icon('heroicon-s-trash') // Optional icon
                     ->iconButton()
                     ->color('danger') // Optional color
@@ -143,8 +143,6 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
                             $action->getModalCancelAction()->label('Batal'),
                         ];
                     })
-                    // ->modalSubmitActionLabel('Simpan')
-                    // ->modalCancelActionLabel('Batal')
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->schema([
                         TextInput::make('nama')

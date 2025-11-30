@@ -36,7 +36,7 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                 fn(?string $search): array => Http::withHeaders([
                     'Authorization' => session()->get('data')['token']
                 ])
-                    ->get(env('API_URL') . '/kelas' . '/' . $this->activeTab)
+                    ->get(env('API_URL') . '/kelas/' . $this->activeTab)
                     ->collect('data')
                     ->when(filled($search), fn (Collection $data): Collection => $data->filter(fn (array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))))
                     ->toArray()
@@ -53,11 +53,11 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
             ->emptyStateDescription('Silahkan menambahkan kelas')
             ->recordActions([
                 Action::make('update') // Unique name for your action
-                    ->tooltip('Edit Kelas')
+                    ->tooltip('Ubah Kelas')
                     ->icon('heroicon-s-pencil-square') // Optional icon
                     ->iconButton()
                     ->color('warning')
-                    ->modalHeading('Edit Kelas')
+                    ->modalHeading('Ubah Kelas')
                     ->modalSubmitActionLabel('Simpan')
                     ->modalCancelActionLabel('Batal')
                     ->modalFooterActionsAlignment(Alignment::End)
@@ -86,7 +86,7 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                         $this->resetTable();
                     }), // Optional color
                 Action::make('delete') // Unique name for your action
-                    ->tooltip('Delete Kelas')
+                    ->tooltip('Hapus Kelas')
                     ->icon('heroicon-s-trash') // Optional icon
                     ->iconButton()
                     ->color('danger') // Optional color

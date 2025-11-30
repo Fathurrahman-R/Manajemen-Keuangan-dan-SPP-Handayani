@@ -1,3 +1,4 @@
 <x-filament-panels::page>
-    <livewire:pembayaran />
+    <p>Hello World</p>
+    <livewire:tagihan />
 </x-filament-panels::page>

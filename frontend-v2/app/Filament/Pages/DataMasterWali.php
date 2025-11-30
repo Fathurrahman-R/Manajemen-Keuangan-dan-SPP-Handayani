@@ -9,7 +9,7 @@ class DataMasterWali extends Page
 {
     protected string $view = 'filament.pages.data-master-wali';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Data Master';
+    // protected static string | UnitEnum | null $navigationGroup = 'Data Master';
 
     protected static ?string $navigationLabel = 'Wali';
 
