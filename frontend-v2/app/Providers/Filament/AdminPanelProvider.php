@@ -41,6 +41,8 @@ class AdminPanelProvider extends PanelProvider
                     ->label('Data Master'),
                 NavigationGroup::make()
                     ->label('Transaksi'),
+                NavigationGroup::make()
+                    ->label('Laporan'),
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([

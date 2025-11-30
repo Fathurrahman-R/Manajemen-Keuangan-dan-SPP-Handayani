@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Support\Facades\Http;
 use Livewire\Component;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\Select;
@@ -28,7 +29,9 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class Pembayaran extends Component implements HasActions, HasSchemas, HasTable
 {
@@ -96,42 +99,74 @@ class Pembayaran extends Component implements HasActions, HasSchemas, HasTable
             ->paginated([5, 10, 25])
             ->defaultPaginationPageOption(2)
             ->paginatedWhileReordering()
-            ->emptyStateHeading('Tidak Ada Tagihan')
+            ->emptyStateHeading('Tidak Ada Pembayaran')
             ->emptyStateDescription('Silahkan menambahkan tagihan')
             ->recordActions([
-                Action::make('delete') // Unique name for your action
-                    ->tooltip('Hapus Tagihan')
-                    ->icon('heroicon-s-trash') // Optional icon
-                    ->iconButton()
-                    ->color('danger') // Optional color
-                    ->requiresConfirmation()
-                    ->modalHeading('Hapus Tagihan')
-                    ->modalDescription('Apakah kamu yakin untuk menghapus tagihan ini?')
-                    ->modalSubmitActionLabel('Ya')
-                    ->modalCancelActionLabel('Batal')
-                    ->modalFooterActionsAlignment(Alignment::End)
-                    ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->delete(env('API_URL') . '/tagihan/' . $record['id']);
+                ActionGroup::make([
+                    Action::make('receipt')
+                        ->label('Kwitansi')
+                        ->tooltip('Mengunduh Kwitansi')
+                        ->action(function (array $data, $record): StreamedResponse {
+                            $filename = 'kwitansi-' . $record['kode_pembayaran'] . '.pdf';
 
-                        if (!$response->ok()) {
-                            throw new Exception($response->json()['errors']['message'][0]);
-                        }
-                    })
-                    ->successNotificationTitle('Tagihan Berhasil Dihapus')
-                    ->failureNotificationTitle('Tagihan Gagal Dihapus')
-                    ->after(function () {
-                        $this->resetTable();
-                    })
+                            $response = Http::withHeaders([
+                                'Authorization' => session()->get('data')['token'],
+                                'Accept' => 'application/pdf'
+                            ])
+                                ->get(env('API_URL') . '/pembayaran/kwitansi/' . $record['kode_pembayaran']);
+
+                            if (!$response->ok()) {
+                                throw new Exception($response->json()['errors']['message'][0]);
+                            }
+
+                            // Store the file temporarily (optional, but good practice for larger files)
+                            Storage::disk('local')->put($filename, $response->body());
+                            $path = Storage::disk('local')->path($filename);
+
+                            // Return a response that prompts the file download
+                            return response()->streamDownload(function () use ($path) {
+                                echo file_get_contents($path);
+                                // Clean up the temporary file after streaming
+                                unlink($path);
+                            }, $filename, [
+                                'Content-Type' => 'application/pdf', // Set the correct MIME type
+                            ]);
+                        })
+                        ->successNotificationTitle('Kwitansi Berhasil Diunggah')
+                        ->failureNotificationTitle('Kwitansi Gagal Diunggah'),
+                    Action::make('delete') // Unique name for your action
+                        ->label('Hapus')
+                        ->tooltip('Hapus Pembayaran')
+                        ->color('danger') // Optional color
+                        ->requiresConfirmation()
+                        ->modalHeading('Hapus Pembayaran')
+                        ->modalDescription('Apakah kamu yakin untuk menghapus pembayaran ini?')
+                        ->modalSubmitActionLabel('Ya')
+                        ->modalCancelActionLabel('Batal')
+                        ->modalFooterActionsAlignment(Alignment::End)
+                        ->action(function (array $data, $record): void {
+                            $response = Http::withHeaders([
+                                'Authorization' => session()->get('data')['token']
+                            ])
+                                ->delete(env('API_URL') . '/pembayaran/' . $record['id']);
+
+                            if (!$response->ok()) {
+                                throw new Exception($response->json()['errors']['message'][0]);
+                            }
+                        })
+                        ->successNotificationTitle('Pembayaran Berhasil Dihapus')
+                        ->failureNotificationTitle('Pembayaran Gagal Dihapus')
+                        ->after(function () {
+                            $this->resetTable();
+                        })
+                ])
             ])
             ->headerActions([
                 Action::make('add') // Unique name for your action
                     ->label('Tambah') // Text displayed on the button
                     ->color('primaryMain') // Optional color
                     ->button()
-                    ->modalHeading('Tambah Tagihan')
+                    ->modalHeading('Tambah Pembayaran')
                     ->modalFooterActions(function (Action $action) {
                         return [
                             $action->getModalSubmitAction()
@@ -149,13 +184,13 @@ class Pembayaran extends Component implements HasActions, HasSchemas, HasTable
                         $response = Http::withHeaders([
                             'Authorization' => session()->get('data')['token']
                         ])
-                            ->post(env('API_URL') . '/tagihan', $data);
+                            ->post(env('API_URL') . '/pembayaran', $data);
 
                         if ($response->status() != 201) {
                             throw new Exception($response->json()['errors']['message'][0]);
                         }
                     })
-                    ->successNotificationTitle('Tagihan Berhasil Ditambah')
+                    ->successNotificationTitle('Pembayaran Berhasil Ditambah')
                     ->extraAttributes([
                         'class' => 'text-white font-semibold'
                     ]),

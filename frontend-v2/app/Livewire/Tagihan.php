@@ -6,12 +6,14 @@ use Exception;
 use Illuminate\Support\Facades\Http;
 use Livewire\Component;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
@@ -115,32 +117,116 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
             ->emptyStateHeading('Tidak Ada Tagihan')
             ->emptyStateDescription('Silahkan menambahkan tagihan')
             ->recordActions([
-                Action::make('delete') // Unique name for your action
-                    ->tooltip('Hapus Tagihan')
-                    ->icon('heroicon-s-trash') // Optional icon
-                    ->iconButton()
-                    ->color('danger') // Optional color
-                    ->requiresConfirmation()
-                    ->modalHeading('Hapus Tagihan')
-                    ->modalDescription('Apakah kamu yakin untuk menghapus tagihan ini?')
-                    ->modalSubmitActionLabel('Ya')
-                    ->modalCancelActionLabel('Batal')
-                    ->modalFooterActionsAlignment(Alignment::End)
-                    ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
+                ActionGroup::make([
+                    Action::make('installments')
+                        ->label('Bayar')
+                        ->tooltip('Bayar')
+                        ->modalHeading('Tambah Tagihan')
+                        ->modalFooterActions(function (Action $action) {
+                            return [
+                                $action->getModalSubmitAction()
+                                    ->label('Simpan')
+                                    ->color('primaryMain')
+                                    ->extraAttributes([
+                                        'class' => 'text-white font-semibold'
+                                    ]),
+                                $action->getModalCancelAction()->label('Batal'),
+                            ];
+                        })
+                        ->fillForm(fn(array $record): array => [
+                            'kode_tagihan' => $record['kode_tagihan'],
+                            'total' => $record['jenis_tagihan']['jumlah'] - $record['tmp'],
                         ])
-                            ->delete(env('API_URL') . '/tagihan/' . $record['id']);
+                        ->schema([
+                            TextInput::make('total')
+                                ->label('Total Tagihan')
+                                ->readOnly()
+                                ->disabled(),
+                            Select::make('metode')
+                                ->label('Metode Pembayaran')
+                                ->options([
+                                    'Tunai' => 'Tunai',
+                                    'Non-Tunai' => 'Non-Tunai',
+                                ])
+                                ->required(),
+                            Select::make('jenis_pembayaran')
+                                ->label('Jenis Pembayaran')
+                                ->options([
+                                    'Cicil' => 'Cicil',
+                                    'Lunas' => 'Lunas',
+                                    ])
+                                ->live()
+                                ->afterStateUpdated(function ($state, $set, array $record): void {
+                                    if($state == 'Lunas') {
+                                        $set('jumlah', $record['jenis_tagihan']['jumlah'] - $record['tmp']);
+                                    } else {
+                                        $set('jumlah', null);
+                                    }
+                                })
+                                ->required(),
+                            TextInput::make('jumlah')
+                                ->label('Jumlah')
+                                ->disabled(fn($get) => $get('jenis_pembayaran') === 'Lunas')
+                                ->required(),
+                            TextInput::make('pembayar')
+                                ->label('Dibayar Oleh')
+                                ->required(),
+                        ])
+                        ->action(function (array $data, $record): void {
+                            $url = env('API_URL') . '/pembayaran';
+                            $payload = [
+                                'metode' => $data['metode'],
+                                'pembayar' => $data['pembayar']
+                            ];
 
-                        if (!$response->ok()) {
-                            throw new Exception($response->json()['errors']['message'][0]);
-                        }
-                    })
-                    ->successNotificationTitle('Tagihan Berhasil Dihapus')
-                    ->failureNotificationTitle('Tagihan Gagal Dihapus')
-                    ->after(function () {
-                        $this->resetTable();
-                    })
+                            if($data['jenis_pembayaran'] === 'Lunas') {
+                                $url = $url . '/lunas/' . $record['kode_tagihan'];
+                            } else {
+                                $url = $url . '/bayar/' . $record['kode_tagihan'];
+
+                                $payload['jumlah'] = $data['jumlah'];
+                            }
+
+                            $response = Http::withHeaders([
+                                'Authorization' => session()->get('data')['token']
+                            ])
+                                ->post($url, $payload);
+    
+                            if (!$response->ok()) {
+                                throw new Exception($response->json()['errors']['message'][0]);
+                            }
+                        })
+                        ->successNotificationTitle('Tagihan Berhasil Ditambahkan')
+                        ->failureNotificationTitle('Tagihan Gagal Ditambahkan')
+                        ->after(function () {
+                            $this->resetTable();
+                        }),
+                    Action::make('delete')
+                        ->label('Hapus')
+                        ->tooltip('Hapus Tagihan')
+                        ->color('danger') // Optional color
+                        ->requiresConfirmation()
+                        ->modalHeading('Hapus Tagihan')
+                        ->modalDescription('Apakah kamu yakin untuk menghapus tagihan ini?')
+                        ->modalSubmitActionLabel('Ya')
+                        ->modalCancelActionLabel('Batal')
+                        ->modalFooterActionsAlignment(Alignment::End)
+                        ->action(function (array $data, $record): void {
+                            $response = Http::withHeaders([
+                                'Authorization' => session()->get('data')['token']
+                            ])
+                                ->delete(env('API_URL') . '/tagihan/' . $record['id']);
+
+                            if (!$response->ok()) {
+                                throw new Exception($response->json()['errors']['message'][0]);
+                            }
+                        })
+                        ->successNotificationTitle('Tagihan Berhasil Dihapus')
+                        ->failureNotificationTitle('Tagihan Gagal Dihapus')
+                        ->after(function () {
+                            $this->resetTable();
+                        })
+                ])
             ])
             ->headerActions([
                 Action::make('add') // Unique name for your action
@@ -161,7 +247,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                     })
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->schema([
-                        Select::make('jenis_tagihan')
+                        Select::make('jenis_tagihan_id')
                             ->label('Jenis Tagihan')
                             ->searchable()
                             ->searchPrompt('Cari Jenis Tagihan')
@@ -250,7 +336,8 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                             throw new Exception($response->json()['errors']['message'][0]);
                         }
                     })
-                    ->successNotificationTitle('Tagihan Berhasil Ditambah')
+                    ->successNotificationTitle('Tagihan Berhasil Ditambahkan')
+                    ->failureNotificationTitle('Tagihan Gagal Ditambahkan')
                     ->extraAttributes([
                         'class' => 'text-white font-semibold'
                     ]),
