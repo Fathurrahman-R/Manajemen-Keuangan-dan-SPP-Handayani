@@ -282,9 +282,21 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                         ->label('Pekerjaan'),
                                 ]),
                         ])
+                            ->nextAction(
+                                fn(Action $action) => $action->label('Selanjutnya')->color('primaryMain')->extraAttributes([
+                                    'class' => 'font-semibold'
+                                ]),
+                            )
+                            ->previousAction(
+                                fn(Action $action) => $action->label('Sebelumnya')
+                            )
                             ->submitAction(
                                 Action::make('submit')
                                     ->label('Simpan')
+                                    ->color('primaryMain')
+                                    ->extraAttributes([
+                                        'class' => 'font-semibold'
+                                    ])
                                     ->submit('save')
                             ),
                     ])
@@ -488,9 +500,21 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                         ->label('Keterangan'),
                                 ]),
                         ])
+                            ->nextAction(
+                                fn(Action $action) => $action->label('Selanjutnya')->color('primaryMain')->extraAttributes([
+                                    'class' => 'font-semibold'
+                                ]),
+                            )
+                            ->previousAction(
+                                fn(Action $action) => $action->label('Sebelumnya')
+                            )
                             ->submitAction(
                                 Action::make('save')
                                     ->label('Simpan')
+                                    ->color('primaryMain')
+                                    ->extraAttributes([
+                                        'class' => 'font-semibold'
+                                    ])
                                     ->submit('save'),
                             )
                     ])
@@ -700,9 +724,21 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                         ->label('Pekerjaan'),
                                 ]),
                         ])
+                            ->nextAction(
+                                fn(Action $action) => $action->label('Selanjutnya')->color('primaryMain')->extraAttributes([
+                                    'class' => 'font-semibold'
+                                ]),
+                            )
+                            ->previousAction(
+                                fn(Action $action) => $action->label('Sebelumnya')
+                            )
                             ->submitAction(
                                 Action::make('submit')
                                     ->label('Simpan')
+                                    ->color('primaryMain')
+                                    ->extraAttributes([
+                                        'class' => 'font-semibold'
+                                    ])
                                     ->submit('save')
                             ),
                     ])
@@ -724,7 +760,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                 // Tambah Siswa TK, KB
                 Action::make('add') // Unique name for your action
                     ->label('Tambah') // Text displayed on the button
-                    ->color('primaryMain') // Optional color
+                    ->color('primaryMain')
                     ->button()
                     ->modalHeading('Tambah Siswa')
                     ->modalSubmitAction(false)
@@ -884,9 +920,21 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                         ->label('Keterangan'),
                                 ]),
                         ])
+                            ->nextAction(
+                                fn(Action $action) => $action->label('Selanjutnya')->color('primaryMain')->extraAttributes([
+                                    'class' => 'font-semibold'
+                                ]),
+                            )
+                            ->previousAction(
+                                fn(Action $action) => $action->label('Sebelumnya')
+                            )
                             ->submitAction(
                                 Action::make('save')
                                     ->label('Simpan')
+                                    ->color('primaryMain')
+                                    ->extraAttributes([
+                                        'class' => 'font-semibold'
+                                    ])
                                     ->submit('save'),
                             )
                     ])

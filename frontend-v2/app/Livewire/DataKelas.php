@@ -38,7 +38,7 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                 ])
                     ->get(env('API_URL') . '/kelas/' . $this->activeTab)
                     ->collect('data')
-                    ->when(filled($search), fn (Collection $data): Collection => $data->filter(fn (array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))))
+                    ->when(filled($search), fn(Collection $data): Collection => $data->filter(fn(array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))))
                     ->toArray()
             )
             ->columns([
@@ -58,8 +58,17 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                     ->iconButton()
                     ->color('warning')
                     ->modalHeading('Ubah Kelas')
-                    ->modalSubmitActionLabel('Simpan')
-                    ->modalCancelActionLabel('Batal')
+                    ->modalFooterActions(function (Action $action) {
+                        return [
+                            $action->getModalSubmitAction()
+                                ->label('Simpan')
+                                ->color('primaryMain')
+                                ->extraAttributes([
+                                    'class' => 'text-white font-semibold'
+                                ]),
+                            $action->getModalCancelAction()->label('Batal'),
+                        ];
+                    })
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->modalSubmitAction()
                     ->fillForm(fn(array $record): array => [
@@ -121,11 +130,11 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                     ->modalFooterActions(function (Action $action) {
                         return [
                             $action->getModalSubmitAction()
-                            ->label('Simpan')
-                            ->color('primaryMain')
-                            ->extraAttributes([
-                                'class' => 'text-white font-semibold'
-                            ]),
+                                ->label('Simpan')
+                                ->color('primaryMain')
+                                ->extraAttributes([
+                                    'class' => 'text-white font-semibold'
+                                ]),
                             $action->getModalCancelAction()->label('Batal'),
                         ];
                     })

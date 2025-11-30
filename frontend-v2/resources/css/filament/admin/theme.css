@@ -7,3 +7,19 @@
 .fi-sidebar-nav {
     @apply bg-white shadow-lg
 }
+
+div.fi-ta-header > div.fi-ta-actions > button {
+    @apply text-white
+}
+
+div.fi-modal-footer-actions > button[type="submit"] {
+    @apply !text-white
+}
+
+div.fi-sc-wizard-footer > div:nth-child(3) > button {
+    @apply text-white
+}
+
+div.fi-sc-wizard-footer > div:nth-child(4) > button {
+    @apply text-white
+}

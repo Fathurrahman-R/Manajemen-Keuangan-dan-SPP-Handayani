@@ -63,8 +63,17 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                     ->iconButton()
                     ->color('warning')
                     ->modalHeading('Ubah Jenis Tagihan')
-                    ->modalSubmitActionLabel('Simpan')
-                    ->modalCancelActionLabel('Batal')
+                    ->modalFooterActions(function (Action $action) {
+                        return [
+                            $action->getModalSubmitAction()
+                                ->label('Simpan')
+                                ->color('primaryMain')
+                                ->extraAttributes([
+                                    'class' => 'text-white font-semibold'
+                                ]),
+                            $action->getModalCancelAction()->label('Batal'),
+                        ];
+                    })
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->modalSubmitAction()
                     ->fillForm(fn(array $record): array => [
