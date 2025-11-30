@@ -93,12 +93,12 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
             ->emptyStateHeading('Tidak Ada Siswa')
             ->emptyStateDescription('Silahkan menambahkan siswa')
             ->recordActions([
-                // Action::make('view') // Unique name for your action
-                //     ->tooltip('Lihat Siswa')
-                //     ->icon('heroicon-s-eye') // Optional icon
-                //     ->iconButton()
-                //     ->url(fn(array $record): string => 'detail-siswa/' . $this->activeTab . '/' . $record['id'])
-                //     ->color('gray'),
+                Action::make('view') // Unique name for your action
+                    ->tooltip('Lihat Siswa')
+                    ->icon('heroicon-s-eye') // Optional icon
+                    ->iconButton()
+                    ->url(fn(array $record): string => 'detail-siswa/' . Str::lower($this->activeTab) . '/' . $record['id'])
+                    ->color('gray'),
                 // Update Siswa MI
                 Action::make('update_detail') // Unique name for your action
                     ->tooltip('Ubah Siswa')
