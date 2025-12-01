@@ -45,6 +45,8 @@ class SiswaController extends Controller
     {
         $data = $request->validated();
 
+        $ayahId = null; $ibuId = null; $waliId = null;
+
         $exists = Siswa::where('jenjang', strtoupper($jenjang))
             ->where('nis', $data['nis'])
             ->exists();
@@ -59,6 +61,9 @@ class SiswaController extends Controller
         {
             $wali = new Wali([
                 'nama' => $data['wali_nama'],
+                'agama' => $data['wali_agama'],
+                'jenis_kelamin' => $data['wali_jenis_kelamin'],
+                'pendidikan_terakhir' => $data['wali_pendidikan_terakhir'],
                 'pekerjaan' => $data['wali_pekerjaan'] ?? null,
                 'alamat' => $data['wali_alamat'],
                 'no_hp' => $data['wali_no_hp'],
@@ -68,7 +73,6 @@ class SiswaController extends Controller
             $waliId = $wali->id;
         }
 
-        $ayahId = null; $ibuId = null; $waliId = null;
         if (strtoupper($jenjang) === 'MI') {
             $ayah = new Ayah([
                 'nama' => $data['ayah_nama'],
@@ -114,19 +118,6 @@ class SiswaController extends Controller
             ], 404));
         }
 
-        // update related models
-        if ($siswa->wali_id) {
-            $wali = Wali::find($siswa->wali_id);
-            if ($wali) {
-                $wali->update([
-                    'nama' => $data['wali_nama'],
-                    'pekerjaan' => $data['wali_pekerjaan'] ?? null,
-                    'alamat' => $data['wali_alamat'],
-                    'no_hp' => $data['wali_no_hp'],
-                    'keterangan' => $data['wali_keterangan'] ?? null,
-                ]);
-            }
-        }
         if (strtoupper($jenjang) === 'MI') {
             if ($siswa->ayah_id) {
                 $ayah = Ayah::find($siswa->ayah_id);
@@ -145,6 +136,20 @@ class SiswaController extends Controller
                         'nama' => $data['ibu_nama'],
                         'pendidikan' => $data['ibu_pendidikan'] ?? null,
                         'pekerjaan' => $data['ibu_pekerjaan'] ?? null,
+                    ]);
+                }
+            }
+        } else {
+            // update related models
+            if ($siswa->wali_id) {
+                $wali = Wali::find($siswa->wali_id);
+                if ($wali) {
+                    $wali->update([
+                        'nama' => $data['wali_nama'],
+                        'pekerjaan' => $data['wali_pekerjaan'] ?? null,
+                        'alamat' => $data['wali_alamat'],
+                        'no_hp' => $data['wali_no_hp'],
+                        'keterangan' => $data['wali_keterangan'] ?? null,
                     ]);
                 }
             }

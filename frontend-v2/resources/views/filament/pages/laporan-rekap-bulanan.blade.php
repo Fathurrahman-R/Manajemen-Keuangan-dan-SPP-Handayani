@@ -1,3 +1,3 @@
 <x-filament-panels::page>
-    {{-- Page content --}}
+    <livewire:rekap-bulanan />
 </x-filament-panels::page>

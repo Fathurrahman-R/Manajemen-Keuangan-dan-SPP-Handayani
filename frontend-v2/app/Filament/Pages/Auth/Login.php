@@ -22,6 +22,14 @@ use Exception;
 
 class Login extends PagesLogin {
 
+    public function __construct() {
+        $token = session()->get('data');
+
+        if (!is_null($token) && !is_null($token['token'])) {
+            return redirect()->intended(filament()->getUrl() . '/data-master-siswa');
+        }
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema

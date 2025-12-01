@@ -68,41 +68,60 @@ class SiswaRequest extends FormRequest
             ],
             // nested ayah
             'ayah_nama' => [
+                $requiredMI,
                 'max:100'
             ],
             'ayah_pendidikan' => [
+                $requiredMI,
                 'nullable',
                 'max:50'
             ],
             'ayah_pekerjaan' => [
+                $requiredMI,
                 'nullable',
                 'max:100'
             ],
             // nested ibu
             'ibu_nama' => [
+                $requiredMI,
                 'max:100'
             ],
             'ibu_pendidikan' => [
+                $requiredMI,
                 'nullable',
                 'max:50'
             ],
             'ibu_pekerjaan' => [
+                $requiredMI,
                 'nullable',
                 'max:100'
             ],
             'wali_nama' => [
-                $requiredOther,
+                $requiredMI,
                 'max:100'
             ],
+            'wali_agama' => [
+                $requiredMI,
+                'nullable',
+            ],
+            'wali_jenis_kelamin' => [
+                $requiredMI,
+                'nullable',
+            ],
+            'wali_pendidikan_terakhir' => [
+                $requiredMI,
+                'nullable',
+            ],
             'wali_pekerjaan' => [
+                $requiredMI,
                 'nullable',
                 'max:100'
             ],
             'wali_alamat' => [
-                $requiredOther
+                $requiredMI
             ],
             'wali_no_hp' => [
-                $requiredOther,
+                $requiredMI,
                 'max:100'
             ],
             'wali_keterangan' => [

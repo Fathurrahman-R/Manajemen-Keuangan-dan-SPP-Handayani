@@ -1,3 +1,4 @@
 <x-filament-panels::page>
-    {{-- Page content --}}
+
+    @livewire('data-siswa')
 </x-filament-panels::page>
