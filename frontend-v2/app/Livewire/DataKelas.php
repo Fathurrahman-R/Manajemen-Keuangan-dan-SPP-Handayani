@@ -84,7 +84,7 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                         $response = Http::withHeaders([
                             'Authorization' => session()->get('data')['token']
                         ])
-                            ->put(env('API_URL') . '/kelas/' . $record['id'], $data);
+                            ->put(env('API_URL') . '/kelas/' . $this->activeTab .'/' . $record['id'], $data);
 
                         if (!$response->ok()) {
                             throw new Exception($response->json()['errors']['message'][0]);
