@@ -137,10 +137,10 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                         'keterangan' => $record['keterangan'],
                         'status' => $record['status'],
                         'ayah_nama' => $record['ayah']['nama'] ?? null,
-                        'ayah_pendidikan' => $record['ayah']['pendidikan_terakhir'] ?? null,
+                        'ayah_pendidikan_terakhir' => $record['ayah']['pendidikan_terakhir'] ?? null,
                         'ayah_pekerjaan' => $record['ayah']['pekerjaan'] ?? null,
                         'ibu_nama' => $record['ibu']['nama'] ?? null,
-                        'ibu_pendidikan' => $record['ibu']['pendidikan_terakhir'] ?? null,
+                        'ibu_pendidikan_terakhir' => $record['ibu']['pendidikan_terakhir'] ?? null,
                         'ibu_pekerjaan' => $record['ibu']['pekerjaan'] ?? null,
                     ])
                     ->schema([
@@ -564,7 +564,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                         $response = Http::withHeaders([
                             'Authorization' => session()->get('data')['token']
                         ])
-                            ->delete(env('API_URL') . '/siswa' . '/' . $record['id']);
+                            ->delete(env('API_URL') . '/siswa/' . $this->activeTab . '/' . $record['id']);
 
                         if (!$response->ok()) {
                             throw new Exception($response->json()['errors']['message'][0]);

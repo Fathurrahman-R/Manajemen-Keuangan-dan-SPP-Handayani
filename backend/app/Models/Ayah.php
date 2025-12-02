@@ -17,7 +17,7 @@ class Ayah extends Model
     public $timestamps = true;
     protected $fillable = [
         'nama',
-        'pendidikan',
+        'pendidikan_terakhir',
         'pekerjaan',
     ];
     protected $casts = [

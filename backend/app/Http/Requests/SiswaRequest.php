@@ -71,7 +71,7 @@ class SiswaRequest extends FormRequest
                 $requiredMI,
                 'max:100'
             ],
-            'ayah_pendidikan' => [
+            'ayah_pendidikan_terakhir' => [
                 $requiredMI,
                 'nullable',
                 'max:50'
@@ -86,7 +86,7 @@ class SiswaRequest extends FormRequest
                 $requiredMI,
                 'max:100'
             ],
-            'ibu_pendidikan' => [
+            'ibu_pendidikan_terakhir' => [
                 $requiredMI,
                 'nullable',
                 'max:50'

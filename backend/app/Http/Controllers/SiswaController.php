@@ -68,7 +68,7 @@ class SiswaController extends Controller
                 'nama' => $data['wali_nama'],
                 'agama' => $data['wali_agama'],
                 'jenis_kelamin' => $data['wali_jenis_kelamin'],
-                'pendidikan_terakhir' => $data['wali_pendidikan_terakhir'],
+                'pendidikan_terakhir' => strtoupper($data['wali_pendidikan_terakhir']),
                 'pekerjaan' => $data['wali_pekerjaan'] ?? null,
                 'alamat' => $data['wali_alamat'],
                 'no_hp' => $data['wali_no_hp'],
@@ -81,14 +81,14 @@ class SiswaController extends Controller
         if (strtoupper($jenjang) === 'MI') {
             $ayah = new Ayah([
                 'nama' => $data['ayah_nama'],
-                'pendidikan' => $data['ayah_pendidikan'] ?? null,
+                'pendidikan_terakhir' => strtoupper($data['ayah_pendidikan_terakhir']) ?? null,
                 'pekerjaan' => $data['ayah_pekerjaan'] ?? null,
             ]);
             $ayah->save();
             $ayahId = $ayah->id;
             $ibu = new Ibu([
                 'nama' => $data['ibu_nama'],
-                'pendidikan' => $data['ibu_pendidikan'] ?? null,
+                'pendidikan_terakhir' => strtoupper($data['ibu_pendidikan_terakhir']) ?? null,
                 'pekerjaan' => $data['ibu_pekerjaan'] ?? null,
             ]);
             $ibu->save();
@@ -129,7 +129,7 @@ class SiswaController extends Controller
                 if ($ayah) {
                     $ayah->update([
                         'nama' => $data['ayah_nama'],
-                        'pendidikan' => $data['ayah_pendidikan'] ?? null,
+                        'pendidikan_terakhir' => strtoupper($data['ayah_pendidikan_terakhir']) ?? null,
                         'pekerjaan' => $data['ayah_pekerjaan'] ?? null,
                     ]);
                 }
@@ -139,7 +139,7 @@ class SiswaController extends Controller
                 if ($ibu) {
                     $ibu->update([
                         'nama' => $data['ibu_nama'],
-                        'pendidikan' => $data['ibu_pendidikan'] ?? null,
+                        'pendidikan_terakhir' => strtoupper($data['ibu_pendidikan_terakhir']) ?? null,
                         'pekerjaan' => $data['ibu_pekerjaan'] ?? null,
                     ]);
                 }
@@ -151,6 +151,9 @@ class SiswaController extends Controller
                 if ($wali) {
                     $wali->update([
                         'nama' => $data['wali_nama'],
+                        'agama' => $data['wali_agama'],
+                        'jenis_kelamin' => $data['wali_jenis_kelamin'],
+                        'pendidikan_terakhir' => strtoupper($data['wali_pendidikan_terakhir']),
                         'pekerjaan' => $data['wali_pekerjaan'] ?? null,
                         'alamat' => $data['wali_alamat'],
                         'no_hp' => $data['wali_no_hp'],
@@ -191,11 +194,29 @@ class SiswaController extends Controller
                 "errors" => ["message" => ["siswa tidak ditemukan."]]
             ], 404));
         }
-        $user = User::where('username', $siswa->nis)->first();
+
+        // Capture related IDs before deleting siswa
+        $jenjangSiswa = strtoupper($siswa->jenjang);
+        $ayahId = $siswa->ayah_id;
+        $ibuId = $siswa->ibu_id;
+        $waliId = $siswa->wali_id;
+        $nis = $siswa->nis;
+
+        // Delete linked user account if exists
+        $user = User::where('username', $nis)->first();
         if ($user) { $user->delete(); }
 
-        // optionally delete related (cascade already on ayah/ibu, wali not cascade) -> keep wali for other siblings? retain.
+        // Delete siswa first to avoid FK constraints
         $siswa->delete();
+
+        // Delete related records based on jenjang
+        if ($jenjangSiswa === 'MI') {
+            if ($ayahId) { Ayah::where('id', $ayahId)->delete(); }
+            if ($ibuId) { Ibu::where('id', $ibuId)->delete(); }
+        } elseif (in_array($jenjangSiswa, ['TK', 'KB'])) {
+            if ($waliId) { Wali::where('id', $waliId)->delete(); }
+        }
+
         return response(['data' => true])->setStatusCode(200);
     }
 }
