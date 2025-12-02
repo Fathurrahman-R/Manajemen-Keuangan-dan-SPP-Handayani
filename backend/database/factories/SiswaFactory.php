@@ -34,9 +34,9 @@ class SiswaFactory extends Factory
             // relasi otomatis
             'ayah_id' => Ayah::factory(),
             'ibu_id' => Ibu::factory(),
-            'wali_id' => Wali::factory(),
-            'kelas_id' => Kelas::factory(),
-            'kategori_id' => Kategori::factory(),
+//            'wali_id' => Wali::factory(),
+            'kelas_id' => $this->faker->numberBetween(1,6),
+            'kategori_id' => $this->faker->numberBetween(1,5),
 
             'jenjang' => 'MI',
             'asal_sekolah' => null,

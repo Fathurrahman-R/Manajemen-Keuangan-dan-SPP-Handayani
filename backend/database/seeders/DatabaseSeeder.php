@@ -2,6 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Ayah;
+use App\Models\Ibu;
+use App\Models\Siswa;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,16 +16,17 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             UserSeeder::class,
-            WaliSeeder::class,
-            AyahSeeder::class,
-            IbuSeeder::class,
+//            WaliSeeder::class,
+//            AyahSeeder::class,
+//            IbuSeeder::class,
             KategoriSeeder::class,
             KelasSeeder::class,
-            SiswaSeeder::class,
+//            SiswaSeeder::class,
             AppSettingSeeder::class,
-            JenisTagihanSeeder::class,
-            TagihanSeeder::class,
-            PembayaranSeeder::class,
+//            JenisTagihanSeeder::class,
+//            TagihanSeeder::class,
+//            PembayaranSeeder::class,
         ]);
+        Siswa::factory(180)->create();
     }
 }

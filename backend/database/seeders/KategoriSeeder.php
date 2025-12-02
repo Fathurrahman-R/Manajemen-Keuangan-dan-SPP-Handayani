@@ -13,9 +13,25 @@ class KategoriSeeder extends Seeder
      */
     public function run(): void
     {
-        Kategori::create([
-           'id' => 1,
-           'nama' => 'Bersaudara',
+        $bersaudara = Kategori::factory()->create([
+            'id'=>1,
+            'nama'=>'Bersaudara',
+        ]);
+        $yatim = Kategori::factory()->create([
+            'id'=>2,
+            'nama'=>'Yatim',
+        ]);
+        $piatu = Kategori::factory()->create([
+            'id'=>3,
+            'nama'=>'Piatu',
+        ]);
+        $yatimpiatu = Kategori::factory()->create([
+            'id'=>4,
+            'nama'=>'Yatim Piatu',
+        ]);
+        $reguler = Kategori::factory()->create([
+            'id'=>5,
+            'nama'=>'Reguler',
         ]);
     }
 }

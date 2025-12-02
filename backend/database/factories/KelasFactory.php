@@ -12,7 +12,8 @@ class KelasFactory extends Factory
     public function definition(): array
     {
         return [
-            'jenjang'=>$this->faker->randomElement(['TK','MI','KB']),
+//            'jenjang'=>$this->faker->randomElement(['TK','MI','KB']),
+            'jenjang'=>'MI',
             'nama'=>'KELAS 1',
         ];
     }

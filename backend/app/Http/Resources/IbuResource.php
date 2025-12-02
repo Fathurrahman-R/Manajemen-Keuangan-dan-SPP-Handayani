@@ -17,7 +17,7 @@ class IbuResource extends JsonResource
         return [
             'id'=>$this->id,
             'nama'=>$this->nama,
-            'pendidikan'=>$this->pendidikan,
+            'pendidikan_terakhir'=>$this->pendidikan_terakhir,
             'pekerjaan'=>$this->pekerjaan
         ];
     }

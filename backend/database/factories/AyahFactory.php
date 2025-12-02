@@ -21,7 +21,7 @@ class AyahFactory extends Factory
     {
         return [
             'nama' => $this->faker->name('male'),
-            'pendidikan' => $this->faker->randomElement(['SD','SMP','SMA','D3','S1']),
+            'pendidikan_terakhir' => $this->faker->randomElement(['SD','SMP','SMA','D3','S1']),
             'pekerjaan' => $this->faker->jobTitle(),
         ];
     }
