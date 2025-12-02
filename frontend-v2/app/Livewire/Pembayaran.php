@@ -148,7 +148,7 @@ class Pembayaran extends Component implements HasActions, HasSchemas, HasTable
                             $response = Http::withHeaders([
                                 'Authorization' => session()->get('data')['token']
                             ])
-                                ->delete(env('API_URL') . '/pembayaran/' . $record['id']);
+                                ->delete(env('API_URL') . '/pembayaran/' . $record['kode_pembayaran']);
 
                             if (!$response->ok()) {
                                 throw new Exception($response->json()['errors']['message'][0]);
