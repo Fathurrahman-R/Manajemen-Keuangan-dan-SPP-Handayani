@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('ibu', function (Blueprint $table) {
             $table->id();
             $table->string('nama',100)->nullable();
-            $table->string('pendidikan',50)->nullable();
+            $table->string('pendidikan_terakhir',50)->nullable();
             $table->string('pekerjaan',100)->nullable();
             $table->timestamps();
         });
