@@ -152,8 +152,9 @@ class TagihanController extends Controller
                 'errors' => ['message' => ['tagihan tidak ditemukan.']]
             ],404));
         }
-        $jumlah = $tagihan->jenis_tagihan->jumlah;
-        $tagihan->update(['status' => 'Lunas','tmp' => $jumlah]);
+        $sisa = $tagihan->jenis_tagihan->jumlah - $tagihan->tmp;
+        $jumlah = when($tagihan->status=='Belum Lunas', $sisa, $tagihan->jenis_tagihan->jumlah);
+        $tagihan->update(['status' => 'Lunas','tmp' => $tagihan->jenis_tagihan->jumlah]);
         return $jumlah;
     }
 
