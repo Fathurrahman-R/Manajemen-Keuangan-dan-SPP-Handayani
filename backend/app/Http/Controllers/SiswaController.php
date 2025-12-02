@@ -21,6 +21,7 @@ class SiswaController extends Controller
 {
     #[HeaderParameter('Authorization')]
     #[QueryParameter('search')]
+    #[QueryParameter('kelas_id')]
     public function index(string $jenjang)
     {
         $baseQuery = Siswa::with(['ayah','ibu','wali','kelas','kategori'])
@@ -35,6 +36,10 @@ class SiswaController extends Controller
                     $q->orWhere('nisn', 'like', "{$term}%");
                 }
             });
+        }
+        $kelasId = request('kelas_id');
+        if (!is_null($kelasId) && $kelasId !== '') {
+            $query->where('kelas_id', (int) $kelasId);
         }
         $siswa = $query->paginate(request('per_page', 30));
         return SiswaResource::collection($siswa);
