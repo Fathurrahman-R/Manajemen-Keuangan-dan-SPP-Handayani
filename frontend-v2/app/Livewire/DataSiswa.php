@@ -35,18 +35,27 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
 
     public $activeTab = 'TK';
     public $perPage = 5;
+    public $currentPage = 1;
+    public ?int $kelasId = null;
 
     public function table(Table $table): Table
     {
         return $table
             ->records(
                 function (?string $search, int $page, int $recordsPerPage): LengthAwarePaginator {
+                    $this->perPage = $recordsPerPage;
+                    $this->currentPage = $page;
                     $params = [
                         'per_page' => $this->perPage,
+                        'page' => $this->currentPage,
                     ];
 
                     if (filled($search)) {
                         $params['search'] = $search;
+                    }
+
+                    if(!is_null($this->kelasId)){
+                        $params['kelas_id'] = $this->kelasId;
                     }
 
                     $response = Http::withHeaders([
@@ -64,12 +73,13 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                 }
             )
             ->columns([
-                TextColumn::make('nis')->label('NIS')->searchable(),
+                TextColumn::make('nis')->label(__('NIS'))->searchable(),
                 TextColumn::make('nisn')
                     ->label('NISN')
                     ->searchable()
                     ->hidden(fn($livewire) => $livewire->activeTab !== 'MI'),
                 TextColumn::make('nama')->label('Nama')->searchable(),
+                TextColumn::make('kelas.nama')->label(__('Kelas')),
                 TextColumn::make('jenis_kelamin')->label('Jenis Kelamin')->searchable(),
                 TextColumn::make('tanggal_lahir')->label('Tanggal Lahir')->searchable(),
                 TextColumn::make('agama')->label('Agama')->searchable(),
@@ -139,10 +149,10 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                 ->description('Informasi Detail Siswa')
                                 ->schema([
                                     TextInput::make('nis')
-                                        ->label('NIS')
+                                        ->label(__('NIS'))
                                         ->required(),
                                     TextInput::make('nisn')
-                                        ->label('NISN')
+                                        ->label(__('NISN'))
                                         ->required(),
                                     TextInput::make('nama')
                                         ->label('Nama Siswa')
@@ -357,7 +367,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                 ->description('Informasi Detail Siswa')
                                 ->schema([
                                     TextInput::make('nis')
-                                        ->label('NIS')
+                                        ->label(__('NIS'))
                                         ->required(),
                                     TextInput::make('nama')
                                         ->label('Nama Siswa')
@@ -567,6 +577,48 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                     })
             ])
             ->headerActions([
+                // Kelas filter tied to active tab
+                Action::make('filter_kelas')
+                    ->label('Filter Kelas')
+                    ->color('gray')
+                    ->button()
+                    ->modalHeading('Filter Kelas')
+                    ->modalSubmitActionLabel('Terapkan')
+                    ->modalCancelActionLabel('Batal')
+                    ->form([
+                        Select::make('kelas_id')
+                            ->label('Kelas')
+                            ->searchable()
+                            ->searchPrompt('Cari Kelas')
+                            ->options(function () {
+                                $response = Http::withHeaders([
+                                    'Authorization' => session()->get('data')['token'],
+                                ])->get(env('API_URL') . '/kelas/' . $this->activeTab);
+
+                                if (!$response->ok()) {
+                                    return [];
+                                }
+
+                                $data = $response->json();
+
+                                return collect($data['data'])->mapWithKeys(fn($item) => [$item['id'] => $item['nama']])->toArray();
+                            })
+                            ->required(),
+                    ])
+                    ->action(function (array $data): void {
+                        $this->kelasId = (int) $data['kelas_id'];
+                        $this->resetTable();
+                    }),
+
+                // Clear kelas filter
+                Action::make('clear_kelas_filter')
+                    ->label('Hapus Filter Kelas')
+                    ->color('gray')
+                    ->button()
+                    ->action(function (): void {
+                        $this->kelasId = null;
+                        $this->resetTable();
+                    }),
                 // Tambah Siswa MI
                 Action::make('add_detail') // Unique name for your action
                     ->label('Tambah') // Text displayed on the button
@@ -581,7 +633,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                 ->description('Informasi Detail Siswa')
                                 ->schema([
                                     TextInput::make('nis')
-                                        ->label('NIS')
+                                        ->label(__('NIS'))
                                         ->required(),
                                     TextInput::make('nisn')
                                         ->label('NISN')
@@ -777,7 +829,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                 ->description('Informasi Detail Siswa')
                                 ->schema([
                                     TextInput::make('nis')
-                                        ->label('NIS')
+                                        ->label(__('NIS'))
                                         ->required(),
                                     TextInput::make('nama')
                                         ->label('Nama Siswa')
@@ -966,6 +1018,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
     {
         $params = [
             'per_page' => $this->perPage,
+            'page' => $this->currentPage,
         ];
 
         $response = Http::withHeaders([
