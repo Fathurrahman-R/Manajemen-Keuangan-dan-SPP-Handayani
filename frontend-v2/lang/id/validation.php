@@ -182,7 +182,7 @@ return [
     ],
 
     'attributes' => [
-        'npwp'=>'NPWP'
+        //
     ],
 
 ];
