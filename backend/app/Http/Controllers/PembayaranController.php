@@ -95,7 +95,7 @@ class PembayaranController extends Controller
             ], 400));
         }
         $tagihanTmpSebelum = $tagihan->getOriginal('tmp'); // setelah update original masih nilai sebelum? (optional)
-        $statusBaru = ($tmpBaru == $jenis->jumlah) ? 'Lunas' : 'Belum Lunas';
+        $statusBaru = ($tmpBaru == $jenis->jumlah) ? 'Lunas' : ($tmpBaru == 0 ? 'Belum Dibayar':'Belum Lunas');
         $tagihan->update([
             'tmp' => $tmpBaru,
             'status' => $statusBaru
