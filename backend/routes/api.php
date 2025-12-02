@@ -19,7 +19,7 @@ Route::middleware(\App\Http\Middleware\ApiAuthMiddleware::class)->group(function
     Route::delete('/users/logout', [UserController::class, "logout"]);
     Route::get("/users/current", [UserController::class, "get"]);
     Route::patch('/users/current', [UserController::class, "update"]);
-    
+
     Route::get('/tagihan', [TagihanController::class, 'index']);
     Route::middleware(\App\Http\Middleware\ApiRoleMiddleware::class . ':admin')->group(function () {
         Route::post("/users", [UserController::class, "register"]);
