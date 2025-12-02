@@ -23,22 +23,32 @@ class AppSettingController extends Controller
     {
         $data = $request->validated();
 
-        // Anggap record settings hanya satu
+        // Ambil atau buat record settings tunggal
         $setting = AppSetting::first();
+        if (!$setting) {
+            $setting = new AppSetting();
+        }
+
+        // Update field non-file
+        foreach ($data as $key => $value) {
+            if ($key !== 'logo') {
+                $setting->{$key} = $value;
+            }
+        }
 
         // Jika ada file logo baru
         if ($request->hasFile('logo')) {
-
             // Hapus logo lama jika ada
             if ($setting->logo && Storage::disk('public')->exists($setting->logo)) {
                 Storage::disk('public')->delete($setting->logo);
             }
 
-            // Simpan logo baru
+            // Simpan logo baru ke disk 'public' -> returns relative path
             $path = $request->file('logo')->store('logo-sekolah', 'public');
-            $setting = new AppSetting($data);
+            // Simpan relative path ke DB agar konsisten dengan loader (Storage::disk('public')->path(...))
             $setting->logo = $path;
         }
+
         $setting->save();
 
         return (new AppSettingResource($setting))->response()->setStatusCode(200);

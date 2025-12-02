@@ -7,6 +7,7 @@ use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 
 class PdfGeneratorController extends Controller
 {
@@ -27,11 +28,20 @@ class PdfGeneratorController extends Controller
         $resource = PembayaranController::kwitansi($kode_pembayaran); // KwitansiResource
         $data = $resource->toArray(request());
 
-        // Fallback logo jika null / tidak ada
-        $logo = $data['setting']['logo'] ?? public_path('favicon.ico');
+        // Resolve logo absolute path from public disk; fallback to public favicon
+        $logoRelative = $data['setting']['logo'] ?? null;
+        $logo = null;
+        if ($logoRelative && Storage::disk('public')->exists($logoRelative)) {
+            // Absolute filesystem path DomPDF can read
+            $logo = Storage::disk('public')->path($logoRelative);
+        }
+        if (!$logo) {
+            $logo = public_path('favicon.ico');
+        }
 
         // Gabungkan ke payload view (blade mengharapkan variabel terpisah)
         $viewData = [
+            'kode_pembayaran' => $data['kode_pembayaran'],
             'setting'   => $data['setting'] ?? [],
             'tanggal'   => $data['tanggal'] ?? null,
             'pembayar'  => $data['pembayar'] ?? null,

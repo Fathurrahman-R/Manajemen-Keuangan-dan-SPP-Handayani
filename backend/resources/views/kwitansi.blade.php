@@ -12,24 +12,8 @@
         html, body {
             font-family: "Arial", sans-serif;
             font-size: 11px;
-            margin: 2px 0;
+            margin: 6px 6px;
             padding: 8px 15px;
-        }
-
-        /* Kontainer landscape */
-        .kwitansi {
-            width: 100%;
-            display: flex;
-            flex-direction: row;
-            gap: 20px;
-        }
-
-        /* Bagian kiri: logo + identitas sekolah */
-        .left-section {
-            width: 35%;
-            text-align: center;
-            border-right: 1px dashed #444;
-            padding-right: 12px;
         }
 
         .left-section img {
@@ -37,18 +21,6 @@
             margin-right: 0;
             height: auto;
             margin-bottom: 5px;
-        }
-
-        .title {
-            font-weight: bold;
-            font-size: 13px;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
-
-        .line {
-            border-bottom: 1px dashed #000;
-            margin: 5px 0;
         }
 
         /* Bagian kanan: isi kwitansi */
@@ -74,9 +46,8 @@
 
         .amount-box {
             border: 1px solid #000;
-            padding: 5px 0;
+            padding: 3px 0;
             margin: 8px 0 0 0;
-            font-size: 13px;
             font-weight: bold;
             text-align: center;
             width: 100%;
@@ -91,20 +62,33 @@
             text-align: center;
             font-size: 11px;
         }
+        .body-text {
+            font-size: 10px;
+        }
+        .watermark {
+            position: fixed;            /* stay in place for all pages */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60%;                 /* adjust size as needed */
+            opacity: 0.06;              /* watermark transparency */
+            /* z-index is not required in DomPDF; draw order handles stacking */
+        }
     </style>
 </head>
 <body>
-
+<img src="{{ $logo }}" alt="Watermark" class="watermark">
 <table  style="border-collapse: collapse;">
     <tr>
         <td style="width: 25%;height: 10px;" rowspan="2">
-            <img src="{{ $setting['logo'] }}" style=" margin-bottom:4px;">
+            <img src="{{ $logo }}" alt="Logo Sekolah" style=" margin-bottom:6px;height: 60px;padding-left: 10px">
         </td>
         <td rowspan="2">
-            <h1 style="text-align: center;margin: 4px 0;font-size: 22px">
+            <h1 style="text-align: center;margin: 4px 0 0 0;padding: 0;font-size: 22px">
                 {{ $setting['nama_sekolah'] }}
             </h1>
-            <p style="text-align: center;margin: 0;padding: 0">
+            <h3 style="text-align: center;margin: 0;">(TK - KB - MIS Handayani)</h3>
+            <p style="text-align: center;margin: 0;padding: 0;font-size: 10px">
                 {{ $setting['alamat'] }}
             </p>
         </td>
@@ -113,12 +97,12 @@
     <tr></tr>
     <tr>
         <td colspan="2">
-            <p style="text-align: left;margin: 0;padding: 0">
+            <p style="text-align: left;margin: 0;padding: 0;font-size: 9px">
                 Email: {{ $setting['email'] }}
             </p>
         </td>
         <td style="width: 20%" >
-            <p style="text-align: right;margin: 0;padding: 0">
+            <p style="text-align: right;margin: 0;padding: 0;font-size: 9px">
                 Telp: {{ $setting['telepon'] }}
             </p>
 
@@ -127,49 +111,53 @@
     <tr>
         <td colspan="3">
             <hr style="border:0; border-bottom:1px dashed #000; margin:6px 0;">
-            <div style="text-align: center;font-weight:bold; margin:5px 0;">K W I T A N S I</div>
+            <div style="text-align: center;font-weight:bold; margin:5px 0;">
+                <p style="padding: 0;margin: 0">
+                    KWITANSI {{ $kode_pembayaran  }}
+                </p>
+            </div>
             <hr style="border:0; border-bottom:1px dashed #000; margin:6px 0;">
         </td>
     </tr>
 </table>
-<div class="right-section">
+<div class="right-section" style="margin-top: 6px">
     <table>
         <tr>
-            <td class="label">Sudah terima dari</td>
+            <td class="label body-text" ><strong>Sudah terima dari</strong></td>
             <td>:</td>
-            <td><span class="value-line">{{ $pembayar }}</span></td>
+            <td><span class="value-line body-text" >{{ $pembayar }}</span></td>
         </tr>
 
         <tr>
-            <td class="label">Untuk Pembayaran</td>
+            <td class="label body-text" ><strong>Untuk Pembayaran</strong></td>
             <td>:</td>
-            <td><span class="value-line">{{ $untuk }}</span></td>
+            <td><span class="value-line body-text" >{{ $untuk }}</span></td>
         </tr>
 
         <tr>
-            <td class="label">Tanggal</td>
+            <td class="label body-text" ><strong>Terbilang</strong></td>
             <td>:</td>
             <td>
-                            <span class="value-line">
-                                {{ \Carbon\Carbon::parse($tanggal)->translatedFormat('d F Y') }}
-                            </span>
+                            <strong class="value-line body-text" style="color: green">
+                                {{ $sejumlah }}
+                            </strong>
             </td>
         </tr>
     </table>
 
-    <div class="amount-box">
-        Rp {{ number_format($jumlah, 0, ',', '.') }}
-    </div>
+
 
     <table class="ttd">
         <tr>
-            <td>
-                <p style="text-align: left">
-                    <strong>Terbilang: </strong>{{ ucfirst($sejumlah) }}
-                </p>
+            <td style="width: 50%">
+                <div class="amount-box" >
+                    <p class=" body-text " style="margin: 3px;color: green">
+                        Rp{{ number_format($jumlah, 0, ',', '.') }}
+                    </p>
+                </div>
             </td>
-            <td>
-                <p style="text-align: right">
+            <td >
+                <p class=" body-text" style="text-align: right">
                     {{ $setting['lokasi'] }}, {{ \Carbon\Carbon::parse($tanggal)->translatedFormat('d F Y') }}
                 </p>
             </td>
@@ -177,14 +165,21 @@
         <tr>
             <td>
                 <br>
-                Bendahara,<br><br><br>
-                <u>{{ $setting['bendahara'] }}</u>
+                <p class=" body-text" style="padding: 0;margin: 4px 0 0 0">
+                    Bendahara,
+                </p>
+                <br><br><br>
+                <u class=" body-text" style="padding: 0;margin: 0">{{ $setting['bendahara'] }}</u>
             </td>
-
             <td>
-                Mengetahui,<br>
-                Kepala Sekolah<br><br><br>
-                <u>{{ $setting['kepala_sekolah'] }}</u>
+                <strong class=" body-text" style="padding: 0;margin: 4px 0 0 0">
+                    Mengetahui,
+                </strong>
+                <p class=" body-text" style="padding: 0;margin: 0">
+                    Kepala Sekolah
+                </p>
+                <br><br><br>
+                <u class=" body-text" style="padding: 0;margin: 0">{{ $setting['kepala_sekolah'] }}</u>
             </td>
         </tr>
     </table>

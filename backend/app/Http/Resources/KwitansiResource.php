@@ -18,6 +18,7 @@ class KwitansiResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'kode_pembayaran'=>$this->kode_pembayaran,
             'setting'=>AppSettingController::get(),
             'tanggal'=>$this->tanggal,
             'pembayar'=>$this->pembayar,
