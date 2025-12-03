@@ -335,7 +335,6 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                 ->send();
                         }
                     })
-                    ->successNotificationTitle('Siswa Berhasil Diubah')
                     ->after(function () {
                         $this->resetTable();
                     }),
@@ -1120,6 +1119,8 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                             )
                     ])
                     ->action(function (array $data, $record): void {
+                        dd($data);
+
                         $response = Http::withHeaders([
                             'Authorization' => session()->get('data')['token']
                         ])
@@ -1147,20 +1148,6 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
 
     public function render(): View
     {
-        $params = [
-            'per_page' => $this->perPage,
-            'page' => $this->currentPage,
-        ];
-
-        $response = Http::withHeaders([
-            'Authorization' => session()->get('data')['token']
-        ])
-            ->get(env('API_URL') . '/siswa/MI', $params);
-
-        // dd($response->json());
-
-        // dd(session()->get('data')['token']);
-
         return view('livewire.data-siswa');
     }
 

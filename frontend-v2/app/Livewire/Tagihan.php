@@ -48,6 +48,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                 function (?string $search, int $page, int $recordsPerPage, array $filters): LengthAwarePaginator {
                     $params = [
                         'per_page' => $this->perPage,
+                        'page' => $page,
                     ];
 
                     if (filled($search)) {
@@ -200,25 +201,45 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                                     ->danger()
                                     ->send();
                             } else {
-                                Notification::make()
-                                    ->title('Tagihan Berhasil Dibayar')
-                                    ->danger()
-                                    ->send();
+                                try {
+                                    Notification::make()
+                                        ->title('Tagihan Berhasil Dibayar')
+                                        ->success()
+                                        ->send();
+    
+                                    $filename = 'kwitansi-' . $response->json()['data']['kode_pembayaran'] . '.pdf';
+    
+                                    $responseDownload = Http::withHeaders([
+                                        'Authorization' => session()->get('data')['token'],
+                                        'Accept' => 'application/pdf'
+                                    ])
+                                        ->get(env('API_URL') . '/pembayaran/kwitansi/' . $response->json()['data']['kode_pembayaran']);
+        
+                                    if (!$responseDownload->ok()) {
+                                        $errorKeys = array_keys($response->json()['errors']);
+                                        $message = $response->json()['errors'][$errorKeys[0]][0];
 
-                                // $filename = 'kwitansi-' . $record['kode_pembayaran'] . '.pdf';
-
-                                // // Store the file temporarily (optional, but good practice for larger files)
-                                // Storage::disk('local')->put($filename, $response->body());
-                                // $path = Storage::disk('local')->path($filename);
-
-                                // // Return a response that prompts the file download
-                                // return response()->streamDownload(function () use ($path) {
-                                //     echo file_get_contents($path);
-                                //     // Clean up the temporary file after streaming
-                                //     unlink($path);
-                                // }, $filename, [
-                                //     'Content-Type' => 'application/pdf', // Set the correct MIME type
-                                // ]);
+                                        throw new Exception($message, $responseDownload->status());
+                                    }
+    
+                                    // Store the file temporarily (optional, but good practice for larger files)
+                                    Storage::disk('local')->put($filename, $responseDownload->body());
+                                    $path = Storage::disk('local')->path($filename);
+    
+                                    // Return a response that prompts the file download
+                                    return response()->streamDownload(function () use ($path) {
+                                        echo file_get_contents($path);
+                                        // Clean up the temporary file after streaming
+                                        unlink($path);
+                                    }, $filename, [
+                                        'Content-Type' => 'application/pdf', // Set the correct MIME type
+                                    ]);
+                                } catch (\Throwable $th) {
+                                    Notification::make()
+                                        ->title('Tagihan Berhasil Dibayar')
+                                        ->danger()
+                                        ->send();
+                                }
                             }
                         })
                         ->after(function () {
@@ -293,7 +314,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                                 $data = $response->json();
 
                                 $options = collect($data['data'])->mapWithKeys(function ($item) {
-                                    $jumlah = 'Rp. ' . number_format($item['jumlah'], 0, '', '.');
+                                    $jumlah = 'Rp. ' . number_format($item['jumlah'], 0, '', ',');
 
                                     return [$item['id'] => $item['nama'] . ' - ' . $jumlah];
                                 })->toArray();

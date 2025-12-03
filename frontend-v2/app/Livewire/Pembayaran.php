@@ -46,6 +46,7 @@ class Pembayaran extends Component implements HasActions, HasSchemas, HasTable
                 function (?string $search, int $page, int $recordsPerPage): LengthAwarePaginator {
                     $params = [
                         'per_page' => $this->perPage,
+                        'page' => $page,
                     ];
 
                     if (filled($search)) {

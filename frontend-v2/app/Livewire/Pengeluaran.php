@@ -243,16 +243,20 @@ class Pengeluaran extends Component implements HasActions, HasSchemas, HasTable
                         $response = Http::withHeaders([
                             'Authorization' => session()->get('data')['token']
                         ])
-                            ->post(env('API_URL') . '/pengeluarans', $data);
+                            ->post(env('API_URL') . '/pengeluaran', $data);
 
                         if ($response->status() != 201) {
                             Notification::make()
-                                ->title('Gagal Menambahkan Data Pengeluaran')
+                                ->title('Pengeluaran Gagal Ditambahkan')
+                                ->danger()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Pengeluaran Berhasil Ditambahkan')
                                 ->danger()
                                 ->send();
                         }
                     })
-                    ->successNotificationTitle('Pengeluaran Berhasil Ditambah')
                     ->extraAttributes([
                         'class' => 'text-white font-semibold',
                         'id' => 'add',

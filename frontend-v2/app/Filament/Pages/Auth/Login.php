@@ -19,10 +19,14 @@ use Filament\Models\Contracts\FilamentUser;
 use Illuminate\Support\Facades\Http;
 use SensitiveParameter;
 use Exception;
+use Filament\Notifications\Notification;
+use Illuminate\Validation\ValidationException;
 
-class Login extends PagesLogin {
+class Login extends PagesLogin
+{
 
-    public function __construct() {
+    public function __construct()
+    {
         $token = session()->get('data');
 
         if (!is_null($token) && !is_null($token['token'])) {
@@ -50,21 +54,38 @@ class Login extends PagesLogin {
             return null;
         }
 
-        $data = $this->form->getState();
+        try {
+            $data = $this->form->getState();
+    
+            $credentials = $this->getCredentialsFromFormData($data);
+    
+            $response = Http::post(env('API_URL') . '/users/login', $credentials);
+    
+            if ($response->successful()) {
+                session()->regenerate();
+                
+                session($response->json());
+                
+                return app(LoginResponse::class);
+            } else {
+                $errorKeys = array_keys($response->json()['errors']);
+                
+                $message = $response->json()['errors'][$errorKeys[0]][0];
+                
+                Notification::make()
+                    ->title('Gagal Login')
+                    ->danger()
+                    ->body($message)
+                    ->send();
 
-        $credentials = $this->getCredentialsFromFormData($data);
-
-        $response = Http::post(env('API_URL') . '/users/login', $credentials);
-
-        if (!$response->ok()) {
-            throw new Exception($response->json()['errors']['message'][0]);
+                throw ValidationException::withMessages([
+                    'email' => $message
+                ]);
+            }
+            
+        } catch (ValidationException $th) {
+            throw $th;
         }
-
-        session()->regenerate();
-
-        session($response->json());
-
-        return app(LoginResponse::class);
     }
 
     protected function getUsernameFormComponent(): Component
@@ -102,5 +123,4 @@ class Login extends PagesLogin {
             'password' => $data['password'],
         ];
     }
-
 }
