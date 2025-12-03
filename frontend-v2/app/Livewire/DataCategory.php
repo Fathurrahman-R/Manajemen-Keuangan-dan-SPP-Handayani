@@ -9,6 +9,7 @@ use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Support\Enums\Alignment;
@@ -83,10 +84,17 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
                             ->put(env('API_URL') . '/kategori/' . $record['id'], $data);
 
                         if (!$response->ok()) {
-                            throw new Exception($response->json()['errors']['message'][0]);
+                            Notification::make()
+                                ->title('Kategori Gagal Diubah')
+                                ->success()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Kategori Berhasil Diubah')
+                                ->success()
+                                ->send();
                         }
                     })
-                    ->successNotificationTitle('Kategori Berhasil Diubah')
                     ->after(function () {
                         $this->resetTable();
                     }), // Optional color
@@ -116,12 +124,18 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
                         ])
                             ->delete(env('API_URL') . '/kategori' . '/' . $record['id']);
 
-                        if (!$response->ok()) {
-                            throw new Exception($response->json()['errors']['message'][0]);
+                        if ($response->status() != 201) {
+                            Notification::make()
+                                ->title('Kategori Gagal Dihapus')
+                                ->danger()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Kategori Berhasil Dihapus')
+                                ->success()
+                                ->send();
                         }
                     })
-                    ->successNotificationTitle('Kategori Berhasil Dihapus')
-                    ->failureNotificationTitle('Kategori Gagal Dihapus')
                     ->after(function () {
                         $this->resetTable();
                     })
@@ -156,12 +170,20 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
                             ->post(env('API_URL') . '/kategori', $data);
 
                         if ($response->status() != 201) {
-                            throw new Exception($response->json()['errors']['message'][0]);
+                            Notification::make()
+                                ->title('Kategori Gagal Ditambahkan')
+                                ->danger()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Kategori Berhasil Ditambahkan')
+                                ->success()
+                                ->send();
                         }
                     })
-                    ->successNotificationTitle('Kategori Berhasil Ditambah')
                     ->extraAttributes([
-                        'class' => 'text-white font-semibold'
+                        'class' => 'text-white font-semibold',
+                        'id' => 'add',
                     ]),
             ]);
     }

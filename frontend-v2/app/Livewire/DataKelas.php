@@ -10,6 +10,7 @@ use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Support\Enums\Alignment;
@@ -87,10 +88,17 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                             ->put(env('API_URL') . '/kelas/' . $this->activeTab .'/' . $record['id'], $data);
 
                         if (!$response->ok()) {
-                            throw new Exception($response->json()['errors']['message'][0]);
+                            Notification::make()
+                                ->title('Kelas Gagal Diubah')
+                                ->danger()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Kelas Berhasil Diubah')
+                                ->success()
+                                ->send();
                         }
                     })
-                    ->successNotificationTitle('Kelas Berhasil Diubah')
                     ->after(function () {
                         $this->resetTable();
                     }), // Optional color
@@ -112,7 +120,15 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                             ->delete(env('API_URL') . '/kelas' . '/' . $record['id']);
 
                         if (!$response->ok()) {
-                            throw new Exception($response->json()['errors']['message'][0]);
+                            Notification::make()
+                                ->title('Kelas Gagal Dihapus')
+                                ->danger()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Kelas Berhasil Dihapus')
+                                ->success()
+                                ->send();
                         }
                     })
                     ->successNotificationTitle('Kelas Berhasil Dihapus')
@@ -151,12 +167,20 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                             ->post(env('API_URL') . '/kelas/' . $this->activeTab, $data);
 
                         if ($response->status() != 201) {
-                            throw new Exception($response->json()['errors']['message'][0]);
+                            Notification::make()
+                                ->title('Kelas Gagal Ditambahkan')
+                                ->danger()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Kelas Berhasil Ditambahkan')
+                                ->success()
+                                ->send();
                         }
                     })
-                    ->successNotificationTitle('Kelas Berhasil Ditambah')
                     ->extraAttributes([
-                        'class' => 'text-white font-semibold'
+                        'class' => 'text-white font-semibold',
+                        'id' => 'add',
                     ]),
             ]);
     }

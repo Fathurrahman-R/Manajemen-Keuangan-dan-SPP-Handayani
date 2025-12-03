@@ -160,40 +160,6 @@ class Pembayaran extends Component implements HasActions, HasSchemas, HasTable
                             $this->resetTable();
                         })
                 ])
-            ])
-            ->headerActions([
-                Action::make('add') // Unique name for your action
-                    ->label('Tambah') // Text displayed on the button
-                    ->color('primaryMain') // Optional color
-                    ->button()
-                    ->modalHeading('Tambah Pembayaran')
-                    ->modalFooterActions(function (Action $action) {
-                        return [
-                            $action->getModalSubmitAction()
-                                ->label('Simpan')
-                                ->color('primaryMain')
-                                ->extraAttributes([
-                                    'class' => 'text-white font-semibold'
-                                ]),
-                            $action->getModalCancelAction()->label('Batal'),
-                        ];
-                    })
-                    ->modalFooterActionsAlignment(Alignment::End)
-                    ->schema([])
-                    ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->post(env('API_URL') . '/pembayaran', $data);
-
-                        if ($response->status() != 201) {
-                            throw new Exception($response->json()['errors']['message'][0]);
-                        }
-                    })
-                    ->successNotificationTitle('Pembayaran Berhasil Ditambah')
-                    ->extraAttributes([
-                        'class' => 'text-white font-semibold'
-                    ]),
             ]);
     }
 

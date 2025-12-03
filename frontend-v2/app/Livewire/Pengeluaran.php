@@ -14,6 +14,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
@@ -45,42 +46,56 @@ class Pengeluaran extends Component implements HasActions, HasSchemas, HasTable
         return $table
             ->records(
                 function (?string $search, int $page, int $recordsPerPage, array $filters): LengthAwarePaginator {
-                    $params = [
-                        'start_date' => $this->startDate,
-                        'end_date' => $this->endDate,
-                        'per_page' => $this->perPage,
-                    ];
+                    try {
+                        $params = [
+                            'start_date' => $this->startDate,
+                            'end_date' => $this->endDate,
+                            'per_page' => $this->perPage,
+                        ];
 
-                    if (filled($search)) {
-                        $params['search'] = $search;
-                    }
-                    
-                    if (filled($filters['date']['start_date'])) {
-                        $params['start_date'] = $filters['date']['start_date'];
-                    }
-                    
-                    if (filled($filters['date']['end_date'])) {
-                        $params['end_date'] = $filters['date']['end_date'];
-                    }
+                        if (filled($search)) {
+                            $params['search'] = $search;
+                        }
 
-                    $response = Http::withHeaders([
-                        'Authorization' => session()->get('data')['token']
-                    ])
-                        ->get(env('API_URL') . '/pengeluaran', $params)
-                        ->collect();
+                        if (filled($filters['date']['start_date'])) {
+                            $params['start_date'] = $filters['date']['start_date'];
+                        }
 
-                    return new LengthAwarePaginator(
-                        items: $response['data'] ?? [],
-                        total: $response['meta']['total'] ?? 0,
-                        perPage: $recordsPerPage,
-                        currentPage: $page,
-                    );
+                        if (filled($filters['date']['end_date'])) {
+                            $params['end_date'] = $filters['date']['end_date'];
+                        }
+
+                        $response = Http::withHeaders([
+                            'Authorization' => session()->get('data')['token']
+                        ])
+                            ->get(env('API_URL') . '/pengeluaran', $params)
+                            ->collect();
+
+                        return new LengthAwarePaginator(
+                            items: $response['data'] ?? [],
+                            total: $response['meta']['total'] ?? 0,
+                            perPage: $recordsPerPage,
+                            currentPage: $page,
+                        );
+                    } catch (\Throwable $th) {
+                        Notification::make()
+                            ->title('Gagal Mengambil Data Pengeluaran')
+                            ->danger()
+                            ->send();
+
+                        return new LengthAwarePaginator(
+                            items: [],
+                            total: 0,
+                            perPage: $recordsPerPage,
+                            currentPage: $page,
+                        );
+                    }
                 }
             )
             ->columns([
                 TextColumn::make('uraian')->label('Uraian')->searchable(),
-                TextColumn::make('tanggal')->label('Tanggal Pengeluaran')->date('d-m-Y'),
-                TextColumn::make('jumlah')->label('Jumlah')->money(currency: 'Rp.', decimalPlaces: 0, ),
+                TextColumn::make('tanggal')->label('Tanggal Pengeluaran'),
+                TextColumn::make('jumlah')->label('Jumlah')->money(currency: 'Rp.', decimalPlaces: 0,),
             ])
             ->filters([
                 Filter::make('date')
@@ -228,15 +243,19 @@ class Pengeluaran extends Component implements HasActions, HasSchemas, HasTable
                         $response = Http::withHeaders([
                             'Authorization' => session()->get('data')['token']
                         ])
-                            ->post(env('API_URL') . '/pengeluaran', $data);
+                            ->post(env('API_URL') . '/pengeluarans', $data);
 
                         if ($response->status() != 201) {
-                            throw new Exception($response->json()['errors']['message'][0]);
+                            Notification::make()
+                                ->title('Gagal Menambahkan Data Pengeluaran')
+                                ->danger()
+                                ->send();
                         }
                     })
                     ->successNotificationTitle('Pengeluaran Berhasil Ditambah')
                     ->extraAttributes([
-                        'class' => 'text-white font-semibold'
+                        'class' => 'text-white font-semibold',
+                        'id' => 'add',
                     ]),
             ]);
     }
