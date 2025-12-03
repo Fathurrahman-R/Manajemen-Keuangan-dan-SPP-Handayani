@@ -14,6 +14,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
@@ -30,7 +31,9 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use NumberFormatter;
 
 class Tagihan extends Component implements HasActions, HasSchemas, HasTable
 {
@@ -45,6 +48,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                 function (?string $search, int $page, int $recordsPerPage, array $filters): LengthAwarePaginator {
                     $params = [
                         'per_page' => $this->perPage,
+                        'page' => $page,
                     ];
 
                     if (filled($search)) {
@@ -80,9 +84,9 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                 TextColumn::make('siswa.kelas.nama')->label('Kelas'),
                 TextColumn::make('jenis_tagihan.jatuh_tempo')->label('Jatuh Tempo'),
                 TextColumn::make('jenis_tagihan.nama')->label('Jenis Tagihan'),
-                TextColumn::make('jenis_tagihan.jumlah')->label('Jumlah Tagihan')->money(currency: 'Rp.', decimalPlaces: 0, ),
-                TextColumn::make('tmp')->label('Jumlah Yang Telah Dibayarkan')->money(currency: 'Rp.', decimalPlaces: 0, ),
-                TextColumn::make('sisa')->state(fn(array $record) => $record['jenis_tagihan']['jumlah'] - $record['tmp'])->label('Sisa')->money(currency: 'Rp.', decimalPlaces: 0, ),
+                TextColumn::make('jenis_tagihan.jumlah')->label('Jumlah Tagihan')->money(currency: 'Rp.', decimalPlaces: 0,),
+                TextColumn::make('tmp')->label('Jumlah Yang Telah Dibayarkan')->money(currency: 'Rp.', decimalPlaces: 0,),
+                TextColumn::make('sisa')->state(fn(array $record) => $record['jenis_tagihan']['jumlah'] - $record['tmp'])->label('Sisa')->money(currency: 'Rp.', decimalPlaces: 0,),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
@@ -94,7 +98,6 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
             ])
             ->filters([
                 SelectFilter::make('status')
-                    // ->multiple()
                     ->options([
                         'Lunas' => 'Lunas',
                         'Belum Lunas' => 'Belum Lunas',
@@ -102,7 +105,6 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                     ]),
                 SelectFilter::make('jenjang')
                     ->label('Jenjang')
-                    // ->multiple() 
                     ->options([
                         'TK' => 'TK',
                         'SD' => 'SD',
@@ -121,7 +123,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                     Action::make('installments')
                         ->label('Bayar')
                         ->tooltip('Bayar')
-                        ->hidden(fn (array $record): bool => $record['status'] === 'Lunas')
+                        ->hidden(fn(array $record): bool => $record['status'] === 'Lunas')
                         ->modalHeading('Bayar Tagihan')
                         ->modalFooterActions(function (Action $action) {
                             return [
@@ -155,10 +157,10 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                                 ->options([
                                     'Cicil' => 'Cicil',
                                     'Lunas' => 'Lunas',
-                                    ])
+                                ])
                                 ->live()
                                 ->afterStateUpdated(function ($state, $set, array $record): void {
-                                    if($state == 'Lunas') {
+                                    if ($state == 'Lunas') {
                                         $set('jumlah', $record['jenis_tagihan']['jumlah'] - $record['tmp']);
                                     } else {
                                         $set('jumlah', null);
@@ -173,14 +175,14 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                                 ->label('Dibayar Oleh')
                                 ->required(),
                         ])
-                        ->action(function (array $data, $record): void {
+                        ->action(function (array $data, $record) {
                             $url = env('API_URL') . '/pembayaran';
                             $payload = [
                                 'metode' => $data['metode'],
                                 'pembayar' => $data['pembayar']
                             ];
 
-                            if($data['jenis_pembayaran'] === 'Lunas') {
+                            if ($data['jenis_pembayaran'] === 'Lunas') {
                                 $url = $url . '/lunas/' . $record['kode_tagihan'];
                             } else {
                                 $url = $url . '/bayar/' . $record['kode_tagihan'];
@@ -192,13 +194,54 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                                 'Authorization' => session()->get('data')['token']
                             ])
                                 ->post($url, $payload);
-    
+
                             if (!$response->ok()) {
-                                throw new Exception($response->json()['errors']['message'][0]);
+                                Notification::make()
+                                    ->title('Tagihan Gagal Dibayar')
+                                    ->danger()
+                                    ->send();
+                            } else {
+                                try {
+                                    Notification::make()
+                                        ->title('Tagihan Berhasil Dibayar')
+                                        ->success()
+                                        ->send();
+    
+                                    $filename = 'kwitansi-' . $response->json()['data']['kode_pembayaran'] . '.pdf';
+    
+                                    $responseDownload = Http::withHeaders([
+                                        'Authorization' => session()->get('data')['token'],
+                                        'Accept' => 'application/pdf'
+                                    ])
+                                        ->get(env('API_URL') . '/pembayaran/kwitansi/' . $response->json()['data']['kode_pembayaran']);
+        
+                                    if (!$responseDownload->ok()) {
+                                        $errorKeys = array_keys($response->json()['errors']);
+                                        $message = $response->json()['errors'][$errorKeys[0]][0];
+
+                                        throw new Exception($message, $responseDownload->status());
+                                    }
+    
+                                    // Store the file temporarily (optional, but good practice for larger files)
+                                    Storage::disk('local')->put($filename, $responseDownload->body());
+                                    $path = Storage::disk('local')->path($filename);
+    
+                                    // Return a response that prompts the file download
+                                    return response()->streamDownload(function () use ($path) {
+                                        echo file_get_contents($path);
+                                        // Clean up the temporary file after streaming
+                                        unlink($path);
+                                    }, $filename, [
+                                        'Content-Type' => 'application/pdf', // Set the correct MIME type
+                                    ]);
+                                } catch (\Throwable $th) {
+                                    Notification::make()
+                                        ->title('Tagihan Berhasil Dibayar')
+                                        ->danger()
+                                        ->send();
+                                }
                             }
                         })
-                        ->successNotificationTitle('Tagihan Berhasil Ditambahkan')
-                        ->failureNotificationTitle('Tagihan Gagal Ditambahkan')
                         ->after(function () {
                             $this->resetTable();
                         }),
@@ -219,11 +262,17 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                                 ->delete(env('API_URL') . '/tagihan/' . $record['id']);
 
                             if (!$response->ok()) {
-                                throw new Exception($response->json()['errors']['message'][0]);
+                                Notification::make()
+                                    ->title('Tagihan Gagal Dihapus')
+                                    ->danger()
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->title('Tagihan Berhasil Dihapus')
+                                    ->danger()
+                                    ->send();
                             }
                         })
-                        ->successNotificationTitle('Tagihan Berhasil Dihapus')
-                        ->failureNotificationTitle('Tagihan Gagal Dihapus')
                         ->after(function () {
                             $this->resetTable();
                         })
@@ -265,7 +314,9 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                                 $data = $response->json();
 
                                 $options = collect($data['data'])->mapWithKeys(function ($item) {
-                                    return [$item['id'] => $item['nama']];
+                                    $jumlah = 'Rp. ' . number_format($item['jumlah'], 0, '', ',');
+
+                                    return [$item['id'] => $item['nama'] . ' - ' . $jumlah];
                                 })->toArray();
 
                                 return $options;
@@ -334,13 +385,20 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                             ->post(env('API_URL') . '/tagihan', $data);
 
                         if ($response->status() != 201) {
-                            throw new Exception($response->json()['errors']['message'][0]);
+                            Notification::make()
+                                ->title('Tagihan Gagal Ditambahkan')
+                                ->danger()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Tagihan Berhasil Ditambahkan')
+                                ->danger()
+                                ->send();
                         }
                     })
-                    ->successNotificationTitle('Tagihan Berhasil Ditambahkan')
-                    ->failureNotificationTitle('Tagihan Gagal Ditambahkan')
                     ->extraAttributes([
-                        'class' => 'text-white font-semibold'
+                        'class' => 'text-white font-semibold',
+                        'id' => 'add',
                     ]),
             ]);
     }

@@ -8,7 +8,11 @@
     @apply bg-white shadow-lg
 }
 
-div.fi-ta-header > div.fi-ta-actions > button {
+div.fi-ta-header > div.fi-ta-actions > button[id="add"] {
+    @apply text-white
+}
+
+div.fi-ta-header > div.fi-ta-actions > button[id="add-detail"] {
     @apply text-white
 }
 

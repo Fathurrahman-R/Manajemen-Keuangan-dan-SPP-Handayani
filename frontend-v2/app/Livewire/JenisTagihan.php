@@ -13,6 +13,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
@@ -106,10 +107,17 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                             ->put(env('API_URL') . '/jenis-tagihan/' . $record['id'], $data);
 
                         if (!$response->ok()) {
-                            throw new Exception($response->json()['errors']['message'][0]);
+                            Notification::make()
+                                ->title('Jenis Tagihan Gagal Diubah')
+                                ->danger()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Jenis Tagihan Berhasil Diubah')
+                                ->success()
+                                ->send();
                         }
                     })
-                    ->successNotificationTitle('Jenis Tagihan Berhasil Diubah')
                     ->after(function () {
                         $this->resetTable();
                     }), // Optional color
@@ -131,11 +139,17 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                             ->delete(env('API_URL') . '/jenis-tagihan/' . $record['id']);
 
                         if (!$response->ok()) {
-                            throw new Exception($response->json()['errors']['message'][0]);
+                            Notification::make()
+                                ->title('Jenis Tagihan Gagal Dihapus')
+                                ->danger()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Jenis Tagihan Berhasil Dihapus')
+                                ->success()
+                                ->send();
                         }
                     })
-                    ->successNotificationTitle('Jenis Tagihan Berhasil Dihapus')
-                    ->failureNotificationTitle('Jenis Tagihan Gagal Dihapus')
                     ->after(function () {
                         $this->resetTable();
                     })
@@ -182,12 +196,20 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                             ->post(env('API_URL') . '/jenis-tagihan', $data);
 
                         if ($response->status() != 201) {
-                            throw new Exception($response->json()['errors']['message'][0]);
+                            Notification::make()
+                                ->title('Jenis Tagihan Gagal Ditambahkan')
+                                ->danger()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Jenis Tagihan Berhasil Ditambahkan')
+                                ->success()
+                                ->send();
                         }
                     })
-                    ->successNotificationTitle('Jenis Tagihan Berhasil Ditambah')
                     ->extraAttributes([
-                        'class' => 'text-white font-semibold'
+                        'class' => 'text-white font-semibold',
+                        'id' => 'add',
                     ]),
             ]);
     }
