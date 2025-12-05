@@ -93,7 +93,7 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                             ->timezone('Asia/Jakarta')
                             ->format('Y-m-d')
                             ->displayFormat('d-m-Y')
-                            ->minDate(now())
+//                            ->minDate(now())
                             ->required(),
                         TextInput::make('jumlah')
                             ->label('Jumlah')
@@ -182,7 +182,7 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                             ->timezone('Asia/Jakarta')
                             ->format('Y-m-d')
                             ->displayFormat('d-m-Y')
-                            ->minDate(now())
+//                            ->minDate(now())
                             ->required(),
                         TextInput::make('jumlah')
                             ->label('Jumlah')
