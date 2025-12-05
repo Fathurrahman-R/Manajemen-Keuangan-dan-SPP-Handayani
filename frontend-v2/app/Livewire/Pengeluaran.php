@@ -228,6 +228,7 @@ class Pengeluaran extends Component implements HasActions, HasSchemas, HasTable
                             ->label('Uraian')
                             ->required(),
                         DatePicker::make('tanggal')
+                            ->default(now())
                             ->label('Tanggal')
                             ->native(false)
                             ->timezone('Asia/Jakarta')
