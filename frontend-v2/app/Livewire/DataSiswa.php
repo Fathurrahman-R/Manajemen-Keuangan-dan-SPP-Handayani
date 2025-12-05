@@ -1119,8 +1119,6 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                             )
                     ])
                     ->action(function (array $data, $record): void {
-                        dd($data);
-
                         $response = Http::withHeaders([
                             'Authorization' => session()->get('data')['token']
                         ])
