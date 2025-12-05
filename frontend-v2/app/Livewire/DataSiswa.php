@@ -484,36 +484,9 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                     TextInput::make('wali_nama')
                                         ->label('Nama Lengkap')
                                         ->required(),
-                                    Grid::make(2)
-                                        ->schema([
-                                            Select::make('wali_agama')
-                                                ->label('Agama')
-                                                ->options([
-                                                    'Islam' => 'Islam',
-                                                    'Protestan' => 'Protestan',
-                                                    'Katolik' => 'Katolik',
-                                                    'Hindu' => 'Hindu',
-                                                    'Budha' => 'Budha',
-                                                    'Konghucu' => 'Konghucu',
-                                                ])
-                                                ->required(),
-                                            Select::make('wali_jenis_kelamin')
-                                                ->label('Jenis Kelamin')
-                                                ->options([
-                                                    'Laki-laki' => 'Laki-laki',
-                                                    'Perempuan' => 'Perempuan'
-                                                ])
-                                                ->required(),
-                                        ]),
-                                    Grid::make(2)
-                                        ->schema([
-                                            TextInput::make('wali_pendidikan_terakhir')
-                                                ->label('Pendidikan Terakhir')
-                                                ->required(),
-                                            TextInput::make('wali_pekerjaan')
-                                                ->label('Pekerjaan')
-                                                ->required(),
-                                        ]),
+                                    TextInput::make('wali_pekerjaan')
+                                        ->label('Pekerjaan')
+                                        ->required(),
                                     TextInput::make('wali_no_hp')
                                         ->label('No. HP')
                                         ->required(),
@@ -1042,47 +1015,11 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                         ->validationMessages([
                                             'required' => 'Nama Tidak Boleh Kosong'
                                         ]),
-                                    Grid::make(2)
-                                        ->schema([
-                                            Select::make('wali_agama')
-                                                ->label('Agama')
-                                                ->options([
-                                                    'Islam' => 'Islam',
-                                                    'Protestan' => 'Protestan',
-                                                    'Katolik' => 'Katolik',
-                                                    'Hindu' => 'Hindu',
-                                                    'Budha' => 'Budha',
-                                                    'Konghucu' => 'Konghucu',
-                                                ])
-                                                ->required()
-                                                ->validationMessages([
-                                                    'required' => 'Agama Tidak Boleh Kosong'
-                                                ]),
-                                            Select::make('wali_jenis_kelamin')
-                                                ->label('Jenis Kelamin')
-                                                ->options([
-                                                    'Laki-laki' => 'Laki-laki',
-                                                    'Perempuan' => 'Perempuan'
-                                                ])
-                                                ->required()
-                                                ->validationMessages([
-                                                    'required' => 'Jenis Kelamin Tidak Boleh Kosong'
-                                                ]),
-                                        ]),
-                                    Grid::make(2)
-                                        ->schema([
-                                            TextInput::make('wali_pendidikan_terakhir')
-                                                ->label('Pendidikan Terakhir')
-                                                ->required()
-                                                ->validationMessages([
-                                                    'required' => 'Pendidikan Terakhir Tidak Boleh Kosong'
-                                                ]),
-                                            TextInput::make('wali_pekerjaan')
-                                                ->label('Pekerjaan')
-                                                ->required()
-                                                ->validationMessages([
-                                                    'required' => 'Pekerjaan Tidak Boleh Kosong'
-                                                ]),
+                                    TextInput::make('wali_pekerjaan')
+                                        ->label('Pekerjaan')
+                                        ->required()
+                                        ->validationMessages([
+                                            'required' => 'Pekerjaan Tidak Boleh Kosong'
                                         ]),
                                     TextInput::make('wali_no_hp')
                                         ->label('No. HP')

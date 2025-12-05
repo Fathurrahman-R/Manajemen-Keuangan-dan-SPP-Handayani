@@ -141,28 +141,10 @@ class DetailSiswa extends Component implements HasSchemas
                             ->label('Nama Lengkap')
                             ->default(fn($livewire) => $livewire->wali['nama'])
                             ->size(TextSize::Large),
-                        Grid::make(2)
-                            ->schema([
-                                TextEntry::make('agama')
-                                    ->label('Agama')
-                                    ->default(fn($livewire) => $livewire->wali['agama'])
-                                    ->size(TextSize::Large),
-                                TextEntry::make('jenis_kelamin')
-                                    ->label('Jenis Kelamin')
-                                    ->default(fn($livewire) => $livewire->wali['jenis_kelamin'])
-                                    ->size(TextSize::Large),
-                            ]),
-                        Grid::make(2)
-                            ->schema([
-                                TextEntry::make('pendidikan_terakhir')
-                                    ->label('Pendidikan Terakhir')
-                                    ->default(fn($livewire) => $livewire->wali['pendidikan_terakhir'])
-                                    ->size(TextSize::Large),
-                                TextEntry::make('pekerjaan')
-                                    ->label('Pekerjaan')
-                                    ->default(fn($livewire) => $livewire->wali['pekerjaan'])
-                                    ->size(TextSize::Large),
-                            ]),
+                        TextEntry::make('pekerjaan')
+                            ->label('Pekerjaan')
+                            ->default(fn($livewire) => $livewire->wali['pekerjaan'])
+                            ->size(TextSize::Large),
                         TextEntry::make('alamat')
                             ->label('Alamat')
                             ->default(fn($livewire) => $livewire->wali['alamat'])
