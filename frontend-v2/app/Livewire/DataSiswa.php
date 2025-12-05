@@ -837,14 +837,20 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                             ),
                     ])
                     ->action(function (array $data, $record): void {
+                        $data['kategori_id'] = $data['kategori'];
+                        $data['kelas_id'] = $data['kelas'];
+                        unset($data['kelas'], $data['kategori']);
+
                         $response = Http::withHeaders([
                             'Authorization' => session()->get('data')['token']
                         ])
                             ->post(env('API_URL') . '/siswa/' . $this->activeTab, $data);
 
                         if ($response->status() != 201) {
+                            $errors = collect($response->json('errors') ?? [])->flatten()->implode(', ');
                             Notification::make()
                                 ->title('Siswa Gagal Ditambahkan')
+                                ->body($errors ?: ($response->json('message') ?? 'Terjadi kesalahan.'))
                                 ->danger()
                                 ->send();
                         } else {
