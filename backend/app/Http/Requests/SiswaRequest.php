@@ -24,8 +24,8 @@ class SiswaRequest extends FormRequest
      */
     public function rules(): array
     {
-        $requiredMI = request('jenjang') == 'mi' ? 'required' : 'sometimes';
-        $requiredOther = request('jenjang') != 'mi' ? 'required' : 'sometimes';
+        $requiredMI = request('jenjang') == 'MI' ? 'required' : 'nullable';
+        $requiredOther = request('jenjang') != 'MI' ? 'required' : 'nullable';
         return [
             'nis' => [
                 'required',
@@ -97,31 +97,31 @@ class SiswaRequest extends FormRequest
                 'max:100'
             ],
             'wali_nama' => [
-                $requiredMI,
+                $requiredOther,
                 'max:100'
             ],
-            'wali_agama' => [
-                $requiredMI,
-                'nullable',
-            ],
-            'wali_jenis_kelamin' => [
-                $requiredMI,
-                'nullable',
-            ],
-            'wali_pendidikan_terakhir' => [
-                $requiredMI,
-                'nullable',
-            ],
+//            'wali_agama' => [
+//                $requiredMI,
+//                'nullable',
+//            ],
+//            'wali_jenis_kelamin' => [
+//                $requiredMI,
+//                'nullable',
+//            ],
+//            'wali_pendidikan_terakhir' => [
+//                $requiredMI,
+//                'nullable',
+//            ],
             'wali_pekerjaan' => [
-                $requiredMI,
+                $requiredOther,
                 'nullable',
                 'max:100'
             ],
             'wali_alamat' => [
-                $requiredMI
+                $requiredOther
             ],
             'wali_no_hp' => [
-                $requiredMI,
+                $requiredOther,
                 'max:100'
             ],
             'wali_keterangan' => [
