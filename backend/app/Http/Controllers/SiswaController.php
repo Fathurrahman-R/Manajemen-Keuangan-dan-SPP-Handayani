@@ -66,9 +66,9 @@ class SiswaController extends Controller
         {
             $wali = new Wali([
                 'nama' => $data['wali_nama'],
-                'agama' => $data['wali_agama'],
-                'jenis_kelamin' => $data['wali_jenis_kelamin'],
-                'pendidikan_terakhir' => strtoupper($data['wali_pendidikan_terakhir']),
+//                'agama' => $data['wali_agama'],
+//                'jenis_kelamin' => $data['wali_jenis_kelamin'],
+//                'pendidikan_terakhir' => strtoupper($data['wali_pendidikan_terakhir']),
                 'pekerjaan' => $data['wali_pekerjaan'] ?? null,
                 'alamat' => $data['wali_alamat'],
                 'no_hp' => $data['wali_no_hp'],
@@ -151,9 +151,9 @@ class SiswaController extends Controller
                 if ($wali) {
                     $wali->update([
                         'nama' => $data['wali_nama'],
-                        'agama' => $data['wali_agama'],
-                        'jenis_kelamin' => $data['wali_jenis_kelamin'],
-                        'pendidikan_terakhir' => strtoupper($data['wali_pendidikan_terakhir']),
+//                        'agama' => $data['wali_agama'],
+//                        'jenis_kelamin' => $data['wali_jenis_kelamin'],
+//                        'pendidikan_terakhir' => strtoupper($data['wali_pendidikan_terakhir']),
                         'pekerjaan' => $data['wali_pekerjaan'] ?? null,
                         'alamat' => $data['wali_alamat'],
                         'no_hp' => $data['wali_no_hp'],
