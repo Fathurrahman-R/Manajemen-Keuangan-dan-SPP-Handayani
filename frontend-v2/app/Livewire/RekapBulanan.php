@@ -35,7 +35,7 @@ use Illuminate\Support\Str;
 class RekapBulanan extends Component implements HasActions, HasSchemas, HasTable
 {
     use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
-    
+
     public $currentMonthYear;
 
     public function table(Table $table): Table
@@ -46,6 +46,10 @@ class RekapBulanan extends Component implements HasActions, HasSchemas, HasTable
                     $params = [
                         'tahun' => (int) explode('-', $this->currentMonthYear)[0],
                     ];
+
+                    if(filled($filters['date']['tahun'])) {
+                        $params['tahun'] = $filters['date']['tahun'];
+                    }
 
                     $response = Http::withHeaders([
                         'Authorization' => session()->get('data')['token']
@@ -63,25 +67,17 @@ class RekapBulanan extends Component implements HasActions, HasSchemas, HasTable
             )
             ->columns([
                 TextColumn::make('tanggal')->label('Tanggal'),
-                TextColumn::make('total_masuk')->label('Total Masuk')->money(currency: 'Rp.', decimalPlaces: 0, ),
-                TextColumn::make('total_keluar')->label('Total Keluar')->money(currency: 'Rp.', decimalPlaces: 0, ),
-                TextColumn::make('saldo')->label('Saldo')->money(currency: 'Rp.', decimalPlaces: 0, ),
+                TextColumn::make('total_masuk')->label('Total Masuk')->money(currency: 'Rp.', decimalPlaces: 0,),
+                TextColumn::make('total_keluar')->label('Total Keluar')->money(currency: 'Rp.', decimalPlaces: 0,),
+                TextColumn::make('saldo')->label('Saldo')->money(currency: 'Rp.', decimalPlaces: 0,),
             ])
             ->filters([
                 Filter::make('date')
                     ->schema([
-                        DatePicker::make('start_date')
-                            ->label('Tanggal Mulai')
-                            ->timezone('Asia/Jakarta')
-                            ->format('Y-m-d')
-                            ->displayFormat('d-m-Y')
-                            ->native(false),
-                        DatePicker::make('end_date')
-                            ->label('Tanggal Berakhir')
-                            ->timezone('Asia/Jakarta')
-                            ->format('Y-m-d')
-                            ->displayFormat('d-m-Y')
-                            ->native(false),
+                        TextInput::make('tahun')
+                            ->label('Tahun')
+                            ->numeric()
+                            ->maxValue(Carbon::now()->year()),
                     ])
             ])
             ->deferLoading()

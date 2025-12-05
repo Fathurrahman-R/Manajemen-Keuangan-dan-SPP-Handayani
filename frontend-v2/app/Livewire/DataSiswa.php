@@ -692,7 +692,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                         ]),
                                     Grid::make(2)
                                         ->schema([
-                                            Select::make('kelas')
+                                            Select::make('kelas_id')
                                                 ->label('Kelas')
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kelas')
@@ -718,7 +718,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->validationMessages([
                                                     'required' => 'Kelas Tidak Boleh Kosong'
                                                 ]),
-                                            Select::make('kategori')
+                                            Select::make('kategori_id')
                                                 ->label('Kategori')
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kategori')
@@ -837,10 +837,6 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                             ),
                     ])
                     ->action(function (array $data, $record): void {
-                        $data['kategori_id'] = $data['kategori'];
-                        $data['kelas_id'] = $data['kelas'];
-                        unset($data['kelas'], $data['kategori']);
-
                         $response = Http::withHeaders([
                             'Authorization' => session()->get('data')['token']
                         ])
@@ -904,6 +900,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->timezone('Asia/Jakarta')
                                                 ->format('Y-m-d')
                                                 ->displayFormat('d-m-Y')
+                                                ->maxDate(now())
                                                 ->required()
                                                 ->validationMessages([
                                                     'required' => 'Tanggal Lahir Tidak Boleh Kosong'
@@ -1067,7 +1064,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                         ])
                             ->post(env('API_URL') . '/siswa/' . $this->activeTab, $data);
 
-                        if ($response->status() != 201) {
+                        if (!$response->successful()) {
                             Notification::make()
                                 ->title('Siswa Gagal Ditambahkan')
                                 ->danger()

@@ -19,5 +19,5 @@ class DataMasterCategory extends Page
 
     protected ?Alignment $headerActionsAlignment = Alignment::End;
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 2;
 }

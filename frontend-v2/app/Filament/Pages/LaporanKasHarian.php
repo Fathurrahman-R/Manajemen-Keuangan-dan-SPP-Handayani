@@ -15,5 +15,5 @@ class LaporanKasHarian extends Page
 
     protected static ?string $title = 'Kas Harian';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 1;
 }

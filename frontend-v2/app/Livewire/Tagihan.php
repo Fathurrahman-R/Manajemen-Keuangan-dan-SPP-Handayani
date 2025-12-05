@@ -107,7 +107,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                     ->label('Jenjang')
                     ->options([
                         'TK' => 'TK',
-                        'SD' => 'SD',
+                        'KB' => 'KB',
                         'MI' => 'MI',
                     ]),
             ])
@@ -259,7 +259,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                             $response = Http::withHeaders([
                                 'Authorization' => session()->get('data')['token']
                             ])
-                                ->delete(env('API_URL') . '/tagihan/' . $record['id']);
+                                ->delete(env('API_URL') . '/tagihan/' . $record['kode_tagihan']);
 
                             if (!$response->ok()) {
                                 Notification::make()

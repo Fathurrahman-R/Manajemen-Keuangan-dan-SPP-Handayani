@@ -48,6 +48,14 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
                         'tahun' => (int) explode('-', $this->currentMonthYear)[0],
                     ];
 
+                    if(filled($filters['date']['bulan'])) {
+                        $params['bulan'] = $filters['date']['bulan'];
+                    }
+
+                    if(filled($filters['date']['tahun'])) {
+                        $params['tahun'] = $filters['date']['tahun'];
+                    }
+
                     $response = Http::withHeaders([
                         'Authorization' => session()->get('data')['token']
                     ])
@@ -64,25 +72,23 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
             )
             ->columns([
                 TextColumn::make('tanggal')->label('Tanggal'),
-                TextColumn::make('total_masuk')->label('Total Masuk')->money(currency: 'Rp.', decimalPlaces: 0, ),
-                TextColumn::make('total_keluar')->label('Total Keluar')->money(currency: 'Rp.', decimalPlaces: 0, ),
-                TextColumn::make('saldo')->label('Saldo')->money(currency: 'Rp.', decimalPlaces: 0, ),
+                TextColumn::make('total_masuk')->label('Total Masuk')->money(currency: 'Rp.', decimalPlaces: 0,),
+                TextColumn::make('total_keluar')->label('Total Keluar')->money(currency: 'Rp.', decimalPlaces: 0,),
+                TextColumn::make('saldo')->label('Saldo')->money(currency: 'Rp.', decimalPlaces: 0,),
             ])
             ->filters([
                 Filter::make('date')
                     ->schema([
-                        DatePicker::make('start_date')
-                            ->label('Tanggal Mulai')
-                            ->timezone('Asia/Jakarta')
-                            ->format('Y-m-d')
-                            ->displayFormat('d-m-Y')
-                            ->native(false),
-                        DatePicker::make('end_date')
-                            ->label('Tanggal Berakhir')
-                            ->timezone('Asia/Jakarta')
-                            ->format('Y-m-d')
-                            ->displayFormat('d-m-Y')
-                            ->native(false),
+                        Grid::make(2)
+                            ->schema([
+                                TextInput::make('bulan')
+                                    ->label('Bulan')
+                                    ->numeric(),
+                                TextInput::make('tahun')
+                                    ->label('Tahun')
+                                    ->numeric()
+                                    ->maxValue(Carbon::now()->year()),
+                            ])
                     ])
             ])
             ->deferLoading()
@@ -95,7 +101,7 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
     public function render()
     {
         $this->currentMonthYear = Carbon::now()->format('Y-m-d');
-        
+
         return view('livewire.kas-harian');
     }
 }
