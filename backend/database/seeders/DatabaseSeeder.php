@@ -27,6 +27,14 @@ class DatabaseSeeder extends Seeder
 //            TagihanSeeder::class,
 //            PembayaranSeeder::class,
         ]);
-        Siswa::factory(3)->create();
+        Siswa::factory(100)->create([
+            'jenjang'=>'MI'
+        ]);
+        Siswa::factory(58)->create([
+            'jenjang'=>'TK'
+        ]);
+        Siswa::factory(6)->create([
+            'jenjang'=>'KB'
+        ]);
     }
 }
