@@ -78,23 +78,23 @@ class Pembayaran extends Component implements HasActions, HasSchemas, HasTable
                 TextColumn::make('kode_tagihan.siswa.nama')->label('Nama Siswa'),
                 TextColumn::make('metode')->label('Metode Pembayaran'),
             ])
-            ->filters([
-                SelectFilter::make('status')
-                    ->multiple()
-                    ->options([
-                        'Lunas' => 'Lunas',
-                        'Belum Lunas' => 'Belum Lunas',
-                        'Belum Dibayar' => 'Belum Dibayar',
-                    ]),
-                SelectFilter::make('jenjang')
-                    ->label('Jenjang')
-                    ->multiple()
-                    ->options([
-                        'TK' => 'TK',
-                        'SD' => 'SD',
-                        'MI' => 'MI',
-                    ]),
-            ])
+            // ->filters([
+            //     SelectFilter::make('status')
+            //         ->multiple()
+            //         ->options([
+            //             'Lunas' => 'Lunas',
+            //             'Belum Lunas' => 'Belum Lunas',
+            //             'Belum Dibayar' => 'Belum Dibayar',
+            //         ]),
+            //     SelectFilter::make('jenjang')
+            //         ->label('Jenjang')
+            //         ->multiple()
+            //         ->options([
+            //             'TK' => 'TK',
+            //             'SD' => 'SD',
+            //             'MI' => 'MI',
+            //         ]),
+            // ])
             ->deferLoading()
             ->striped()
             ->paginated([5, 10, 25])

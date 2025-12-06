@@ -15,5 +15,5 @@ class LaporanRekapBulanan extends Page
 
     protected static ?string $title = 'Rekap Bulanan';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 2;
 }

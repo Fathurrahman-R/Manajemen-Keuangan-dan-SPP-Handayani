@@ -42,13 +42,13 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                 ])
                     ->get(env('API_URL') . '/jenis-tagihan')
                     ->collect('data')
-                    ->when(filled($search), fn (Collection $data): Collection => $data->filter(fn (array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))))
+                    ->when(filled($search), fn(Collection $data): Collection => $data->filter(fn(array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))))
                     ->toArray()
             )
             ->columns([
                 TextColumn::make('nama')->label('Nama')->searchable(),
                 TextColumn::make('jatuh_tempo')->label('Jatuh Tempo'),
-                TextColumn::make('jumlah')->label('Jumlah')->money(currency: 'Rp.', decimalPlaces: 0, ),
+                TextColumn::make('jumlah')->label('Jumlah')->money(currency: 'Rp.', decimalPlaces: 0,),
             ])
             ->deferLoading()
             ->striped()
@@ -58,69 +58,68 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
             ->emptyStateHeading('Tidak Ada Jenis Tagihan')
             ->emptyStateDescription('Silahkan menambahkan jenis tagihan')
             ->recordActions([
-                Action::make('update') // Unique name for your action
-                    ->tooltip('Ubah Jenis Tagihan')
-                    ->icon('heroicon-s-pencil-square') // Optional icon
-                    ->iconButton()
-                    ->color('warning')
-                    ->modalHeading('Ubah Jenis Tagihan')
-                    ->modalFooterActions(function (Action $action) {
-                        return [
-                            $action->getModalSubmitAction()
-                                ->label('Simpan')
-                                ->color('primaryMain')
-                                ->extraAttributes([
-                                    'class' => 'text-white font-semibold'
-                                ]),
-                            $action->getModalCancelAction()->label('Batal'),
-                        ];
-                    })
-                    ->modalFooterActionsAlignment(Alignment::End)
-                    ->modalSubmitAction()
-                    ->fillForm(fn(array $record): array => [
-                        'id' => $record['id'],
-                        'nama' => $record['nama'],
-                        'jatuh_tempo' => $record['jatuh_tempo'],
-                        'jumlah' => $record['jumlah'],
-                    ])
-                    ->schema([
-                        TextInput::make('nama')
-                            ->label('Nama Tagihan')
-                            ->required(),
-                        DatePicker::make('jatuh_tempo')
-                            ->label('Jatuh Tempo')
-                            ->native(false)
-                            ->timezone('Asia/Jakarta')
-                            ->format('Y-m-d')
-                            ->displayFormat('d-m-Y')
-//                            ->minDate(now())
-                            ->required(),
-                        TextInput::make('jumlah')
-                            ->label('Jumlah')
-                            ->numeric()
-                            ->required(),
-                    ])
-                    ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->put(env('API_URL') . '/jenis-tagihan/' . $record['id'], $data);
+                // Action::make('update') // Unique name for your action
+                //     ->tooltip('Ubah Jenis Tagihan')
+                //     ->icon('heroicon-s-pencil-square') // Optional icon
+                //     ->iconButton()
+                //     ->color('warning')
+                //     ->modalHeading('Ubah Jenis Tagihan')
+                //     ->modalFooterActions(function (Action $action) {
+                //         return [
+                //             $action->getModalSubmitAction()
+                //                 ->label('Simpan')
+                //                 ->color('primaryMain')
+                //                 ->extraAttributes([
+                //                     'class' => 'text-white font-semibold'
+                //                 ]),
+                //             $action->getModalCancelAction()->label('Batal'),
+                //         ];
+                //     })
+                //     ->modalFooterActionsAlignment(Alignment::End)
+                //     ->modalSubmitAction()
+                //     ->fillForm(fn(array $record): array => [
+                //         'id' => $record['id'],
+                //         'nama' => $record['nama'],
+                //         'jatuh_tempo' => $record['jatuh_tempo'],
+                //         'jumlah' => $record['jumlah'],
+                //     ])
+                //     ->schema([
+                //         TextInput::make('nama')
+                //             ->label('Nama Tagihan')
+                //             ->required(),
+                //         DatePicker::make('jatuh_tempo')
+                //             ->label('Jatuh Tempo')
+                //             ->native(false)
+                //             ->timezone('Asia/Jakarta')
+                //             ->format('Y-m-d')
+                //             ->displayFormat('d-m-Y')
+                //             ->required(),
+                //         TextInput::make('jumlah')
+                //             ->label('Jumlah')
+                //             ->numeric()
+                //             ->required(),
+                //     ])
+                //     ->action(function (array $data, $record): void {
+                //         $response = Http::withHeaders([
+                //             'Authorization' => session()->get('data')['token']
+                //         ])
+                //             ->put(env('API_URL') . '/jenis-tagihan/' . $record['id'], $data);
 
-                        if (!$response->ok()) {
-                            Notification::make()
-                                ->title('Jenis Tagihan Gagal Diubah')
-                                ->danger()
-                                ->send();
-                        } else {
-                            Notification::make()
-                                ->title('Jenis Tagihan Berhasil Diubah')
-                                ->success()
-                                ->send();
-                        }
-                    })
-                    ->after(function () {
-                        $this->resetTable();
-                    }), // Optional color
+                //         if (!$response->ok()) {
+                //             Notification::make()
+                //                 ->title('Jenis Tagihan Gagal Diubah')
+                //                 ->danger()
+                //                 ->send();
+                //         } else {
+                //             Notification::make()
+                //                 ->title('Jenis Tagihan Berhasil Diubah')
+                //                 ->success()
+                //                 ->send();
+                //         }
+                //     })
+                //     ->after(function () {
+                //         $this->resetTable();
+                //     }), // Optional color
                 Action::make('delete') // Unique name for your action
                     ->tooltip('Hapus Jenis Tagihan')
                     ->icon('heroicon-s-trash') // Optional icon
@@ -182,7 +181,7 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                             ->timezone('Asia/Jakarta')
                             ->format('Y-m-d')
                             ->displayFormat('d-m-Y')
-//                            ->minDate(now())
+                            //                            ->minDate(now())
                             ->required(),
                         TextInput::make('jumlah')
                             ->label('Jumlah')

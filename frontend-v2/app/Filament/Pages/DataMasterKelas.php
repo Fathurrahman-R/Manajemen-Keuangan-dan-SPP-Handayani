@@ -15,5 +15,5 @@ class DataMasterKelas extends Page
 
     protected static ?string $title = 'Data Kelas';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 3;
 }
