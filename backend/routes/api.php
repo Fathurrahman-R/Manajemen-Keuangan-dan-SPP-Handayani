@@ -79,7 +79,8 @@ Route::middleware(\App\Http\Middleware\ApiAuthMiddleware::class)->group(function
             Route::delete('/{id}', [PengeluaranController::class, 'delete']);
         });
 
-        Route::put('/setting', [AppSettingController::class, 'update']);
+        Route::get('/setting', [AppSettingController::class, 'get']);
+        Route::post('/setting/{id}', [AppSettingController::class, 'update']);
 
         Route::prefix('/laporan')->group(function () {
             Route::get('/kas', [\App\Http\Controllers\KasController::class, 'kasHarian']);

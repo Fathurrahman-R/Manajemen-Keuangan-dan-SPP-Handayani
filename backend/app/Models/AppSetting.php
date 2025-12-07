@@ -10,6 +10,7 @@ class AppSetting extends Model
     /** @use HasFactory<\Database\Factories\AppSettingFactory> */
     use HasFactory;
     protected $table = 'app_settings';
+    protected $primaryKey = 'id';
     protected $fillable = [
         'nama_sekolah',
         'lokasi',
@@ -20,5 +21,8 @@ class AppSetting extends Model
         'bendahara',
         'kode_pos',
         'logo'
+    ];
+    protected $casts = [
+        'id' => 'integer'
     ];
 }

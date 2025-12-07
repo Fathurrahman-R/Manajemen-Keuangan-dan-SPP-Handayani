@@ -15,16 +15,18 @@ class AppSettingController extends Controller
     public static function get()
     {
         $setting = AppSetting::first();
+        $setting->logo = asset('storage') . '/' . $setting->logo;
+
         return new AppSettingResource($setting);
     }
 
     #[HeaderParameter('Authorization')]
-    public function update(AppSettingRequest $request)
+    public function update(AppSettingRequest $request, int $id)
     {
         $data = $request->validated();
 
         // Ambil atau buat record settings tunggal
-        $setting = AppSetting::first();
+        $setting = AppSetting::findOrFail($id);
         if (!$setting) {
             $setting = new AppSetting();
         }

@@ -15,6 +15,7 @@ class AppSettingResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'id' => $this->id,
             'nama_sekolah'=>$this->nama_sekolah,
             'lokasi'=>$this->lokasi,
             'alamat'=>$this->alamat,

@@ -201,9 +201,9 @@ class Pengeluaran extends Component implements HasActions, HasSchemas, HasTable
                     })
                     ->successNotificationTitle('Pengeluaran Berhasil Dihapus')
                     ->failureNotificationTitle('Pengeluaran Gagal Dihapus')
-                    ->after(function () {
-                        $this->resetTable();
-                    })
+                    // ->after(function () {
+                    //     $this->resetTable();
+                    // })
             ])
             ->headerActions([
                 Action::make('add') // Unique name for your action
@@ -246,7 +246,7 @@ class Pengeluaran extends Component implements HasActions, HasSchemas, HasTable
                         ])
                             ->post(env('API_URL') . '/pengeluaran', $data);
 
-                        if ($response->status() != 201) {
+                        if (!$response->created()) {
                             Notification::make()
                                 ->title('Pengeluaran Gagal Ditambahkan')
                                 ->danger()
@@ -254,7 +254,7 @@ class Pengeluaran extends Component implements HasActions, HasSchemas, HasTable
                         } else {
                             Notification::make()
                                 ->title('Pengeluaran Berhasil Ditambahkan')
-                                ->danger()
+                                ->success()
                                 ->send();
                         }
                     })
