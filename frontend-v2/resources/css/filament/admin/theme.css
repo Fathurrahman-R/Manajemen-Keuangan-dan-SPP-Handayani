@@ -16,6 +16,10 @@ div.fi-ta-header > div.fi-ta-actions > button[id="add-detail"] {
     @apply text-white
 }
 
+button[id="update"] {
+    @apply text-white
+}
+
 div.fi-modal-footer-actions > button[type="submit"] {
     @apply !text-white
 }

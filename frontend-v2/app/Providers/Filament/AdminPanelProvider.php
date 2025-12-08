@@ -103,13 +103,13 @@ class AdminPanelProvider extends PanelProvider
                                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.admin.pages.laporan-rekap-bulanan'))
                                 ->url(fn(): string => LaporanRekapBulanan::getUrl()),
                         ]),
-                    // NavigationGroup::make()
-                    //     ->items([
-                    //         NavigationItem::make()
-                    //             ->label('Pengaturan')
-                    //             ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.admin.pages.setting'))
-                    //             ->url(fn(): string => Settings::getUrl()),
-                    //     ]),
+                    NavigationGroup::make()
+                        ->items([
+                            NavigationItem::make()
+                                ->label('Pengaturan')
+                                ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.admin.pages.setting'))
+                                ->url(fn(): string => Settings::getUrl()),
+                        ]),
                 ]);
             })
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')

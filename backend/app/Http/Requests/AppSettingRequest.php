@@ -47,7 +47,6 @@ class AppSettingRequest extends FormRequest
             'telepon'=>[
                 'required',
                 'max:20',
-
             ],
             'kepala_sekolah'=>[
                 'required',
@@ -65,9 +64,8 @@ class AppSettingRequest extends FormRequest
                 'regex:/[0-9]/'
             ],
             'logo'=>[
-                'required',
                 'file',
-                'mimes:png',
+                'mimes:jpg,png',
             ]
         ];
     }
