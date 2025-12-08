@@ -46,6 +46,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
         return $table
             ->records(
                 function (?string $search, int $page, int $recordsPerPage, array $filters): LengthAwarePaginator {
+                    $this->perPage = $recordsPerPage;
                     $params = [
                         'per_page' => $this->perPage,
                         'page' => $page,
@@ -206,26 +207,26 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                                         ->title('Tagihan Berhasil Dibayar')
                                         ->success()
                                         ->send();
-    
+
                                     $filename = 'kwitansi-' . $response->json()['data']['kode_pembayaran'] . '.pdf';
-    
+
                                     $responseDownload = Http::withHeaders([
                                         'Authorization' => session()->get('data')['token'],
                                         'Accept' => 'application/pdf'
                                     ])
                                         ->get(env('API_URL') . '/pembayaran/kwitansi/' . $response->json()['data']['kode_pembayaran']);
-        
+
                                     if (!$responseDownload->ok()) {
                                         $errorKeys = array_keys($response->json()['errors']);
                                         $message = $response->json()['errors'][$errorKeys[0]][0];
 
                                         throw new Exception($message, $responseDownload->status());
                                     }
-    
+
                                     // Store the file temporarily (optional, but good practice for larger files)
                                     Storage::disk('local')->put($filename, $responseDownload->body());
                                     $path = Storage::disk('local')->path($filename);
-    
+
                                     // Return a response that prompts the file download
                                     return response()->streamDownload(function () use ($path) {
                                         echo file_get_contents($path);
@@ -269,7 +270,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                             } else {
                                 Notification::make()
                                     ->title('Tagihan Berhasil Dihapus')
-                                    ->danger()
+                                    ->success()
                                     ->send();
                             }
                         })
@@ -392,7 +393,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                         } else {
                             Notification::make()
                                 ->title('Tagihan Berhasil Ditambahkan')
-                                ->danger()
+                                ->success()
                                 ->send();
                         }
                     })

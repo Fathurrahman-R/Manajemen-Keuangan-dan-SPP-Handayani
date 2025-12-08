@@ -149,6 +149,10 @@ class DetailSiswa extends Component implements HasSchemas
                             ->label('Alamat')
                             ->default(fn($livewire) => $livewire->wali['alamat'])
                             ->size(TextSize::Large),
+                        TextEntry::make('no_hp')
+                            ->label('No HP')
+                            ->default(fn($livewire) => $livewire->wali['no_hp'])
+                            ->size(TextSize::Large),
                         TextEntry::make('keterangan')
                             ->label('Keterangan')
                             ->default(fn($livewire) => $livewire->wali['keterangan'] ?? '-')

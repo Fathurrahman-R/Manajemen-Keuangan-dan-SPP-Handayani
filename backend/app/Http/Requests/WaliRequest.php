@@ -32,21 +32,21 @@ class WaliRequest extends FormRequest
                 'string',
                 'max:100'
             ],
-            'jenis_kelamin' => [
-                $requiredOrSometimes,
-                'string',
-                'in:Laki-laki,Perempuan'
-            ],
-            'agama' => [
-                $requiredOrSometimes,
-                'string',
-                'max:50'
-            ],
-            'pendidikan_terakhir' => [
-                $requiredOrSometimes,
-                'string',
-                'max:100'
-            ],
+//            'jenis_kelamin' => [
+//                $requiredOrSometimes,
+//                'string',
+//                'in:Laki-laki,Perempuan'
+//            ],
+//            'agama' => [
+//                $requiredOrSometimes,
+//                'string',
+//                'max:50'
+//            ],
+//            'pendidikan_terakhir' => [
+//                $requiredOrSometimes,
+//                'string',
+//                'max:100'
+//            ],
             'pekerjaan' => [
                 'sometimes',
                 'nullable',

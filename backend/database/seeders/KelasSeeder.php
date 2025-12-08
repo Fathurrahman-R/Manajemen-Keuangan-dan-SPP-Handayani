@@ -16,32 +16,32 @@ class KelasSeeder extends Seeder
     {
         $kelas1 = Kelas::factory()->create([
             'id'=>1,
-            'nama'=>'Kelas 1',
+            'nama'=>'KELAS 1',
             'jenjang'=>'MI',
         ]);
         $kelas2 = Kelas::factory()->create([
             'id'=>2,
-            'nama'=>'Kelas 2',
+            'nama'=>'KELAS 2',
             'jenjang'=>'MI',
         ]);
         $kelas3 = Kelas::factory()->create([
             'id'=>3,
-            'nama'=>'Kelas 3',
+            'nama'=>'KELAS 3',
             'jenjang'=>'MI',
         ]);
         $kelas4 = Kelas::factory()->create([
             'id'=>4,
-            'nama'=>'Kelas 4',
+            'nama'=>'KELAS 4',
             'jenjang'=>'MI',
         ]);
         $kelas5 = Kelas::factory()->create([
             'id'=>5,
-            'nama'=>'Kelas 5',
+            'nama'=>'KELAS 5',
             'jenjang'=>'MI',
         ]);
         $kelas6 = Kelas::factory()->create([
             'id'=>6,
-            'nama'=>'Kelas 6',
+            'nama'=>'KELAS 6',
             'jenjang'=>'MI',
         ]);
     }

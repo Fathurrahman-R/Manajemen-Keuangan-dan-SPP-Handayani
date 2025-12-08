@@ -15,7 +15,7 @@ class AppSettingController extends Controller
     public static function get()
     {
         $setting = AppSetting::first();
-        $setting->logo = asset('storage') . '/' . $setting->logo;
+//        $setting->logo = asset('storage') . '/' . $setting->logo;
 
         return new AppSettingResource($setting);
     }

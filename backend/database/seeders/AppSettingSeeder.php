@@ -6,7 +6,7 @@ class AppSettingSeeder extends Seeder
 {
     public function run(): void{
         AppSetting::create([
-            'logo' => 'logo-sekolah.jpeg',
+            'logo' => 'logo-sekolah/qZ3JCppidsn5nVPDnVqfFAy1mFB5tnifaZWZ40dZ.jpg',
             'kode_pos' => '12345',
             'bendahara' => 'Siti',
             'kepala_sekolah' => 'Ahmad',

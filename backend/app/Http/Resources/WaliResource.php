@@ -17,9 +17,9 @@ class WaliResource extends JsonResource
         return [
             'id'=>$this->id,
             'nama'=>$this->nama,
-            'agama'=>$this->agama,
-            'jenis_kelamin'=>$this->jenis_kelamin,
-            'pendidikan_terakhir'=>$this->pendidikan_terakhir,
+//            'agama'=>$this->agama,
+//            'jenis_kelamin'=>$this->jenis_kelamin,
+//            'pendidikan_terakhir'=>$this->pendidikan_terakhir,
             'pekerjaan'=>$this->pekerjaan,
             'alamat'=>$this->alamat,
             'no_hp'=>$this->no_hp,

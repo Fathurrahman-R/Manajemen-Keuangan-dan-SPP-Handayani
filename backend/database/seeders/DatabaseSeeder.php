@@ -4,7 +4,9 @@ namespace Database\Seeders;
 
 use App\Models\Ayah;
 use App\Models\Ibu;
+use App\Models\Kelas;
 use App\Models\Siswa;
+use App\Models\Wali;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -30,11 +32,29 @@ class DatabaseSeeder extends Seeder
         Siswa::factory(100)->create([
             'jenjang'=>'MI'
         ]);
+        $tk = Kelas::factory()->create([
+            'jenjang'=>'TK',
+            'nama'=>'MATAHARI'
+        ]);
         Siswa::factory(58)->create([
-            'jenjang'=>'TK'
+            'nisn'=>null,
+            'jenjang'=>'TK',
+            'kelas_id' => $tk->id,
+            'ayah_id'=>null,
+            'ibu_id'=>null,
+            'wali_id' => Wali::factory()
+        ]);
+        $kb = Kelas::factory()->create([
+            'jenjang'=>'KB',
+            'nama'=>'AMAN'
         ]);
         Siswa::factory(6)->create([
-            'jenjang'=>'KB'
+            'nisn'=>null,
+            'jenjang'=>'KB',
+            'kelas_id' => $kb->id,
+            'ayah_id'=>null,
+            'ibu_id'=>null,
+            'wali_id' => Wali::factory()
         ]);
     }
 }

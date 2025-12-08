@@ -11,6 +11,8 @@ class AppSetting extends Model
     use HasFactory;
     protected $table = 'app_settings';
     protected $primaryKey = 'id';
+    public $incrementing = true;
+    public $timestamps = true;
     protected $fillable = [
         'nama_sekolah',
         'lokasi',
