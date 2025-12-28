@@ -32,5 +32,9 @@ class JenisTagihan extends Model
     {
         return $this->hasMany(Tagihan::class,'jenis_tagihan_id','id');
     }
+    public function branch()
+    {
+        return $this->BelongsTo(Branch::class, 'branch_id');
+    }
 
 }

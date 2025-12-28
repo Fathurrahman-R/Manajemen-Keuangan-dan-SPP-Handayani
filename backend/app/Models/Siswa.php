@@ -68,5 +68,9 @@ class Siswa extends Model
     {
         return $this->hasMany(Tagihan::class,'nis','nis');
     }
+    public function branch()
+    {
+        return $this->BelongsTo(Branch::class, 'branch_id');
+    }
 
 }

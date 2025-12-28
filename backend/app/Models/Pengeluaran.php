@@ -16,6 +16,10 @@ class Pengeluaran extends Model
         'uraian',
         'jumlah',
     ];
+    protected $primaryKey = 'id';
+    protected $keyType = 'int';
+    public $incrementing = true;
+    public $timestamps = true;
 
     protected function casts(): array
     {
@@ -23,8 +27,8 @@ class Pengeluaran extends Model
             'jumlah' => 'float',
         ];
     }
-    protected $primaryKey = 'id';
-    protected $keyType = 'int';
-    public $incrementing = true;
-    public $timestamps = true;
+    public function branch()
+    {
+        return $this->BelongsTo(Branch::class, 'branch_id');
+    }
 }

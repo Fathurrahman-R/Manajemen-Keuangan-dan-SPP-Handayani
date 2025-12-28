@@ -19,4 +19,8 @@ class Kategori extends Model
     {
         return $this->hasMany(Siswa::class);
     }
+    public function branch()
+    {
+        return $this->BelongsTo(Branch::class, 'branch_id');
+    }
 }

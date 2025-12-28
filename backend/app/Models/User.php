@@ -19,6 +19,11 @@ class User extends Model implements Authenticatable
         'password'
     ];
 
+    public function branch()
+    {
+        return $this->BelongsTo(Branch::class, 'branch_id');
+    }
+
     public function getAuthIdentifierName()
     {
         return 'username';

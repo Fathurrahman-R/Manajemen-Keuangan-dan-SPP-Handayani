@@ -27,4 +27,8 @@ class AppSetting extends Model
     protected $casts = [
         'id' => 'integer'
     ];
+    public function branch()
+    {
+        return $this->BelongsTo(Branch::class, 'branch_id');
+    }
 }

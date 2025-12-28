@@ -35,4 +35,8 @@ class Pembayaran extends Model
     {
         return $this->belongsTo(Tagihan::class, 'kode_tagihan', 'kode_tagihan');
     }
+    public function branch()
+    {
+        return $this->BelongsTo(Branch::class, 'branch_id');
+    }
 }
