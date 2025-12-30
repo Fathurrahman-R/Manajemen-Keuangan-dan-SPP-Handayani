@@ -16,12 +16,25 @@ class User extends Model implements Authenticatable
     public $incrementing = true;
     protected $fillable = [
         'username',
-        'password'
+        'password',
+        'branch_id',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'branch_id'=> 'int'
+        ];
+    }
 
     public function branch()
     {
         return $this->BelongsTo(Branch::class, 'branch_id');
+    }
+
+    public function getBranchId()
+    {
+        return $this->branch_id;
     }
 
     public function getAuthIdentifierName()
