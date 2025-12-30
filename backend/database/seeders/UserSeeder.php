@@ -15,10 +15,18 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         User::create([
-            'username' => 'admin',
+            'username' => 'selatpanjang',
             'password' => Hash::make('admin123'),
             'role' => 'admin',
-            'token' => 'test'
+            'token' => 'test',
+            'branch_id' => 1,
+        ]);
+        User::create([
+            'username' => 'desakapur',
+            'password' => Hash::make('admin123'),
+            'role' => 'admin',
+            'token' => 'test2',
+            'branch_id' => 2,
         ]);
     }
 }

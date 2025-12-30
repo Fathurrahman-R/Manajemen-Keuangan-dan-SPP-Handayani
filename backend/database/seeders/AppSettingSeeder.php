@@ -15,6 +15,7 @@ class AppSettingSeeder extends Seeder
             'alamat' => 'Jl. Parit H. Husai 2, Komp. Acisa Asri No.47, Bansir Darat Pontianak Tenggara',
             'lokasi' => 'Pontianak',
             'nama_sekolah' => 'LPA Handayani',
+            'branch_id'=>1,
         ]);
     }
 }
