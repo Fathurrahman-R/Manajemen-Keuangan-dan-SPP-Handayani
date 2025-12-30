@@ -17,7 +17,8 @@ class KelasResource extends JsonResource
         return [
             'id'=>$this->id,
             'jenjang'=>$this->jenjang,
-            'nama'=>$this->nama
+            'nama'=>$this->nama,
+            'branch_id'=>$this->branch_id
         ];
     }
 }

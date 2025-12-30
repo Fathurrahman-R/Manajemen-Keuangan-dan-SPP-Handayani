@@ -13,7 +13,19 @@ class Kelas extends Model
     protected $keyType = 'int';
     public $incrementing = true;
     public $timestamps = true;
-    protected $fillable = ['jenjang','nama'];
+
+    protected $fillable = [
+        'jenjang',
+        'nama',
+        'branch_id',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'branch_id'=>'int'
+        ];
+    }
 
     public function siswa()
     {
