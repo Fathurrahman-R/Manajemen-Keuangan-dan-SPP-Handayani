@@ -21,13 +21,15 @@ class Pembayaran extends Model
         'tanggal',
         'metode',
         'jumlah',
-        'pembayar'
+        'pembayar',
+        'branch_id',
     ];
 
     protected function casts(): array
     {
         return [
             'jumlah' => 'float',
+            'branch_id' => 'int',
         ];
     }
 

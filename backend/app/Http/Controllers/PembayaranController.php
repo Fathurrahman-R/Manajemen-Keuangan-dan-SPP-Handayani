@@ -36,6 +36,7 @@ class PembayaranController extends Controller
                     $q->select(['id','nis','nama','jenjang','kelas_id','kategori_id']);
                 }
             ])
+            ->where('branch_id', Auth::user()->branch_id)
             ->select(['kode_pembayaran','kode_tagihan','tanggal','metode','jumlah','pembayar']);
 
         if ($user && $user->role !== 'admin') {
@@ -122,6 +123,18 @@ class PembayaranController extends Controller
                 'errors' => [ 'message' => ['tagihan tidak ditemukan.'] ]
             ], 404));
         }
+        $lunas = Pembayaran::query()
+            ->with([
+                'tagihan' => fn($q) => $q->where('status','Lunas')
+            ])
+            ->where('kode_tagihan',$kode_tagihan)
+            ->exists();
+        if ($lunas)
+        {
+            throw new HttpResponseException(response([
+                'errors' => [ 'message' => ['tagihan sudah dibayar lunas.'] ]
+            ], 400));
+        }
         $jumlah = TagihanController::lunas($request, $kode_tagihan);
         $pembayaran = Pembayaran::create([
             'kode_pembayaran' => GenerateKodePembayaran::generate(),
@@ -129,7 +142,8 @@ class PembayaranController extends Controller
             'tanggal' => now()->format('Y-m-d'),
             'metode' => $data['metode'],
             'jumlah' => $jumlah,
-            'pembayar' => $data['pembayar']
+            'pembayar' => $data['pembayar'],
+            'branch_id' => Auth::user()->branch_id,
         ]);
         $pembayaran->load(['tagihan','tagihan.jenis_tagihan','tagihan.siswa']);
         return (new PembayaranResource($pembayaran))->response()->setStatusCode(200);
@@ -142,12 +156,27 @@ class PembayaranController extends Controller
         $tagihan = Tagihan::with([
             'siswa' => function ($q) { $q->select(['nis','nama']); },
             'jenis_tagihan' => function ($q) { $q->select(['id','jumlah']); }
-        ])->select(['kode_tagihan','tmp','jenis_tagihan_id','nis'])->find($kode_tagihan);
+        ])
+            ->select(['kode_tagihan','tmp','jenis_tagihan_id','nis'])
+            ->find($kode_tagihan);
 
         if (!$tagihan) {
             throw new HttpResponseException(response([
                 'errors' => [ 'message' => ['tagihan tidak ditemukan.'] ]
             ], 404));
+        }
+
+        $lunas = Pembayaran::query()
+            ->with([
+                'tagihan' => fn($q) => $q->where('status','Lunas')
+            ])
+            ->where('kode_tagihan',$kode_tagihan)
+            ->exists();
+        if ($lunas)
+        {
+            throw new HttpResponseException(response([
+                'errors' => [ 'message' => ['tagihan sudah dibayar lunas.'] ]
+            ], 400));
         }
 
         $akumulasi = $tagihan->tmp + $data['jumlah'];
@@ -171,7 +200,8 @@ class PembayaranController extends Controller
             'tanggal' => now()->format('Y-m-d'),
             'metode' => $data['metode'],
             'jumlah' => $data['jumlah'],
-            'pembayar' => $data['pembayar']
+            'pembayar' => $data['pembayar'],
+            'branch_id' => Auth::user()->branch_id,
         ]);
         TagihanController::bayar($request, $kode_tagihan);
         $pembayaran->load(['tagihan','tagihan.jenis_tagihan','tagihan.siswa']);
@@ -181,7 +211,8 @@ class PembayaranController extends Controller
     #[HeaderParameter('Authorization')]
     public static function kwitansi(string $kode_pembayaran)
     {
-        $pembayaran = Pembayaran::with(['tagihan'])->find($kode_pembayaran);
+        $pembayaran = Pembayaran::with(['tagihan'])
+            ->find($kode_pembayaran);
         if (!$pembayaran) {
             throw new HttpResponseException(response([
                 'errors' => [ 'message' => ['pembayaran tidak ditemukan.'] ]
