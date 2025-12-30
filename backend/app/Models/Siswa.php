@@ -34,6 +34,7 @@ class Siswa extends Model
         'tahun_diterima',
         'status',
         'keterangan',
+        'branch_id',
     ];
     protected $casts = [
         'id' => 'integer',
@@ -42,6 +43,7 @@ class Siswa extends Model
         'wali_id' => 'integer',
         'kelas_id' => 'integer',
         'kategori_id' => 'integer',
+        'branch_id' => 'integer',
     ];
 
     public function ayah(): \Illuminate\Database\Eloquent\Relations\BelongsTo
