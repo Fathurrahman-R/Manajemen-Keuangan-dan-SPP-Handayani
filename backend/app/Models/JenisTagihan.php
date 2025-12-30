@@ -18,13 +18,15 @@ class JenisTagihan extends Model
     protected $fillable = [
         'nama',
         'jatuh_tempo',
-        'jumlah'
+        'jumlah',
+        'branch_id'
     ];
 
     protected function casts(): array
     {
         return [
             'jumlah' => 'float',
+            'branch_id' => 'int',
         ];
     }
 

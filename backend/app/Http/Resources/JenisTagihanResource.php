@@ -18,7 +18,8 @@ class JenisTagihanResource extends JsonResource
             'id'=>$this->id,
             'nama'=>$this->nama,
             'jatuh_tempo'=>$this->jatuh_tempo,
-            'jumlah'=>$this->jumlah
+            'jumlah'=>$this->jumlah,
+            'branch_id'=>$this->branch_id
         ];
     }
 }

@@ -7,6 +7,7 @@ use App\Http\Resources\JenisTagihanResource;
 use App\Models\JenisTagihan;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Auth;
 use Throwable;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 
@@ -15,7 +16,8 @@ class JenisTagihanController extends Controller
     #[HeaderParameter('Authorization')]
     public function index()
     {
-        $jt = JenisTagihan::query()->get();
+        $jt = JenisTagihan::query()
+            ->where('branch_id', Auth::user()->branch_id)->get();
         // Kembalikan ke bentuk asli: langsung koleksi resource
         return JenisTagihanResource::collection($jt);
     }
@@ -25,7 +27,9 @@ class JenisTagihanController extends Controller
     {
         $data = $request->validated();
         try {
-            $jt = JenisTagihan::query()->create($data);
+            $jt = new JenisTagihan($data);
+            $jt->branch_id = Auth::user()->branch_id;
+            $jt->save();
         } catch (QueryException|Throwable $e) {
             throw new HttpResponseException(response([
                 'errors' => [
