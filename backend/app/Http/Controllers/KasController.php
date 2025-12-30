@@ -9,6 +9,7 @@ use Dedoc\Scramble\Attributes\HeaderParameter;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class KasController extends Controller
 {
@@ -53,13 +54,15 @@ class KasController extends Controller
         | 1) Ambil pemasukan & pengeluaran per tanggal (di bulan yang difilter)
         |--------------------------------------------------------------------------
         */
-        $pemasukan = Pembayaran::selectRaw('DATE(tanggal) as tanggal, SUM(jumlah) as total')
+        $pemasukan = Pembayaran::query()->selectRaw('DATE(tanggal) as tanggal, SUM(jumlah) as total')
+            ->where('branch_id', Auth::user()->branch_id)
             ->whereBetween('tanggal', [$start, $end])
             ->groupBy('tanggal')
             ->get()
             ->keyBy('tanggal');
 
         $pengeluaran = Pengeluaran::selectRaw('DATE(tanggal) as tanggal, SUM(jumlah) as total')
+            ->where('branch_id', Auth::user()->branch_id)
             ->whereBetween('tanggal', [$start, $end])
             ->groupBy('tanggal')
             ->get()
@@ -97,8 +100,12 @@ class KasController extends Controller
 
             // ❗ SALDO GLOBAL — sesuai buku kas
             (float)$saldoGlobal =
-                Pembayaran::whereDate('tanggal', '<=', $tanggal)->sum('jumlah')
-                - Pengeluaran::whereDate('tanggal', '<=', $tanggal)->sum('jumlah');
+                Pembayaran::query()
+                    ->where('branch_id', Auth::user()->branch_id)
+                    ->whereDate('tanggal', '<=', $tanggal)->sum('jumlah')
+                - Pengeluaran::query()
+                    ->where('branch_id', Auth::user()->branch_id)
+                    ->whereDate('tanggal', '<=', $tanggal)->sum('jumlah');
 
             $kas[] = (object) [
                 'tanggal'      => \Carbon\Carbon::parse($tanggal)->locale('id')->translatedFormat('d F Y'),
@@ -144,13 +151,17 @@ class KasController extends Controller
         | 1) Ambil pemasukan dan pengeluaran per bulan dalam tahun tersebut
         |--------------------------------------------------------------------------
         */
-        $pemasukan = Pembayaran::selectRaw("DATE_FORMAT(tanggal, '%Y-%m') as bulan, SUM(jumlah) as total")
+        $pemasukan = Pembayaran::query()
+            ->selectRaw("DATE_FORMAT(tanggal, '%Y-%m') as bulan, SUM(jumlah) as total")
+            ->where('branch_id', Auth::user()->branch_id)
             ->whereYear('tanggal', $tahun)
             ->groupBy('bulan')
             ->get()
             ->keyBy('bulan');
 
-        $pengeluaran = Pengeluaran::selectRaw("DATE_FORMAT(tanggal, '%Y-%m') as bulan, SUM(jumlah) as total")
+        $pengeluaran = Pengeluaran::query()
+            ->selectRaw("DATE_FORMAT(tanggal, '%Y-%m') as bulan, SUM(jumlah) as total")
+            ->where('branch_id', Auth::user()->branch_id)
             ->whereYear('tanggal', $tahun)
             ->groupBy('bulan')
             ->get()
@@ -191,8 +202,12 @@ class KasController extends Controller
 
             // ❗ SALDO GLOBAL SAMPAI AKHIR BULAN
             $saldoGlobal =
-                Pembayaran::whereDate('tanggal', '<=', $lastDate)->sum('jumlah')
-                - Pengeluaran::whereDate('tanggal', '<=', $lastDate)->sum('jumlah');
+                Pembayaran::query()
+                    ->where('branch_id', Auth::user()->branch_id)
+                    ->whereDate('tanggal', '<=', $lastDate)->sum('jumlah')
+                - Pengeluaran::query()
+                    ->where('branch_id', Auth::user()->branch_id)
+                    ->whereDate('tanggal', '<=', $lastDate)->sum('jumlah');
 
             $kas[] = (object)[
                 'tanggal'      => \Carbon\Carbon::parse("$bulan-01")->locale('id')->translatedFormat('F Y'),
