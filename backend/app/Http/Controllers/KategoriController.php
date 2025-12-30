@@ -7,13 +7,15 @@ use App\Http\Resources\KategoriResource;
 use App\Models\Kategori;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Dedoc\Scramble\Attributes\HeaderParameter;
+use Illuminate\Support\Facades\Auth;
 
 class KategoriController extends Controller
 {
     #[HeaderParameter('Authorization')]
     public function index()
     {
-        $kategori = Kategori::query()->get();
+        $kategori = Kategori::query()
+            ->where('branch_id', Auth::user()->branch_id)->get();
         // Return koleksi (bisa kosong) tanpa error
         return KategoriResource::collection($kategori);
     }
@@ -23,7 +25,9 @@ class KategoriController extends Controller
     {
         $data = $request->validated();
         $namaUp = strtoupper($data['nama']);
-        $exists = Kategori::query()->whereRaw('UPPER(nama) = ?', [$namaUp])->exists();
+        $exists = Kategori::query()
+            ->where('branch_id', Auth::user()->branch_id)
+            ->whereRaw('UPPER(nama) = ?', [$namaUp])->exists();
         if ($exists) {
             throw new HttpResponseException(response([
                 'errors' => [
@@ -32,7 +36,8 @@ class KategoriController extends Controller
             ], 400));
         }
         $kategori = new Kategori([
-            'nama' => $namaUp
+            'nama' => $namaUp,
+            'branch_id' => Auth::user()->branch_id,
         ]);
         $kategori->save();
         return (new KategoriResource($kategori))->response()->setStatusCode(201);
