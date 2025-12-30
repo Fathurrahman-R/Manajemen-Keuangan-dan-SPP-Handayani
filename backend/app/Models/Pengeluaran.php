@@ -15,6 +15,7 @@ class Pengeluaran extends Model
         'tanggal',
         'uraian',
         'jumlah',
+        'branch_id',
     ];
     protected $primaryKey = 'id';
     protected $keyType = 'int';
@@ -25,6 +26,7 @@ class Pengeluaran extends Model
     {
         return [
             'jumlah' => 'float',
+            'branch_id' => 'int',
         ];
     }
     public function branch()

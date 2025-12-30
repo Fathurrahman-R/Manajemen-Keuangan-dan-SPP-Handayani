@@ -9,6 +9,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Dedoc\Scramble\Attributes\QueryParameter;
+use Illuminate\Support\Facades\Auth;
 
 class PengeluaranController extends Controller
 {
@@ -18,7 +19,10 @@ class PengeluaranController extends Controller
     #[QueryParameter('per_page', description: 'Jumlah data per halaman', required: false, example: 30)]
     public function index()
     {
-        $query = Pengeluaran::query()->orderByDesc('tanggal')->orderByDesc('id');
+        $query = Pengeluaran::query()
+            ->where('branch_id', Auth::user()->branch_id)
+            ->orderByDesc('tanggal')
+            ->orderByDesc('id');
 
         $start = request('start_date');
         $end = request('end_date');
@@ -39,7 +43,9 @@ class PengeluaranController extends Controller
     {
         $data = $request->validated();
 
-        $pengeluaran = Pengeluaran::create($data);
+        $pengeluaran = new Pengeluaran($data);
+        $pengeluaran->branch_id = Auth::user()->branch_id;
+        $pengeluaran->save();
 
         return (new PengeluaranResource($pengeluaran))
             ->response()
