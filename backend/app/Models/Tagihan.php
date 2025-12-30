@@ -19,13 +19,15 @@ class Tagihan extends Model
         'jenis_tagihan_id',
         'nis',
         'tmp',
-        'status'
+        'status',
+        'branch_id'
     ];
 
     protected function casts(): array
     {
         return [
             'tmp' => 'float',
+            'branch_id' => 'int'
         ];
     }
 

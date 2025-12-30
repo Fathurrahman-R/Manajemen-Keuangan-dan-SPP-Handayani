@@ -19,7 +19,8 @@ class TagihanResource extends JsonResource
             'jenis_tagihan' => JenisTagihanResource::make($this->whenLoaded('jenis_tagihan')),
             'siswa' => TagihanSiswaResource::make($this->whenLoaded('siswa')),
             'tmp'=>$this->tmp,
-            'status' => $this->status
+            'status' => $this->status,
+            'branch_id' => $this->branch_id
         ];
     }
 }

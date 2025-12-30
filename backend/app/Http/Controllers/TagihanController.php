@@ -32,7 +32,7 @@ class TagihanController extends Controller
                 'siswa' => function ($q) { $q->select(['id','nis','nama','jenjang','kelas_id','kategori_id']); },
                 'jenis_tagihan' => function ($q) { $q->select(['id','nama','jatuh_tempo','jumlah']); },
             ])
-            ->select(['kode_tagihan','jenis_tagihan_id','nis','tmp','status']);
+            ->select(['kode_tagihan','jenis_tagihan_id','nis','tmp','status'])->where('branch_id', Auth::user()->branch_id);
         if ($user && $user->role !== 'admin') {
             $query->whereHas('siswa', fn($q) => $q->where('nis',$user->username));
         }
@@ -86,6 +86,7 @@ class TagihanController extends Controller
             ->where('kelas_id',$data['kelas_id'])
             ->where('jenjang',$data['jenjang'])
             ->where('kategori_id',$data['kategori_id'])
+            ->where('branch_id', Auth::user()->branch_id)
             ->get();
         if ($siswa->isEmpty()) {
             throw new HttpResponseException(response([
@@ -98,6 +99,7 @@ class TagihanController extends Controller
                 'kode_tagihan' => GenerateKodeTagihan::generate(),
                 'jenis_tagihan_id' => $data['jenis_tagihan_id'],
                 'nis' => $s->nis,
+                'branch_id' => Auth::user()->branch_id,
             ]);
             $created->push($t->fresh([
                 'siswa' => fn($q) => $q->select(['id','nis','nama','jenjang','kelas_id','kategori_id']),
