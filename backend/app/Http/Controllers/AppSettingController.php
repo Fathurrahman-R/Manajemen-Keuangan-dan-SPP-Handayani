@@ -6,7 +6,9 @@ use App\Http\Requests\AppSettingRequest;
 use App\Http\Resources\AppSettingResource;
 use App\Models\AppSetting;
 use Dedoc\Scramble\Attributes\HeaderParameter;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class AppSettingController extends Controller
@@ -14,8 +16,18 @@ class AppSettingController extends Controller
     #[HeaderParameter('Authorization')]
     public static function get()
     {
-        $setting = AppSetting::first();
+        $setting = AppSetting::query()
+            ->where('branch_id', Auth::user()->branch_id)->first();
 //        $setting->logo = asset('storage') . '/' . $setting->logo;
+        if (!$setting) {
+            throw new HttpResponseException(response([
+                'errors' => [
+                    'message' => [
+                        'setting tidak ditemukan.',
+                    ],
+                ],
+            ], 404));
+        }
 
         return new AppSettingResource($setting);
     }
@@ -51,6 +63,7 @@ class AppSettingController extends Controller
             $setting->logo = $path;
         }
 
+        $setting->branch_id = Auth::user()->branch_id;
         $setting->save();
 
         return (new AppSettingResource($setting))->response()->setStatusCode(200);

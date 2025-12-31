@@ -22,10 +22,12 @@ class AppSetting extends Model
         'kepala_sekolah',
         'bendahara',
         'kode_pos',
-        'logo'
+        'logo',
+        'branch_id'
     ];
     protected $casts = [
-        'id' => 'integer'
+        'id' => 'integer',
+        'branch_id' => 'int',
     ];
     public function branch()
     {
