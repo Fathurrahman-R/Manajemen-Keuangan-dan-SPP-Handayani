@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Livewire\Component;
@@ -28,6 +29,7 @@ use Filament\Tables\Table;
 use Illuminate\Contracts\View\View;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
@@ -850,6 +852,16 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                 ->danger()
                                 ->send();
                         } else {
+                            try {
+                                User::create([
+                                    'name' =>  $data['nama'],
+                                    'username' => $data['nis'],
+                                    'password' => Hash::make($data['tanggal_lahir']),
+                                ]);
+                            } catch (\Throwable $th) {
+                                //throw $th;
+                            }
+                            
                             Notification::make()
                                 ->title('Siswa Berhasil Ditambahkan')
                                 ->success()
@@ -1070,6 +1082,16 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                 ->danger()
                                 ->send();
                         } else {
+                            try {
+                                User::create([
+                                    'name' =>  $data['nama'],
+                                    'username' => $data['nis'],
+                                    'password' => Hash::make($data['tanggal_lahir']),
+                                ]);
+                            } catch (\Throwable $th) {
+                                //throw $th;
+                            }
+
                             Notification::make()
                                 ->title('Siswa Berhasil Ditambahkan')
                                 ->success()

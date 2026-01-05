@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Http;
 use SensitiveParameter;
 use Exception;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
 
 class Login extends PagesLogin
@@ -63,9 +64,12 @@ class Login extends PagesLogin
     
             if ($response->successful()) {
                 session()->regenerate();
-                
                 session($response->json());
                 
+                Session::put('data', $response->json()['data']);
+
+                Filament::auth()->loginUsingId($response->json()['data']['id']);
+
                 return app(LoginResponse::class);
             } else {
                 $errorKeys = array_keys($response->json()['errors']);

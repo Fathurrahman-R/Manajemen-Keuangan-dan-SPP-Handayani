@@ -15,6 +15,10 @@ class LoginResponse implements LoginResponseContract
             return redirect()->to($intendedUrl);
         }
 
+        if (session()->get('data')['role'] != 'admin') {
+            return redirect()->intended(filament()->getUrl() . '/transaksi-pembayaran');
+        }
+
         return redirect()->intended(filament()->getUrl() . '/data-master-siswa');
     }
 }
