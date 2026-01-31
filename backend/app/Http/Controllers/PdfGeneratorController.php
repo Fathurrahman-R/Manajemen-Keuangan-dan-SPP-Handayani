@@ -2,11 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\KasResource;
 use App\Models\AppSetting;
+use App\Models\Pembayaran;
+use App\Models\Pengeluaran;
+use App\Services\LaporanService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class PdfGeneratorController extends Controller
@@ -54,5 +59,32 @@ class PdfGeneratorController extends Controller
         $pdf = Pdf::loadView('kwitansi', $viewData)
         ->setPaper('A6', 'landscape');
         return $pdf->stream("kwitansi-{$kode_pembayaran}.pdf");
+    }
+
+    #[HeaderParameter('Authorization')]
+    public function exportKas(Request $request)
+    {
+        $kas = app(LaporanService::class)->KasHarian($request)->toArray($request);
+        $viewData = [
+            'rows'  => $kas,
+            'bulan' => $request->bulan,
+            'tahun' => $request->tahun,
+        ];
+        $pdf = Pdf::loadView('Laporan.kas-harian', $viewData)
+            ->setPaper('A4', 'potrait');
+        return $pdf->stream("Kas harian {$request->bulan}.pdf");
+    }
+
+    #[HeaderParameter('Authorization')]
+    public function exportRekapBulanan(Request $request)
+    {
+        $rekap = app(LaporanService::class)->RekapBulanan($request)->toArray($request);
+        $viewData = [
+            'rows'  => $rekap,
+            'tahun' => $request->tahun,
+        ];
+        $pdf = Pdf::loadView('Laporan.rekap-bulanan', $viewData)
+            ->setPaper('A4', 'potrait');
+        return $pdf->stream("Rekap Bulanan {$request->tahun}.pdf");
     }
 }
