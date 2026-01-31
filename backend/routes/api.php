@@ -84,6 +84,10 @@ Route::middleware(\App\Http\Middleware\ApiAuthMiddleware::class)->group(function
 
         Route::prefix('/laporan')->group(function () {
             Route::get('/kas', [\App\Http\Controllers\KasController::class, 'kasHarian']);
+            Route::prefix('/export')->group(function () {
+                Route::get('/kas', [\App\Http\Controllers\PdfGeneratorController::class, 'exportKas']);
+                Route::get('/rekap', [\App\Http\Controllers\PdfGeneratorController::class, 'exportRekapBulanan']);
+            });
             Route::get('/rekap', [\App\Http\Controllers\KasController::class, 'rekapBulanan']);
         });
 
