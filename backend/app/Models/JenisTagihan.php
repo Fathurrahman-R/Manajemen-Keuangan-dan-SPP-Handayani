@@ -18,19 +18,25 @@ class JenisTagihan extends Model
     protected $fillable = [
         'nama',
         'jatuh_tempo',
-        'jumlah'
+        'jumlah',
+        'branch_id'
     ];
 
     protected function casts(): array
     {
         return [
             'jumlah' => 'float',
+            'branch_id' => 'int',
         ];
     }
 
     public function tagihan()
     {
         return $this->hasMany(Tagihan::class,'jenis_tagihan_id','id');
+    }
+    public function branch()
+    {
+        return $this->BelongsTo(Branch::class, 'branch_id');
     }
 
 }

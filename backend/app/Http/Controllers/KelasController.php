@@ -7,6 +7,7 @@ use App\Http\Resources\KelasResource;
 use App\Models\Kelas;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Dedoc\Scramble\Attributes\HeaderParameter;
+use Illuminate\Support\Facades\Auth;
 
 class KelasController extends Controller
 {
@@ -21,7 +22,8 @@ class KelasController extends Controller
                 ]
             ], 400));
         }
-        $kelas = Kelas::where('jenjang', $jenjangUp)->get();
+        $kelas = Kelas::where('jenjang', $jenjangUp)
+            ->where('kelas.branch_id', Auth::user()->branch_id)->get();
         return KelasResource::collection($kelas);
     }
 
@@ -39,6 +41,7 @@ class KelasController extends Controller
         $data = $request->validated();
         $namaUp = strtoupper($data['nama']);
         $exists = Kelas::where('jenjang', $jenjangUp)
+            ->where('kelas.branch_id', Auth::user()->branch_id)
             ->whereRaw('UPPER(nama) = ?', [$namaUp])
             ->exists();
         if ($exists) {
@@ -51,6 +54,7 @@ class KelasController extends Controller
         $kelas = new Kelas([
             'jenjang' => $jenjangUp,
             'nama' => $namaUp,
+            'branch_id' => Auth::user()->branch_id,
         ]);
         $kelas->save();
         return (new KelasResource($kelas))->response()->setStatusCode(201);

@@ -38,6 +38,7 @@ class Pengeluaran extends Component implements HasActions, HasSchemas, HasTable
     use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     public $perPage = 5;
+    public $currentPage = 1;
     public $startDate;
     public $endDate;
 
@@ -47,6 +48,8 @@ class Pengeluaran extends Component implements HasActions, HasSchemas, HasTable
             ->records(
                 function (?string $search, int $page, int $recordsPerPage, array $filters): LengthAwarePaginator {
                     try {
+                        $this->perPage = $recordsPerPage;
+                        $this->currentPage = $page;
                         $params = [
                             'start_date' => $this->startDate,
                             'end_date' => $this->endDate,

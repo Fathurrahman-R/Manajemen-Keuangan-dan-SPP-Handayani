@@ -1,22 +1,17 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Services;
 
 use App\Http\Resources\KasResource;
 use App\Models\Pembayaran;
 use App\Models\Pengeluaran;
-use Dedoc\Scramble\Attributes\HeaderParameter;
-use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class KasController extends Controller
+class LaporanService
 {
-    #[HeaderParameter('Authorization')]
-    #[QueryParameter('bulan', description: 'Filter bulan dalam angka (1-12)', required: true, example: 11)]
-    #[QueryParameter('tahun', description: 'Filter tahun dalam 4 digit', required: true, example: 2025)]
-    public function kasHarian(Request $request)
+    public function KasHarian(Request $request)
     {
         $bulan = $request->bulan;
         $tahun = $request->tahun;
@@ -107,8 +102,9 @@ class KasController extends Controller
                     ->where('branch_id', Auth::user()->branch_id)
                     ->whereDate('tanggal', '<=', $tanggal)->sum('jumlah');
 
-            $kas[] = (object) [
-                'tanggal'      => \Carbon\Carbon::parse($tanggal)->locale('id')->translatedFormat('d F Y'),
+            $kas[] = [
+                'tanggal_raw'  => $tanggal,
+                'tanggal_view' => \Carbon\Carbon::parse($tanggal)->locale('id')->translatedFormat('d F Y'),
                 'total_masuk'  => floatval($masuk),
                 'total_keluar' => floatval($keluar),
                 'saldo'        => floatval($saldoGlobal),
@@ -117,17 +113,22 @@ class KasController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | 4) Urutkan DESC (transaksi terbaru di atas)
+        | 4) Urutkan ASC (tanggal paling awal dulu)
         |--------------------------------------------------------------------------
         */
-        $kas = collect($kas)->sortByDesc(fn($x) => $x->tanggal)->values();
+        $kas = collect($kas)
+            ->sortBy(fn ($row) => $row['tanggal_raw'])
+            ->values()
+            ->map(fn ($row) => (object) [
+                'tanggal'      => $row['tanggal_view'],
+                'total_masuk'  => $row['total_masuk'],
+                'total_keluar' => $row['total_keluar'],
+                'saldo'        => $row['saldo'],
+            ]);
 
         return KasResource::collection($kas);
     }
-
-    #[HeaderParameter('Authorization')]
-    #[QueryParameter('tahun', description: 'Filter tahun dalam 4 digit', required: true, example: 2025)]
-    public function rekapBulanan(Request $request)
+    public function RekapBulanan(Request $request)
     {
         $tahun = $request->tahun;
 
@@ -194,10 +195,9 @@ class KasController extends Controller
 
         foreach ($months as $bulan) {
 
-            $masuk  = $pemasukan[$bulan]->total ?? 0;
+            $masuk = $pemasukan[$bulan]->total ?? 0;
             $keluar = $pengeluaran[$bulan]->total ?? 0;
 
-            // Ambil tanggal terakhir bulan tsb
             $lastDate = \Carbon\Carbon::parse("$bulan-01")->endOfMonth()->format('Y-m-d');
 
             // ❗ SALDO GLOBAL SAMPAI AKHIR BULAN
@@ -209,14 +209,25 @@ class KasController extends Controller
                     ->where('branch_id', Auth::user()->branch_id)
                     ->whereDate('tanggal', '<=', $lastDate)->sum('jumlah');
 
-            $kas[] = (object)[
-                'tanggal'      => \Carbon\Carbon::parse("$bulan-01")->locale('id')->translatedFormat('F Y'),
+            $kas[] = [
+                'bulan_raw'    => $bulan,
+                'tanggal'      => \Carbon\Carbon::parse("$bulan-01")->locale('id')->translatedFormat('F'),
                 'total_masuk'  => $masuk,
                 'total_keluar' => $keluar,
                 'saldo'        => $saldoGlobal,
             ];
         }
 
-        return KasResource::collection($kas);
+        return KasResource::collection(
+            collect($kas)
+                ->sortBy(fn ($row) => $row['bulan_raw'])
+                ->values()
+                ->map(fn ($row) => (object) [
+                    'tanggal'      => $row['tanggal'],
+                    'total_masuk'  => $row['total_masuk'],
+                    'total_keluar' => $row['total_keluar'],
+                    'saldo'        => $row['saldo'],
+                ])
+        );
     }
 }

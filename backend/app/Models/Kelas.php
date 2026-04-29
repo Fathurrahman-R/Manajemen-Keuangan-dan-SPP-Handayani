@@ -13,10 +13,26 @@ class Kelas extends Model
     protected $keyType = 'int';
     public $incrementing = true;
     public $timestamps = true;
-    protected $fillable = ['jenjang','nama'];
+
+    protected $fillable = [
+        'jenjang',
+        'nama',
+        'branch_id',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'branch_id'=>'int'
+        ];
+    }
 
     public function siswa()
     {
         return $this->hasMany(Siswa::class);
+    }
+    public function branch()
+    {
+        return $this->BelongsTo(Branch::class, 'branch_id');
     }
 }

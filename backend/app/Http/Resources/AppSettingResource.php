@@ -24,7 +24,8 @@ class AppSettingResource extends JsonResource
             'kepala_sekolah'=>$this->kepala_sekolah,
             'bendahara'=>$this->bendahara,
             'kode_pos'=>$this->kode_pos,
-            'logo'=>$this->logo
+            'logo'=>$this->logo,
+            'branch_id'=>$this->branch_id
         ];
     }
 }

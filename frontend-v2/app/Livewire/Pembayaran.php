@@ -38,12 +38,15 @@ class Pembayaran extends Component implements HasActions, HasSchemas, HasTable
     use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     public $perPage = 5;
+    public $currentPage = 1;
 
     public function table(Table $table): Table
     {
         return $table
             ->records(
                 function (?string $search, int $page, int $recordsPerPage): LengthAwarePaginator {
+                    $this->perPage = $recordsPerPage;
+                    $this->currentPage = $page;
                     $params = [
                         'per_page' => $this->perPage,
                         'page' => $page,

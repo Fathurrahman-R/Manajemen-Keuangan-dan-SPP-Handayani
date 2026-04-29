@@ -4,7 +4,9 @@ namespace App\Livewire;
 
 use Carbon\Carbon;
 use Exception;
+use Filament\Actions\ExportAction;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -37,7 +39,6 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
     use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     public $currentMonthYear;
-
     public function table(Table $table): Table
     {
         return $table
@@ -95,7 +96,45 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
             ->striped()
             ->paginatedWhileReordering()
             ->emptyStateHeading('Tidak Ada Kas Harian')
-            ->emptyStateDescription('Silahkan menambahkan data pembayaran atau pengeluaran');
+            ->emptyStateDescription('Silahkan menambahkan data pembayaran atau pengeluaran')
+            ->headerActions([
+                Action::make('Export')
+                    ->action(function () {
+                        $filters = $this->getTableFilterState('date');
+                        $params = [
+                            'bulan' => (int) explode('-', $this->currentMonthYear)[1],
+                            'tahun' => (int) explode('-', $this->currentMonthYear)[0],
+                        ];
+
+                        if(filled($filters['bulan'])) {
+                            $params['bulan'] = $filters['bulan'];
+                        }
+
+                        if(filled($filters['tahun'])) {
+                            $params['tahun'] = $filters['tahun'];
+                        }
+
+                        $filename = 'Kas harian-' . $params['bulan'] . '.pdf';
+                        $response = Http::withHeaders([
+                            'Authorization' => session()->get('data')['token'],
+                            'Accept' => 'application/pdf'
+                        ])
+                            ->get(env('API_URL') . '/laporan/export/kas', $params);
+
+                        Storage::disk('local')->put($filename, $response->body());
+                        $path = Storage::disk('local')->path($filename);
+
+                        // Return a response that prompts the file download
+                        return response()
+                            ->streamDownload(function () use ($path) {
+                            echo file_get_contents($path);
+                            // Clean up the temporary file after streaming
+                            unlink($path);
+                        }, $filename, [
+                            'Content-Type' => 'application/pdf', // Set the correct MIME type
+                        ]);
+                    })
+            ]);
     }
 
     public function render()

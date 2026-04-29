@@ -15,16 +15,22 @@ class Pengeluaran extends Model
         'tanggal',
         'uraian',
         'jumlah',
+        'branch_id',
     ];
+    protected $primaryKey = 'id';
+    protected $keyType = 'int';
+    public $incrementing = true;
+    public $timestamps = true;
 
     protected function casts(): array
     {
         return [
             'jumlah' => 'float',
+            'branch_id' => 'int',
         ];
     }
-    protected $primaryKey = 'id';
-    protected $keyType = 'int';
-    public $incrementing = true;
-    public $timestamps = true;
+    public function branch()
+    {
+        return $this->BelongsTo(Branch::class, 'branch_id');
+    }
 }

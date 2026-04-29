@@ -19,13 +19,15 @@ class Tagihan extends Model
         'jenis_tagihan_id',
         'nis',
         'tmp',
-        'status'
+        'status',
+        'branch_id'
     ];
 
     protected function casts(): array
     {
         return [
             'tmp' => 'float',
+            'branch_id' => 'int'
         ];
     }
 
@@ -42,6 +44,10 @@ class Tagihan extends Model
     public function pembayaran()
     {
         return $this->hasMany(Pembayaran::class, 'kode_tagihan','kode_tagihan');
+    }
+    public function branch()
+    {
+        return $this->BelongsTo(Branch::class, 'branch_id');
     }
 }
 

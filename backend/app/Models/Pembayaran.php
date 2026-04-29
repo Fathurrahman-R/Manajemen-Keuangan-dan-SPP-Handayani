@@ -21,18 +21,24 @@ class Pembayaran extends Model
         'tanggal',
         'metode',
         'jumlah',
-        'pembayar'
+        'pembayar',
+        'branch_id',
     ];
 
     protected function casts(): array
     {
         return [
             'jumlah' => 'float',
+            'branch_id' => 'int',
         ];
     }
 
     public function tagihan()
     {
         return $this->belongsTo(Tagihan::class, 'kode_tagihan', 'kode_tagihan');
+    }
+    public function branch()
+    {
+        return $this->BelongsTo(Branch::class, 'branch_id');
     }
 }

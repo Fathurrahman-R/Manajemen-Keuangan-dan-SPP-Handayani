@@ -25,7 +25,7 @@ class SiswaController extends Controller
     public function index(string $jenjang)
     {
         $baseQuery = Siswa::with(['ayah','ibu','wali','kelas','kategori'])
-            ->where('jenjang', strtoupper($jenjang));
+            ->where('jenjang', strtoupper($jenjang))->where('siswas.branch_id', Auth::user()->branch_id);
         $query = clone $baseQuery;
         $term = request('search', request('q'));
         if ($term) {
@@ -98,6 +98,7 @@ class SiswaController extends Controller
 
         $siswa = new Siswa($data);
         $siswa->jenjang = strtoupper($jenjang);
+        $siswa->branch_id = Auth::user()->branch_id;
         if ($ayahId) { $siswa->ayah_id = $ayahId; }
         if ($ibuId) { $siswa->ibu_id = $ibuId; }
         if ($waliId) { $siswa->wali_id = $waliId; }
@@ -105,6 +106,7 @@ class SiswaController extends Controller
         $user = new User();
         $user->username = $data['nis'];
         $user->password = Hash::make($data['tanggal_lahir']);
+        $user->branch_id = Auth::user()->branch_id;
         $user->save();
         $siswa->refresh();
         $siswa->load(['ayah','ibu','wali','kelas','kategori']);
