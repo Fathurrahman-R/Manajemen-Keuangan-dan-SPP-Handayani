@@ -361,7 +361,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                         'keterangan' => $record['keterangan'],
                         'status' => $record['status'],
                         'wali_nama' => $record['wali']['nama'],
-                        'wali_agama' => $record['wali']['agama'],
+//                        'wali_agama' => $record['wali']['agama'],
                         'wali_jenis_kelamin' => $record['wali']['jenis_kelamin'],
                         'wali_pendidikan_terakhir' => $record['wali']['pendidikan_terakhir'],
                         'wali_pekerjaan' => $record['wali']['pekerjaan'],

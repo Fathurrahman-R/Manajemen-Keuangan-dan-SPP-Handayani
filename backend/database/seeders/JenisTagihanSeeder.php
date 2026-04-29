@@ -14,6 +14,7 @@ class JenisTagihanSeeder extends Seeder
             'nama' => 'SPP',
             'jatuh_tempo' => now()->addMonth()->format('Y-m-d'),
             'jumlah' => 100000,
+            'branch_id' => 1,
         ]);
     }
 }

@@ -15,7 +15,8 @@ class TagihanSeeder extends Seeder
             'jenis_tagihan_id' => 1,
             'nis' => '000001',
             'tmp' => 100000,
-            'status' => 'Lunas'
+            'status' => 'Lunas',
+            'branch_id' => 1,
         ]);
     }
 }

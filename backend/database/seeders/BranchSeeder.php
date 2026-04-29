@@ -19,5 +19,8 @@ class BranchSeeder extends Seeder
         Branch::create([
             'location' => 'Desa Kapur'
         ]);
+        Branch::create([
+            'location' => 'Darma Putra'
+        ]);
     }
 }
