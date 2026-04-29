@@ -73,7 +73,7 @@ class Setting extends Component implements HasSchemas, HasActions
                     ImageEntry::make('logo')
                         ->disk('public')
                         ->visibility('public')
-                        ->default($this->setting['logo'] ? $this->setting['logo'] : url('assets/img/default.png'))
+                        ->default($this->setting['logo'] ? env('PHOTO_STORAGE_URL', 'http://localhost:8001/storage') . '/' . $this->setting['logo'] : url('assets/img/default.png'))
                 ])
             ])
             ->fill($this->setting);
