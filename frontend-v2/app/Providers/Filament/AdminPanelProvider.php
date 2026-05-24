@@ -48,7 +48,8 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('')
             ->path('')
-            ->homeUrl(fn(): string => session()->get('data')['role'] == 'admin' ? 'data-master-siswa' : 'transaksi-pembayaran')
+//            ->homeUrl(fn(): string => session()->get('data')['role'] == 'admin' ? 'data-master-siswa' : 'transaksi-pembayaran')
+            ->homeUrl('data-master-siswa')
             ->login(Login::class)
             // ->login()
             ->spa(hasPrefetching: true)
@@ -57,28 +58,28 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 // Dashboard::class,
             ])
-            ->userMenuItems([
-                'logout' => fn(Action $action) => $action
-                    ->label('Logout')
-                    ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->delete(env('API_URL') . '/users/logout');
-
-                        if (!$response->ok()) {
-                            Notification::make()
-                                ->title('Logout Gagal')
-                                ->danger()
-                                ->send();
-                        } else {
-                            Notification::make()
-                                ->title('Logout Berhasil')
-                                ->success()
-                                ->send();
-                        }
-                    })
-            ])
+//            ->userMenuItems([
+//                'logout' => fn(Action $action) => $action
+//                    ->label('Logout')
+//                    ->action(function (array $data, $record): void {
+//                        $response = Http::withHeaders([
+//                            'Authorization' => session()->get('data')['token']
+//                        ])
+//                            ->delete(env('API_URL') . '/users/logout');
+//
+//                        if (!$response->ok()) {
+//                            Notification::make()
+//                                ->title('Logout Gagal')
+//                                ->danger()
+//                                ->send();
+//                        } else {
+//                            Notification::make()
+//                                ->title('Logout Berhasil')
+//                                ->success()
+//                                ->send();
+//                        }
+//                    })
+//            ])
             ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
                 return $builder->groups([
                     NavigationGroup::make('data_master')
@@ -87,17 +88,17 @@ class AdminPanelProvider extends PanelProvider
                             NavigationItem::make()
                                 ->label('Siswa')
                                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.admin.pages.data-master-siswa'))
-                                ->visible(fn(): bool => session()->get('data')['role'] == 'admin')
+                                // ->visible(fn(): bool => session()->get('data')['role'] == 'admin')
                                 ->url(fn(): string => DataMasterSiswa::getUrl()),
                             NavigationItem::make()
                                 ->label('Kategori')
                                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.admin.pages.data-master-category'))
-                                ->visible(fn(): bool => session()->get('data')['role'] == 'admin')
+                                // ->visible(fn(): bool => session()->get('data')['role'] == 'admin')
                                 ->url(fn(): string => DataMasterCategory::getUrl()),
                             NavigationItem::make()
                                 ->label('Kelas')
                                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.admin.pages.data-master-kelas'))
-                                ->visible(fn(): bool => session()->get('data')['role'] == 'admin')
+                                // ->visible(fn(): bool => session()->get('data')['role'] == 'admin')
                                 ->url(fn(): string => DataMasterKelas::getUrl()),
                         ]),
                     NavigationGroup::make('transaksi')
@@ -106,12 +107,12 @@ class AdminPanelProvider extends PanelProvider
                             NavigationItem::make()
                                 ->label('Jenis Tagihan')
                                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.admin.pages.transaksi-jenis-tagihan'))
-                                ->visible(fn(): bool => session()->get('data')['role'] == 'admin')
+                                // ->visible(fn(): bool => session()->get('data')['role'] == 'admin')
                                 ->url(fn(): string => TransaksiJenisTagihan::getUrl()),
                             NavigationItem::make()
                                 ->label('Tagihan')
                                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.admin.pages.transaksi-tagihan'))
-                                ->visible(fn(): bool => session()->get('data')['role'] == 'admin')
+                                // ->visible(fn(): bool => session()->get('data')['role'] == 'admin')
                                 ->url(fn(): string => TransaksiTagihan::getUrl()),
                             NavigationItem::make()
                                 ->label('Pembayaran')
@@ -120,7 +121,7 @@ class AdminPanelProvider extends PanelProvider
                             NavigationItem::make()
                                 ->label('Pengeluaran')
                                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.admin.pages.transaksi-pengeluaran'))
-                                ->visible(fn(): bool => session()->get('data')['role'] == 'admin')
+                                // ->visible(fn(): bool => session()->get('data')['role'] == 'admin')
                                 ->url(fn(): string => TransaksiPengeluaran::getUrl()),
                         ]),
                     NavigationGroup::make('laporan')
@@ -129,12 +130,12 @@ class AdminPanelProvider extends PanelProvider
                             NavigationItem::make()
                                 ->label('Kas Harian')
                                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.admin.pages.laporan-kas-harian'))
-                                ->visible(fn(): bool => session()->get('data')['role'] == 'admin')
+                                // ->visible(fn(): bool => session()->get('data')['role'] == 'admin')
                                 ->url(fn(): string => LaporanKasHarian::getUrl()),
                             NavigationItem::make()
                                 ->label('Rekap Bulanan')
                                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.admin.pages.laporan-rekap-bulanan'))
-                                ->visible(fn(): bool => session()->get('data')['role'] == 'admin')
+                                // ->visible(fn(): bool => session()->get('data')['role'] == 'admin')
                                 ->url(fn(): string => LaporanRekapBulanan::getUrl()),
                         ]),
                     NavigationGroup::make()
@@ -142,11 +143,12 @@ class AdminPanelProvider extends PanelProvider
                             NavigationItem::make()
                                 ->label('Pengaturan')
                                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.admin.pages.setting'))
-                                ->visible(fn(): bool => session()->get('data')['role'] == 'admin')
+                                // ->visible(fn(): bool => session()->get('data')['role'] == 'admin')
                                 ->url(fn(): string => Settings::getUrl()),
                         ]),
                 ]);
             })
+            ->userMenu(false)
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
                 AccountWidget::class,

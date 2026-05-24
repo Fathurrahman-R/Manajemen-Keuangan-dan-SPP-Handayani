@@ -2,38 +2,35 @@
 
 namespace Database\Seeders;
 
+use App\Enum\DefaultRoles;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        User::create([
-            'username' => 'handayaniselpa',
-            'password' => Hash::make('admin123'),
-            'role' => 'admin',
-            'token' => 'test',
-            'branch_id' => 1,
-        ]);
-        User::create([
-            'username' => 'handayanideskap',
-            'password' => Hash::make('admin123'),
-            'role' => 'admin',
-            'token' => 'test2',
-            'branch_id' => 2,
-        ]);
-        User::create([
-            'username' => 'handayanisiantan',
-            'password' => Hash::make('admin123'),
-            'role' => 'admin',
-            'token' => 'test3',
-            'branch_id' => 3,
-        ]);
+        // Pastikan role admin sudah ada sebelum di-assign
+        $adminRole = Role::firstOrCreate(
+            ['name' => DefaultRoles::ADMIN->value, 'guard_name' => 'web']
+        );
+
+        $users = [
+            ['username' => 'handayaniselpa',   'token' => 'test',  'branch_id' => 1],
+            ['username' => 'handayanideskap',  'token' => 'test2', 'branch_id' => 2],
+            ['username' => 'handayanisiantan', 'token' => 'test3', 'branch_id' => 3],
+        ];
+
+        foreach ($users as $data) {
+            $user = User::create([
+                'username'  => $data['username'],
+                'password'  => Hash::make('admin123'),
+                'token'     => $data['token'],
+                'branch_id' => $data['branch_id'],
+            ]);
+            $user->assignRole($adminRole);
+        }
     }
 }

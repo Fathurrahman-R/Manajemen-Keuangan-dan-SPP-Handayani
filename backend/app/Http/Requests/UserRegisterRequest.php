@@ -14,7 +14,7 @@ class UserRegisterRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user() != null;
+        return true;
     }
 
     /**
@@ -26,7 +26,8 @@ class UserRegisterRequest extends FormRequest
     {
         return [
             'username'=>['required','max:100'],
-            'password'=>['required','min:8','max:100']
+            'password'=>['required','min:8','max:100'],
+            'branch_id'=>['required','exists:branches,id'],
         ];
     }
 

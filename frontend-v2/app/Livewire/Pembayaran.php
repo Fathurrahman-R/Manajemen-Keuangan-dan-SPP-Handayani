@@ -105,6 +105,9 @@ class Pembayaran extends Component implements HasActions, HasSchemas, HasTable
             ->paginatedWhileReordering()
             ->emptyStateHeading('Tidak Ada Pembayaran')
             ->emptyStateDescription('Silahkan menambahkan tagihan')
+            ->headerActions([
+                Action::make("Buat Pembayaran")->action($action)
+            ])
             ->recordActions([
                 ActionGroup::make([
                     Action::make('receipt')

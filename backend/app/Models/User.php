@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Model implements Authenticatable
 {
-    use HasFactory;
+    use HasFactory, HasRoles;
     protected $table = 'users';
     protected $primaryKey = 'id';
     protected $keyType = 'int';
@@ -23,6 +24,7 @@ class User extends Model implements Authenticatable
     protected function casts(): array
     {
         return [
+            'id' => 'int',
             'branch_id'=> 'int'
         ];
     }

@@ -17,7 +17,7 @@ class BranchFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'location' => $this->faker->city(),
         ];
     }
 }

@@ -96,17 +96,17 @@ class UserTest extends TestCase
     public function testLoginSuccess()
     {
         $this->seed(UserSeeder::class);
-        $this->post("api/users/login", [
-            'username' => 'admin',
+        $this->post("api/login", [
+            'username' => 'handayaniselpa',
             'password' => 'admin123',
         ])->assertStatus(200)
             ->assertJson([
                 "data" => [
-                    "username" => "admin"
+                    "username" => "handayaniselpa"
                 ]
             ]);
 
-        $user = User::query()->where('username', 'admin')->first();
+        $user = User::query()->where('username', 'handayaniselpa')->first();
         assertNotNull($user->token);
 
         return $user->token;
@@ -114,7 +114,7 @@ class UserTest extends TestCase
 
     public function testLoginFailedUsernameNotFound()
     {
-        $this->post("api/users/login", [
+        $this->post("api/login", [
             "username" => "admin",
             "password" => "admin123",
         ])->assertStatus(401)
@@ -130,9 +130,9 @@ class UserTest extends TestCase
     public function testLoginFailedPasswordWrong()
     {
         $this->seed(UserSeeder::class);
-        $this->post("api/users/login", [
-            "username" => "admin",
-            "password" => "admin456",
+        $this->post("api/login", [
+            "username" => "handayaniselpa",
+            "password" => "salah123",
         ])->assertStatus(401)
             ->assertJson([
                 "errors" => [
@@ -145,7 +145,7 @@ class UserTest extends TestCase
 
     public function testLoginFailed()
     {
-        $this->post('api/users/login', [
+        $this->post('api/login', [
             "username" => "",
             "password" => "",
         ])->assertStatus(400)
@@ -163,7 +163,7 @@ class UserTest extends TestCase
 
     public function testLoginFailedPasswordTooShort()
     {
-        $this->post('api/users/login', [
+        $this->post('api/login', [
             'username' => 'admin',
             'password' => 'short',
         ])->assertStatus(400)
@@ -262,21 +262,21 @@ class UserTest extends TestCase
     public function testLogoutSuccess()
     {
         $this->seed([UserSeeder::class]);
-        $this->delete(uri: 'api/users/logout', headers: [
+        $this->delete(uri: 'api/logout', headers: [
             'Authorization' => 'test'
         ])->assertStatus(200)
             ->assertJson([
-                "errors" => true
+                "data" => true
             ]);
 
-        $user = User::where('username', 'admin')->first();
+        $user = User::where('username', 'handayaniselpa')->first();
         self::assertNull($user->token);
     }
 
     public function testLogoutFailed()
     {
         $this->seed(UserSeeder::class);
-        $this->delete(uri: 'api/users/logout', headers: [
+        $this->delete(uri: 'api/logout', headers: [
             'Authorization' => 'salah'
         ])->assertStatus(401)
             ->assertJson([

@@ -57,15 +57,15 @@ class Login extends PagesLogin
 
         try {
             $data = $this->form->getState();
-    
+
             $credentials = $this->getCredentialsFromFormData($data);
-    
+
             $response = Http::post(env('API_URL') . '/users/login', $credentials);
-    
+
             if ($response->successful()) {
                 session()->regenerate();
                 session($response->json());
-                
+
                 Session::put('data', $response->json()['data']);
 
                 Filament::auth()->loginUsingId($response->json()['data']['id']);
@@ -73,9 +73,9 @@ class Login extends PagesLogin
                 return app(LoginResponse::class);
             } else {
                 $errorKeys = array_keys($response->json()['errors']);
-                
+
                 $message = $response->json()['errors'][$errorKeys[0]][0];
-                
+
                 Notification::make()
                     ->title('Gagal Login')
                     ->danger()
@@ -86,7 +86,7 @@ class Login extends PagesLogin
                     'email' => $message
                 ]);
             }
-            
+
         } catch (ValidationException $th) {
             throw $th;
         }

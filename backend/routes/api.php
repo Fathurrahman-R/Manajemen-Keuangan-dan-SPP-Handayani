@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AppSettingController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\KelasController;
 use App\Http\Controllers\PembayaranController;
@@ -13,17 +14,27 @@ use App\Http\Controllers\JenisTagihanController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::post("/users/login", [UserController::class, "login"]);
+Route::post("/login", [AuthController::class, "login"]);
 
 Route::middleware(\App\Http\Middleware\ApiAuthMiddleware::class)->group(function () {
-    Route::delete('/users/logout', [UserController::class, "logout"]);
+    Route::delete('/logout', [AuthController::class, "logout"]);
     Route::get("/users/current", [UserController::class, "get"]);
     Route::patch('/users/current', [UserController::class, "update"]);
 
     Route::get('/tagihan', [TagihanController::class, 'index']);
-    Route::middleware(\App\Http\Middleware\ApiRoleMiddleware::class . ':admin')->group(function () {
-        Route::post("/users", [UserController::class, "register"]);
 
+    // Role management — superadmin only
+    Route::middleware(\App\Http\Middleware\ApiRoleMiddleware::class . ':superadmin')->prefix('/roles')->group(function () {
+        Route::get('/', [\App\Http\Controllers\RoleController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\RoleController::class, 'store']);
+        Route::post('/attach', [\App\Http\Controllers\RoleController::class, 'attach']);
+        Route::post('/detach', [\App\Http\Controllers\RoleController::class, 'detach']);
+        Route::get('/{id}', [\App\Http\Controllers\RoleController::class, 'show']);
+        Route::put('/{id}', [\App\Http\Controllers\RoleController::class, 'update']);
+        Route::delete('/{id}', [\App\Http\Controllers\RoleController::class, 'destroy']);
+    });
+
+    Route::middleware(\App\Http\Middleware\ApiRoleMiddleware::class . ':admin')->group(function () {
         Route::prefix('/siswa')->group(function () {
             Route::get('/{jenjang}', [SiswaController::class, 'index']);
             Route::post('/{jenjang}', [SiswaController::class, 'create']);

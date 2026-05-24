@@ -19,57 +19,6 @@ use Illuminate\Support\Str;
 class UserController extends Controller
 {
     #[HeaderParameter('Authorization')]
-    public function register(UserRegisterRequest $request): JsonResponse
-    {
-        $data = $request->validated();
-        $user = Auth::user();
-        if (!$user) {
-            throw new HttpResponseException(response([
-                'errors' => [
-                    'message' => ['unauthorized.']
-                ]
-            ], 401));
-        }
-
-        if (User::query()->where('username', $data['username'])->count() == 1) {
-            throw new HttpResponseException(response([
-                "errors" => [
-                    "username" => [
-                        "Username already registered."
-                    ]
-                ]
-            ], 400));
-        }
-
-        $user = new User($data);
-        $user->password = Hash::make($data['password']);
-        $user->save();
-
-        return (new UserResource($user))->response()->setStatusCode(201);
-    }
-
-    public function login(UserLoginRequest $request): UserResource
-    {
-        $data = $request->validated();
-        $user = User::query()->where('username', $data['username'])->first();
-
-        if (!$user || !Hash::check($data['password'], $user->password)) {
-            throw new HttpResponseException(response([
-                "errors" => [
-                    "message" => [
-                        "username or password is wrong"
-                    ]
-                ]
-            ], 401));
-        }
-
-        $user->token = Str::uuid()->toString();
-        $user->save();
-
-        return new UserResource($user);
-    }
-
-    #[HeaderParameter('Authorization')]
     public function get(Request $request): UserResource
     {
         $user = Auth::user();
@@ -105,22 +54,5 @@ class UserController extends Controller
         return new UserResource($user);
     }
 
-    #[HeaderParameter('Authorization')]
-    public function logout(Request $request): JsonResponse
-    {
-        $user = Auth::user();
-        if (!$user) {
-            throw new HttpResponseException(response([
-                'errors' => [
-                    'message' => ['unauthorized.']
-                ]
-            ], 401));
-        }
-        $user->token = null;
-        $user->save();
 
-        return response()->json([
-            "data" => true
-        ], 200);
-    }
 }

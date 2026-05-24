@@ -306,6 +306,7 @@
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/dedoc/scramble" />
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/phpstan/phpdoc-parser" />
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/spatie/laravel-package-tools" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/spatie/laravel-permission" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
