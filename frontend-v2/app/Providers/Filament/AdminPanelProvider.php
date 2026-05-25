@@ -6,10 +6,13 @@ use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\DataMasterCategory;
 use App\Filament\Pages\DataMasterKelas;
 use App\Filament\Pages\DataMasterSiswa;
+use App\Filament\Pages\KenaikanKelasPage;
 use App\Filament\Pages\LaporanKasHarian;
 use App\Filament\Pages\LaporanRekapBulanan;
 use App\Filament\Pages\RoleManagement;
 use App\Filament\Pages\Settings;
+use App\Filament\Pages\TagihanSiswaPage;
+use App\Filament\Pages\TahunAjaranManagement as TahunAjaranPage;
 use App\Filament\Pages\UserManagement;
 use App\Filament\Pages\TransaksiJenisTagihan;
 use App\Filament\Pages\TransaksiPembayaran;
@@ -97,6 +100,16 @@ class AdminPanelProvider extends PanelProvider
                                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.admin.pages.data-master-kelas'))
                                 ->visible(fn(): bool => in_array('view-kelas', session()->get('data.permissions', [])))
                                 ->url(fn(): string => DataMasterKelas::getUrl()),
+                            NavigationItem::make()
+                                ->label('Tahun Ajaran')
+                                ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.admin.pages.tahun-ajaran-management'))
+                                ->visible(fn(): bool => in_array('manage-tahun-ajaran', session()->get('data.permissions', [])) || session()->get('data.role') === 'admin')
+                                ->url(fn(): string => TahunAjaranPage::getUrl()),
+                            NavigationItem::make()
+                                ->label('Kenaikan Kelas')
+                                ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.admin.pages.kenaikan-kelas'))
+                                ->visible(fn(): bool => in_array('manage-kenaikan-kelas', session()->get('data.permissions', [])))
+                                ->url(fn(): string => KenaikanKelasPage::getUrl()),
                         ]),
                     NavigationGroup::make('transaksi')
                         ->label('Transaksi')
@@ -151,6 +164,16 @@ class AdminPanelProvider extends PanelProvider
                                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.admin.pages.user-management'))
                                 ->visible(fn(): bool => in_array('view-user', session()->get('data.permissions', [])))
                                 ->url(fn(): string => UserManagement::getUrl()),
+                        ]),
+                    NavigationGroup::make('tagihan_siswa')
+                        ->label('Tagihan')
+                        ->items([
+                            NavigationItem::make()
+                                ->label('Tagihan Saya')
+                                ->icon('heroicon-o-credit-card')
+                                ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.admin.pages.tagihan-siswa'))
+                                ->visible(fn(): bool => in_array('siswa', session()->get('data.roles', [])))
+                                ->url(fn(): string => TagihanSiswaPage::getUrl()),
                         ]),
                     NavigationGroup::make()
                         ->items([

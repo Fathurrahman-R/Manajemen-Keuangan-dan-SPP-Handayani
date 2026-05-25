@@ -20,7 +20,8 @@ class Tagihan extends Model
         'nis',
         'tmp',
         'status',
-        'branch_id'
+        'branch_id',
+        'tahun_ajaran_id',
     ];
 
     protected function casts(): array
@@ -44,6 +45,10 @@ class Tagihan extends Model
     public function pembayaran()
     {
         return $this->hasMany(Pembayaran::class, 'kode_tagihan','kode_tagihan');
+    }
+    public function tahunAjaran()
+    {
+        return $this->belongsTo(TahunAjaran::class, 'tahun_ajaran_id');
     }
     public function branch()
     {

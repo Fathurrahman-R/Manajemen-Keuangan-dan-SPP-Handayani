@@ -70,9 +70,17 @@ class Siswa extends Model
     {
         return $this->hasMany(Tagihan::class,'nis','nis');
     }
+    public function siswaKelas()
+    {
+        return $this->hasMany(SiswaKelas::class, 'siswa_id');
+    }
     public function branch()
     {
         return $this->BelongsTo(Branch::class, 'branch_id');
     }
 
+    public function user()
+    {
+        return $this->hasOne(User::class, 'siswa_id');
+    }
 }

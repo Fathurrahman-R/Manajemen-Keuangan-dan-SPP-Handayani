@@ -43,6 +43,10 @@ class Branch extends Model
     {
         return $this->hasMany(Tagihan::class, 'branch_id');
     }
+    public function tahunAjarans()
+    {
+        return $this->hasMany(TahunAjaran::class, 'branch_id');
+    }
     public function pembayarans()
     {
         return $this->hasMany(Pembayaran::class, 'branch_id');

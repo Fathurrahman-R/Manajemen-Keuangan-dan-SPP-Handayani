@@ -154,6 +154,36 @@ class UserController extends Controller
     }
 
     /**
+     * Change the authenticated user's password.
+     */
+    public function changePassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = Auth::user();
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            throw new HttpResponseException(response()->json([
+                'errors' => [
+                    'current_password' => ['Password saat ini tidak sesuai.']
+                ]
+            ], 422));
+        }
+
+        $user->password = Hash::make($request->new_password);
+        $user->must_change_password = false;
+        $user->save();
+
+        return response()->json([
+            'data' => true,
+            'message' => 'Password berhasil diubah.'
+        ]);
+    }
+
+    /**
      * Delete a user by ID.
      */
     public function destroy(int $id): JsonResponse

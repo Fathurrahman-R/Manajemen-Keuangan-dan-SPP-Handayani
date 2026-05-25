@@ -42,6 +42,7 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
             )
             ->columns([
                 TextColumn::make('nama')->label('Nama')->searchable(),
+                TextColumn::make('level')->label('Level')->placeholder('-'),
             ])
             ->deferLoading()
             ->striped()
@@ -73,20 +74,35 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                     ->modalSubmitAction()
                     ->fillForm(fn(array $record): array => [
                         'id' => $record['id'],
-                        'nama' => $record['nama']
+                        'nama' => $record['nama'],
+                        'level' => $record['level'] ?? null,
                     ])
                     ->schema([
                         TextInput::make('nama')
                             ->label('Nama Kelas')
                             ->required(),
+                        TextInput::make('level')
+                            ->label('Urutan Level')
+                            ->placeholder('Opsional - urutan kelas dalam jenjang')
+                            ->numeric()
+                            ->minValue(1),
                     ])
                     ->action(function (array $data, $record): void {
+                        $payload = [
+                            'nama' => $data['nama'],
+                            'level' => $data['level'] !== '' && $data['level'] !== null ? (int) $data['level'] : null,
+                        ];
+
                         $response = ApiService::client()
-                            ->put('/kelas/' . $this->activeTab .'/' . $record['id'], $data);
+                            ->put('/kelas/' . $this->activeTab .'/' . $record['id'], $payload);
 
                         if (!$response->ok()) {
+                            $errors = $response->json()['errors'] ?? [];
+                            $errorKeys = array_keys($errors);
+                            $message = !empty($errorKeys) ? $errors[$errorKeys[0]][0] : 'Kelas Gagal Diubah';
+
                             Notification::make()
-                                ->title('Kelas Gagal Diubah')
+                                ->title($message)
                                 ->danger()
                                 ->send();
                         } else {
@@ -156,14 +172,28 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                         TextInput::make('nama')
                             ->label('Nama Kelas')
                             ->required(),
+                        TextInput::make('level')
+                            ->label('Urutan Level')
+                            ->placeholder('Opsional - urutan kelas dalam jenjang')
+                            ->numeric()
+                            ->minValue(1),
                     ])
                     ->action(function (array $data, $record): void {
+                        $payload = [
+                            'nama' => $data['nama'],
+                            'level' => $data['level'] !== '' && $data['level'] !== null ? (int) $data['level'] : null,
+                        ];
+
                         $response = ApiService::client()
-                            ->post('/kelas/' . $this->activeTab, $data);
+                            ->post('/kelas/' . $this->activeTab, $payload);
 
                         if ($response->status() != 201) {
+                            $errors = $response->json()['errors'] ?? [];
+                            $errorKeys = array_keys($errors);
+                            $message = !empty($errorKeys) ? $errors[$errorKeys[0]][0] : 'Kelas Gagal Ditambahkan';
+
                             Notification::make()
-                                ->title('Kelas Gagal Ditambahkan')
+                                ->title($message)
                                 ->danger()
                                 ->send();
                         } else {

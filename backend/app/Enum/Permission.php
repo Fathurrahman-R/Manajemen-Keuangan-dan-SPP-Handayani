@@ -73,4 +73,14 @@ enum Permission: string
     case VIEW_PERMISSIONS = 'view-permissions';
     case ATTACH_PERMISSIONS = 'attach-permissions';
     case DETACH_PERMISSIONS = 'detach-permissions';
+
+    //tahun ajaran permission
+    case MANAGE_TAHUN_AJARAN = 'manage-tahun-ajaran';
+
+    //kenaikan kelas permission
+    case MANAGE_KENAIKAN_KELAS = 'manage-kenaikan-kelas';
+
+    //akun siswa permissions
+    case VIEW_TAGIHAN_SISWA = 'view-tagihan-siswa';
+    case MANAGE_AKUN_SISWA = 'manage-akun-siswa';
 }

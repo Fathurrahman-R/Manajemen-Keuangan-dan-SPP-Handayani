@@ -1,3 +1,3 @@
 <x-filament-panels::page>
-    <livewire:tagihan />
+    <livewire:tagihan-card-view />
 </x-filament-panels::page>

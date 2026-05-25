@@ -23,6 +23,9 @@ class SiswaKBRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Wali fields are only required if wali_id is not provided
+        $waliFieldRequired = !$this->filled('wali_id') ? 'required' : 'nullable';
+
         return [
             'nis' => [
                 'required',
@@ -57,8 +60,14 @@ class SiswaKBRequest extends FormRequest
             'alamat' => [
                 'required'
             ],
+            // optional parent linking ID
+            'wali_id' => [
+                'nullable',
+                'integer',
+                'exists:walis,id'
+            ],
             'wali_nama' => [
-                'required',
+                $waliFieldRequired,
                 'max:100'
             ],
             'wali_pekerjaan' => [
@@ -66,10 +75,10 @@ class SiswaKBRequest extends FormRequest
                 'max:100'
             ],
             'wali_alamat' => [
-                'required'
+                $waliFieldRequired
             ],
             'wali_no_hp' => [
-                'required',
+                $waliFieldRequired,
                 'max:100'
             ],
             'wali_keterangan' => [

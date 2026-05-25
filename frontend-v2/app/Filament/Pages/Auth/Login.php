@@ -73,14 +73,23 @@ class Login extends PagesLogin
             if ($response->successful()) {
                 session()->regenerate();
 
-                session()->put('data.token', $response->json()['data']['token']);
-                session()->put('data.permissions', $response->json()['data']['permissions']);
-                session()->put('data.roles', $response->json()['data']['roles']);
-                session()->put('data.id', $response->json()['data']['id']);
-                session()->put('data.username', $response->json()['data']['username']);
+                $responseData = $response->json()['data'];
+
+                session()->put('data.token', $responseData['token']);
+                session()->put('data.permissions', $responseData['permissions']);
+                session()->put('data.roles', $responseData['roles']);
+                session()->put('data.id', $responseData['id']);
+                session()->put('data.username', $responseData['username']);
+                session()->put('data.must_change_password', $responseData['must_change_password'] ?? false);
 
                 // Login ke Laravel Auth agar Filament mengenali user (untuk user menu)
-                Filament::auth()->loginUsingId($response->json()['data']['id']);
+                Filament::auth()->loginUsingId($responseData['id']);
+
+                // Redirect to change password page if must_change_password is true
+                if (!empty($responseData['must_change_password'])) {
+                    $this->redirect(filament()->getUrl() . '/change-password');
+                    return null;
+                }
 
                 return app(LoginResponse::class);
             } else {

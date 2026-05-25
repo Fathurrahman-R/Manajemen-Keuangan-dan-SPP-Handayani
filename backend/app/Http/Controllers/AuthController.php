@@ -44,6 +44,13 @@ class AuthController extends Controller
             ], 401));
         }
 
+        // Check if account is active
+        if ($user->is_active === false) {
+            throw new HttpResponseException(response()->json([
+                'errors' => ['message' => ['Akun tidak aktif. Hubungi admin sekolah.']]
+            ], 401));
+        }
+
         // Check if user already has an active token
         if ($user->tokens()->count() > 0) {
             throw new HttpResponseException(response()->json([
@@ -70,6 +77,7 @@ class AuthController extends Controller
                 'expires_at' => $token->accessToken->expires_at->toISOString(),
                 'permissions' => $abilities,
                 'roles' => $user->getRoleNames()->toArray(),
+                'must_change_password' => $user->must_change_password,
             ]
         ]);
     }

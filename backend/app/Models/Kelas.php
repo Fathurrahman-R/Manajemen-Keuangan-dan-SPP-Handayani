@@ -18,12 +18,14 @@ class Kelas extends Model
         'jenjang',
         'nama',
         'branch_id',
+        'level',
     ];
 
     protected function casts(): array
     {
         return [
-            'branch_id'=>'int'
+            'branch_id'=>'int',
+            'level'=>'integer',
         ];
     }
 

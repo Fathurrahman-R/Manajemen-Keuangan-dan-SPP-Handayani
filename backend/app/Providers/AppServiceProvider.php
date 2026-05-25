@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Enum\DefaultRoles;
+use App\Models\Siswa;
+use App\Observers\SiswaObserver;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -30,5 +32,7 @@ class AppServiceProvider extends ServiceProvider
             }
             return $user->hasRole(DefaultRoles::SUPERADMIN->value) ? true : null;
         });
+
+        Siswa::observe(SiswaObserver::class);
     }
 }

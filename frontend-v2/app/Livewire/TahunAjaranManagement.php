@@ -1,0 +1,250 @@
+<?php
+
+namespace App\Livewire;
+
+use App\Services\ApiService;
+use Livewire\Component;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Support\Enums\Alignment;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Table;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
+
+class TahunAjaranManagement extends Component implements HasActions, HasSchemas, HasTable
+{
+    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->records(
+                fn(?string $search): array => ApiService::client()
+                    ->get('/tahun-ajaran')
+                    ->collect('data')
+                    ->when(filled($search), fn(Collection $data): Collection => $data->filter(
+                        fn(array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))
+                    ))
+                    ->toArray()
+            )
+            ->columns([
+                TextColumn::make('nama')->label('Tahun Ajaran')->searchable(),
+                TextColumn::make('tanggal_mulai')->label('Tanggal Mulai'),
+                TextColumn::make('tanggal_selesai')->label('Tanggal Selesai'),
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'Aktif' => 'success',
+                        'Non-Aktif' => 'gray',
+                        default => 'gray',
+                    }),
+            ])
+            ->deferLoading()
+            ->striped()
+            ->paginated([5, 10, 25])
+            ->defaultPaginationPageOption(10)
+            ->emptyStateHeading('Tidak Ada Tahun Ajaran')
+            ->emptyStateDescription('Silahkan menambahkan tahun ajaran')
+            ->recordActions([
+                ActionGroup::make([
+                    Action::make('activate')
+                        ->label('Aktifkan')
+                        ->tooltip('Aktifkan Tahun Ajaran')
+                        ->color('success')
+                        ->hidden(fn(array $record): bool => $record['status'] === 'Aktif')
+                        ->requiresConfirmation()
+                        ->modalHeading('Aktifkan Tahun Ajaran')
+                        ->modalDescription('Apakah kamu yakin ingin mengaktifkan tahun ajaran ini? Tahun ajaran lain akan dinonaktifkan.')
+                        ->modalSubmitActionLabel('Ya, Aktifkan')
+                        ->modalCancelActionLabel('Batal')
+                        ->action(function (array $data, $record): void {
+                            $response = ApiService::client()
+                                ->patch('/tahun-ajaran/' . $record['id'] . '/activate');
+
+                            if (!$response->ok()) {
+                                $this->showApiError($response);
+                            } else {
+                                Notification::make()
+                                    ->title('Tahun Ajaran Berhasil Diaktifkan')
+                                    ->success()
+                                    ->send();
+                            }
+                        })
+                        ->after(fn() => $this->resetTable()),
+                    Action::make('edit')
+                        ->label('Edit')
+                        ->tooltip('Edit Tahun Ajaran')
+                        ->color('warning')
+                        ->modalHeading('Edit Tahun Ajaran')
+                        ->modalFooterActions(function (Action $action) {
+                            return [
+                                $action->getModalSubmitAction()
+                                    ->label('Simpan')
+                                    ->color('primary')
+                                    ->extraAttributes(['class' => 'text-white font-semibold']),
+                                $action->getModalCancelAction()->label('Batal'),
+                            ];
+                        })
+                        ->modalFooterActionsAlignment(Alignment::End)
+                        ->fillForm(fn(array $record): array => [
+                            'nama' => $record['nama'],
+                            'tanggal_mulai' => $record['tanggal_mulai'],
+                            'tanggal_selesai' => $record['tanggal_selesai'],
+                        ])
+                        ->schema([
+                            TextInput::make('nama')
+                                ->label('Nama Tahun Ajaran')
+                                ->placeholder('2024/2025')
+                                ->maxLength(9)
+                                ->required(),
+                            DatePicker::make('tanggal_mulai')
+                                ->label('Tanggal Mulai')
+                                ->native(false)
+                                ->format('Y-m-d')
+                                ->displayFormat('d-m-Y')
+                                ->required(),
+                            DatePicker::make('tanggal_selesai')
+                                ->label('Tanggal Selesai')
+                                ->native(false)
+                                ->format('Y-m-d')
+                                ->displayFormat('d-m-Y')
+                                ->required(),
+                        ])
+                        ->action(function (array $data, $record): void {
+                            $response = ApiService::client()
+                                ->put('/tahun-ajaran/' . $record['id'], $data);
+
+                            if (!$response->ok()) {
+                                $this->showApiError($response);
+                            } else {
+                                Notification::make()
+                                    ->title('Tahun Ajaran Berhasil Diubah')
+                                    ->success()
+                                    ->send();
+                            }
+                        })
+                        ->after(fn() => $this->resetTable()),
+                    Action::make('delete')
+                        ->label('Hapus')
+                        ->tooltip('Hapus Tahun Ajaran')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading('Hapus Tahun Ajaran')
+                        ->modalDescription('Apakah kamu yakin untuk menghapus tahun ajaran ini?')
+                        ->modalSubmitActionLabel('Ya, Hapus')
+                        ->modalCancelActionLabel('Batal')
+                        ->modalFooterActionsAlignment(Alignment::End)
+                        ->action(function (array $data, $record): void {
+                            $response = ApiService::client()
+                                ->delete('/tahun-ajaran/' . $record['id']);
+
+                            if (!$response->ok()) {
+                                $this->showApiError($response);
+                            } else {
+                                Notification::make()
+                                    ->title('Tahun Ajaran Berhasil Dihapus')
+                                    ->success()
+                                    ->send();
+                            }
+                        })
+                        ->after(fn() => $this->resetTable()),
+                ])
+            ])
+            ->headerActions([
+                Action::make('add')
+                    ->label('Tambah')
+                    ->color('primary')
+                    ->button()
+                    ->modalHeading('Tambah Tahun Ajaran')
+                    ->modalFooterActions(function (Action $action) {
+                        return [
+                            $action->getModalSubmitAction()
+                                ->label('Simpan')
+                                ->color('primary')
+                                ->extraAttributes(['class' => 'text-white font-semibold']),
+                            $action->getModalCancelAction()->label('Batal'),
+                        ];
+                    })
+                    ->modalFooterActionsAlignment(Alignment::End)
+                    ->schema([
+                        TextInput::make('nama')
+                            ->label('Nama Tahun Ajaran')
+                            ->placeholder('2024/2025')
+                            ->maxLength(9)
+                            ->required(),
+                        DatePicker::make('tanggal_mulai')
+                            ->label('Tanggal Mulai')
+                            ->native(false)
+                            ->format('Y-m-d')
+                            ->displayFormat('d-m-Y')
+                            ->required(),
+                        DatePicker::make('tanggal_selesai')
+                            ->label('Tanggal Selesai')
+                            ->native(false)
+                            ->format('Y-m-d')
+                            ->displayFormat('d-m-Y')
+                            ->required(),
+                    ])
+                    ->action(function (array $data): void {
+                        $response = ApiService::client()
+                            ->post('/tahun-ajaran', $data);
+
+                        if ($response->status() !== 201) {
+                            $this->showApiError($response);
+                        } else {
+                            Notification::make()
+                                ->title('Tahun Ajaran Berhasil Ditambahkan')
+                                ->success()
+                                ->send();
+                        }
+                    })
+                    ->after(fn() => $this->resetTable())
+                    ->extraAttributes([
+                        'class' => 'text-white font-semibold',
+                    ]),
+            ]);
+    }
+
+    private function showApiError($response): void
+    {
+        try {
+            $json = $response->json();
+            $errors = $json['errors'] ?? [];
+
+            if (isset($errors['message'])) {
+                $message = is_array($errors['message']) ? $errors['message'][0] : $errors['message'];
+            } else {
+                $firstKey = array_key_first($errors);
+                $message = $firstKey ? (is_array($errors[$firstKey]) ? $errors[$firstKey][0] : $errors[$firstKey]) : 'Terjadi kesalahan.';
+            }
+
+            Notification::make()
+                ->title($message)
+                ->danger()
+                ->persistent()
+                ->send();
+        } catch (\Throwable $e) {
+            Notification::make()
+                ->title('Terjadi kesalahan pada server.')
+                ->danger()
+                ->persistent()
+                ->send();
+        }
+    }
+
+    public function render()
+    {
+        return view('livewire.tahun-ajaran-management');
+    }
+}

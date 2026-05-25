@@ -19,7 +19,8 @@ class JenisTagihan extends Model
         'nama',
         'jatuh_tempo',
         'jumlah',
-        'branch_id'
+        'branch_id',
+        'tahun_ajaran_id',
     ];
 
     protected function casts(): array
@@ -33,6 +34,10 @@ class JenisTagihan extends Model
     public function tagihan()
     {
         return $this->hasMany(Tagihan::class,'jenis_tagihan_id','id');
+    }
+    public function tahunAjaran()
+    {
+        return $this->belongsTo(TahunAjaran::class, 'tahun_ajaran_id');
     }
     public function branch()
     {

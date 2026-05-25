@@ -781,22 +781,94 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                             Step::make('Data Ayah')
                                 ->description('Informasi Detail Ayah')
                                 ->schema([
+                                    Select::make('ayah_id')
+                                        ->label('Pilih Ayah yang Sudah Ada')
+                                        ->searchable()
+                                        ->searchPrompt('Cari nama ayah...')
+                                        ->getSearchResultsUsing(function (string $search): array {
+                                            if (strlen($search) < 2) {
+                                                return [];
+                                            }
+                                            $response = ApiService::client()
+                                                ->get('/ayah', ['search' => $search]);
+                                            if (!$response->ok()) {
+                                                return [];
+                                            }
+                                            $data = $response->json('data') ?? [];
+                                            return collect($data)->mapWithKeys(function ($item) {
+                                                $label = $item['nama'];
+                                                if (!empty($item['pekerjaan'])) {
+                                                    $label .= ' - ' . $item['pekerjaan'];
+                                                }
+                                                return [$item['id'] => $label];
+                                            })->toArray();
+                                        })
+                                        ->live()
+                                        ->afterStateUpdated(function ($state, $set) {
+                                            if ($state) {
+                                                // Clear manual fields when an existing ayah is selected
+                                                $set('ayah_nama', null);
+                                                $set('ayah_pendidikan_terakhir', null);
+                                                $set('ayah_pekerjaan', null);
+                                            }
+                                        })
+                                        ->helperText('Pilih ayah yang sudah ada di sistem, atau kosongkan untuk input manual di bawah.')
+                                        ->placeholder('Ketik nama ayah untuk mencari...'),
                                     TextInput::make('ayah_nama')
-                                        ->label('Nama Ayah'),
+                                        ->label('Nama Ayah')
+                                        ->hidden(fn ($get) => filled($get('ayah_id'))),
                                     TextInput::make('ayah_pendidikan_terakhir')
-                                        ->label('Pendidikan Terakhir'),
+                                        ->label('Pendidikan Terakhir')
+                                        ->hidden(fn ($get) => filled($get('ayah_id'))),
                                     TextInput::make('ayah_pekerjaan')
-                                        ->label('Pekerjaan'),
+                                        ->label('Pekerjaan')
+                                        ->hidden(fn ($get) => filled($get('ayah_id'))),
                                 ]),
                             Step::make('Data Ibu')
                                 ->description('Informasi Detail Ibu')
                                 ->schema([
+                                    Select::make('ibu_id')
+                                        ->label('Pilih Ibu yang Sudah Ada')
+                                        ->searchable()
+                                        ->searchPrompt('Cari nama ibu...')
+                                        ->getSearchResultsUsing(function (string $search): array {
+                                            if (strlen($search) < 2) {
+                                                return [];
+                                            }
+                                            $response = ApiService::client()
+                                                ->get('/ibu', ['search' => $search]);
+                                            if (!$response->ok()) {
+                                                return [];
+                                            }
+                                            $data = $response->json('data') ?? [];
+                                            return collect($data)->mapWithKeys(function ($item) {
+                                                $label = $item['nama'];
+                                                if (!empty($item['pekerjaan'])) {
+                                                    $label .= ' - ' . $item['pekerjaan'];
+                                                }
+                                                return [$item['id'] => $label];
+                                            })->toArray();
+                                        })
+                                        ->live()
+                                        ->afterStateUpdated(function ($state, $set) {
+                                            if ($state) {
+                                                // Clear manual fields when an existing ibu is selected
+                                                $set('ibu_nama', null);
+                                                $set('ibu_pendidikan_terakhir', null);
+                                                $set('ibu_pekerjaan', null);
+                                            }
+                                        })
+                                        ->helperText('Pilih ibu yang sudah ada di sistem, atau kosongkan untuk input manual di bawah.')
+                                        ->placeholder('Ketik nama ibu untuk mencari...'),
                                     TextInput::make('ibu_nama')
-                                        ->label('Nama Ibu'),
+                                        ->label('Nama Ibu')
+                                        ->hidden(fn ($get) => filled($get('ibu_id'))),
                                     TextInput::make('ibu_pendidikan_terakhir')
-                                        ->label('Pendidikan Terakhir'),
+                                        ->label('Pendidikan Terakhir')
+                                        ->hidden(fn ($get) => filled($get('ibu_id'))),
                                     TextInput::make('ibu_pekerjaan')
-                                        ->label('Pekerjaan'),
+                                        ->label('Pekerjaan')
+                                        ->hidden(fn ($get) => filled($get('ibu_id'))),
                                 ]),
                         ])
                             ->nextAction(
@@ -997,32 +1069,72 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                             Step::make('Data Wali')
                                 ->description('Informasi Detail Wali')
                                 ->schema([
+                                    Select::make('wali_id')
+                                        ->label('Pilih Wali yang Sudah Ada')
+                                        ->searchable()
+                                        ->searchPrompt('Cari nama wali...')
+                                        ->getSearchResultsUsing(function (string $search): array {
+                                            if (strlen($search) < 2) {
+                                                return [];
+                                            }
+                                            $response = ApiService::client()
+                                                ->get('/wali', ['search' => $search]);
+                                            if (!$response->ok()) {
+                                                return [];
+                                            }
+                                            $data = $response->json('data') ?? [];
+                                            return collect($data)->mapWithKeys(function ($item) {
+                                                $label = $item['nama'];
+                                                if (!empty($item['pekerjaan'])) {
+                                                    $label .= ' - ' . $item['pekerjaan'];
+                                                }
+                                                return [$item['id'] => $label];
+                                            })->toArray();
+                                        })
+                                        ->live()
+                                        ->afterStateUpdated(function ($state, $set) {
+                                            if ($state) {
+                                                // Clear manual fields when an existing wali is selected
+                                                $set('wali_nama', null);
+                                                $set('wali_pekerjaan', null);
+                                                $set('wali_no_hp', null);
+                                                $set('wali_alamat', null);
+                                                $set('wali_keterangan', null);
+                                            }
+                                        })
+                                        ->helperText('Pilih wali yang sudah ada di sistem, atau kosongkan untuk input manual di bawah.')
+                                        ->placeholder('Ketik nama wali untuk mencari...'),
                                     TextInput::make('wali_nama')
                                         ->label('Nama Lengkap')
-                                        ->required()
+                                        ->required(fn ($get) => !filled($get('wali_id')))
+                                        ->hidden(fn ($get) => filled($get('wali_id')))
                                         ->validationMessages([
                                             'required' => 'Nama Tidak Boleh Kosong'
                                         ]),
                                     TextInput::make('wali_pekerjaan')
                                         ->label('Pekerjaan')
-                                        ->required()
+                                        ->required(fn ($get) => !filled($get('wali_id')))
+                                        ->hidden(fn ($get) => filled($get('wali_id')))
                                         ->validationMessages([
                                             'required' => 'Pekerjaan Tidak Boleh Kosong'
                                         ]),
                                     TextInput::make('wali_no_hp')
                                         ->label('No. HP')
-                                        ->required()
+                                        ->required(fn ($get) => !filled($get('wali_id')))
+                                        ->hidden(fn ($get) => filled($get('wali_id')))
                                         ->validationMessages([
                                             'required' => 'No. HP Tidak Boleh Kosong'
                                         ]),
                                     Textarea::make('wali_alamat')
                                         ->label('Alamat')
-                                        ->required()
+                                        ->required(fn ($get) => !filled($get('wali_id')))
+                                        ->hidden(fn ($get) => filled($get('wali_id')))
                                         ->validationMessages([
                                             'required' => 'Alamat Tidak Boleh Kosong'
                                         ]),
                                     Textarea::make('wali_keterangan')
-                                        ->label('Keterangan'),
+                                        ->label('Keterangan')
+                                        ->hidden(fn ($get) => filled($get('wali_id'))),
                                 ]),
                         ])
                             ->nextAction(

@@ -24,8 +24,15 @@ class SiswaRequest extends FormRequest
      */
     public function rules(): array
     {
-        $requiredMI = request('jenjang') == 'MI' ? 'required' : 'nullable';
-        $requiredOther = request('jenjang') != 'MI' ? 'required' : 'nullable';
+        $isMI = request('jenjang') == 'MI' || $this->route('jenjang') == 'MI';
+        $requiredMI = $isMI ? 'required' : 'nullable';
+        $requiredOther = !$isMI ? 'required' : 'nullable';
+
+        // Parent fields are only required if the corresponding parent ID is not provided
+        $ayahFieldRequired = ($isMI && !$this->filled('ayah_id')) ? 'required' : 'nullable';
+        $ibuFieldRequired = ($isMI && !$this->filled('ibu_id')) ? 'required' : 'nullable';
+        $waliFieldRequired = (!$isMI && !$this->filled('wali_id')) ? 'required' : 'nullable';
+
         return [
             'nis' => [
                 'required',
@@ -68,64 +75,63 @@ class SiswaRequest extends FormRequest
             ],
             // nested ayah
             'ayah_nama' => [
-                $requiredMI,
+                $ayahFieldRequired,
                 'max:100'
             ],
             'ayah_pendidikan_terakhir' => [
-                $requiredMI,
                 'nullable',
                 'max:50'
             ],
             'ayah_pekerjaan' => [
-                $requiredMI,
                 'nullable',
                 'max:100'
             ],
             // nested ibu
             'ibu_nama' => [
-                $requiredMI,
+                $ibuFieldRequired,
                 'max:100'
             ],
             'ibu_pendidikan_terakhir' => [
-                $requiredMI,
                 'nullable',
                 'max:50'
             ],
             'ibu_pekerjaan' => [
-                $requiredMI,
                 'nullable',
                 'max:100'
             ],
             'wali_nama' => [
-                $requiredOther,
+                $waliFieldRequired,
                 'max:100'
             ],
-//            'wali_agama' => [
-//                $requiredMI,
-//                'nullable',
-//            ],
-//            'wali_jenis_kelamin' => [
-//                $requiredMI,
-//                'nullable',
-//            ],
-//            'wali_pendidikan_terakhir' => [
-//                $requiredMI,
-//                'nullable',
-//            ],
             'wali_pekerjaan' => [
-                $requiredOther,
                 'nullable',
                 'max:100'
             ],
             'wali_alamat' => [
-                $requiredOther
+                $waliFieldRequired
             ],
             'wali_no_hp' => [
-                $requiredOther,
+                $waliFieldRequired,
                 'max:100'
             ],
             'wali_keterangan' => [
                 'nullable'
+            ],
+            // optional parent linking IDs
+            'ayah_id' => [
+                'nullable',
+                'integer',
+                'exists:ayah,id'
+            ],
+            'ibu_id' => [
+                'nullable',
+                'integer',
+                'exists:ibu,id'
+            ],
+            'wali_id' => [
+                'nullable',
+                'integer',
+                'exists:walis,id'
             ],
             'kelas_id' => [
                 'required',

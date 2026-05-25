@@ -8,17 +8,28 @@ use App\Http\Resources\SiswaResource;
 use App\Models\Ayah;
 use App\Models\Ibu;
 use App\Models\Siswa;
+use App\Models\SiswaKelas;
+use App\Models\TahunAjaran;
 use App\Models\User;
 use App\Models\Wali;
+use App\Services\AkunSiswaService;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class SiswaController extends Controller
 {
+    protected AkunSiswaService $akunSiswaService;
+
+    public function __construct(AkunSiswaService $akunSiswaService)
+    {
+        $this->akunSiswaService = $akunSiswaService;
+    }
     #[HeaderParameter('Authorization')]
     #[QueryParameter('search')]
     #[QueryParameter('kelas_id')]
@@ -64,35 +75,48 @@ class SiswaController extends Controller
         // build related models from nested fields
         if(strtoupper($jenjang)!== 'MI')
         {
-            $wali = new Wali([
-                'nama' => $data['wali_nama'],
-//                'agama' => $data['wali_agama'],
-//                'jenis_kelamin' => $data['wali_jenis_kelamin'],
-//                'pendidikan_terakhir' => strtoupper($data['wali_pendidikan_terakhir']),
-                'pekerjaan' => $data['wali_pekerjaan'] ?? null,
-                'alamat' => $data['wali_alamat'],
-                'no_hp' => $data['wali_no_hp'],
-                'keterangan' => $data['wali_keterangan'] ?? null,
-            ]);
-            $wali->save();
-            $waliId = $wali->id;
+            if (!empty($data['wali_id'])) {
+                // Use existing wali record
+                $waliId = $data['wali_id'];
+            } else {
+                $wali = new Wali([
+                    'nama' => $data['wali_nama'],
+                    'pekerjaan' => $data['wali_pekerjaan'] ?? null,
+                    'alamat' => $data['wali_alamat'],
+                    'no_hp' => $data['wali_no_hp'],
+                    'keterangan' => $data['wali_keterangan'] ?? null,
+                ]);
+                $wali->save();
+                $waliId = $wali->id;
+            }
         }
 
         if (strtoupper($jenjang) === 'MI') {
-            $ayah = new Ayah([
-                'nama' => $data['ayah_nama'],
-                'pendidikan_terakhir' => strtoupper($data['ayah_pendidikan_terakhir']) ?? null,
-                'pekerjaan' => $data['ayah_pekerjaan'] ?? null,
-            ]);
-            $ayah->save();
-            $ayahId = $ayah->id;
-            $ibu = new Ibu([
-                'nama' => $data['ibu_nama'],
-                'pendidikan_terakhir' => strtoupper($data['ibu_pendidikan_terakhir']) ?? null,
-                'pekerjaan' => $data['ibu_pekerjaan'] ?? null,
-            ]);
-            $ibu->save();
-            $ibuId = $ibu->id;
+            if (!empty($data['ayah_id'])) {
+                // Use existing ayah record
+                $ayahId = $data['ayah_id'];
+            } else {
+                $ayah = new Ayah([
+                    'nama' => $data['ayah_nama'],
+                    'pendidikan_terakhir' => strtoupper($data['ayah_pendidikan_terakhir']) ?? null,
+                    'pekerjaan' => $data['ayah_pekerjaan'] ?? null,
+                ]);
+                $ayah->save();
+                $ayahId = $ayah->id;
+            }
+
+            if (!empty($data['ibu_id'])) {
+                // Use existing ibu record
+                $ibuId = $data['ibu_id'];
+            } else {
+                $ibu = new Ibu([
+                    'nama' => $data['ibu_nama'],
+                    'pendidikan_terakhir' => strtoupper($data['ibu_pendidikan_terakhir']) ?? null,
+                    'pekerjaan' => $data['ibu_pekerjaan'] ?? null,
+                ]);
+                $ibu->save();
+                $ibuId = $ibu->id;
+            }
         }
 
 
@@ -103,11 +127,19 @@ class SiswaController extends Controller
         if ($ibuId) { $siswa->ibu_id = $ibuId; }
         if ($waliId) { $siswa->wali_id = $waliId; }
         $siswa->save();
-        $user = new User();
-        $user->username = $data['nis'];
-        $user->password = Hash::make($data['tanggal_lahir']);
-        $user->branch_id = Auth::user()->branch_id;
-        $user->save();
+
+        // Sync SiswaKelas for Periode_Aktif when kelas_id is provided
+        if (!empty($data['kelas_id'])) {
+            $this->syncSiswaKelas($siswa);
+        }
+
+        // Create akun siswa via service (non-blocking: if it fails, siswa is still created)
+        try {
+            $this->akunSiswaService->createAccount($siswa);
+        } catch (\Throwable $e) {
+            Log::error('Gagal membuat akun siswa untuk NIS ' . $siswa->nis . ': ' . $e->getMessage());
+        }
+
         $siswa->refresh();
         $siswa->load(['ayah','ibu','wali','kelas','kategori']);
 
@@ -172,6 +204,11 @@ class SiswaController extends Controller
         ])->toArray();
         $siswa->update($updateFields);
 
+        // Sync SiswaKelas for Periode_Aktif when kelas_id is provided
+        if (isset($data['kelas_id'])) {
+            $this->syncSiswaKelas($siswa);
+        }
+
         return (new SiswaResource($siswa->load(['ayah','ibu','wali','kelas','kategori'])))->response()->setStatusCode(200);
     }
 
@@ -220,5 +257,33 @@ class SiswaController extends Controller
         }
 
         return response(['data' => true])->setStatusCode(200);
+    }
+
+    /**
+     * Sync SiswaKelas record for the Periode_Aktif when kelas_id is set.
+     * Also keeps siswas.kelas_id in sync.
+     */
+    private function syncSiswaKelas(Siswa $siswa): void
+    {
+        $user = Auth::user();
+        $periodeAktif = TahunAjaran::getAktif($user->branch_id);
+
+        if (!$periodeAktif) {
+            // No active period — skip silently for backward compatibility
+            // (kelas_id is already set on siswas table directly)
+            return;
+        }
+
+        DB::transaction(function () use ($siswa, $periodeAktif) {
+            SiswaKelas::updateOrCreate(
+                [
+                    'siswa_id' => $siswa->id,
+                    'tahun_ajaran_id' => $periodeAktif->id,
+                ],
+                [
+                    'kelas_id' => $siswa->kelas_id,
+                ]
+            );
+        });
     }
 }

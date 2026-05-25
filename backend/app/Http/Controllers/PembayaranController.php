@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BatchPaymentRequest;
 use App\Http\Requests\BayarLunasRequest;
 use App\Http\Requests\BayarTidakLunasRequest;
 use App\Http\Resources\KwitansiResource;
@@ -15,6 +16,7 @@ use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class PembayaranController extends Controller
 {
@@ -60,6 +62,79 @@ class PembayaranController extends Controller
         $pembayaran = $query->paginate($perPage);
 
         return PembayaranResource::collection($pembayaran);
+    }
+
+    /**
+     * Process batch payment (lunas) for multiple tagihan in a single transaction.
+     */
+    #[HeaderParameter('Authorization')]
+    public function batchLunas(BatchPaymentRequest $request)
+    {
+        $data = $request->validated();
+        $user = Auth::user();
+
+        // Load all tagihan with their jenis_tagihan
+        $tagihanList = Tagihan::with('jenis_tagihan')
+            ->whereIn('kode_tagihan', $data['kode_tagihan'])
+            ->get();
+
+        // Verify all tagihan belong to user's branch
+        foreach ($tagihanList as $tagihan) {
+            if ($tagihan->branch_id !== $user->branch_id) {
+                throw new HttpResponseException(response([
+                    'errors' => ['message' => ["Tagihan {$tagihan->kode_tagihan} tidak ditemukan atau bukan milik branch Anda."]]
+                ], 400));
+            }
+        }
+
+        // Verify none of the tagihan have status "Lunas"
+        foreach ($tagihanList as $tagihan) {
+            if ($tagihan->status === 'Lunas') {
+                throw new HttpResponseException(response([
+                    'errors' => ['message' => ["Tagihan {$tagihan->kode_tagihan} sudah berstatus Lunas."]]
+                ], 400));
+            }
+        }
+
+        try {
+            $pembayaranRecords = DB::transaction(function () use ($tagihanList, $data, $user) {
+                $records = collect();
+
+                foreach ($tagihanList as $tagihan) {
+                    $jumlah = $tagihan->jenis_tagihan->jumlah - $tagihan->tmp;
+
+                    $pembayaran = Pembayaran::create([
+                        'kode_pembayaran' => GenerateKodePembayaran::generate(),
+                        'kode_tagihan' => $tagihan->kode_tagihan,
+                        'tanggal' => now()->format('Y-m-d'),
+                        'metode' => $data['metode'],
+                        'jumlah' => $jumlah,
+                        'pembayar' => $data['pembayar'],
+                        'branch_id' => $user->branch_id,
+                    ]);
+
+                    $tagihan->update([
+                        'status' => 'Lunas',
+                        'tmp' => $tagihan->jenis_tagihan->jumlah,
+                    ]);
+
+                    $records->push($pembayaran);
+                }
+
+                return $records;
+            });
+
+            // Load relationships for response
+            $pembayaranRecords->each(function ($pembayaran) {
+                $pembayaran->load(['tagihan', 'tagihan.jenis_tagihan', 'tagihan.siswa']);
+            });
+
+            return PembayaranResource::collection($pembayaranRecords)->response()->setStatusCode(200);
+        } catch (\Throwable $e) {
+            throw new HttpResponseException(response([
+                'errors' => ['message' => ['Terjadi kesalahan saat memproses pembayaran.']]
+            ], 500));
+        }
     }
 
     #[HeaderParameter('Authorization')]

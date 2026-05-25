@@ -29,6 +29,11 @@ class KelasRequest extends FormRequest
                 'string',
                 'min:1',
                 'max:100'
+            ],
+            'level' => [
+                'nullable',
+                'integer',
+                'min:1'
             ]
         ];
     }

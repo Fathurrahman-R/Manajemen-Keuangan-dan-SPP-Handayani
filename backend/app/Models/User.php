@@ -19,8 +19,12 @@ class User extends Authenticatable
 
     protected $fillable = [
         'username',
+        'name',
         'password',
         'branch_id',
+        'siswa_id',
+        'is_active',
+        'must_change_password',
     ];
 
     protected $hidden = ['password'];
@@ -30,12 +34,25 @@ class User extends Authenticatable
         return [
             'id' => 'int',
             'branch_id' => 'int',
+            'siswa_id' => 'int',
+            'is_active' => 'boolean',
+            'must_change_password' => 'boolean',
         ];
     }
 
     public function branch()
     {
         return $this->belongsTo(Branch::class, 'branch_id');
+    }
+
+    public function siswa()
+    {
+        return $this->belongsTo(Siswa::class);
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
     }
 
     public function getBranchId()

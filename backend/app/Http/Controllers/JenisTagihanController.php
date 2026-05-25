@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\JenisTagihanRequest;
 use App\Http\Resources\JenisTagihanResource;
 use App\Models\JenisTagihan;
+use App\Models\TahunAjaran;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
@@ -16,9 +17,20 @@ class JenisTagihanController extends Controller
     #[HeaderParameter('Authorization')]
     public function index()
     {
+        $user = Auth::user();
+
+        // Resolve tahun_ajaran_id filter
+        $tahunAjaranId = $this->resolveTahunAjaranFilter($user);
+        if ($tahunAjaranId === null) {
+            // No active period and no filter provided — return empty collection
+            return JenisTagihanResource::collection(collect());
+        }
+
         $jt = JenisTagihan::query()
-            ->where('branch_id', Auth::user()->branch_id)->get();
-        // Kembalikan ke bentuk asli: langsung koleksi resource
+            ->where('branch_id', $user->branch_id)
+            ->where('tahun_ajaran_id', $tahunAjaranId)
+            ->get();
+
         return JenisTagihanResource::collection($jt);
     }
 
@@ -26,9 +38,32 @@ class JenisTagihanController extends Controller
     public function create(JenisTagihanRequest $request)
     {
         $data = $request->validated();
+        $user = Auth::user();
+
+        // Resolve tahun_ajaran_id: auto-assign Periode_Aktif if not provided
+        $tahunAjaranId = $request->input('tahun_ajaran_id');
+        if (!$tahunAjaranId) {
+            $periodeAktif = TahunAjaran::getAktif($user->branch_id);
+            if (!$periodeAktif) {
+                throw new HttpResponseException(response([
+                    'errors' => ['tahun_ajaran_id' => ['Periode aktif harus diatur terlebih dahulu.']]
+                ], 422));
+            }
+            $tahunAjaranId = $periodeAktif->id;
+        } else {
+            // Validate branch ownership of provided tahun_ajaran_id
+            $tahunAjaran = TahunAjaran::find($tahunAjaranId);
+            if (!$tahunAjaran || $tahunAjaran->branch_id !== $user->branch_id) {
+                throw new HttpResponseException(response([
+                    'errors' => ['tahun_ajaran_id' => ['Tahun ajaran tidak ditemukan atau bukan milik branch Anda.']]
+                ], 422));
+            }
+        }
+
         try {
             $jt = new JenisTagihan($data);
-            $jt->branch_id = Auth::user()->branch_id;
+            $jt->branch_id = $user->branch_id;
+            $jt->tahun_ajaran_id = $tahunAjaranId;
             $jt->save();
         } catch (QueryException|Throwable $e) {
             throw new HttpResponseException(response([
@@ -37,7 +72,6 @@ class JenisTagihanController extends Controller
                 ]
             ], 500));
         }
-        // Bentuk asli: Resource response 201
         return (new JenisTagihanResource($jt))->response()->setStatusCode(201);
     }
 
@@ -52,7 +86,6 @@ class JenisTagihanController extends Controller
                 ]
             ], 404));
         }
-        // Bentuk asli: Resource response 200
         return (new JenisTagihanResource($jt))->response()->setStatusCode(200);
     }
 
@@ -77,7 +110,6 @@ class JenisTagihanController extends Controller
                 ]
             ], 500));
         }
-        // Bentuk asli: Resource response 200
         return (new JenisTagihanResource($jt))->response()->setStatusCode(200);
     }
 
@@ -101,7 +133,30 @@ class JenisTagihanController extends Controller
                 ]
             ], 409));
         }
-        // Bentuk asli: data true status 200
         return response(['data' => true])->setStatusCode(200);
+    }
+
+    /**
+     * Resolve the tahun_ajaran_id filter from request or default to Periode_Aktif.
+     * Returns null if no filter provided and no Periode_Aktif exists.
+     */
+    private function resolveTahunAjaranFilter($user): ?int
+    {
+        $tahunAjaranId = request('tahun_ajaran_id');
+
+        if ($tahunAjaranId) {
+            // Validate branch ownership
+            $tahunAjaran = TahunAjaran::find($tahunAjaranId);
+            if (!$tahunAjaran || $tahunAjaran->branch_id !== $user->branch_id) {
+                throw new HttpResponseException(response([
+                    'errors' => ['tahun_ajaran_id' => ['Tahun ajaran tidak ditemukan atau bukan milik branch Anda.']]
+                ], 422));
+            }
+            return (int) $tahunAjaranId;
+        }
+
+        // Default to Periode_Aktif
+        $periodeAktif = TahunAjaran::getAktif($user->branch_id);
+        return $periodeAktif?->id;
     }
 }

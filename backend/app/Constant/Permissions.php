@@ -67,4 +67,16 @@ class Permissions
         ],
         'export' => Permission::EXPORT_LAPORAN,
     ];
+
+    public const TAHUN_AJARAN_PERMISSIONS = [
+        'manage' => Permission::MANAGE_TAHUN_AJARAN,
+    ];
+
+    public const KENAIKAN_KELAS_PERMISSIONS = [
+        'manage' => Permission::MANAGE_KENAIKAN_KELAS,
+    ];
+
+    public const AKUN_SISWA_PERMISSIONS = [
+        'manage' => Permission::MANAGE_AKUN_SISWA,
+    ];
 }

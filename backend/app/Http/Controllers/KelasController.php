@@ -40,8 +40,10 @@ class KelasController extends Controller
         }
         $data = $request->validated();
         $namaUp = strtoupper($data['nama']);
+        $branchId = Auth::user()->branch_id;
+
         $exists = Kelas::where('jenjang', $jenjangUp)
-            ->where('kelas.branch_id', Auth::user()->branch_id)
+            ->where('kelas.branch_id', $branchId)
             ->whereRaw('UPPER(nama) = ?', [$namaUp])
             ->exists();
         if ($exists) {
@@ -51,10 +53,28 @@ class KelasController extends Controller
                 ]
             ], 400));
         }
+
+        // Validate unique level within jenjang + branch_id
+        $level = $data['level'] ?? null;
+        if ($level !== null) {
+            $levelExists = Kelas::where('jenjang', $jenjangUp)
+                ->where('branch_id', $branchId)
+                ->where('level', $level)
+                ->exists();
+            if ($levelExists) {
+                throw new HttpResponseException(response()->json([
+                    'errors' => [
+                        'level' => ['Level sudah digunakan oleh kelas lain dalam jenjang ini.']
+                    ]
+                ], 422));
+            }
+        }
+
         $kelas = new Kelas([
             'jenjang' => $jenjangUp,
             'nama' => $namaUp,
-            'branch_id' => Auth::user()->branch_id,
+            'branch_id' => $branchId,
+            'level' => $level,
         ]);
         $kelas->save();
         return (new KelasResource($kelas))->response()->setStatusCode(201);
@@ -85,6 +105,8 @@ class KelasController extends Controller
         }
 
         $namaUp = strtoupper($data['nama']);
+        $branchId = Auth::user()->branch_id;
+
         $duplicate = Kelas::where('jenjang', $jenjangUp)
             ->whereRaw('UPPER(nama) = ?', [$namaUp])
             ->where('id', '<>', $kelas->id)
@@ -96,7 +118,26 @@ class KelasController extends Controller
                 ]
             ], 400));
         }
+
+        // Validate unique level within jenjang + branch_id (exclude self)
+        $level = array_key_exists('level', $data) ? $data['level'] : $kelas->level;
+        if ($level !== null) {
+            $levelExists = Kelas::where('jenjang', $jenjangUp)
+                ->where('branch_id', $branchId)
+                ->where('level', $level)
+                ->where('id', '<>', $kelas->id)
+                ->exists();
+            if ($levelExists) {
+                throw new HttpResponseException(response()->json([
+                    'errors' => [
+                        'level' => ['Level sudah digunakan oleh kelas lain dalam jenjang ini.']
+                    ]
+                ], 422));
+            }
+        }
+
         $kelas->nama = $namaUp;
+        $kelas->level = $level;
         $kelas->save();
         return (new KelasResource($kelas))->response()->setStatusCode(200);
     }

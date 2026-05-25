@@ -14,5 +14,8 @@ class PermissionBinding
         Permissions::PENGELUARAN_PERMISSIONS,
         Permissions::JENIS_TAGIHAN_PERMISSIONS,
         Permissions::TAGIHAN_PERMISSIONS,
+        Permissions::TAHUN_AJARAN_PERMISSIONS,
+        Permissions::KENAIKAN_KELAS_PERMISSIONS,
+        Permissions::AKUN_SISWA_PERMISSIONS,
     ];
 }

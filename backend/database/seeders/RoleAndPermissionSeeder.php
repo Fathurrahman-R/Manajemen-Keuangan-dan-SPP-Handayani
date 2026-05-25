@@ -29,6 +29,7 @@ class RoleAndPermissionSeeder extends Seeder
         $superadmin = Role::firstOrCreate(['name' => DefaultRoles::SUPERADMIN->value]);
         $admin = Role::firstOrCreate(['name' => DefaultRoles::ADMIN->value]);
         Role::firstOrCreate(['name' => DefaultRoles::USER->value]);
+        $siswa = Role::firstOrCreate(['name' => DefaultRoles::SISWA->value]);
 
         // Assign all permissions to superadmin
         $superadmin->syncPermissions(
@@ -41,6 +42,11 @@ class RoleAndPermissionSeeder extends Seeder
             ->map(fn($p) => $p->value)
             ->toArray();
         $admin->syncPermissions($adminPermissions);
+
+        // Assign siswa permissions — only view-tagihan-siswa, NO admin panel permissions
+        $siswa->syncPermissions([
+            Permission::VIEW_TAGIHAN_SISWA->value,
+        ]);
 
         // Clear cache after seeding
         app()[PermissionRegistrar::class]->forgetCachedPermissions();

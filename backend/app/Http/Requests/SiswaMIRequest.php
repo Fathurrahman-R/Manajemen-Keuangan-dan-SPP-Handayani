@@ -23,6 +23,10 @@ class SiswaMIRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Parent fields are only required if the corresponding parent ID is not provided
+        $ayahFieldRequired = !$this->filled('ayah_id') ? 'required' : 'nullable';
+        $ibuFieldRequired = !$this->filled('ibu_id') ? 'required' : 'nullable';
+
         return [
             'nis' => [
                 'required',
@@ -63,9 +67,20 @@ class SiswaMIRequest extends FormRequest
             'alamat' => [
                 'required'
             ],
+            // optional parent linking IDs
+            'ayah_id' => [
+                'nullable',
+                'integer',
+                'exists:ayah,id'
+            ],
+            'ibu_id' => [
+                'nullable',
+                'integer',
+                'exists:ibu,id'
+            ],
             // nested ayah
             'ayah_nama' => [
-                'required',
+                $ayahFieldRequired,
                 'max:100'
             ],
             'ayah_pendidikan' => [
@@ -78,7 +93,7 @@ class SiswaMIRequest extends FormRequest
             ],
             // nested ibu
             'ibu_nama' => [
-                'required',
+                $ibuFieldRequired,
                 'max:100'
             ],
             'ibu_pendidikan' => [

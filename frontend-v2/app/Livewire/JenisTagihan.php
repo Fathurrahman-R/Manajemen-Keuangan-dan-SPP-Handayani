@@ -32,13 +32,16 @@ use Illuminate\Support\Str;
 class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
 {
     use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
+    use \App\Livewire\Concerns\HasPeriodFilter;
 
     public function table(Table $table): Table
     {
         return $table
             ->records(
                 fn(?string $search): array => ApiService::client()
-                    ->get('/jenis-tagihan')
+                    ->get('/jenis-tagihan', array_filter([
+                        'tahun_ajaran_id' => $this->selectedTahunAjaranId,
+                    ]))
                     ->collect('data')
                     ->when(filled($search), fn(Collection $data): Collection => $data->filter(fn(array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))))
                     ->toArray()
