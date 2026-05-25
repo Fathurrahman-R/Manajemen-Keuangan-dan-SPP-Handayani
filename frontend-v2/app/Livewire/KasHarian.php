@@ -2,10 +2,10 @@
 
 namespace App\Livewire;
 
+use App\Services\ApiService;
 use Carbon\Carbon;
 use Exception;
 use Filament\Actions\ExportAction;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Filament\Actions\Action;
@@ -57,10 +57,8 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
                         $params['tahun'] = $filters['date']['tahun'];
                     }
 
-                    $response = Http::withHeaders([
-                        'Authorization' => session()->get('data')['token']
-                    ])
-                        ->get(env('API_URL') . '/laporan/kas', $params)
+                    $response = ApiService::client()
+                        ->get('/laporan/kas', $params)
                         ->collect();
 
                     return new LengthAwarePaginator(
@@ -115,11 +113,9 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
                         }
 
                         $filename = 'Kas harian-' . $params['bulan'] . '.pdf';
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token'],
-                            'Accept' => 'application/pdf'
-                        ])
-                            ->get(env('API_URL') . '/laporan/export/kas', $params);
+                        $response = ApiService::client()
+                            ->withHeaders(['Accept' => 'application/pdf'])
+                            ->get('/laporan/export/kas', $params);
 
                         Storage::disk('local')->put($filename, $response->body());
                         $path = Storage::disk('local')->path($filename);

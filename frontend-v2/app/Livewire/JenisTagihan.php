@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Services\ApiService;
 use Exception;
-use Illuminate\Support\Facades\Http;
 use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -37,10 +37,8 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
     {
         return $table
             ->records(
-                fn(?string $search): array => Http::withHeaders([
-                    'Authorization' => session()->get('data')['token']
-                ])
-                    ->get(env('API_URL') . '/jenis-tagihan')
+                fn(?string $search): array => ApiService::client()
+                    ->get('/jenis-tagihan')
                     ->collect('data')
                     ->when(filled($search), fn(Collection $data): Collection => $data->filter(fn(array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))))
                     ->toArray()
@@ -125,6 +123,7 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                     ->icon('heroicon-s-trash') // Optional icon
                     ->iconButton()
                     ->color('danger') // Optional color
+                    ->visible(fn(): bool => in_array('delete-jenis-tagihan', session()->get('data.permissions', [])))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Jenis Tagihan')
                     ->modalDescription('Apakah kamu yakin untuk menghapus jenis tagihan ini?')
@@ -132,10 +131,8 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                     ->modalCancelActionLabel('Batal')
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->delete(env('API_URL') . '/jenis-tagihan/' . $record['id']);
+                        $response = ApiService::client()
+                            ->delete('/jenis-tagihan/' . $record['id']);
 
                         if (!$response->ok()) {
                             Notification::make()
@@ -158,6 +155,7 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                     ->label('Tambah') // Text displayed on the button
                     ->color('primaryMain') // Optional color
                     ->button()
+                    ->visible(fn(): bool => in_array('create-jenis-tagihan', session()->get('data.permissions', [])))
                     ->modalHeading('Tambah Jenis Tagihan')
                     ->modalFooterActions(function (Action $action) {
                         return [
@@ -189,10 +187,8 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                             ->required(),
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->post(env('API_URL') . '/jenis-tagihan', $data);
+                        $response = ApiService::client()
+                            ->post('/jenis-tagihan', $data);
 
                         if ($response->status() != 201) {
                             Notification::make()

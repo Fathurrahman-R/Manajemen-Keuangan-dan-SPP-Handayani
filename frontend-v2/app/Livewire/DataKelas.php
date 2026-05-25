@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Services\ApiService;
 use Exception;
-use Illuminate\Support\Facades\Http;
 use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -34,10 +34,8 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
     {
         return $table
             ->records(
-                fn(?string $search): array => Http::withHeaders([
-                    'Authorization' => session()->get('data')['token']
-                ])
-                    ->get(env('API_URL') . '/kelas/' . $this->activeTab)
+                fn(?string $search): array => ApiService::client()
+                    ->get('/kelas/' . $this->activeTab)
                     ->collect('data')
                     ->when(filled($search), fn(Collection $data): Collection => $data->filter(fn(array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))))
                     ->toArray()
@@ -58,6 +56,7 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                     ->icon('heroicon-s-pencil-square') // Optional icon
                     ->iconButton()
                     ->color('warning')
+                    ->visible(fn(): bool => in_array('update-kelas', session()->get('data.permissions', [])))
                     ->modalHeading('Ubah Kelas')
                     ->modalFooterActions(function (Action $action) {
                         return [
@@ -82,10 +81,8 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                             ->required(),
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->put(env('API_URL') . '/kelas/' . $this->activeTab .'/' . $record['id'], $data);
+                        $response = ApiService::client()
+                            ->put('/kelas/' . $this->activeTab .'/' . $record['id'], $data);
 
                         if (!$response->ok()) {
                             Notification::make()
@@ -107,6 +104,7 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                     ->icon('heroicon-s-trash') // Optional icon
                     ->iconButton()
                     ->color('danger') // Optional color
+                    ->visible(fn(): bool => in_array('delete-kelas', session()->get('data.permissions', [])))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Kelas')
                     ->modalDescription('Apakah kamu yakin untuk menghapus kelas ini?')
@@ -114,10 +112,8 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                     ->modalCancelActionLabel('Batal')
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->delete(env('API_URL') . '/kelas' . '/' . $record['id']);
+                        $response = ApiService::client()
+                            ->delete('/kelas' . '/' . $record['id']);
 
                         if (!$response->ok()) {
                             Notification::make()
@@ -142,6 +138,7 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                     ->label('Tambah') // Text displayed on the button
                     ->color('primaryMain') // Optional color
                     ->button()
+                    ->visible(fn(): bool => in_array('create-kelas', session()->get('data.permissions', [])))
                     ->modalHeading('Tambah Kelas')
                     ->modalFooterActions(function (Action $action) {
                         return [
@@ -161,10 +158,8 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                             ->required(),
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->post(env('API_URL') . '/kelas/' . $this->activeTab, $data);
+                        $response = ApiService::client()
+                            ->post('/kelas/' . $this->activeTab, $data);
 
                         if ($response->status() != 201) {
                             Notification::make()

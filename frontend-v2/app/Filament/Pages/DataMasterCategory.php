@@ -20,4 +20,18 @@ class DataMasterCategory extends Page
     protected ?Alignment $headerActionsAlignment = Alignment::End;
 
     protected static ?int $navigationSort = 2;
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
+        return in_array('view-kategori', $permissions);
+    }
+
+    public function mount(): void
+    {
+        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
+        if (!in_array('view-kategori', $permissions)) {
+            abort(403);
+        }
+    }
 }

@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Services\ApiService;
 use Exception;
-use Illuminate\Support\Facades\Http;
 use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -48,10 +48,8 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                         $params['search'] = $search;
                     }
 
-                    $response = Http::withHeaders([
-                        'Authorization' => session()->get('data')['token']
-                    ])
-                    ->get(env('API_URL') . '/wali', $params)
+                    $response = ApiService::client()
+                    ->get('/wali', $params)
                     ->collect();
 
                     return new LengthAwarePaginator(
@@ -159,10 +157,8 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                             ->label('Keterangan'),
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->put(env('API_URL') . '/wali/' . $record['id'], $data);
+                        $response = ApiService::client()
+                            ->put('/wali/' . $record['id'], $data);
 
                         if (!$response->ok()) {
                             throw new Exception($response->json()['errors']['message'][0]);
@@ -184,10 +180,8 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                     ->modalCancelActionLabel('Batal')
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->delete(env('API_URL') . '/wali/' . $record['id']);
+                        $response = ApiService::client()
+                            ->delete('/wali/' . $record['id']);
 
                         if (!$response->ok()) {
                             throw new Exception($response->json()['errors']['message'][0]);
@@ -261,10 +255,8 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                             ->label('Keterangan'),
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->post(env('API_URL') . '/wali', $data);
+                        $response = ApiService::client()
+                            ->post('/wali', $data);
 
                         if ($response->status() != 201) {
                             throw new Exception($response->json()['errors']['message'][0]);

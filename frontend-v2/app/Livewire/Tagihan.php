@@ -2,9 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Services\ApiService;
 use Exception;
 use Filament\Tables\Grouping\Group;
-use Illuminate\Support\Facades\Http;
 use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -65,10 +65,8 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                         $params['jenjang'] = $filters['jenjang']['value'];
                     }
 
-                    $response = Http::withHeaders([
-                        'Authorization' => session()->get('data')['token']
-                    ])
-                        ->get(env('API_URL') . '/tagihan', $params)
+                    $response = ApiService::client()
+                        ->get('/tagihan', $params)
                         ->collect();
 
                     return new LengthAwarePaginator(
@@ -125,6 +123,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                     Action::make('installments')
                         ->label('Bayar')
                         ->tooltip('Bayar')
+                        ->visible(fn(): bool => in_array('view-tagihan', session()->get('data.permissions', [])))
                         ->hidden(fn(array $record): bool => $record['status'] === 'Lunas')
                         ->modalHeading('Bayar Tagihan')
                         ->modalFooterActions(function (Action $action) {
@@ -178,7 +177,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                                 ->required(),
                         ])
                         ->action(function (array $data, $record) {
-                            $url = env('API_URL') . '/pembayaran';
+                            $url = '/pembayaran';
                             $payload = [
                                 'metode' => $data['metode'],
                                 'pembayar' => $data['pembayar']
@@ -192,9 +191,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                                 $payload['jumlah'] = $data['jumlah'];
                             }
 
-                            $response = Http::withHeaders([
-                                'Authorization' => session()->get('data')['token']
-                            ])
+                            $response = ApiService::client()
                                 ->post($url, $payload);
 
                             if (!$response->ok()) {
@@ -211,11 +208,9 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
 
                                     $filename = 'kwitansi-' . $response->json()['data']['kode_pembayaran'] . '.pdf';
 
-                                    $responseDownload = Http::withHeaders([
-                                        'Authorization' => session()->get('data')['token'],
-                                        'Accept' => 'application/pdf'
-                                    ])
-                                        ->get(env('API_URL') . '/pembayaran/kwitansi/' . $response->json()['data']['kode_pembayaran']);
+                                    $responseDownload = ApiService::client()
+                                        ->withHeaders(['Accept' => 'application/pdf'])
+                                        ->get('/pembayaran/kwitansi/' . $response->json()['data']['kode_pembayaran']);
 
                                     if (!$responseDownload->ok()) {
                                         $errorKeys = array_keys($response->json()['errors']);
@@ -251,6 +246,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                         ->label('Hapus')
                         ->tooltip('Hapus Tagihan')
                         ->color('danger') // Optional color
+                        ->visible(fn(): bool => in_array('delete-tagihan', session()->get('data.permissions', [])))
                         ->requiresConfirmation()
                         ->modalHeading('Hapus Tagihan')
                         ->modalDescription('Apakah kamu yakin untuk menghapus tagihan ini?')
@@ -258,10 +254,8 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                         ->modalCancelActionLabel('Batal')
                         ->modalFooterActionsAlignment(Alignment::End)
                         ->action(function (array $data, $record): void {
-                            $response = Http::withHeaders([
-                                'Authorization' => session()->get('data')['token']
-                            ])
-                                ->delete(env('API_URL') . '/tagihan/' . $record['kode_tagihan']);
+                            $response = ApiService::client()
+                                ->delete('/tagihan/' . $record['kode_tagihan']);
 
                             if (!$response->ok()) {
                                 Notification::make()
@@ -285,6 +279,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                     ->label('Tambah') // Text displayed on the button
                     ->color('primaryMain') // Optional color
                     ->button()
+                    ->visible(fn(): bool => in_array('create-tagihan', session()->get('data.permissions', [])))
                     ->modalHeading('Tambah Tagihan')
                     ->modalFooterActions(function (Action $action) {
                         return [
@@ -304,10 +299,8 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                             ->searchable()
                             ->searchPrompt('Cari Jenis Tagihan')
                             ->options(function () {
-                                $response = Http::withHeaders([
-                                    'Authorization' => session()->get('data')['token']
-                                ])
-                                    ->get(env('API_URL') . '/jenis-tagihan');
+                                $response = ApiService::client()
+                                    ->get('/jenis-tagihan');
 
                                 if (!$response->ok()) {
                                     return [];
@@ -338,10 +331,8 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                             ->searchable()
                             ->searchPrompt('Cari Kelas')
                             ->options(function ($get) {
-                                $response = Http::withHeaders([
-                                    'Authorization' => session()->get('data')['token']
-                                ])
-                                    ->get(env('API_URL') . '/kelas/' . $get('jenjang'));
+                                $response = ApiService::client()
+                                    ->get('/kelas/' . $get('jenjang'));
 
                                 if (!$response->ok()) {
                                     return [];
@@ -361,10 +352,8 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                             ->searchable()
                             ->searchPrompt('Cari Kategori')
                             ->options(function () {
-                                $response = Http::withHeaders([
-                                    'Authorization' => session()->get('data')['token']
-                                ])
-                                    ->get(env('API_URL') . '/kategori');
+                                $response = ApiService::client()
+                                    ->get('/kategori');
 
                                 if (!$response->ok()) {
                                     return [];
@@ -381,10 +370,8 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                             ->required(),
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->post(env('API_URL') . '/tagihan', $data);
+                        $response = ApiService::client()
+                            ->post('/tagihan', $data);
 
                         if ($response->status() != 201) {
                             Notification::make()

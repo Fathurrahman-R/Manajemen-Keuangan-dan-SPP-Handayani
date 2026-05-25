@@ -2,9 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Services\ApiService;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Support\Facades\Http;
 use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -68,10 +68,8 @@ class Pengeluaran extends Component implements HasActions, HasSchemas, HasTable
                             $params['end_date'] = $filters['date']['end_date'];
                         }
 
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->get(env('API_URL') . '/pengeluaran', $params)
+                        $response = ApiService::client()
+                            ->get('/pengeluaran', $params)
                             ->collect();
 
                         return new LengthAwarePaginator(
@@ -131,6 +129,7 @@ class Pengeluaran extends Component implements HasActions, HasSchemas, HasTable
                     ->icon('heroicon-s-pencil-square') // Optional icon
                     ->iconButton()
                     ->color('warning')
+                    ->visible(fn(): bool => in_array('update-pengeluaran', session()->get('data.permissions', [])))
                     ->modalHeading('Ubah Pengeluaran')
                     ->modalFooterActions(function (Action $action) {
                         return [
@@ -168,10 +167,8 @@ class Pengeluaran extends Component implements HasActions, HasSchemas, HasTable
                             ->required(),
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->put(env('API_URL') . '/pengeluaran/' . $record['id'], $data);
+                        $response = ApiService::client()
+                            ->put('/pengeluaran/' . $record['id'], $data);
 
                         if (!$response->ok()) {
                             throw new Exception($response->json()['errors']['message'][0]);
@@ -186,6 +183,7 @@ class Pengeluaran extends Component implements HasActions, HasSchemas, HasTable
                     ->icon('heroicon-s-trash') // Optional icon
                     ->iconButton()
                     ->color('danger') // Optional color
+                    ->visible(fn(): bool => in_array('delete-pengeluaran', session()->get('data.permissions', [])))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Pengeluaran')
                     ->modalDescription('Apakah kamu yakin untuk menghapus pengeluaran ini?')
@@ -193,10 +191,8 @@ class Pengeluaran extends Component implements HasActions, HasSchemas, HasTable
                     ->modalCancelActionLabel('Batal')
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->delete(env('API_URL') . '/pengeluaran/' . $record['id']);
+                        $response = ApiService::client()
+                            ->delete('/pengeluaran/' . $record['id']);
 
                         if (!$response->ok()) {
                             throw new Exception($response->json()['errors']['message'][0]);
@@ -213,6 +209,7 @@ class Pengeluaran extends Component implements HasActions, HasSchemas, HasTable
                     ->label('Tambah') // Text displayed on the button
                     ->color('primaryMain') // Optional color
                     ->button()
+                    ->visible(fn(): bool => in_array('create-pengeluaran', session()->get('data.permissions', [])))
                     ->modalHeading('Tambah Pengeluaran')
                     ->modalFooterActions(function (Action $action) {
                         return [
@@ -244,10 +241,8 @@ class Pengeluaran extends Component implements HasActions, HasSchemas, HasTable
                             ->required(),
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->post(env('API_URL') . '/pengeluaran', $data);
+                        $response = ApiService::client()
+                            ->post('/pengeluaran', $data);
 
                         if (!$response->created()) {
                             Notification::make()

@@ -16,4 +16,18 @@ class DataMasterSiswa extends Page
     protected static ?string $title = 'Data Siswa';
 
     protected static ?int $navigationSort = 1;
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
+        return in_array('view-siswa', $permissions);
+    }
+
+    public function mount(): void
+    {
+        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
+        if (!in_array('view-siswa', $permissions)) {
+            abort(403);
+        }
+    }
 }

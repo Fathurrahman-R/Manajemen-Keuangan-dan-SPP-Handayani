@@ -44,6 +44,20 @@ enum Permission: string
     case DELETE_PEMBAYARAN = 'delete-pembayaran';
     case PRINT_KWITANSI = 'print-kwitansi';
 
+    //jenis tagihan permissions
+    case VIEW_JENIS_TAGIHAN = 'view-jenis-tagihan';
+    case CREATE_JENIS_TAGIHAN = 'create-jenis-tagihan';
+    case READ_JENIS_TAGIHAN = 'read-jenis-tagihan';
+    case UPDATE_JENIS_TAGIHAN = 'update-jenis-tagihan';
+    case DELETE_JENIS_TAGIHAN = 'delete-jenis-tagihan';
+
+    //tagihan permissions
+    case VIEW_TAGIHAN = 'view-tagihan';
+    case CREATE_TAGIHAN = 'create-tagihan';
+    case READ_TAGIHAN = 'read-tagihan';
+    case UPDATE_TAGIHAN = 'update-tagihan';
+    case DELETE_TAGIHAN = 'delete-tagihan';
+
     //laporan permission
     case VIEW_KAS_HARIAN = 'view-kas-harian';
     case VIEW_REKAP_BULANAN = 'view-rekap-bulanan';

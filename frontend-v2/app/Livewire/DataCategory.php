@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Services\ApiService;
 use Exception;
-use Illuminate\Support\Facades\Http;
 use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -29,10 +29,8 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
     {
         return $table
             ->records(
-                fn(?string $search): array => Http::withHeaders([
-                    'Authorization' => session()->get('data')['token']
-                ])
-                    ->get(env('API_URL') . '/kategori')
+                fn(?string $search): array => ApiService::client()
+                    ->get('/kategori')
                     ->collect('data')
                     ->when(filled($search), fn (Collection $data): Collection => $data->filter(fn (array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))))
                     ->toArray(),
@@ -54,6 +52,7 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
                     ->icon('heroicon-s-pencil-square') // Optional icon
                     ->iconButton()
                     ->color('warning')
+                    ->visible(fn(): bool => in_array('update-kategori', session()->get('data.permissions', [])))
                     ->modalHeading('Ubah Kategori')
                     ->modalFooterActions(function (Action $action) {
                         return [
@@ -78,10 +77,8 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
                             ->required(),
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->put(env('API_URL') . '/kategori/' . $record['id'], $data);
+                        $response = ApiService::client()
+                            ->put('/kategori/' . $record['id'], $data);
 
                         if (!$response->ok()) {
                             Notification::make()
@@ -103,6 +100,7 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
                     ->icon('heroicon-s-trash') // Optional icon
                     ->iconButton()
                     ->color('danger') // Optional color
+                    ->visible(fn(): bool => in_array('delete-kategori', session()->get('data.permissions', [])))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Kategori')
                     ->modalDescription('Apakah kamu yakin untuk menghapus kategori ini?')
@@ -119,10 +117,8 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
                     })
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->delete(env('API_URL') . '/kategori' . '/' . $record['id']);
+                        $response = ApiService::client()
+                            ->delete('/kategori' . '/' . $record['id']);
 
                         if ($response->status() != 201) {
                             Notification::make()
@@ -145,6 +141,7 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
                     ->label('Tambah') // Text displayed on the button
                     ->color('primaryMain') // Optional color
                     ->button()
+                    ->visible(fn(): bool => in_array('create-kategori', session()->get('data.permissions', [])))
                     ->modalHeading('Tambah Kategori')
                     ->modalFooterActions(function (Action $action) {
                         return [
@@ -164,10 +161,8 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
                             ->required(),
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->post(env('API_URL') . '/kategori', $data);
+                        $response = ApiService::client()
+                            ->post('/kategori', $data);
 
                         if ($response->status() != 201) {
                             Notification::make()

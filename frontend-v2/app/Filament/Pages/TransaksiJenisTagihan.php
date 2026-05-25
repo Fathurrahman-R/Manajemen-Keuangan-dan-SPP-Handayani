@@ -16,4 +16,18 @@ class TransaksiJenisTagihan extends Page
     protected static ?string $title = 'Jenis Tagihan';
 
     protected static ?int $navigationSort = 1;
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
+        return in_array('view-jenis-tagihan', $permissions);
+    }
+
+    public function mount(): void
+    {
+        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
+        if (!in_array('view-jenis-tagihan', $permissions)) {
+            abort(403);
+        }
+    }
 }

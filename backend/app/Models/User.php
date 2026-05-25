@@ -2,75 +2,44 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Model implements Authenticatable
+class User extends Authenticatable
 {
-    use HasFactory, HasRoles;
+    use HasFactory, HasRoles, HasApiTokens;
+
     protected $table = 'users';
     protected $primaryKey = 'id';
     protected $keyType = 'int';
     public $timestamps = true;
     public $incrementing = true;
+
     protected $fillable = [
         'username',
         'password',
         'branch_id',
     ];
 
+    protected $hidden = ['password'];
+
     protected function casts(): array
     {
         return [
             'id' => 'int',
-            'branch_id'=> 'int'
+            'branch_id' => 'int',
         ];
     }
 
     public function branch()
     {
-        return $this->BelongsTo(Branch::class, 'branch_id');
+        return $this->belongsTo(Branch::class, 'branch_id');
     }
 
     public function getBranchId()
     {
         return $this->branch_id;
-    }
-
-    public function getAuthIdentifierName()
-    {
-        return 'username';
-    }
-
-    public function getAuthIdentifier()
-    {
-        return $this->username;
-    }
-
-    public function getAuthPasswordName()
-    {
-        return 'password';
-    }
-
-    public function getAuthPassword()
-    {
-        return $this->password;
-    }
-
-    public function getRememberToken()
-    {
-        $this->token;
-    }
-
-    public function setRememberToken($value)
-    {
-        return $this->token($value);
-    }
-
-    public function getRememberTokenName()
-    {
-        return 'token';
     }
 }

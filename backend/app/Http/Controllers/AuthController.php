@@ -6,13 +6,10 @@ use App\Http\Requests\UserLoginRequest;
 use App\Http\Requests\UserRegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
-use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -36,51 +33,51 @@ class AuthController extends Controller
         return (new UserResource($user))->response()->setStatusCode(201);
     }
 
-    public function login(UserLoginRequest $request): UserResource
+    public function login(UserLoginRequest $request): JsonResponse
     {
         $data = $request->validated();
-        $user = User::query()->where('username', $data['username'])->first();
+        $user = User::where('username', $data['username'])->first();
 
         if (!$user || !Hash::check($data['password'], $user->password)) {
-            throw new HttpResponseException(response([
-                'errors' => [
-                    'message' => [
-                        'username or password is wrong'
-                    ]
-                ]
+            throw new HttpResponseException(response()->json([
+                'errors' => ['message' => ['username or password is wrong']]
             ], 401));
         }
 
-        if($user->token){
-            throw new HttpResponseException(response([
-                'errors' => [
-                    'message' => ['Akun kamu sedang login di perangkat lain.']
-                ]
-            ],401));
-        }
-
-        $user->token = Str::uuid()->toString();
-        $user->save();
-
-        return new UserResource($user);
-    }
-
-    #[HeaderParameter('Authorization')]
-    public function logout(Request $request): JsonResponse
-    {
-        $user = Auth::user();
-        if (!$user) {
-            throw new HttpResponseException(response([
-                'errors' => [
-                    'message' => ['unauthorized.']
-                ]
+        // Check if user already has an active token
+        if ($user->tokens()->count() > 0) {
+            throw new HttpResponseException(response()->json([
+                'errors' => ['message' => ['Akun kamu sedang login di perangkat lain.']]
             ], 401));
         }
-        $user->token = null;
-        $user->save();
+
+        // Gather all permission strings from user's roles
+        $abilities = $user->getAllPermissions()->pluck('name')->toArray();
+
+        // Create Sanctum token with abilities and expiration
+        $expiration = config('sanctum.expiration', 480);
+        $token = $user->createToken(
+            'api-token',
+            $abilities,
+            now()->addMinutes($expiration)
+        );
 
         return response()->json([
-            'data' => true
-        ], 200);
+            'data' => [
+                'id' => $user->id,
+                'username' => $user->username,
+                'token' => $token->plainTextToken,
+                'expires_at' => $token->accessToken->expires_at->toISOString(),
+                'permissions' => $abilities,
+                'roles' => $user->getRoleNames()->toArray(),
+            ]
+        ]);
+    }
+
+    public function logout(Request $request): JsonResponse
+    {
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json(['data' => true]);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Services\ApiService;
 use Exception;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -21,7 +22,6 @@ use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\TextSize;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class DetailSiswa extends Component implements HasSchemas
@@ -223,10 +223,8 @@ class DetailSiswa extends Component implements HasSchemas
 
     public function render()
     {
-        $response = Http::withHeaders([
-            'Authorization' => session()->get('data')['token']
-        ])
-            ->get(env('API_URL') . '/siswa/' . Str::upper($this->jenjang) . '/' . $this->id);
+        $response = ApiService::client()
+            ->get('/siswa/' . Str::upper($this->jenjang) . '/' . $this->id);
 
         if (!$response->ok()) {
             throw new Exception($response->json()['errors']['message'][0]);

@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Services\ApiService;
 use Exception;
-use Illuminate\Support\Facades\Http;
 use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -56,10 +56,8 @@ class Pembayaran extends Component implements HasActions, HasSchemas, HasTable
                         $params['search'] = $search;
                     }
 
-                    $response = Http::withHeaders([
-                        'Authorization' => session()->get('data')['token']
-                    ])
-                        ->get(env('API_URL') . '/pembayaran', $params)
+                    $response = ApiService::client()
+                        ->get('/pembayaran', $params)
                         ->collect();
 
                     return new LengthAwarePaginator(
@@ -105,9 +103,6 @@ class Pembayaran extends Component implements HasActions, HasSchemas, HasTable
             ->paginatedWhileReordering()
             ->emptyStateHeading('Tidak Ada Pembayaran')
             ->emptyStateDescription('Silahkan menambahkan tagihan')
-            ->headerActions([
-                Action::make("Buat Pembayaran")->action($action)
-            ])
             ->recordActions([
                 ActionGroup::make([
                     Action::make('receipt')
@@ -116,11 +111,9 @@ class Pembayaran extends Component implements HasActions, HasSchemas, HasTable
                         ->action(function (array $data, $record): StreamedResponse {
                             $filename = 'kwitansi-' . $record['kode_pembayaran'] . '.pdf';
 
-                            $response = Http::withHeaders([
-                                'Authorization' => session()->get('data')['token'],
-                                'Accept' => 'application/pdf'
-                            ])
-                                ->get(env('API_URL') . '/pembayaran/kwitansi/' . $record['kode_pembayaran']);
+                            $response = ApiService::client()
+                                ->withHeaders(['Accept' => 'application/pdf'])
+                                ->get('/pembayaran/kwitansi/' . $record['kode_pembayaran']);
 
                             if (!$response->ok()) {
                                 throw new Exception($response->json()['errors']['message'][0]);
@@ -145,6 +138,7 @@ class Pembayaran extends Component implements HasActions, HasSchemas, HasTable
                         ->label('Hapus')
                         ->tooltip('Hapus Pembayaran')
                         ->color('danger') // Optional color
+                        ->visible(fn(): bool => in_array('delete-pembayaran', session()->get('data.permissions', [])))
                         ->requiresConfirmation()
                         ->modalHeading('Hapus Pembayaran')
                         ->modalDescription('Apakah kamu yakin untuk menghapus pembayaran ini?')
@@ -152,10 +146,8 @@ class Pembayaran extends Component implements HasActions, HasSchemas, HasTable
                         ->modalCancelActionLabel('Batal')
                         ->modalFooterActionsAlignment(Alignment::End)
                         ->action(function (array $data, $record): void {
-                            $response = Http::withHeaders([
-                                'Authorization' => session()->get('data')['token']
-                            ])
-                                ->delete(env('API_URL') . '/pembayaran/' . $record['kode_pembayaran']);
+                            $response = ApiService::client()
+                                ->delete('/pembayaran/' . $record['kode_pembayaran']);
 
                             if (!$response->ok()) {
                                 throw new Exception($response->json()['errors']['message'][0]);

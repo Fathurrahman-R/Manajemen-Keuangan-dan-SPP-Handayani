@@ -15,10 +15,30 @@ class LoginResponse implements LoginResponseContract
             return redirect()->to($intendedUrl);
         }
 
-//        if (session()->get('data')['role'] != 'admin') {
-//            return redirect()->intended(filament()->getUrl() . '/transaksi-pembayaran');
-//        }
+        $permissions = session()->get('data.permissions', []);
 
-        return redirect()->intended(filament()->getUrl() . '/data-master-siswa');
+        // Map permission ke halaman, urut berdasarkan prioritas
+        $permissionRoutes = [
+            'view-siswa' => '/data-master-siswa',
+            'view-pembayaran' => '/transaksi-pembayaran',
+            'view-tagihan' => '/transaksi-tagihan',
+            'view-jenis-tagihan' => '/transaksi-jenis-tagihan',
+            'view-kategori' => '/data-master-category',
+            'view-kelas' => '/data-master-kelas',
+            'view-pengeluaran' => '/transaksi-pengeluaran',
+            'view-kas-harian' => '/laporan-kas-harian',
+            'view-rekap-bulanan' => '/laporan-rekap-bulanan',
+            'view-roles' => '/role-management',
+            'view-user' => '/user-management',
+        ];
+
+        foreach ($permissionRoutes as $permission => $route) {
+            if (in_array($permission, $permissions)) {
+                return redirect()->to(filament()->getUrl() . $route);
+            }
+        }
+
+        // Fallback: jika tidak ada permission yang cocok, arahkan ke setting
+        return redirect()->to(filament()->getUrl() . '/setting');
     }
 }

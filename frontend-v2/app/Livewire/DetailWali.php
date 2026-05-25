@@ -2,7 +2,7 @@
 
 namespace App\Livewire;
 
-use Illuminate\Support\Facades\Http;
+use App\Services\ApiService;
 use Livewire\Component;
 use Exception;
 
@@ -17,10 +17,8 @@ class DetailWali extends Component
 
     public function render()
     {
-        $response = Http::withHeaders([
-            'Authorization' => session()->get('data')['token']
-        ])
-            ->get(env('API_URL') . '/wali/' . $this->id);
+        $response = ApiService::client()
+            ->get('/wali/' . $this->id);
 
         if (!$response->ok()) {
             throw new Exception($response->json()['errors']['message'][0]);

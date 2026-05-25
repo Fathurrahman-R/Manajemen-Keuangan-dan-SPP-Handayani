@@ -46,6 +46,20 @@ class Permissions
         'delete' => Permission::DELETE_PEMBAYARAN,
         'print' => Permission::PRINT_KWITANSI
     ];
+    public const JENIS_TAGIHAN_PERMISSIONS = [
+        'view' => Permission::VIEW_JENIS_TAGIHAN,
+        'create' => Permission::CREATE_JENIS_TAGIHAN,
+        'read' => Permission::READ_JENIS_TAGIHAN,
+        'update' => Permission::UPDATE_JENIS_TAGIHAN,
+        'delete' => Permission::DELETE_JENIS_TAGIHAN,
+    ];
+    public const TAGIHAN_PERMISSIONS = [
+        'view' => Permission::VIEW_TAGIHAN,
+        'create' => Permission::CREATE_TAGIHAN,
+        'read' => Permission::READ_TAGIHAN,
+        'update' => Permission::UPDATE_TAGIHAN,
+        'delete' => Permission::DELETE_TAGIHAN,
+    ];
     public const LAPORAN_PERMISSIONS = [
         'view' => [
             Permission::VIEW_KAS_HARIAN,

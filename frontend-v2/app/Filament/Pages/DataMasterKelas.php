@@ -16,4 +16,18 @@ class DataMasterKelas extends Page
     protected static ?string $title = 'Data Kelas';
 
     protected static ?int $navigationSort = 3;
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
+        return in_array('view-kelas', $permissions);
+    }
+
+    public function mount(): void
+    {
+        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
+        if (!in_array('view-kelas', $permissions)) {
+            abort(403);
+        }
+    }
 }

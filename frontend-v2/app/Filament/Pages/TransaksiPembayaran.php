@@ -16,4 +16,18 @@ class TransaksiPembayaran extends Page
     protected static ?string $title = 'Pembayaran';
 
     protected static ?int $navigationSort = 3;
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
+        return in_array('view-pembayaran', $permissions);
+    }
+
+    public function mount(): void
+    {
+        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
+        if (!in_array('view-pembayaran', $permissions)) {
+            abort(403);
+        }
+    }
 }

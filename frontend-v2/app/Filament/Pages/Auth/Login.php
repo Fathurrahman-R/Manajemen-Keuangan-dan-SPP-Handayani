@@ -5,7 +5,6 @@ namespace App\Filament\Pages\Auth;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use App\Filament\Pages\Auth\LoginResponse;
 
-// use Filament\Auth\MultiFactor\Contracts\HasBeforeChallengeHook;
 use Filament\Facades\Filament;
 use Filament\Auth\Pages\Login as PagesLogin;
 use Filament\Forms\Components\Checkbox;
@@ -14,13 +13,10 @@ use Filament\Schemas\Components\Component;
 use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Facades\Blade;
-use Illuminate\Contracts\Auth\Authenticatable;
-use Filament\Models\Contracts\FilamentUser;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\ConnectionException;
 use SensitiveParameter;
-use Exception;
 use Filament\Notifications\Notification;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
 
 class Login extends PagesLogin
@@ -28,9 +24,9 @@ class Login extends PagesLogin
 
     public function __construct()
     {
-        $token = session()->get('data');
+        $token = session()->get('data.token');
 
-        if (!is_null($token) && !is_null($token['token'])) {
+        if (!is_null($token)) {
             return redirect()->intended(filament()->getUrl() . '/data-master-siswa');
         }
     }
@@ -60,14 +56,30 @@ class Login extends PagesLogin
 
             $credentials = $this->getCredentialsFromFormData($data);
 
-            $response = Http::post(env('API_URL') . '/users/login', $credentials);
+            $response = Http::post(env('API_URL') . '/login', $credentials);
+
+            if ($response->serverError()) {
+                Notification::make()
+                    ->title('Gagal Login')
+                    ->danger()
+                    ->body('Tidak dapat terhubung ke server. Silakan coba beberapa saat lagi.')
+                    ->send();
+
+                throw ValidationException::withMessages([
+                    'data.username' => 'Tidak dapat terhubung ke server. Silakan coba beberapa saat lagi.',
+                ]);
+            }
 
             if ($response->successful()) {
                 session()->regenerate();
-                session($response->json());
 
-                Session::put('data', $response->json()['data']);
+                session()->put('data.token', $response->json()['data']['token']);
+                session()->put('data.permissions', $response->json()['data']['permissions']);
+                session()->put('data.roles', $response->json()['data']['roles']);
+                session()->put('data.id', $response->json()['data']['id']);
+                session()->put('data.username', $response->json()['data']['username']);
 
+                // Login ke Laravel Auth agar Filament mengenali user (untuk user menu)
                 Filament::auth()->loginUsingId($response->json()['data']['id']);
 
                 return app(LoginResponse::class);
@@ -83,10 +95,20 @@ class Login extends PagesLogin
                     ->send();
 
                 throw ValidationException::withMessages([
-                    'email' => $message
+                    'data.username' => $message
                 ]);
             }
 
+        } catch (ConnectionException $e) {
+            Notification::make()
+                ->title('Gagal Login')
+                ->danger()
+                ->body('Tidak dapat terhubung ke server. Silakan coba beberapa saat lagi.')
+                ->send();
+
+            throw ValidationException::withMessages([
+                'data.username' => 'Tidak dapat terhubung ke server. Silakan coba beberapa saat lagi.',
+            ]);
         } catch (ValidationException $th) {
             throw $th;
         }

@@ -14,9 +14,9 @@ use Filament\Schemas\Components\Grid;
 use Filament\Support\Enums\Alignment;
 use UnitEnum;
 use Filament\Forms\Components\FileUpload as FileUploadComponent;
+use App\Services\ApiService;
 use Filament\Notifications\Notification;
 use Filament\QueryBuilder\Constraints\Operators\IsFilledOperator;
-use Illuminate\Support\Facades\Http;
 
 class Settings extends Page
 {
@@ -30,10 +30,8 @@ class Settings extends Page
 
     public function mount()
     {
-        $response = Http::withHeaders([
-            'Authorization' => session()->get('data')['token']
-        ])
-            ->get(env('API_URL') . '/setting');
+        $response = ApiService::client()
+            ->get('/setting');
 
         if ($response->successful()) {
             $this->setting = $response->json()['data'];
@@ -139,16 +137,14 @@ class Settings extends Page
 
                     unset($data['logo']);
 
-                    $request = Http::withHeaders([
-                        'Authorization' => session()->get('data')['token'],
-                    ]);
+                    $request = ApiService::client();
 
                     if (filled($photo)) {
                         $request = $request->attach('logo', $photo, $originalName);
                     }
 
                     $response = $request
-                        ->post(env('API_URL') . '/setting/' . $this->setting['id'], $data);
+                        ->post('/setting/' . $this->setting['id'], $data);
 
                     if (!$response->successful()) {
                         Notification::make()

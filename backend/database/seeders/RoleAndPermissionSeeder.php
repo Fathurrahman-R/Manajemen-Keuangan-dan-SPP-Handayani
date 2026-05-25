@@ -3,13 +3,12 @@
 namespace Database\Seeders;
 
 use App\Constant\PermissionBinding;
-use App\Constant\Permissions;
 use App\Enum\DefaultRoles;
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Enum\Permission;
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Permission as SpatiePermission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RoleAndPermissionSeeder extends Seeder
 {
@@ -18,20 +17,32 @@ class RoleAndPermissionSeeder extends Seeder
      */
     public function run(): void
     {
-//        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
-//
-//        $role = Role::create(['name'=>DefaultRoles::ADMIN]);
-//
-//        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
-//
-//        foreach (PermissionBinding::ADMIN_PERMISSIONS as $permissions) {
-//            foreach ($permissions as $permission=>$value) {
-//                Permission::create(['name'=>$value]);
-//                $role->givePermissionTo($value);
-//            }
-//        }
+        // Clear cache before seeding
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        $user = User::query()->whereId(1)->first();
-        $user->assignRole(DefaultRoles::ADMIN);
+        // Create all permissions from enum
+        foreach (Permission::cases() as $permission) {
+            SpatiePermission::firstOrCreate(['name' => $permission->value]);
+        }
+
+        // Create default roles
+        $superadmin = Role::firstOrCreate(['name' => DefaultRoles::SUPERADMIN->value]);
+        $admin = Role::firstOrCreate(['name' => DefaultRoles::ADMIN->value]);
+        Role::firstOrCreate(['name' => DefaultRoles::USER->value]);
+
+        // Assign all permissions to superadmin
+        $superadmin->syncPermissions(
+            collect(Permission::cases())->map(fn($p) => $p->value)->toArray()
+        );
+
+        // Assign admin permissions from PermissionBinding
+        $adminPermissions = collect(PermissionBinding::ADMIN_PERMISSIONS)
+            ->flatten()
+            ->map(fn($p) => $p->value)
+            ->toArray();
+        $admin->syncPermissions($adminPermissions);
+
+        // Clear cache after seeding
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
     }
 }

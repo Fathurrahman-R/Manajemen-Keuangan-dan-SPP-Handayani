@@ -4,7 +4,7 @@ namespace App\Livewire;
 
 use App\Models\User;
 use Exception;
-use Illuminate\Support\Facades\Http;
+use App\Services\ApiService;
 use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -61,10 +61,8 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                         $params['kelas_id'] = $this->kelasId;
                     }
 
-                    $response = Http::withHeaders([
-                        'Authorization' => session()->get('data')['token']
-                    ])
-                        ->get(env('API_URL') . '/siswa/' . $this->activeTab, $params)
+                    $response = ApiService::client()
+                        ->get('/siswa/' . $this->activeTab, $params)
                         ->collect();
 
                     return new LengthAwarePaginator(
@@ -117,7 +115,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                     ->tooltip('Ubah Siswa')
                     ->icon('heroicon-s-pencil-square') // Optional icon
                     ->iconButton()
-                    ->visible(fn($livewire) => $livewire->activeTab === 'MI')
+                    ->visible(fn($livewire) => $livewire->activeTab === 'MI' && in_array('update-siswa', session()->get('data.permissions', [])))
                     ->color('warning')
                     ->modalHeading('Ubah Siswa')
                     ->modalSubmitAction(false)
@@ -201,10 +199,8 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kelas')
                                                 ->options(function () {
-                                                    $response = Http::withHeaders([
-                                                        'Authorization' => session()->get('data')['token']
-                                                    ])
-                                                        ->get(env('API_URL') . '/kelas/' . $this->activeTab);
+                                                    $response = ApiService::client()
+                        ->get('/kelas/' . $this->activeTab);
 
                                                     if (!$response->ok()) {
                                                         return [];
@@ -224,10 +220,8 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kategori')
                                                 ->options(function () {
-                                                    $response = Http::withHeaders([
-                                                        'Authorization' => session()->get('data')['token']
-                                                    ])
-                                                        ->get(env('API_URL') . '/kategori');
+                                                    $response = ApiService::client()
+                        ->get('/kategori');
 
                                                     if (!$response->ok()) {
                                                         return [];
@@ -320,10 +314,8 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                             ),
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->put(env('API_URL') . '/siswa/' . $this->activeTab . '/' . $record['id'], $data);
+                        $response = ApiService::client()
+                            ->put('/siswa/' . $this->activeTab . '/' . $record['id'], $data);
 
                         if (!$response->ok()) {
                             Notification::make()
@@ -423,10 +415,8 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kelas')
                                                 ->options(function () {
-                                                    $response = Http::withHeaders([
-                                                        'Authorization' => session()->get('data')['token']
-                                                    ])
-                                                        ->get(env('API_URL') . '/kelas/' . $this->activeTab);
+                                                    $response = ApiService::client()
+                        ->get('/kelas/' . $this->activeTab);
 
                                                     if (!$response->ok()) {
                                                         return [];
@@ -446,10 +436,8 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kategori')
                                                 ->options(function () {
-                                                    $response = Http::withHeaders([
-                                                        'Authorization' => session()->get('data')['token']
-                                                    ])
-                                                        ->get(env('API_URL') . '/kategori');
+                                                    $response = ApiService::client()
+                        ->get('/kategori');
 
                                                     if (!$response->ok()) {
                                                         return [];
@@ -518,10 +506,8 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                             )
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->put(env('API_URL') . '/siswa/' . $this->activeTab . '/' . $record['id'], $data);
+                        $response = ApiService::client()
+                            ->put('/siswa/' . $this->activeTab . '/' . $record['id'], $data);
 
                         if (!$response->ok()) {
                             Notification::make()
@@ -538,12 +524,13 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                     ->after(function () {
                         $this->resetTable();
                     })
-                    ->visible(fn($livewire) => $livewire->activeTab !== 'MI'),
+                    ->visible(fn($livewire) => $livewire->activeTab !== 'MI' && in_array('update-siswa', session()->get('data.permissions', []))),
                 Action::make('delete') // Unique name for your action
                     ->tooltip('Hapus Siswa')
                     ->icon('heroicon-s-trash') // Optional icon
                     ->iconButton()
                     ->color('danger') // Optional color
+                    ->visible(fn(): bool => in_array('delete-siswa', session()->get('data.permissions', [])))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Siswa')
                     ->modalDescription('Apakah kamu yakin untuk menghapus siswa ini?')
@@ -551,10 +538,8 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                     ->modalCancelActionLabel('Batal')
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->delete(env('API_URL') . '/siswa/' . $this->activeTab . '/' . $record['id']);
+                        $response = ApiService::client()
+                            ->delete('/siswa/' . $this->activeTab . '/' . $record['id']);
 
                         if (!$response->ok()) {
                             Notification::make()
@@ -587,9 +572,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                             ->searchable()
                             ->searchPrompt('Cari Kelas')
                             ->options(function () {
-                                $response = Http::withHeaders([
-                                    'Authorization' => session()->get('data')['token'],
-                                ])->get(env('API_URL') . '/kelas/' . $this->activeTab);
+                                $response = ApiService::client()->get('/kelas/' . $this->activeTab);
 
                                 if (!$response->ok()) {
                                     return [];
@@ -699,10 +682,8 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kelas')
                                                 ->options(function () {
-                                                    $response = Http::withHeaders([
-                                                        'Authorization' => session()->get('data')['token']
-                                                    ])
-                                                        ->get(env('API_URL') . '/kelas/' . $this->activeTab);
+                                                    $response = ApiService::client()
+                        ->get('/kelas/' . $this->activeTab);
 
                                                     if (!$response->ok()) {
                                                         return [];
@@ -725,10 +706,8 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kategori')
                                                 ->options(function () {
-                                                    $response = Http::withHeaders([
-                                                        'Authorization' => session()->get('data')['token']
-                                                    ])
-                                                        ->get(env('API_URL') . '/kategori');
+                                                    $response = ApiService::client()
+                        ->get('/kategori');
 
                                                     if (!$response->ok()) {
                                                         return [];
@@ -839,10 +818,8 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                             ),
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->post(env('API_URL') . '/siswa/' . $this->activeTab, $data);
+                        $response = ApiService::client()
+                            ->post('/siswa/' . $this->activeTab, $data);
 
                         if ($response->status() != 201) {
                             $errors = collect($response->json('errors') ?? [])->flatten()->implode(', ');
@@ -872,7 +849,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                         'class' => 'font-semibold text-white',
                         'id' => 'add-detail'
                     ])
-                    ->visible(fn($livewire) => $livewire->activeTab === 'MI'),
+                    ->visible(fn($livewire) => $livewire->activeTab === 'MI' && in_array('create-siswa', session()->get('data.permissions', []))),
                 // Tambah Siswa TK, KB
                 Action::make('add') // Unique name for your action
                     ->label('Tambah') // Text displayed on the button
@@ -952,10 +929,8 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kelas')
                                                 ->options(function () {
-                                                    $response = Http::withHeaders([
-                                                        'Authorization' => session()->get('data')['token']
-                                                    ])
-                                                        ->get(env('API_URL') . '/kelas/' . $this->activeTab);
+                                                    $response = ApiService::client()
+                        ->get('/kelas/' . $this->activeTab);
 
                                                     if (!$response->ok()) {
                                                         return [];
@@ -978,10 +953,8 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kategori')
                                                 ->options(function () {
-                                                    $response = Http::withHeaders([
-                                                        'Authorization' => session()->get('data')['token']
-                                                    ])
-                                                        ->get(env('API_URL') . '/kategori');
+                                                    $response = ApiService::client()
+                        ->get('/kategori');
 
                                                     if (!$response->ok()) {
                                                         return [];
@@ -1071,10 +1044,8 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                             )
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->post(env('API_URL') . '/siswa/' . $this->activeTab, $data);
+                        $response = ApiService::client()
+                            ->post('/siswa/' . $this->activeTab, $data);
 
                         if (!$response->successful()) {
                             Notification::make()
@@ -1102,7 +1073,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                         'class' => 'font-semibold text-white',
                         'id' => 'add'
                     ])
-                    ->visible(fn($livewire) => $livewire->activeTab !== 'MI'),
+                    ->visible(fn($livewire) => $livewire->activeTab !== 'MI' && in_array('create-siswa', session()->get('data.permissions', []))),
             ]);
     }
 

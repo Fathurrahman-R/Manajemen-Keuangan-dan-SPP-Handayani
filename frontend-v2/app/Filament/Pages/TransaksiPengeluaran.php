@@ -16,4 +16,18 @@ class TransaksiPengeluaran extends Page
     protected static ?string $title = 'Pengeluaran';
 
     protected static ?int $navigationSort = 4;
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
+        return in_array('view-pengeluaran', $permissions);
+    }
+
+    public function mount(): void
+    {
+        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
+        if (!in_array('view-pengeluaran', $permissions)) {
+            abort(403);
+        }
+    }
 }

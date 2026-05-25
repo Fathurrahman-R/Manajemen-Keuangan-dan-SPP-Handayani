@@ -15,13 +15,9 @@ class CustomAuthentication
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $token = session()->get('data');
+        $token = session()->get('data.token');
 
-        if(is_null($token)) {
-            return redirect()->intended(filament()->getUrl() . '/login');
-        }
-        
-        if(is_null($token['token'])) {
+        if (is_null($token)) {
             return redirect()->intended(filament()->getUrl() . '/login');
         }
 
