@@ -14,8 +14,9 @@ class UserSeeder extends Seeder
     {
         $user = User::create([
             'username' => 'admin123',
+            'name' => 'Admin',
             'password' => Hash::make('admin123'),
-            'branch_id' => 525
+            'branch_id' => 964
         ]);
         $user->assignRole('superadmin');
         // Pastikan role admin sudah ada sebelum di-assign

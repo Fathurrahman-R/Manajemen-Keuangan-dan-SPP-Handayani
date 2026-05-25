@@ -91,6 +91,10 @@ class SiswaMIRequest extends FormRequest
                 'nullable',
                 'max:100'
             ],
+            'ayah_email' => [
+                'nullable',
+                'email:rfc',
+            ],
             // nested ibu
             'ibu_nama' => [
                 $ibuFieldRequired,
@@ -103,6 +107,10 @@ class SiswaMIRequest extends FormRequest
             'ibu_pekerjaan' => [
                 'nullable',
                 'max:100'
+            ],
+            'ibu_email' => [
+                'nullable',
+                'email:rfc',
             ],
             'kelas_id' => [
                 'required',
@@ -132,6 +140,14 @@ class SiswaMIRequest extends FormRequest
             'keterangan' => [
                 'nullable'
             ],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'ayah_email.email' => 'Format email tidak valid',
+            'ibu_email.email' => 'Format email tidak valid',
         ];
     }
 

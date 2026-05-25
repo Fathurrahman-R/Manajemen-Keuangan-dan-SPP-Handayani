@@ -17,11 +17,18 @@ use App\Http\Controllers\TahunAjaranController;
 use App\Http\Controllers\AyahController;
 use App\Http\Controllers\IbuController;
 use App\Http\Controllers\AkunSiswaController;
+use App\Http\Controllers\EmailOptOutController;
+use App\Http\Controllers\NotificationLogController;
+use App\Http\Controllers\NotificationSettingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WaliController;
 use Illuminate\Support\Facades\Route;
 
 Route::post("/login", [AuthController::class, "login"]);
+
+// Public unsubscribe routes (no auth required)
+Route::get('/unsubscribe/{token}', [EmailOptOutController::class, 'show']);
+Route::post('/unsubscribe/{token}', [EmailOptOutController::class, 'update']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/logout', [AuthController::class, "logout"]);
@@ -157,6 +164,14 @@ Route::middleware('auth:sanctum')->group(function () {
         // Setting routes (accessible to authenticated admin users)
         Route::get('/setting', [AppSettingController::class, 'get']);
         Route::post('/setting/{id}', [AppSettingController::class, 'update']);
+
+        // Notification settings routes
+        Route::get('/notification-settings', [NotificationSettingController::class, 'show']);
+        Route::put('/notification-settings', [NotificationSettingController::class, 'update']);
+
+        // Notification log routes
+        Route::get('/notification-logs', [NotificationLogController::class, 'index']);
+        Route::post('/notification-logs/retry', [NotificationLogController::class, 'retry']);
 
         // Laporan routes
         Route::prefix('/laporan')->group(function () {

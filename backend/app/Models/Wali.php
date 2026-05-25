@@ -22,6 +22,7 @@ class Wali extends Model
         'alamat',
         'no_hp',
         'keterangan',
+        'email',
     ];
     protected $casts = [
         'id' => 'integer'

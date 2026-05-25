@@ -63,6 +63,10 @@ class SiswaMIUpdateRequest extends FormRequest
                 'nullable',
                 'max:100'
             ],
+            'ayah_email' => [
+                'nullable',
+                'email:rfc',
+            ],
             'ibu_nama' => [
                 'required',
                 'max:100'
@@ -74,6 +78,10 @@ class SiswaMIUpdateRequest extends FormRequest
             'ibu_pekerjaan' => [
                 'nullable',
                 'max:100'
+            ],
+            'ibu_email' => [
+                'nullable',
+                'email:rfc',
             ],
             'kelas_id' => [
                 'required',
@@ -103,6 +111,14 @@ class SiswaMIUpdateRequest extends FormRequest
             'keterangan' => [
                 'nullable'
             ],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'ayah_email.email' => 'Format email tidak valid',
+            'ibu_email.email' => 'Format email tidak valid',
         ];
     }
 

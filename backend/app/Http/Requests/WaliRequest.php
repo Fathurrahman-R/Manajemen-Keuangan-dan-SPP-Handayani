@@ -65,7 +65,18 @@ class WaliRequest extends FormRequest
             'keterangan' => [
                 'sometimes',
                 'nullable',
-            ]
+            ],
+            'email' => [
+                'nullable',
+                'email:rfc',
+            ],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'email.email' => 'Format email tidak valid',
         ];
     }
 

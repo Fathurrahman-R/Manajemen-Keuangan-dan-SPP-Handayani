@@ -19,6 +19,7 @@ class Ibu extends Model
         'nama',
         'pendidikan_terakhir',
         'pekerjaan',
+        'email',
     ];
     protected $casts = [
         'id' => 'integer'

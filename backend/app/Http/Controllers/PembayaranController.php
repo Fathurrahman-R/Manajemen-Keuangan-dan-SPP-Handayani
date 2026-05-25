@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\PembayaranRecorded;
 use App\Http\Requests\BatchPaymentRequest;
 use App\Http\Requests\BayarLunasRequest;
 use App\Http\Requests\BayarTidakLunasRequest;
@@ -127,6 +128,9 @@ class PembayaranController extends Controller
             // Load relationships for response
             $pembayaranRecords->each(function ($pembayaran) {
                 $pembayaran->load(['tagihan', 'tagihan.jenis_tagihan', 'tagihan.siswa']);
+
+                // Dispatch email notification event
+                PembayaranRecorded::dispatch($pembayaran);
             });
 
             return PembayaranResource::collection($pembayaranRecords)->response()->setStatusCode(200);
@@ -221,6 +225,10 @@ class PembayaranController extends Controller
             'branch_id' => Auth::user()->branch_id,
         ]);
         $pembayaran->load(['tagihan','tagihan.jenis_tagihan','tagihan.siswa']);
+
+        // Dispatch email notification event
+        PembayaranRecorded::dispatch($pembayaran);
+
         return (new PembayaranResource($pembayaran))->response()->setStatusCode(200);
     }
 
@@ -280,6 +288,10 @@ class PembayaranController extends Controller
         ]);
         TagihanController::bayar($request, $kode_tagihan);
         $pembayaran->load(['tagihan','tagihan.jenis_tagihan','tagihan.siswa']);
+
+        // Dispatch email notification event
+        PembayaranRecorded::dispatch($pembayaran);
+
         return (new PembayaranResource($pembayaran))->response()->setStatusCode(200);
     }
 

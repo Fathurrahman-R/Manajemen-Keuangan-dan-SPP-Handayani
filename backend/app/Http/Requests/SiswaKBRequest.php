@@ -84,6 +84,10 @@ class SiswaKBRequest extends FormRequest
             'wali_keterangan' => [
                 'nullable'
             ],
+            'wali_email' => [
+                'nullable',
+                'email:rfc',
+            ],
             'kelas_id' => [
                 'required',
                 'exists:kelas,id'
@@ -102,40 +106,12 @@ class SiswaKBRequest extends FormRequest
         ];
     }
 
-//    public function messages(): array
-//    {
-//        return [
-//            'nis.required' => 'NIS wajib diisi.',
-//            'nis.max' => 'NIS maksimal 20 karakter.',
-//            'nis.min' => 'NIS minimal 4 karakter.',
-//            'nis.regex' => 'NIS hanya boleh berisi angka.',
-//            'nama.required' => 'Nama wajib diisi.',
-//            'nama.max' => 'Nama maksimal 100 karakter.',
-//            'nama.regex' => 'Nama hanya boleh berisi huruf dan spasi.',
-//            'jenis_kelamin.required' => 'Jenis kelamin wajib diisi.',
-//            'jenis_kelamin.in' => 'Jenis kelamin harus Laki-laki atau Perempuan.',
-//            'tempat_lahir.required' => 'Tempat lahir wajib diisi.',
-//            'tempat_lahir.max' => 'Tempat lahir maksimal 100 karakter.',
-//            'tanggal_lahir.required' => 'Tanggal lahir wajib diisi.',
-//            'tanggal_lahir.date' => 'Format tanggal lahir tidak valid.',
-//            'tanggal_lahir.before' => 'Tanggal lahir harus sebelum hari ini.',
-//            'tanggal_lahir.after' => 'Tanggal lahir terlalu lama.',
-//            'agama.required' => 'Agama wajib diisi.',
-//            'agama.max' => 'Agama maksimal 50 karakter.',
-//            'alamat.required' => 'Alamat wajib diisi.',
-//            'wali_nama.required' => 'Nama wali wajib diisi.',
-//            'wali_nama.max' => 'Nama wali maksimal 100 karakter.',
-//            'wali_pekerjaan.max' => 'Pekerjaan wali maksimal 100 karakter.',
-//            'wali_alamat.required' => 'Alamat wali wajib diisi.',
-//            'wali_no_hp.required' => 'Nomor HP wali wajib diisi.',
-//            'wali_no_hp.max' => 'Nomor HP wali maksimal 100 karakter.',
-//            'kelas_id.required' => 'Kelas wajib diisi.',
-//            'kelas_id.exists' => 'Kelas tidak ditemukan.',
-//            'kategori_id.required' => 'Kategori wajib diisi.',
-//            'kategori_id.exists' => 'Kategori tidak ditemukan.',
-//            'status.in' => 'Status harus salah satu: Aktif, Lulus, Pindah, Keluar.'
-//        ];
-//    }
+    public function messages(): array
+    {
+        return [
+            'wali_email.email' => 'Format email tidak valid',
+        ];
+    }
 
     protected function failedValidation(Validator $validator)
     {

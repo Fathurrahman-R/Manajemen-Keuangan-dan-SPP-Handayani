@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\TagihanCreated;
 use App\Http\Requests\BayarLunasRequest;
 use App\Http\Requests\BayarTidakLunasRequest;
 use App\Http\Requests\TagihanRequest;
@@ -213,10 +214,14 @@ class TagihanController extends Controller
                 'branch_id' => $user->branch_id,
                 'tahun_ajaran_id' => $tahunAjaranId,
             ]);
-            $created->push($t->fresh([
+            $freshTagihan = $t->fresh([
                 'siswa' => fn($q) => $q->select(['id','nis','nama','jenjang','kelas_id','kategori_id']),
                 'jenis_tagihan' => fn($q) => $q->select(['id','nama','jatuh_tempo','jumlah']),
-            ]));
+            ]);
+            $created->push($freshTagihan);
+
+            // Dispatch email notification event
+            TagihanCreated::dispatch(collect([$freshTagihan]), $s);
         }
         return TagihanResource::collection($created)->response()->setStatusCode(201);
     }

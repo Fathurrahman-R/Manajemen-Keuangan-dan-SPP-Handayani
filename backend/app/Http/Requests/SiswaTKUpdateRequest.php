@@ -69,6 +69,10 @@ class SiswaTKUpdateRequest extends FormRequest
             'wali_keterangan' => [
                 'nullable'
             ],
+            'wali_email' => [
+                'nullable',
+                'email:rfc',
+            ],
             'kelas_id' => [
                 'required',
                 'exists:kelas,id'
@@ -84,6 +88,13 @@ class SiswaTKUpdateRequest extends FormRequest
             'keterangan' => [
                 'nullable'
             ],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'wali_email.email' => 'Format email tidak valid',
         ];
     }
 

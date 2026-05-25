@@ -85,6 +85,7 @@ class SiswaController extends Controller
                     'alamat' => $data['wali_alamat'],
                     'no_hp' => $data['wali_no_hp'],
                     'keterangan' => $data['wali_keterangan'] ?? null,
+                    'email' => $data['wali_email'] ?? null,
                 ]);
                 $wali->save();
                 $waliId = $wali->id;
@@ -100,6 +101,7 @@ class SiswaController extends Controller
                     'nama' => $data['ayah_nama'],
                     'pendidikan_terakhir' => strtoupper($data['ayah_pendidikan_terakhir']) ?? null,
                     'pekerjaan' => $data['ayah_pekerjaan'] ?? null,
+                    'email' => $data['ayah_email'] ?? null,
                 ]);
                 $ayah->save();
                 $ayahId = $ayah->id;
@@ -113,6 +115,7 @@ class SiswaController extends Controller
                     'nama' => $data['ibu_nama'],
                     'pendidikan_terakhir' => strtoupper($data['ibu_pendidikan_terakhir']) ?? null,
                     'pekerjaan' => $data['ibu_pekerjaan'] ?? null,
+                    'email' => $data['ibu_email'] ?? null,
                 ]);
                 $ibu->save();
                 $ibuId = $ibu->id;
@@ -165,6 +168,7 @@ class SiswaController extends Controller
                         'nama' => $data['ayah_nama'],
                         'pendidikan_terakhir' => strtoupper($data['ayah_pendidikan_terakhir']) ?? null,
                         'pekerjaan' => $data['ayah_pekerjaan'] ?? null,
+                        'email' => $data['ayah_email'] ?? null,
                     ]);
                 }
             }
@@ -175,6 +179,7 @@ class SiswaController extends Controller
                         'nama' => $data['ibu_nama'],
                         'pendidikan_terakhir' => strtoupper($data['ibu_pendidikan_terakhir']) ?? null,
                         'pekerjaan' => $data['ibu_pekerjaan'] ?? null,
+                        'email' => $data['ibu_email'] ?? null,
                     ]);
                 }
             }
@@ -192,6 +197,7 @@ class SiswaController extends Controller
                         'alamat' => $data['wali_alamat'],
                         'no_hp' => $data['wali_no_hp'],
                         'keterangan' => $data['wali_keterangan'] ?? null,
+                        'email' => $data['wali_email'] ?? null,
                     ]);
                 }
             }
@@ -199,8 +205,9 @@ class SiswaController extends Controller
 
         // update siswa main fields excluding nested inputs
         $updateFields = collect($data)->except([
-            'wali_nama','wali_pekerjaan','wali_alamat','wali_no_hp','wali_keterangan',
-            'ayah_nama','ayah_pendidikan','ayah_pekerjaan','ibu_nama','ibu_pendidikan','ibu_pekerjaan'
+            'wali_nama','wali_pekerjaan','wali_alamat','wali_no_hp','wali_keterangan','wali_email',
+            'ayah_nama','ayah_pendidikan','ayah_pekerjaan','ayah_email',
+            'ibu_nama','ibu_pendidikan','ibu_pekerjaan','ibu_email'
         ])->toArray();
         $siswa->update($updateFields);
 
