@@ -50,33 +50,47 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('branches');
+        Schema::disableForeignKeyConstraints();
+
         Schema::table('users', function (Blueprint $table) {
-            $table->dropForeign('users_branch_id_foreign');
+            $table->dropForeign(['branch_id']);
+            $table->dropColumn('branch_id');
         });
         Schema::table('siswas', function (Blueprint $table) {
-            $table->dropForeign('users_branch_id_foreign');
+            $table->dropForeign(['branch_id']);
+            $table->dropColumn('branch_id');
         });
         Schema::table('kelas', function (Blueprint $table) {
-            $table->dropForeign('users_branch_id_foreign');
+            $table->dropForeign(['branch_id']);
+            $table->dropColumn('branch_id');
         });
         Schema::table('kategoris', function (Blueprint $table) {
-            $table->dropForeign('users_branch_id_foreign');
+            $table->dropForeign(['branch_id']);
+            $table->dropColumn('branch_id');
         });
         Schema::table('jenis_tagihans', function (Blueprint $table) {
-            $table->dropForeign('users_branch_id_foreign');
+            $table->dropForeign(['branch_id']);
+            $table->dropColumn('branch_id');
         });
         Schema::table('app_settings', function (Blueprint $table) {
-            $table->dropForeign('branch_id');
+            $table->dropForeign(['branch_id']);
+            $table->dropColumn('branch_id');
         });
         Schema::table('pembayarans', function (Blueprint $table) {
-            $table->dropForeign('pembayaran_branch_id_foreign');
+            $table->dropForeign(['branch_id']);
+            $table->dropColumn('branch_id');
         });
         Schema::table('pengeluarans', function (Blueprint $table) {
-            $table->dropForeign('pengeluaran_branch_id_foreign');
+            $table->dropForeign(['branch_id']);
+            $table->dropColumn('branch_id');
         });
         Schema::table('tagihans', function (Blueprint $table) {
-            $table->dropForeign('tagihan_branch_id_foreign');
+            $table->dropForeign(['branch_id']);
+            $table->dropColumn('branch_id');
         });
+
+        Schema::dropIfExists('branches');
+
+        Schema::enableForeignKeyConstraints();
     }
 };

@@ -83,6 +83,8 @@ return new class extends Migration
      */
     public function down(): void
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
         // Remove all SiswaKelas records
         DB::table('siswa_kelas')->truncate();
 
@@ -94,5 +96,7 @@ return new class extends Migration
 
         // Remove all TahunAjaran records
         DB::table('tahun_ajarans')->truncate();
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
     }
 };

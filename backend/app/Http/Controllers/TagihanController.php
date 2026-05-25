@@ -56,7 +56,7 @@ class TagihanController extends Controller
             ->where('branch_id', $user->branch_id);
 
         // Non-admin users can only see their own data
-        if ($user->role !== 'admin') {
+        if (!$user->hasAnyRole(['superadmin', 'admin'])) {
             $query->where('nis', $user->username);
         }
 
@@ -123,7 +123,7 @@ class TagihanController extends Controller
             ->where('branch_id', $user->branch_id)
             ->where('tahun_ajaran_id', $tahunAjaranId);
 
-        if ($user->role !== 'admin') {
+        if (!$user->hasAnyRole(['superadmin', 'admin'])) {
             $query->whereHas('siswa', fn($q) => $q->where('nis', $user->username));
         }
 

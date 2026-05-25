@@ -4,15 +4,23 @@ namespace App\Livewire;
 
 use App\Services\ApiService;
 use Livewire\Component;
+use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Support\Enums\Alignment;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Table;
+use Illuminate\Pagination\LengthAwarePaginator;
 
-class KenaikanKelas extends Component implements HasActions, HasSchemas
+class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas;
+    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     public ?int $selectedSourcePeriodId = null;
     public ?int $selectedTargetPeriodId = null;
@@ -42,6 +50,80 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
         $this->activeJenjangTab = 'MI';
         $this->loadKelasList();
         $this->loadHistory();
+    }
+
+    /**
+     * Filament Table for history (Riwayat Proses).
+     */
+    public function table(Table $table): Table
+    {
+        return $table
+            ->records(function (): LengthAwarePaginator {
+                return new LengthAwarePaginator(
+                    items: $this->history,
+                    total: count($this->history),
+                    perPage: 10,
+                    currentPage: 1,
+                );
+            })
+            ->columns([
+                TextColumn::make('processed_at')
+                    ->label('Tanggal')
+                    ->formatStateUsing(fn($state) => $state ? \Carbon\Carbon::parse($state)->format('d/m/Y H:i') : '-'),
+                TextColumn::make('batch_type')
+                    ->label('Tipe')
+                    ->formatStateUsing(fn($state) => $this->translateBatchType($state ?? '')),
+                TextColumn::make('kelas_nama')
+                    ->label('Kelas Asal')
+                    ->state(fn(array $record) => $record['kelas_nama'] ?? $record['kelas']['nama'] ?? '-'),
+                TextColumn::make('source_tahun_ajaran_nama')
+                    ->label('Dari Periode')
+                    ->state(fn(array $record) => $record['source_tahun_ajaran_nama'] ?? $record['source_tahun_ajaran']['nama'] ?? '-'),
+                TextColumn::make('target_tahun_ajaran_nama')
+                    ->label('Ke Periode')
+                    ->state(fn(array $record) => $record['target_tahun_ajaran_nama'] ?? $record['target_tahun_ajaran']['nama'] ?? '-'),
+                TextColumn::make('details_count')
+                    ->label('Jumlah Siswa')
+                    ->state(fn(array $record) => $record['details_count'] ?? count($record['details'] ?? [])),
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'completed' => 'success',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn($state) => $state === 'completed' ? 'Completed' : 'Undone'),
+                TextColumn::make('processed_by_name')
+                    ->label('User')
+                    ->state(fn(array $record) => $record['processed_by_name'] ?? $record['processed_by_user']['name'] ?? '-'),
+            ])
+            ->recordActions([
+                Action::make('detail')
+                    ->label('Detail')
+                    ->icon('heroicon-o-eye')
+                    ->iconButton()
+                    ->tooltip('Lihat Detail')
+                    ->color('info')
+                    ->action(fn(array $record) => $this->showBatchDetail($record['id'])),
+                Action::make('undo')
+                    ->label('Undo')
+                    ->icon('heroicon-o-arrow-uturn-left')
+                    ->iconButton()
+                    ->tooltip('Batalkan')
+                    ->color('danger')
+                    ->visible(fn(array $record): bool => ($record['status'] ?? '') === 'completed')
+                    ->requiresConfirmation()
+                    ->modalHeading('Batalkan Batch')
+                    ->modalDescription('Apakah Anda yakin ingin membatalkan batch ini? Semua perubahan yang dilakukan akan dikembalikan.')
+                    ->modalSubmitActionLabel('Ya, Batalkan')
+                    ->modalCancelActionLabel('Batal')
+                    ->action(fn(array $record) => $this->undoBatch($record['id'])),
+            ])
+            ->emptyStateHeading('Belum Ada Riwayat')
+            ->emptyStateDescription('Belum ada riwayat proses kenaikan kelas.')
+            ->striped()
+            ->paginated([5, 10, 25])
+            ->defaultPaginationPageOption(5);
     }
 
     /**
@@ -94,7 +176,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
     public function loadKelasList(): void
     {
         try {
-            $response = ApiService::client()->get('/kenaikan-kelas/hierarki-kelas', [
+            $response = ApiService::client()->get('/kenaikan-kelas/class-hierarchy', [
                 'jenjang' => $this->activeJenjangTab,
             ]);
 
@@ -136,10 +218,8 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
             return;
         }
 
-        // Check if selected kelas is the highest in its jenjang
         $this->checkIsKelasTertinggi();
 
-        // Load target jenjang kelas list for pindah_jenjang
         if ($this->isKelasTertinggi) {
             $this->loadTargetJenjangKelas();
         } else {
@@ -186,7 +266,6 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
 
     /**
      * Initialize student actions with default action for each student.
-     * If kelas is tertinggi, default to 'lulus'; otherwise default to 'naik_kelas'.
      */
     protected function initializeStudentActions(): void
     {
@@ -205,14 +284,11 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
     /**
      * Update the action for a specific student.
      */
-    public function updateStudentAction(int $siswaId, string $action, ?int $targetKelasId = null): void
+    public function updateStudentAction(int $siswaId, string $action): void
     {
         $this->studentActions[$siswaId] = $action;
 
-        // Store target kelas for pindah_jenjang actions
-        if ($action === 'pindah_jenjang') {
-            $this->studentTargetKelas[$siswaId] = $targetKelasId;
-        } else {
+        if ($action !== 'pindah_jenjang') {
             $this->studentTargetKelas[$siswaId] = null;
         }
 
@@ -248,7 +324,6 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
 
     /**
      * Check if the selected kelas is the highest in its jenjang.
-     * Calls the class hierarchy API and compares levels.
      */
     protected function checkIsKelasTertinggi(): void
     {
@@ -258,7 +333,6 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
             return;
         }
 
-        // Find the selected kelas in the kelasList to get its level
         $selectedKelas = null;
         foreach ($this->kelasList as $kelas) {
             if ($kelas['id'] == $this->selectedKelasId) {
@@ -271,7 +345,6 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
             return;
         }
 
-        // Check if any other kelas in the same jenjang has a higher level
         $hasHigherLevel = false;
         foreach ($this->kelasList as $kelas) {
             if ($kelas['id'] != $this->selectedKelasId && isset($kelas['level']) && $kelas['level'] > $selectedKelas['level']) {
@@ -285,8 +358,6 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
 
     /**
      * Get available actions based on whether the kelas is tertinggi.
-     *
-     * @return array<string, string>
      */
     public function getAvailableActions(): array
     {
@@ -304,13 +375,12 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
     }
 
     /**
-     * Load target kelas options for pindah_jenjang (next jenjang's kelas list).
+     * Load target kelas options for pindah_jenjang.
      */
     protected function loadTargetJenjangKelas(): void
     {
         $this->targetJenjangKelasList = [];
 
-        // Determine the next jenjang based on current active tab
         $nextJenjang = $this->getNextJenjang($this->activeJenjangTab);
 
         if (!$nextJenjang) {
@@ -318,7 +388,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
         }
 
         try {
-            $response = ApiService::client()->get('/kenaikan-kelas/hierarki-kelas', [
+            $response = ApiService::client()->get('/kenaikan-kelas/class-hierarchy', [
                 'jenjang' => $nextJenjang,
             ]);
 
@@ -332,7 +402,6 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
 
     /**
      * Get the next jenjang for pindah_jenjang transitions.
-     * Allowed transitions: KB → TK, TK → MI
      */
     protected function getNextJenjang(string $currentJenjang): ?string
     {
@@ -341,16 +410,6 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
             'TK' => 'MI',
             default => null,
         };
-    }
-
-    /**
-     * Get target jenjang kelas options for pindah_jenjang.
-     *
-     * @return array
-     */
-    public function getTargetJenjangKelas(): array
-    {
-        return $this->targetJenjangKelasList;
     }
 
     /**
@@ -392,7 +451,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
     }
 
     /**
-     * Load batch history from the API, sorted by processed_at desc.
+     * Load batch history from the API.
      */
     public function loadHistory(): void
     {
@@ -404,15 +463,13 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
             } else {
                 $this->history = [];
             }
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            $this->history = [];
         } catch (\Throwable $e) {
             $this->history = [];
         }
     }
 
     /**
-     * Show batch detail by fetching from the API.
+     * Show batch detail modal.
      */
     public function showBatchDetail(string $batchId): void
     {
@@ -428,12 +485,6 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
                     ->danger()
                     ->send();
             }
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            $this->selectedBatchDetail = null;
-            Notification::make()
-                ->title('Server tidak dapat dihubungi')
-                ->danger()
-                ->send();
         } catch (\Throwable $e) {
             $this->selectedBatchDetail = null;
             Notification::make()
@@ -486,12 +537,6 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
             } else {
                 $this->handleApiError($response);
             }
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            Notification::make()
-                ->title('Server tidak dapat dihubungi')
-                ->danger()
-                ->persistent()
-                ->send();
         } catch (\Throwable $e) {
             Notification::make()
                 ->title('Terjadi kesalahan saat membatalkan batch.')
@@ -517,14 +562,13 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
     }
 
     /**
-     * Process all student actions by sending batch requests to the API.
+     * Process all student actions.
      */
     public function processAll(): void
     {
         $this->processing = true;
 
         try {
-            // Validate target period is selected
             if (!$this->selectedTargetPeriodId) {
                 Notification::make()
                     ->title('Periode tujuan harus dipilih sebelum memproses.')
@@ -534,7 +578,6 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
                 return;
             }
 
-            // Group students by action type
             $grouped = [
                 'naik_kelas' => [],
                 'tinggal_kelas' => [],
@@ -549,7 +592,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
             $results = [];
             $errors = [];
 
-            // Process naik_kelas: bulk promotion
+            // Process naik_kelas
             if (!empty($grouped['naik_kelas'])) {
                 try {
                     $response = ApiService::client()->post('/kenaikan-kelas/bulk-promotion', [
@@ -567,7 +610,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
                 }
             }
 
-            // Process tinggal_kelas: retention
+            // Process tinggal_kelas
             if (!empty($grouped['tinggal_kelas'])) {
                 try {
                     $response = ApiService::client()->post('/kenaikan-kelas/retention', [
@@ -585,7 +628,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
                 }
             }
 
-            // Process lulus: graduation
+            // Process lulus
             if (!empty($grouped['lulus'])) {
                 try {
                     $response = ApiService::client()->post('/kenaikan-kelas/graduation', [
@@ -603,7 +646,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
                 }
             }
 
-            // Process pindah_jenjang: cross-level transfer (individual per student)
+            // Process pindah_jenjang
             if (!empty($grouped['pindah_jenjang'])) {
                 foreach ($grouped['pindah_jenjang'] as $siswaId) {
                     $targetKelasId = $this->studentTargetKelas[$siswaId] ?? null;
@@ -631,7 +674,6 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
                 }
             }
 
-            // Show results
             if (!empty($errors)) {
                 Notification::make()
                     ->title('Terjadi kesalahan saat memproses')
@@ -663,8 +705,8 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
                     ->persistent()
                     ->send();
 
-                // Reload students to reflect changes
                 $this->loadStudents();
+                $this->loadHistory();
             }
         } catch (\Throwable $e) {
             Notification::make()
@@ -678,7 +720,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
     }
 
     /**
-     * Extract error message from an API response for display.
+     * Extract error message from an API response.
      */
     protected function extractErrorMessage($response, string $prefix = ''): string
     {
@@ -702,7 +744,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas
     }
 
     /**
-     * Handle API error responses with Filament notification.
+     * Handle API error responses.
      */
     protected function handleApiError($response): void
     {

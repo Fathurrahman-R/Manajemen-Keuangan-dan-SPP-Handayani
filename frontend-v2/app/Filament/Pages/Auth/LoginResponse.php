@@ -15,6 +15,12 @@ class LoginResponse implements LoginResponseContract
             return redirect()->to($intendedUrl);
         }
 
+        // Siswa role langsung ke halaman tagihan
+        $roles = session()->get('data.roles', []);
+        if (in_array('siswa', $roles)) {
+            return redirect()->to(filament()->getUrl() . '/tagihan-siswa');
+        }
+
         $permissions = session()->get('data.permissions', []);
 
         // Map permission ke halaman, urut berdasarkan prioritas

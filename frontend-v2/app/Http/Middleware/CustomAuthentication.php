@@ -23,7 +23,7 @@ class CustomAuthentication
 
         // Redirect to change-password page if must_change_password is true
         // (unless already on the change-password page)
-        if (session()->get('data.must_change_password', false) && !$request->routeIs('filament.admin.pages.change-password')) {
+        if (session()->get('data.must_change_password', false) && !$request->is('*/change-password', 'change-password')) {
             return redirect()->to(filament()->getUrl() . '/change-password');
         }
 

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->date('sent_date');
             $table->timestamps();
 
-            $table->unique(['tagihan_kode', 'notification_type', 'sent_date']);
+            $table->unique(['tagihan_kode', 'notification_type', 'sent_date'], 'notif_sent_kode_type_date_unique');
         });
     }
 

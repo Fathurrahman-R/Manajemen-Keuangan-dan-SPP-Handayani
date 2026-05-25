@@ -12,9 +12,10 @@ class KelasFactory extends Factory
     public function definition(): array
     {
         return [
-//            'jenjang'=>$this->faker->randomElement(['TK','MI','KB']),
-            'jenjang'=>'MI',
-            'nama'=>'KELAS 1',
+            'jenjang' => $this->faker->randomElement(['TK', 'MI', 'KB']),
+            'nama' => $this->faker->randomElement(['Kelas 1', 'Kelas 2', 'Kelas 3', 'TK A', 'TK B', 'KB']),
+            'branch_id' => \App\Models\Branch::factory(),
+            'level' => $this->faker->numberBetween(1, 6),
         ];
     }
 }

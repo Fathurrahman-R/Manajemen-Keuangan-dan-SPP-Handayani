@@ -18,7 +18,7 @@ return new class extends Migration
             $table->boolean('reminder_enabled')->default(true);
             $table->boolean('kwitansi_enabled')->default(true);
             $table->boolean('overdue_enabled')->default(true);
-            $table->json('reminder_days_before')->default('[7,3,1]');
+            $table->json('reminder_days_before')->nullable();
             $table->integer('overdue_interval_days')->default(7);
             $table->timestamps();
         });

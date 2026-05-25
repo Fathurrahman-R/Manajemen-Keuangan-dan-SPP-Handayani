@@ -27,7 +27,9 @@ class Login extends PagesLogin
         $token = session()->get('data.token');
 
         if (!is_null($token)) {
-            return redirect()->intended(filament()->getUrl() . '/data-master-siswa');
+            $roles = session()->get('data.roles', []);
+            $target = in_array('siswa', $roles) ? '/tagihan-siswa' : '/data-master-siswa';
+            return redirect()->intended(filament()->getUrl() . $target);
         }
     }
 

@@ -3,12 +3,14 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Auth\Login;
+use App\Filament\Pages\BulkAkunSiswaPage;
 use App\Filament\Pages\DataMasterCategory;
 use App\Filament\Pages\DataMasterKelas;
 use App\Filament\Pages\DataMasterSiswa;
 use App\Filament\Pages\KenaikanKelasPage;
 use App\Filament\Pages\LaporanKasHarian;
 use App\Filament\Pages\LaporanRekapBulanan;
+use App\Filament\Pages\ManajemenAkunSiswa;
 use App\Filament\Pages\RoleManagement;
 use App\Filament\Pages\Settings;
 use App\Filament\Pages\TagihanSiswaPage;
@@ -164,6 +166,18 @@ class AdminPanelProvider extends PanelProvider
                                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.admin.pages.user-management'))
                                 ->visible(fn(): bool => in_array('view-user', session()->get('data.permissions', [])))
                                 ->url(fn(): string => UserManagement::getUrl()),
+                            NavigationItem::make()
+                                ->label('Manajemen Akun Siswa')
+                                ->icon('heroicon-o-user-circle')
+                                ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.admin.pages.manajemen-akun-siswa'))
+                                ->visible(fn(): bool => in_array('manage-akun-siswa', session()->get('data.permissions', [])))
+                                ->url(fn(): string => ManajemenAkunSiswa::getUrl()),
+                            NavigationItem::make()
+                                ->label('Bulk Akun Siswa')
+                                ->icon('heroicon-o-user-plus')
+                                ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.admin.pages.bulk-akun-siswa'))
+                                ->visible(fn(): bool => in_array('manage-akun-siswa', session()->get('data.permissions', [])))
+                                ->url(fn(): string => BulkAkunSiswaPage::getUrl()),
                         ]),
                     NavigationGroup::make('tagihan_siswa')
                         ->label('Tagihan')

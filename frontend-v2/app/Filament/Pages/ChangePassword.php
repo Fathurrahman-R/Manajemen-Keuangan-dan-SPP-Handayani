@@ -54,7 +54,18 @@ class ChangePassword extends Page
                 ->success()
                 ->send();
 
-            $this->redirectToMainPage();
+            // Logout dari API (hapus token Sanctum) lalu clear session
+            try {
+                ApiService::client()->delete('/logout');
+            } catch (\Exception $e) {
+                // Tetap lanjut meskipun API call gagal
+            }
+
+            \Filament\Facades\Filament::auth()->logout();
+            session()->invalidate();
+            session()->regenerateToken();
+
+            $this->redirect(filament()->getUrl() . '/login');
         } else {
             $errors = $response->json('errors', []);
             $message = 'Gagal mengubah password.';

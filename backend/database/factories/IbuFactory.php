@@ -21,8 +21,9 @@ class IbuFactory extends Factory
     {
         return [
             'nama' => $this->faker->name('female'),
-            'pendidikan_terakhir' => $this->faker->randomElement(['SD','SMP','SMA','D3','S1']),
-            'pekerjaan' => $this->faker->jobTitle(),
+            'pendidikan_terakhir' => $this->faker->randomElement(['SD', 'SMP', 'SMA', 'D3', 'S1', 'S2']),
+            'pekerjaan' => $this->faker->randomElement(['Ibu Rumah Tangga', $this->faker->jobTitle()]),
+            'email' => $this->faker->optional(0.5)->safeEmail(),
         ];
     }
 }

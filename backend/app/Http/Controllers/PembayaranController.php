@@ -42,7 +42,7 @@ class PembayaranController extends Controller
             ->where('branch_id', Auth::user()->branch_id)
             ->select(['kode_pembayaran','kode_tagihan','tanggal','metode','jumlah','pembayar']);
 
-        if ($user && $user->role !== 'admin') {
+        if ($user && !$user->hasAnyRole(['superadmin', 'admin'])) {
             $query->whereHas('tagihan', function ($q) use ($user) {
                 $q->where('nis', $user->username);
             });
