@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AppSettingController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ImportExportController;
 use App\Http\Controllers\JenisTagihanController;
 use App\Http\Controllers\KasController;
 use App\Http\Controllers\KategoriController;
@@ -206,6 +207,33 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::patch('/{id}/toggle-active', [AkunSiswaController::class, 'toggleActive']);
             Route::get('/credentials', [AkunSiswaController::class, 'credentials']);
             Route::get('/credentials-pdf', [AkunSiswaController::class, 'credentialsPdf']);
+        });
+
+        // Import & Export routes
+        Route::prefix('/import-export')->group(function () {
+            // Export routes - require 'export-data' permission
+            Route::middleware('permission:export-data')->group(function () {
+                Route::post('/export/siswa', [ImportExportController::class, 'exportSiswa']);
+                Route::post('/export/tagihan', [ImportExportController::class, 'exportTagihan']);
+                Route::post('/export/pembayaran', [ImportExportController::class, 'exportPembayaran']);
+                Route::post('/export/kas-harian', [ImportExportController::class, 'exportKasHarian']);
+                Route::post('/export/rekap-bulanan', [ImportExportController::class, 'exportRekapBulanan']);
+            });
+
+            // Import routes - require 'import-data' permission
+            Route::middleware('permission:import-data')->group(function () {
+                Route::post('/import/siswa/upload', [ImportExportController::class, 'uploadSiswa']);
+                Route::post('/import/siswa/confirm', [ImportExportController::class, 'confirmSiswa']);
+                Route::post('/import/tagihan/upload', [ImportExportController::class, 'uploadTagihan']);
+                Route::post('/import/tagihan/confirm', [ImportExportController::class, 'confirmTagihan']);
+                Route::get('/import/template/siswa', [ImportExportController::class, 'templateSiswa']);
+                Route::get('/import/template/tagihan', [ImportExportController::class, 'templateTagihan']);
+                Route::get('/import/history', [ImportExportController::class, 'importHistory']);
+                Route::post('/import/{batchId}/rollback', [ImportExportController::class, 'rollbackImport']);
+            });
+
+            // Job status - accessible with either permission
+            Route::get('/job/{jobId}/status', [ImportExportController::class, 'jobStatus']);
         });
     });
 });

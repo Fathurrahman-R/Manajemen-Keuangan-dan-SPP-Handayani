@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Services\ApiService;
+use App\Livewire\Concerns\HasImportExport;
 use Exception;
 use Livewire\Component;
 use Filament\Actions\Action;
@@ -35,7 +36,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class Pembayaran extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
+    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable, HasImportExport;
 
     public $perPage = 5;
     public $currentPage = 1;
@@ -103,6 +104,14 @@ class Pembayaran extends Component implements HasActions, HasSchemas, HasTable
             ->paginatedWhileReordering()
             ->emptyStateHeading('Tidak Ada Pembayaran')
             ->emptyStateDescription('Silahkan menambahkan tagihan')
+            ->headerActions([
+                ...$this->makeImportExportActions('pembayaran', [
+                    \Filament\Forms\Components\DatePicker::make('tanggal_mulai')
+                        ->label('Tanggal Mulai'),
+                    \Filament\Forms\Components\DatePicker::make('tanggal_selesai')
+                        ->label('Tanggal Selesai'),
+                ]),
+            ])
             ->recordActions([
                 ActionGroup::make([
                     Action::make('receipt')

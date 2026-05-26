@@ -17,5 +17,6 @@ class PermissionBinding
         Permissions::TAHUN_AJARAN_PERMISSIONS,
         Permissions::KENAIKAN_KELAS_PERMISSIONS,
         Permissions::AKUN_SISWA_PERMISSIONS,
+        Permissions::IMPORT_EXPORT_PERMISSIONS,
     ];
 }

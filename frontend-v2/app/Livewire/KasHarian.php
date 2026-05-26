@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Services\ApiService;
+use App\Livewire\Concerns\HasImportExport;
 use Carbon\Carbon;
 use Exception;
 use Filament\Actions\ExportAction;
@@ -36,7 +37,7 @@ use Illuminate\Support\Str;
 
 class KasHarian extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
+    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable, HasImportExport;
 
     public $currentMonthYear;
     public function table(Table $table): Table
@@ -97,6 +98,7 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
             ->emptyStateDescription('Silahkan menambahkan data pembayaran atau pengeluaran')
             ->headerActions([
                 Action::make('Export')
+                    ->label('Export PDF')
                     ->action(function () {
                         $filters = $this->getTableFilterState('date');
                         $params = [
@@ -129,7 +131,35 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
                         }, $filename, [
                             'Content-Type' => 'application/pdf', // Set the correct MIME type
                         ]);
-                    })
+                    }),
+                Action::make('export_excel')
+                    ->label('Export Excel/CSV')
+                    ->color('success')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->button()
+                    ->visible(fn(): bool => in_array('export-data', session()->get('data.permissions', [])))
+                    ->modalHeading('Export Kas Harian')
+                    ->modalSubmitActionLabel('Export')
+                    ->schema([
+                        \Filament\Forms\Components\Select::make('format')
+                            ->label('Format')
+                            ->options(['xlsx' => 'Excel (.xlsx)', 'csv' => 'CSV (.csv)'])
+                            ->default('xlsx')
+                            ->required(),
+                        \Filament\Forms\Components\Select::make('bulan')
+                            ->label('Bulan')
+                            ->options(collect(range(1, 12))->mapWithKeys(fn($m) => [$m => \Carbon\Carbon::create(null, $m)->translatedFormat('F')])->toArray())
+                            ->default(now()->month)
+                            ->required(),
+                        \Filament\Forms\Components\TextInput::make('tahun')
+                            ->label('Tahun')
+                            ->numeric()
+                            ->default(now()->year)
+                            ->required(),
+                    ])
+                    ->action(function (array $data) {
+                        return $this->doExportAction('kas_harian', $data);
+                    }),
             ]);
     }
 

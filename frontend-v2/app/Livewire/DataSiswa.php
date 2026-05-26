@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\User;
 use Exception;
 use App\Services\ApiService;
+use App\Livewire\Concerns\HasImportExport;
 use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -34,7 +35,7 @@ use Illuminate\Support\Str;
 
 class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
+    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable, HasImportExport;
 
     public $activeTab = 'TK';
     public $perPage = 5;
@@ -598,6 +599,17 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                         $this->kelasId = null;
                         $this->resetTable();
                     }),
+
+                // Import/Export Siswa
+                ...$this->makeImportExportActions('siswa', [
+                    Select::make('jenjang')
+                        ->label('Jenjang')
+                        ->options(['TK' => 'TK', 'MI' => 'MI', 'KB' => 'KB']),
+                    Select::make('status')
+                        ->label('Status')
+                        ->options(['Aktif' => 'Aktif', 'Lulus' => 'Lulus', 'Pindah' => 'Pindah', 'Keluar' => 'Keluar']),
+                ]),
+
                 // Tambah Siswa MI
                 Action::make('add_detail') // Unique name for your action
                     ->label('Tambah') // Text displayed on the button

@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Services\ApiService;
+use App\Livewire\Concerns\HasImportExport;
 use Exception;
 use Filament\Tables\Grouping\Group;
 use Livewire\Component;
@@ -38,7 +39,7 @@ use NumberFormatter;
 
 class Tagihan extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
+    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable, HasImportExport;
 
     public $perPage = 5;
 
@@ -275,6 +276,16 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                 ])
             ])
             ->headerActions([
+                // Import/Export Tagihan
+                ...$this->makeImportExportActions('tagihan', [
+                    Select::make('status')
+                        ->label('Status')
+                        ->options(['Lunas' => 'Lunas', 'Belum Lunas' => 'Belum Lunas', 'Belum Dibayar' => 'Belum Dibayar']),
+                    Select::make('jenjang')
+                        ->label('Jenjang')
+                        ->options(['TK' => 'TK', 'MI' => 'MI', 'KB' => 'KB']),
+                ]),
+
                 Action::make('add') // Unique name for your action
                     ->label('Tambah') // Text displayed on the button
                     ->color('primaryMain') // Optional color

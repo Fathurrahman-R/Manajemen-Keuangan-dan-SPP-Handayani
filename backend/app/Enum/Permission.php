@@ -83,4 +83,8 @@ enum Permission: string
     //akun siswa permissions
     case VIEW_TAGIHAN_SISWA = 'view-tagihan-siswa';
     case MANAGE_AKUN_SISWA = 'manage-akun-siswa';
+
+    //import export permissions
+    case IMPORT_DATA = 'import-data';
+    case EXPORT_DATA = 'export-data';
 }

@@ -18,7 +18,6 @@ class UserFactory extends Factory
         return [
             'username'  => 'admin',
             'password'  => Hash::make('password'),
-            'token'     => 'test',
             'branch_id' => Branch::factory(),
         ];
     }

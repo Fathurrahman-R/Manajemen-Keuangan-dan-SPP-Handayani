@@ -35,6 +35,7 @@ class Siswa extends Model
         'status',
         'keterangan',
         'branch_id',
+        'batch_reference',
     ];
     protected $casts = [
         'id' => 'integer',

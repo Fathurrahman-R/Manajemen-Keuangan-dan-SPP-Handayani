@@ -22,6 +22,7 @@ class Tagihan extends Model
         'status',
         'branch_id',
         'tahun_ajaran_id',
+        'batch_reference',
     ];
 
     protected function casts(): array

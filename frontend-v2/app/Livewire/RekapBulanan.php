@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Services\ApiService;
+use App\Livewire\Concerns\HasImportExport;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Storage;
@@ -35,7 +36,7 @@ use Illuminate\Support\Str;
 
 class RekapBulanan extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
+    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable, HasImportExport;
 
     public $currentMonthYear;
 
@@ -86,6 +87,7 @@ class RekapBulanan extends Component implements HasActions, HasSchemas, HasTable
             ->emptyStateDescription('Silahkan menambahkan data pembayaran atau pengeluaran')
             ->headerActions([
                 Action::make('Export')
+                    ->label('Export PDF')
                     ->action(function () {
                         $filters = $this->getTableFilterState('date');
                         $params = [
@@ -113,7 +115,30 @@ class RekapBulanan extends Component implements HasActions, HasSchemas, HasTable
                             }, $filename, [
                                 'Content-Type' => 'application/pdf', // Set the correct MIME type
                             ]);
-                    })
+                    }),
+                Action::make('export_excel')
+                    ->label('Export Excel/CSV')
+                    ->color('success')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->button()
+                    ->visible(fn(): bool => in_array('export-data', session()->get('data.permissions', [])))
+                    ->modalHeading('Export Rekap Bulanan')
+                    ->modalSubmitActionLabel('Export')
+                    ->schema([
+                        \Filament\Forms\Components\Select::make('format')
+                            ->label('Format')
+                            ->options(['xlsx' => 'Excel (.xlsx)', 'csv' => 'CSV (.csv)'])
+                            ->default('xlsx')
+                            ->required(),
+                        \Filament\Forms\Components\TextInput::make('tahun')
+                            ->label('Tahun')
+                            ->numeric()
+                            ->default(now()->year)
+                            ->required(),
+                    ])
+                    ->action(function (array $data) {
+                        return $this->doExportAction('rekap_bulanan', $data);
+                    }),
             ]);
     }
 

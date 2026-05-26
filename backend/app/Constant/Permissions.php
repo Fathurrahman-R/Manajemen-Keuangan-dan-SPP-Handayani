@@ -79,4 +79,9 @@ class Permissions
     public const AKUN_SISWA_PERMISSIONS = [
         'manage' => Permission::MANAGE_AKUN_SISWA,
     ];
+
+    public const IMPORT_EXPORT_PERMISSIONS = [
+        'import' => Permission::IMPORT_DATA,
+        'export' => Permission::EXPORT_DATA,
+    ];
 }
