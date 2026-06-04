@@ -43,9 +43,10 @@ class RoleAndPermissionSeeder extends Seeder
             ->toArray();
         $admin->syncPermissions($adminPermissions);
 
-        // Assign siswa permissions — only view-tagihan-siswa, NO admin panel permissions
+        // Assign siswa permissions — only view-tagihan-siswa and view-own-billing
         $siswa->syncPermissions([
             Permission::VIEW_TAGIHAN_SISWA->value,
+            Permission::VIEW_OWN_BILLING->value,
         ]);
 
         // Clear cache after seeding

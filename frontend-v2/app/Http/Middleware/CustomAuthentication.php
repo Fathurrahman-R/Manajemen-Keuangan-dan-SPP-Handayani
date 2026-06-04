@@ -15,6 +15,14 @@ class CustomAuthentication
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // If portal is disabled, abort any portal requests with 404
+        $portalPath = config('handayani.portal.path', 'portal');
+        if ($request->is($portalPath) || $request->is($portalPath . '/*')) {
+            if (!config('handayani.features.portal_enabled', true)) {
+                abort(404);
+            }
+        }
+
         $token = session()->get('data.token');
 
         if (is_null($token)) {

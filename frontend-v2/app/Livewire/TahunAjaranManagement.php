@@ -6,6 +6,7 @@ use App\Services\ApiService;
 use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\DatePicker;
@@ -29,20 +30,29 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
     {
         return $table
             ->records(
-                fn(?string $search): array => ApiService::client()
+                fn(?string $search, ?string $sortColumn = null, ?string $sortDirection = null): array => ApiService::client()
                     ->get('/tahun-ajaran')
                     ->collect('data')
                     ->when(filled($search), fn(Collection $data): Collection => $data->filter(
                         fn(array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))
                     ))
+                    ->when(
+                        filled($sortColumn),
+                        fn(Collection $data): Collection => $data->sortBy(
+                            fn(array $record) => data_get($record, $sortColumn),
+                            SORT_REGULAR,
+                            ($sortDirection ?? 'asc') === 'desc'
+                        )->values()
+                    )
                     ->toArray()
             )
             ->columns([
-                TextColumn::make('nama')->label('Tahun Ajaran')->searchable(),
-                TextColumn::make('tanggal_mulai')->label('Tanggal Mulai'),
-                TextColumn::make('tanggal_selesai')->label('Tanggal Selesai'),
+                TextColumn::make('nama')->label('Tahun Ajaran')->sortable()->searchable(),
+                TextColumn::make('tanggal_mulai')->label('Tanggal Mulai')->sortable(),
+                TextColumn::make('tanggal_selesai')->label('Tanggal Selesai')->sortable(),
                 TextColumn::make('status')
                     ->label('Status')
+                    ->sortable()
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
                         'Aktif' => 'success',
@@ -160,6 +170,31 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
                         })
                         ->after(fn() => $this->resetTable()),
                 ])
+            ])
+            ->bulkActions([
+                BulkAction::make('bulkDelete')
+                    ->label('Hapus Terpilih')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Hapus Tahun Ajaran Terpilih')
+                    ->modalDescription('Apakah kamu yakin ingin menghapus semua tahun ajaran yang dipilih?')
+                    ->modalSubmitActionLabel('Ya, Hapus Semua')
+                    ->action(function (Collection $records): void {
+                        $success = 0;
+                        $failed = 0;
+                        foreach ($records as $record) {
+                            $response = ApiService::client()->delete('/tahun-ajaran/' . $record['id']);
+                            $response->ok() ? $success++ : $failed++;
+                        }
+                        if ($failed > 0) {
+                            Notification::make()->title("{$success} berhasil, {$failed} gagal dihapus")->warning()->send();
+                        } else {
+                            Notification::make()->title("{$success} tahun ajaran berhasil dihapus")->success()->send();
+                        }
+                        $this->resetTable();
+                        $this->deselectAllTableRecords();
+                    }),
             ])
             ->headerActions([
                 Action::make('add')

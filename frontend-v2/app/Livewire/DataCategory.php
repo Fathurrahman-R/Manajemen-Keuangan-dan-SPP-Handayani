@@ -6,6 +6,7 @@ use App\Services\ApiService;
 use Exception;
 use Livewire\Component;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\TextInput;
@@ -29,20 +30,28 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
     {
         return $table
             ->records(
-                fn(?string $search): array => ApiService::client()
+                fn(?string $search, ?string $sortColumn = null, ?string $sortDirection = null): array => ApiService::client()
                     ->get('/kategori')
                     ->collect('data')
                     ->when(filled($search), fn (Collection $data): Collection => $data->filter(fn (array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))))
+                    ->when(
+                        filled($sortColumn),
+                        fn(Collection $data): Collection => $data->sortBy(
+                            $sortColumn,
+                            SORT_REGULAR,
+                            ($sortDirection ?? 'asc') === 'desc'
+                        )->values()
+                    )
                     ->toArray(),
             )
             ->columns([
-                TextColumn::make('nama')->label('Nama'),
+                TextColumn::make('nama')->label('Nama')->sortable(),
             ])
             ->deferLoading()
             ->striped()
             ->searchable()
             ->paginated([5, 10, 25])
-            ->defaultPaginationPageOption(5)
+            ->defaultPaginationPageOption(10)
             ->paginatedWhileReordering()
             ->emptyStateHeading('Tidak Ada Kategori')
             ->emptyStateDescription('Silahkan menambahkan kategori')
@@ -58,7 +67,7 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
                         return [
                             $action->getModalSubmitAction()
                                 ->label('Simpan')
-                                ->color('primaryMain')
+                                ->color('primary')
                                 ->extraAttributes([
                                     'class' => 'text-white font-semibold'
                                 ]),
@@ -136,10 +145,36 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
                         $this->resetTable();
                     })
             ])
+            ->bulkActions([
+                BulkAction::make('bulkDelete')
+                    ->label('Hapus Terpilih')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->visible(fn(): bool => in_array('delete-kategori', session()->get('data.permissions', [])))
+                    ->requiresConfirmation()
+                    ->modalHeading('Hapus Kategori Terpilih')
+                    ->modalDescription('Apakah kamu yakin ingin menghapus semua kategori yang dipilih?')
+                    ->modalSubmitActionLabel('Ya, Hapus Semua')
+                    ->action(function (Collection $records): void {
+                        $success = 0;
+                        $failed = 0;
+                        foreach ($records as $record) {
+                            $response = ApiService::client()->delete('/kategori/' . $record['id']);
+                            $response->ok() ? $success++ : $failed++;
+                        }
+                        if ($failed > 0) {
+                            Notification::make()->title("{$success} berhasil, {$failed} gagal dihapus")->warning()->send();
+                        } else {
+                            Notification::make()->title("{$success} kategori berhasil dihapus")->success()->send();
+                        }
+                        $this->resetTable();
+                        $this->deselectAllTableRecords();
+                    }),
+            ])
             ->headerActions([
                 Action::make('add') // Unique name for your action
                     ->label('Tambah') // Text displayed on the button
-                    ->color('primaryMain') // Optional color
+                    ->color('primary') // Optional color
                     ->button()
                     ->visible(fn(): bool => in_array('create-kategori', session()->get('data.permissions', [])))
                     ->modalHeading('Tambah Kategori')
@@ -147,7 +182,7 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
                         return [
                             $action->getModalSubmitAction()
                                 ->label('Simpan')
-                                ->color('primaryMain')
+                                ->color('primary')
                                 ->extraAttributes([
                                     'class' => 'text-white font-semibold'
                                 ]),

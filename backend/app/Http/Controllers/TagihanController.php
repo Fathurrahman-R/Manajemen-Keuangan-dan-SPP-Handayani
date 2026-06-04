@@ -25,6 +25,8 @@ use Throwable;
 
 class TagihanController extends Controller
 {
+    use Traits\Sortable;
+
     protected SiblingDetectionService $siblingDetectionService;
 
     public function __construct(SiblingDetectionService $siblingDetectionService)
@@ -103,6 +105,8 @@ class TagihanController extends Controller
     #[QueryParameter('jenjang', description: 'Filter jenjang (TK/MI/KB)', required: false, example: 'MI')]
     #[QueryParameter('status', description: 'Filter status tagihan (Lunas/Belum Lunas)', required: false, example: 'Belum Lunas')]
     #[QueryParameter('per_page', description: 'Jumlah data per halaman', required: false, example: 30)]
+    #[QueryParameter('sort', description: 'Column to sort by (kode_tagihan, nis, status, tmp, created_at)', required: false, example: 'kode_tagihan')]
+    #[QueryParameter('direction', description: 'Sort direction (asc or desc)', required: false, example: 'desc')]
     public function index()
     {
         $user = Auth::user();
@@ -149,6 +153,14 @@ class TagihanController extends Controller
         if ($status) {
             $query->where('status',$status);
         }
+
+        $this->applySorting(
+            $query,
+            ['kode_tagihan', 'nis', 'status', 'tmp', 'created_at'],
+            'kode_tagihan',
+            'desc'
+        );
+
         $tagihan = $query->paginate(request('per_page',30));
         return TagihanResource::collection($tagihan);
     }

@@ -17,10 +17,11 @@ class TransaksiTagihan extends Page
 
     protected static ?int $navigationSort = 2;
 
+    public string $activeJenjang = '';
+
     public static function shouldRegisterNavigation(): bool
     {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        return in_array('view-tagihan', $permissions);
+        return false; // Handled manually in AdminPanelProvider with flat jenjang items
     }
 
     public function mount(): void
@@ -29,5 +30,7 @@ class TransaksiTagihan extends Page
         if (!in_array('view-tagihan', $permissions)) {
             abort(403);
         }
+
+        $this->activeJenjang = request()->query('jenjang', 'KB');
     }
 }

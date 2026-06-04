@@ -18,5 +18,8 @@ class PermissionBinding
         Permissions::KENAIKAN_KELAS_PERMISSIONS,
         Permissions::AKUN_SISWA_PERMISSIONS,
         Permissions::IMPORT_EXPORT_PERMISSIONS,
+        Permissions::DASHBOARD_PERMISSIONS,
+        Permissions::APPROVAL_WORKFLOW_PERMISSIONS,
+        Permissions::BRANCH_PERMISSIONS,
     ];
 }

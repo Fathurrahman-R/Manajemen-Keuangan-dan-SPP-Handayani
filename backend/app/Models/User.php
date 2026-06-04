@@ -20,6 +20,7 @@ class User extends Authenticatable
     protected $fillable = [
         'username',
         'name',
+        'email',
         'password',
         'branch_id',
         'siswa_id',
@@ -48,6 +49,16 @@ class User extends Authenticatable
     public function siswa()
     {
         return $this->belongsTo(Siswa::class);
+    }
+
+    /**
+     * Normalize email to lowercase on set.
+     */
+    public function setEmailAttribute(?string $value): void
+    {
+        $this->attributes['email'] = $value !== null
+            ? strtolower(trim($value))
+            : null;
     }
 
     public function scopeActive($query)

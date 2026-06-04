@@ -8,6 +8,7 @@ use App\Services\ApiService;
 use App\Livewire\Concerns\HasImportExport;
 use Livewire\Component;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\DatePicker;
@@ -37,16 +38,21 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
 {
     use InteractsWithActions, InteractsWithSchemas, InteractsWithTable, HasImportExport;
 
-    public $activeTab = 'TK';
+    public $activeTab = 'KB';
     public $perPage = 5;
     public $currentPage = 1;
     public ?int $kelasId = null;
+
+    public function mount(string $jenjang = 'KB'): void
+    {
+        $this->activeTab = $jenjang;
+    }
 
     public function table(Table $table): Table
     {
         return $table
             ->records(
-                function (?string $search, int $page, int $recordsPerPage): LengthAwarePaginator {
+                function (?string $search, int $page, int $recordsPerPage, ?string $sortColumn = null, ?string $sortDirection = null): LengthAwarePaginator {
                     $this->perPage = $recordsPerPage;
                     $this->currentPage = $page;
                     $params = [
@@ -60,6 +66,11 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
 
                     if (!is_null($this->kelasId)) {
                         $params['kelas_id'] = $this->kelasId;
+                    }
+
+                    if (filled($sortColumn)) {
+                        $params['sort'] = $sortColumn;
+                        $params['direction'] = $sortDirection ?? 'asc';
                     }
 
                     $response = ApiService::client()
@@ -80,10 +91,10 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                     ->label('NISN')
                     ->searchable()
                     ->hidden(fn($livewire) => $livewire->activeTab !== 'MI'),
-                TextColumn::make('nama')->label('Nama')->searchable(),
+                TextColumn::make('nama')->label('Nama')->sortable()->searchable(),
                 TextColumn::make('kelas.nama')->label(__('Kelas')),
                 TextColumn::make('jenis_kelamin')->label('Jenis Kelamin')->searchable(),
-                TextColumn::make('tanggal_lahir')->label('Tanggal Lahir')->searchable(),
+                TextColumn::make('tanggal_lahir')->label('Tanggal Lahir')->sortable()->searchable(),
                 TextColumn::make('agama')->label('Agama')->searchable(),
                 TextColumn::make('wali.nama')
                     ->label('Nama Wali')
@@ -100,7 +111,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
             ->deferLoading()
             ->striped()
             ->paginated([5, 10, 25])
-            ->defaultPaginationPageOption(5)
+            ->defaultPaginationPageOption(10)
             ->paginatedWhileReordering()
             ->emptyStateHeading('Tidak Ada Siswa')
             ->emptyStateDescription('Silahkan menambahkan siswa')
@@ -297,7 +308,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                 ]),
                         ])
                             ->nextAction(
-                                fn(Action $action) => $action->label('Selanjutnya')->color('primaryMain')->extraAttributes([
+                                fn(Action $action) => $action->label('Selanjutnya')->color('primary')->extraAttributes([
                                     'class' => 'font-semibold'
                                 ]),
                             )
@@ -307,7 +318,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                             ->submitAction(
                                 Action::make('submit')
                                     ->label('Simpan')
-                                    ->color('primaryMain')
+                                    ->color('primary')
                                     ->extraAttributes([
                                         'class' => 'font-semibold'
                                     ])
@@ -489,7 +500,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                 ]),
                         ])
                             ->nextAction(
-                                fn(Action $action) => $action->label('Selanjutnya')->color('primaryMain')->extraAttributes([
+                                fn(Action $action) => $action->label('Selanjutnya')->color('primary')->extraAttributes([
                                     'class' => 'font-semibold'
                                 ]),
                             )
@@ -499,7 +510,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                             ->submitAction(
                                 Action::make('save')
                                     ->label('Simpan')
-                                    ->color('primaryMain')
+                                    ->color('primary')
                                     ->extraAttributes([
                                         'class' => 'font-semibold'
                                     ])
@@ -556,7 +567,32 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                     })
                     ->after(function () {
                         $this->resetTable();
-                    })
+            ])
+            ->bulkActions([
+                BulkAction::make('bulkDelete')
+                    ->label('Hapus Terpilih')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->visible(fn(): bool => in_array('delete-siswa', session()->get('data.permissions', [])))
+                    ->requiresConfirmation()
+                    ->modalHeading('Hapus Siswa Terpilih')
+                    ->modalDescription('Apakah kamu yakin ingin menghapus semua siswa yang dipilih?')
+                    ->modalSubmitActionLabel('Ya, Hapus Semua')
+                    ->action(function (Collection $records): void {
+                        $success = 0;
+                        $failed = 0;
+                        foreach ($records as $record) {
+                            $response = ApiService::client()->delete('/siswa/' . $this->activeTab . '/' . $record['id']);
+                            $response->ok() ? $success++ : $failed++;
+                        }
+                        if ($failed > 0) {
+                            Notification::make()->title("{$success} berhasil, {$failed} gagal dihapus")->warning()->send();
+                        } else {
+                            Notification::make()->title("{$success} siswa berhasil dihapus")->success()->send();
+                        }
+                        $this->resetTable();
+                        $this->deselectAllTableRecords();
+                    }),
             ])
             ->headerActions([
                 // Kelas filter tied to active tab
@@ -613,7 +649,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                 // Tambah Siswa MI
                 Action::make('add_detail') // Unique name for your action
                     ->label('Tambah') // Text displayed on the button
-                    ->color('primaryMain') // Optional color
+                    ->color('primary') // Optional color
                     ->button()
                     ->modalHeading('Tambah Siswa')
                     ->modalSubmitAction(false)
@@ -884,7 +920,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                 ]),
                         ])
                             ->nextAction(
-                                fn(Action $action) => $action->label('Selanjutnya')->color('primaryMain')->extraAttributes([
+                                fn(Action $action) => $action->label('Selanjutnya')->color('primary')->extraAttributes([
                                     'class' => 'font-semibold'
                                 ]),
                             )
@@ -894,7 +930,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                             ->submitAction(
                                 Action::make('submit')
                                     ->label('Simpan')
-                                    ->color('primaryMain')
+                                    ->color('primary')
                                     ->extraAttributes([
                                         'class' => 'font-semibold'
                                     ])
@@ -937,7 +973,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                 // Tambah Siswa TK, KB
                 Action::make('add') // Unique name for your action
                     ->label('Tambah') // Text displayed on the button
-                    ->color('primaryMain')
+                    ->color('primary')
                     ->button()
                     ->modalHeading('Tambah Siswa')
                     ->modalSubmitAction(false)
@@ -1150,7 +1186,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                 ]),
                         ])
                             ->nextAction(
-                                fn(Action $action) => $action->label('Selanjutnya')->color('primaryMain')->extraAttributes([
+                                fn(Action $action) => $action->label('Selanjutnya')->color('primary')->extraAttributes([
                                     'class' => 'font-semibold'
                                 ]),
                             )
@@ -1160,7 +1196,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                             ->submitAction(
                                 Action::make('save')
                                     ->label('Simpan')
-                                    ->color('primaryMain')
+                                    ->color('primary')
                                     ->extraAttributes([
                                         'class' => 'font-semibold'
                                     ])

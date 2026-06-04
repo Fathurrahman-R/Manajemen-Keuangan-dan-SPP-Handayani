@@ -87,4 +87,20 @@ enum Permission: string
     //import export permissions
     case IMPORT_DATA = 'import-data';
     case EXPORT_DATA = 'export-data';
+
+    //dashboard permissions
+    case VIEW_DASHBOARD = 'view-dashboard';
+    case VIEW_OWN_BILLING = 'view-own-billing';
+
+    //approval workflow permissions
+    case CREATE_PENGELUARAN_REQUEST = 'create-pengeluaran-request';
+    case APPROVE_PENGELUARAN = 'approve-pengeluaran';
+    case DISBURSE_PENGELUARAN = 'disburse-pengeluaran';
+
+    //branch permissions
+    case VIEW_BRANCH = 'view-branch';
+    case CREATE_BRANCH = 'create-branch';
+    case READ_BRANCH = 'read-branch';
+    case UPDATE_BRANCH = 'update-branch';
+    case DELETE_BRANCH = 'delete-branch';
 }

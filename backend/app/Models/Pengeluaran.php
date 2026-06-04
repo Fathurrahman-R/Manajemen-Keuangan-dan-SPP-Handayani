@@ -16,6 +16,7 @@ class Pengeluaran extends Model
         'uraian',
         'jumlah',
         'branch_id',
+        'pengeluaran_request_id',
     ];
     protected $primaryKey = 'id';
     protected $keyType = 'int';
@@ -32,5 +33,10 @@ class Pengeluaran extends Model
     public function branch()
     {
         return $this->BelongsTo(Branch::class, 'branch_id');
+    }
+
+    public function pengeluaranRequest()
+    {
+        return $this->belongsTo(\App\Models\PengeluaranRequest::class, 'pengeluaran_request_id');
     }
 }

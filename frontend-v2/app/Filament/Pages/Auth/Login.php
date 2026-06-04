@@ -128,7 +128,7 @@ class Login extends PagesLogin
     protected function getUsernameFormComponent(): Component
     {
         return TextInput::make('username')
-            ->label(__('Username'))
+            ->label('Email / NIS')
             ->required()
             ->autocomplete()
             ->autofocus()
@@ -156,7 +156,7 @@ class Login extends PagesLogin
     protected function getCredentialsFromFormData(#[SensitiveParameter] array $data): array
     {
         return [
-            'username' => $data['username'],
+            'identifier' => $data['username'],
             'password' => $data['password'],
         ];
     }

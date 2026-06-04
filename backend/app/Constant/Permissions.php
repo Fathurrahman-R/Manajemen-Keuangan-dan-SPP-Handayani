@@ -84,4 +84,23 @@ class Permissions
         'import' => Permission::IMPORT_DATA,
         'export' => Permission::EXPORT_DATA,
     ];
+
+    public const DASHBOARD_PERMISSIONS = [
+        'view' => Permission::VIEW_DASHBOARD,
+        'view-own' => Permission::VIEW_OWN_BILLING,
+    ];
+
+    public const APPROVAL_WORKFLOW_PERMISSIONS = [
+        'create' => Permission::CREATE_PENGELUARAN_REQUEST,
+        'approve' => Permission::APPROVE_PENGELUARAN,
+        'disburse' => Permission::DISBURSE_PENGELUARAN,
+    ];
+
+    public const BRANCH_PERMISSIONS = [
+        'view' => Permission::VIEW_BRANCH,
+        'create' => Permission::CREATE_BRANCH,
+        'read' => Permission::READ_BRANCH,
+        'update' => Permission::UPDATE_BRANCH,
+        'delete' => Permission::DELETE_BRANCH,
+    ];
 }

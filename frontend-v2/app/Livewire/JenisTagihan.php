@@ -6,6 +6,7 @@ use App\Services\ApiService;
 use Exception;
 use Livewire\Component;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\DatePicker;
@@ -38,23 +39,31 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
     {
         return $table
             ->records(
-                fn(?string $search): array => ApiService::client()
+                fn(?string $search, ?string $sortColumn = null, ?string $sortDirection = null): array => ApiService::client()
                     ->get('/jenis-tagihan', array_filter([
                         'tahun_ajaran_id' => $this->selectedTahunAjaranId,
                     ]))
                     ->collect('data')
                     ->when(filled($search), fn(Collection $data): Collection => $data->filter(fn(array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))))
+                    ->when(
+                        filled($sortColumn),
+                        fn(Collection $data): Collection => $data->sortBy(
+                            fn(array $record) => data_get($record, $sortColumn),
+                            SORT_REGULAR,
+                            ($sortDirection ?? 'asc') === 'desc'
+                        )->values()
+                    )
                     ->toArray()
             )
             ->columns([
-                TextColumn::make('nama')->label('Nama')->searchable(),
-                TextColumn::make('jatuh_tempo')->label('Jatuh Tempo'),
-                TextColumn::make('jumlah')->label('Jumlah')->money(currency: 'Rp.', decimalPlaces: 0,),
+                TextColumn::make('nama')->label('Nama')->sortable()->searchable(),
+                TextColumn::make('jatuh_tempo')->label('Jatuh Tempo')->sortable(),
+                TextColumn::make('jumlah')->label('Jumlah')->sortable()->money(currency: 'Rp.', decimalPlaces: 0,),
             ])
             ->deferLoading()
             ->striped()
             ->paginated([5, 10, 25])
-            ->defaultPaginationPageOption(5)
+            ->defaultPaginationPageOption(10)
             ->paginatedWhileReordering()
             ->emptyStateHeading('Tidak Ada Jenis Tagihan')
             ->emptyStateDescription('Silahkan menambahkan jenis tagihan')
@@ -69,7 +78,7 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                 //         return [
                 //             $action->getModalSubmitAction()
                 //                 ->label('Simpan')
-                //                 ->color('primaryMain')
+                //                 ->color('primary')
                 //                 ->extraAttributes([
                 //                     'class' => 'text-white font-semibold'
                 //                 ]),
@@ -151,12 +160,37 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                     })
                     ->after(function () {
                         $this->resetTable();
-                    })
+            ])
+            ->bulkActions([
+                BulkAction::make('bulkDelete')
+                    ->label('Hapus Terpilih')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->visible(fn(): bool => in_array('delete-jenis-tagihan', session()->get('data.permissions', [])))
+                    ->requiresConfirmation()
+                    ->modalHeading('Hapus Jenis Tagihan Terpilih')
+                    ->modalDescription('Apakah kamu yakin ingin menghapus semua jenis tagihan yang dipilih?')
+                    ->modalSubmitActionLabel('Ya, Hapus Semua')
+                    ->action(function (Collection $records): void {
+                        $success = 0;
+                        $failed = 0;
+                        foreach ($records as $record) {
+                            $response = ApiService::client()->delete('/jenis-tagihan/' . $record['id']);
+                            $response->ok() ? $success++ : $failed++;
+                        }
+                        if ($failed > 0) {
+                            Notification::make()->title("{$success} berhasil, {$failed} gagal dihapus")->warning()->send();
+                        } else {
+                            Notification::make()->title("{$success} jenis tagihan berhasil dihapus")->success()->send();
+                        }
+                        $this->resetTable();
+                        $this->deselectAllTableRecords();
+                    }),
             ])
             ->headerActions([
                 Action::make('add') // Unique name for your action
                     ->label('Tambah') // Text displayed on the button
-                    ->color('primaryMain') // Optional color
+                    ->color('primary') // Optional color
                     ->button()
                     ->visible(fn(): bool => in_array('create-jenis-tagihan', session()->get('data.permissions', [])))
                     ->modalHeading('Tambah Jenis Tagihan')
@@ -164,7 +198,7 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                         return [
                             $action->getModalSubmitAction()
                                 ->label('Simpan')
-                                ->color('primaryMain')
+                                ->color('primary')
                                 ->extraAttributes([
                                     'class' => 'text-white font-semibold'
                                 ]),

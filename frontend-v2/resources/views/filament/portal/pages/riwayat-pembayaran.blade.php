@@ -1,3 +1,3 @@
 <x-filament-panels::page>
-    <livewire:pengeluaran />
+    {{ $this->table }}
 </x-filament-panels::page>

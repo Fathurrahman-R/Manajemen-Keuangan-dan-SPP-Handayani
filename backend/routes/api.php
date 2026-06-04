@@ -2,15 +2,22 @@
 
 use App\Http\Controllers\AppSettingController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BranchApprovalSettingController;
+use App\Http\Controllers\BranchController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmailPopulationController;
 use App\Http\Controllers\ImportExportController;
 use App\Http\Controllers\JenisTagihanController;
 use App\Http\Controllers\KasController;
 use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\KelasController;
 use App\Http\Controllers\KenaikanKelasController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PdfGeneratorController;
 use App\Http\Controllers\PembayaranController;
 use App\Http\Controllers\PengeluaranController;
+use App\Http\Controllers\PengeluaranRequestController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SiswaController;
 use App\Http\Controllers\TagihanController;
@@ -27,6 +34,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::post("/login", [AuthController::class, "login"]);
 
+// Password reset routes (public, no auth required)
+Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink']);
+Route::get('/reset-password/{token}', [PasswordResetController::class, 'validateToken']);
+Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
+
 // Public unsubscribe routes (no auth required)
 Route::get('/unsubscribe/{token}', [EmailOptOutController::class, 'show']);
 Route::post('/unsubscribe/{token}', [EmailOptOutController::class, 'update']);
@@ -35,10 +47,30 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/logout', [AuthController::class, "logout"]);
     Route::get("/users/current", [UserController::class, "get"]);
     Route::patch('/users/current', [UserController::class, "updateCurrent"]);
+    Route::patch('/users/current/email', [UserController::class, 'updateEmail']);
     Route::post('/users/change-password', [UserController::class, 'changePassword']);
 
     // Siswa-accessible route (role:siswa middleware)
     Route::get('/tagihan/siswa', [TagihanController::class, 'siswaView'])->middleware('role:siswa');
+
+    // Dashboard routes
+    Route::prefix('/dashboard')->group(function () {
+        // Admin dashboard endpoints — require view-dashboard permission
+        Route::middleware('permission:view-dashboard')->group(function () {
+            Route::get('/summary', [DashboardController::class, 'summary']);
+            Route::get('/charts/pembayaran-bulanan', [DashboardController::class, 'chartPembayaranBulanan']);
+            Route::get('/charts/tunggakan-jenjang', [DashboardController::class, 'chartTunggakanJenjang']);
+            Route::get('/charts/kas-bulanan', [DashboardController::class, 'chartKasBulanan']);
+            Route::get('/charts/status-tagihan', [DashboardController::class, 'chartStatusTagihan']);
+            Route::get('/top-tunggakan', [DashboardController::class, 'topTunggakan']);
+            Route::get('/tagihan-jatuh-tempo', [DashboardController::class, 'tagihanJatuhTempo']);
+            Route::get('/pembayaran-terbaru', [DashboardController::class, 'pembayaranTerbaru']);
+        });
+
+        // Siswa/Wali dashboard endpoint — require view-own-billing permission
+        Route::get('/siswa', [DashboardController::class, 'siswaDashboard'])
+            ->middleware('permission:view-own-billing');
+    });
 
     // Admin panel routes — deny access to users with only "siswa" role
     Route::middleware('deny_siswa')->group(function () {
@@ -125,6 +157,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Pembayaran routes
         Route::prefix('/pembayaran')->group(function () {
+            Route::get('/grouped', [PembayaranController::class, 'grouped'])->middleware('permission:view-pembayaran');
             Route::get('/', [PembayaranController::class, 'index'])->middleware('permission:view-pembayaran');
             Route::post('/batch', [PembayaranController::class, 'batchLunas'])->middleware('permission:view-pembayaran');
             Route::post('/bayar/{kode_tagihan}', [PembayaranController::class, 'bayar'])->middleware('permission:view-pembayaran');
@@ -207,6 +240,50 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::patch('/{id}/toggle-active', [AkunSiswaController::class, 'toggleActive']);
             Route::get('/credentials', [AkunSiswaController::class, 'credentials']);
             Route::get('/credentials-pdf', [AkunSiswaController::class, 'credentialsPdf']);
+        });
+
+        // Email Population routes (for migration tool)
+        Route::prefix('/users/email-population')->group(function () {
+            Route::get('/', [EmailPopulationController::class, 'index']);
+            Route::get('/progress', [EmailPopulationController::class, 'progress']);
+        });
+        Route::patch('/users/{id}/email', [EmailPopulationController::class, 'update'])
+            ->where('id', '[0-9]+');
+
+        // Notification routes
+        Route::prefix('/notifications')->group(function () {
+            Route::get('/', [NotificationController::class, 'index']);
+            Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
+            Route::patch('/{id}/read', [NotificationController::class, 'markAsRead']);
+            Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+        });
+
+        // Pengeluaran Request (Approval Workflow) routes
+        Route::prefix('/pengeluaran-request')->group(function () {
+            Route::get('/', [PengeluaranRequestController::class, 'index']);
+            Route::get('/{id}', [PengeluaranRequestController::class, 'show'])->where('id', '[0-9]+');
+            Route::post('/', [PengeluaranRequestController::class, 'store'])->middleware('permission:create-pengeluaran-request');
+            Route::put('/{id}', [PengeluaranRequestController::class, 'update'])->middleware('permission:create-pengeluaran-request')->where('id', '[0-9]+');
+            Route::delete('/{id}', [PengeluaranRequestController::class, 'destroy'])->middleware('permission:create-pengeluaran-request')->where('id', '[0-9]+');
+            Route::post('/{id}/submit', [PengeluaranRequestController::class, 'submit'])->middleware('permission:create-pengeluaran-request')->where('id', '[0-9]+');
+            Route::post('/{id}/approve', [PengeluaranRequestController::class, 'approve'])->middleware('permission:approve-pengeluaran')->where('id', '[0-9]+');
+            Route::post('/{id}/reject', [PengeluaranRequestController::class, 'reject'])->middleware('permission:approve-pengeluaran')->where('id', '[0-9]+');
+            Route::post('/{id}/disburse', [PengeluaranRequestController::class, 'disburse'])->middleware('permission:disburse-pengeluaran')->where('id', '[0-9]+');
+        });
+
+        // Branch Approval Settings
+        Route::prefix('/branch-approval-settings')->group(function () {
+            Route::get('/', [BranchApprovalSettingController::class, 'show']);
+            Route::put('/', [BranchApprovalSettingController::class, 'update']);
+        });
+
+        // Branch routes
+        Route::prefix('/branches')->group(function () {
+            Route::get('/', [BranchController::class, 'index'])->middleware('permission:view-branch');
+            Route::post('/', [BranchController::class, 'store'])->middleware('permission:create-branch');
+            Route::get('/{id}', [BranchController::class, 'show'])->middleware('permission:read-branch');
+            Route::put('/{id}', [BranchController::class, 'update'])->middleware('permission:update-branch');
+            Route::delete('/{id}', [BranchController::class, 'destroy'])->middleware('permission:delete-branch');
         });
 
         // Import & Export routes

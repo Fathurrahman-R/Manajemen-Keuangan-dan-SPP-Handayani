@@ -11,12 +11,14 @@ use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Filament\Actions\BulkAction;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Support\Enums\Alignment;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
@@ -88,18 +90,27 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
     {
         return $table
             ->records(
-                fn(?string $search): array => ApiService::client()
+                fn(?string $search, ?string $sortColumn = null, ?string $sortDirection = null): array => ApiService::client()
                     ->get('/users')
                     ->collect('data')
                     ->when(filled($search), fn(Collection $data): Collection => $data->filter(
                         fn(array $record): bool => str_contains(Str::lower($record['username'] ?? ''), Str::lower($search))
                             || str_contains(Str::lower($record['branch']['location'] ?? ''), Str::lower($search))
                     ))
+                    ->when(
+                        filled($sortColumn),
+                        fn(Collection $data): Collection => $data->sortBy(
+                            fn(array $record) => data_get($record, $sortColumn),
+                            SORT_REGULAR,
+                            ($sortDirection ?? 'asc') === 'desc'
+                        )->values()
+                    )
                     ->toArray(),
             )
             ->columns([
                 TextColumn::make('username')
-                    ->label('Username'),
+                    ->label('Username')
+                    ->sortable(),
                 TextColumn::make('branch.location')
                     ->label('Lokasi Cabang')
                     ->formatStateUsing(function ($state, $record) {
@@ -107,6 +118,7 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                     }),
                 TextColumn::make('roles')
                     ->label('Role')
+                    ->sortable()
                     ->formatStateUsing(function ($state, $record) {
                         if (isset($record['roles']) && is_array($record['roles'])) {
                             return implode(', ', $record['roles']);
@@ -117,6 +129,11 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
             ->deferLoading()
             ->striped()
             ->searchable()
+            ->filters([
+                SelectFilter::make('role')
+                    ->label('Role')
+                    ->options(fn(): array => $this->getRoleOptions()),
+            ])
             ->paginated([5, 10, 25])
             ->defaultPaginationPageOption(10)
             ->paginatedWhileReordering()
@@ -135,7 +152,7 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                         return [
                             $action->getModalSubmitAction()
                                 ->label('Simpan')
-                                ->color('primaryMain')
+                                ->color('primary')
                                 ->extraAttributes([
                                     'class' => 'text-white font-semibold'
                                 ]),
@@ -249,12 +266,37 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                     })
                     ->after(function () {
                         $this->resetTable();
+            ])
+            ->bulkActions([
+                BulkAction::make('bulkDelete')
+                    ->label('Hapus Terpilih')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->visible(fn(): bool => in_array('delete-user', session()->get('data.permissions', [])))
+                    ->requiresConfirmation()
+                    ->modalHeading('Hapus User Terpilih')
+                    ->modalDescription('Apakah kamu yakin ingin menghapus semua user yang dipilih?')
+                    ->modalSubmitActionLabel('Ya, Hapus Semua')
+                    ->action(function (Collection $records): void {
+                        $success = 0;
+                        $failed = 0;
+                        foreach ($records as $record) {
+                            $response = ApiService::client()->delete('/users/' . $record['id']);
+                            $response->ok() ? $success++ : $failed++;
+                        }
+                        if ($failed > 0) {
+                            Notification::make()->title("{$success} berhasil, {$failed} gagal dihapus")->warning()->send();
+                        } else {
+                            Notification::make()->title("{$success} user berhasil dihapus")->success()->send();
+                        }
+                        $this->resetTable();
+                        $this->deselectAllTableRecords();
                     }),
             ])
             ->headerActions([
                 Action::make('add')
                     ->label('Tambah User')
-                    ->color('primaryMain')
+                    ->color('primary')
                     ->button()
                     ->modalHeading('Tambah User')
                     ->modalWidth('2xl')
@@ -263,7 +305,7 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                         return [
                             $action->getModalSubmitAction()
                                 ->label('Simpan')
-                                ->color('primaryMain')
+                                ->color('primary')
                                 ->extraAttributes([
                                     'class' => 'text-white font-semibold'
                                 ]),

@@ -6,6 +6,7 @@ use App\Services\ApiService;
 use Exception;
 use Livewire\Component;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\Select;
@@ -38,7 +39,7 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
     {
         return $table
             ->records(
-                function (?string $search, int $page, int $recordsPerPage): LengthAwarePaginator {
+                function (?string $search, int $page, int $recordsPerPage, ?string $sortColumn = null, ?string $sortDirection = null): LengthAwarePaginator {
                     $params = [
                         'per_page' => $this->perPage,
                         'page' => $page
@@ -46,6 +47,11 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                     
                     if (filled($search)) {
                         $params['search'] = $search;
+                    }
+
+                    if (filled($sortColumn)) {
+                        $params['sort'] = $sortColumn;
+                        $params['direction'] = $sortDirection ?? 'asc';
                     }
 
                     $response = ApiService::client()
@@ -61,7 +67,7 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                 }
             )
             ->columns([
-                TextColumn::make('nama')->label('Nama')->searchable(),
+                TextColumn::make('nama')->label('Nama')->sortable()->searchable(),
                 TextColumn::make('jenis_kelamin')->label('Jenis Kelamin'),
                 TextColumn::make('agama')->label('Agama'),
                 TextColumn::make('pendidikan_terakhir')->label('Pendidikan Terakhir'),
@@ -70,7 +76,7 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
             ->deferLoading()
             ->striped()
             ->paginated([5, 10, 25])
-            ->defaultPaginationPageOption(2)
+            ->defaultPaginationPageOption(10)
             ->paginatedWhileReordering()
             ->emptyStateHeading('Tidak Ada Wali')
             ->emptyStateDescription('Silahkan menambahkan wali')
@@ -191,19 +197,44 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                     ->failureNotificationTitle('Wali Gagal Dihapus')
                     ->after(function () {
                         $this->resetTable();
-                    })
+            ])
+            ->bulkActions([
+                BulkAction::make('bulkDelete')
+                    ->label('Hapus Terpilih')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->visible(fn(): bool => in_array('delete-wali', session()->get('data.permissions', [])))
+                    ->requiresConfirmation()
+                    ->modalHeading('Hapus Wali Terpilih')
+                    ->modalDescription('Apakah kamu yakin ingin menghapus semua wali yang dipilih?')
+                    ->modalSubmitActionLabel('Ya, Hapus Semua')
+                    ->action(function (\Illuminate\Support\Collection $records): void {
+                        $success = 0;
+                        $failed = 0;
+                        foreach ($records as $record) {
+                            $response = ApiService::client()->delete('/wali/' . $record['id']);
+                            $response->ok() ? $success++ : $failed++;
+                        }
+                        if ($failed > 0) {
+                            \Filament\Notifications\Notification::make()->title("{$success} berhasil, {$failed} gagal dihapus")->warning()->send();
+                        } else {
+                            \Filament\Notifications\Notification::make()->title("{$success} wali berhasil dihapus")->success()->send();
+                        }
+                        $this->resetTable();
+                        $this->deselectAllTableRecords();
+                    }),
             ])
             ->headerActions([
                 Action::make('add') // Unique name for your action
                     ->label('Tambah') // Text displayed on the button
-                    ->color('primaryMain') // Optional color
+                    ->color('primary') // Optional color
                     ->button()
                     ->modalHeading('Tambah Kelas')
                     ->modalFooterActions(function (Action $action) {
                         return [
                             $action->getModalSubmitAction()
                                 ->label('Simpan')
-                                ->color('primaryMain')
+                                ->color('primary')
                                 ->extraAttributes([
                                     'class' => 'text-white font-semibold'
                                 ]),

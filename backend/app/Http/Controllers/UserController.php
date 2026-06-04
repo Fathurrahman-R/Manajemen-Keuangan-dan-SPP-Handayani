@@ -6,6 +6,7 @@ use App\Http\Requests\UserRequest;
 use App\Http\Requests\UserUpdateRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Services\EmailValidationService;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
+    use Traits\Sortable;
+
     /**
      * Get the currently authenticated user's profile.
      */
@@ -56,6 +59,9 @@ class UserController extends Controller
 
     /**
      * List users with pagination and optional filters.
+     *
+     * @queryParam sort string Column to sort by (username, email, created_at). Example: username
+     * @queryParam direction string Sort direction (asc or desc). Example: asc
      */
     public function index(Request $request)
     {
@@ -72,6 +78,8 @@ class UserController extends Controller
                 $q->where('name', $request->query('role'));
             });
         }
+
+        $this->applySorting($query, ['username', 'email', 'created_at'], 'id', 'asc');
 
         $users = $query->paginate($perPage);
 
@@ -208,6 +216,45 @@ class UserController extends Controller
         return response()->json([
             'data' => true,
             'message' => 'User berhasil dihapus.'
+        ]);
+    }
+
+    /**
+     * Update the authenticated user's email (requires current password).
+     */
+    public function updateEmail(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => 'required|email|max:255',
+            'current_password' => 'required|string',
+        ]);
+
+        $user = Auth::user();
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            throw new HttpResponseException(response()->json([
+                'errors' => [
+                    'current_password' => ['Password saat ini tidak sesuai.']
+                ]
+            ], 422));
+        }
+
+        $emailService = app(EmailValidationService::class);
+
+        if (!$emailService->isUniqueInBranch($request->email, $user->branch_id, $user->id)) {
+            throw new HttpResponseException(response()->json([
+                'errors' => [
+                    'email' => ['Email sudah digunakan oleh user lain di cabang ini.']
+                ]
+            ], 422));
+        }
+
+        $user->email = $request->email;
+        $user->save();
+
+        return response()->json([
+            'message' => 'Email berhasil diperbarui.',
+            'data' => ['email' => $user->email],
         ]);
     }
 }

@@ -14,9 +14,12 @@ use Dedoc\Scramble\Attributes\QueryParameter;
 
 class WaliController extends Controller
 {
+    use Traits\Sortable;
     #[HeaderParameter('Authorization')]
     #[QueryParameter('search', description: 'Cari wali berdasarkan nama', required: false, example: 'Budi')]
     #[QueryParameter('per_page', description: 'Jumlah data per halaman', required: false, example: 30)]
+    #[QueryParameter('sort', description: 'Column to sort by (nama, jenis_kelamin, agama, pendidikan_terakhir, pekerjaan)', required: false, example: 'nama')]
+    #[QueryParameter('direction', description: 'Sort direction (asc or desc)', required: false, example: 'asc')]
     public function index()
     {
         $search = request('search');
@@ -26,8 +29,9 @@ class WaliController extends Controller
             ->select(['id', 'nama', 'jenis_kelamin', 'agama', 'pendidikan_terakhir', 'pekerjaan', 'alamat', 'no_hp', 'keterangan'])
             ->when($search, function ($q) use ($search) {
                 $q->where('nama', 'like', "%$search%");
-            })
-            ->orderBy('nama');
+            });
+
+        $this->applySorting($query, ['nama', 'jenis_kelamin', 'agama', 'pendidikan_terakhir', 'pekerjaan'], 'nama', 'asc');
 
         $paginated = $query->paginate($perPage);
 

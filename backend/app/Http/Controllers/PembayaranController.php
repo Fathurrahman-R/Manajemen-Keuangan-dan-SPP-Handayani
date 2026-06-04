@@ -7,6 +7,7 @@ use App\Http\Requests\BatchPaymentRequest;
 use App\Http\Requests\BayarLunasRequest;
 use App\Http\Requests\BayarTidakLunasRequest;
 use App\Http\Resources\KwitansiResource;
+use App\Http\Resources\PembayaranGroupedResource;
 use App\Http\Resources\PembayaranResource;
 use App\Http\Resources\TagihanResource;
 use App\Models\Pembayaran;
@@ -21,9 +22,55 @@ use Illuminate\Support\Facades\DB;
 
 class PembayaranController extends Controller
 {
+    use Traits\Sortable;
+
+    #[HeaderParameter('Authorization')]
+    #[QueryParameter('search', description: 'Pencarian nama / nis siswa', required: false, example: 'Ahmad')]
+    #[QueryParameter('jenjang', description: 'Filter jenjang (TK/MI/KB)', required: false, example: 'MI')]
+    #[QueryParameter('per_page', description: 'Jumlah siswa per halaman (max 100)', required: false, example: 10)]
+    public function grouped()
+    {
+        $user = Auth::user();
+
+        $query = \App\Models\Siswa::query()
+            ->whereHas('tagihan.pembayaran')
+            ->where('branch_id', $user->branch_id);
+
+        if ($user && !$user->hasAnyRole(['superadmin', 'admin'])) {
+            $query->where('nis', $user->username);
+        }
+
+        $search = request('search');
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                  ->orWhere('nis', 'like', "%{$search}%");
+            });
+        }
+
+        $jenjang = request('jenjang');
+        if ($jenjang) {
+            $query->where('jenjang', $jenjang);
+        }
+
+        $query->orderBy('nama', 'asc');
+
+        $perPage = min((int) request('per_page', 10), 100);
+        $siswaList = $query->paginate($perPage);
+
+        $siswaList->load(['kelas']);
+        $siswaList->each(function ($siswa) {
+            $siswa->setRelation('pembayaran', $siswa->pembayaranForGroupedView());
+        });
+
+        return PembayaranGroupedResource::collection($siswaList);
+    }
+
     #[HeaderParameter('Authorization')]
     #[QueryParameter('search', description: 'Pencarian kode_pembayaran / nama / nis', required: false, example: 'PAY-2025')]
     #[QueryParameter('per_page', description: 'Jumlah data per halaman', required: false, example: 30)]
+    #[QueryParameter('sort', description: 'Column to sort by (tanggal, jumlah, metode, kode_pembayaran)', required: false, example: 'tanggal')]
+    #[QueryParameter('direction', description: 'Sort direction (asc or desc)', required: false, example: 'desc')]
     public function index()
     {
         $user = Auth::user();
@@ -59,6 +106,8 @@ class PembayaranController extends Controller
                   });
             });
         }
+
+        $this->applySorting($query, ['tanggal', 'jumlah', 'metode', 'kode_pembayaran'], 'tanggal', 'desc');
 
         $pembayaran = $query->paginate($perPage);
 

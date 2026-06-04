@@ -3,7 +3,7 @@
 namespace App\Filament\Pages;
 
 use Filament\Pages\Page;
-Use UnitEnum;
+use UnitEnum;
 
 class DataMasterKelas extends Page
 {
@@ -17,10 +17,11 @@ class DataMasterKelas extends Page
 
     protected static ?int $navigationSort = 3;
 
+    public string $activeJenjang = '';
+
     public static function shouldRegisterNavigation(): bool
     {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        return in_array('view-kelas', $permissions);
+        return false; // Handled manually in AdminPanelProvider with flat jenjang items
     }
 
     public function mount(): void
@@ -29,5 +30,7 @@ class DataMasterKelas extends Page
         if (!in_array('view-kelas', $permissions)) {
             abort(403);
         }
+
+        $this->activeJenjang = request()->query('jenjang', 'KB');
     }
 }

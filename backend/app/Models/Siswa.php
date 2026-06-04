@@ -84,4 +84,24 @@ class Siswa extends Model
     {
         return $this->hasOne(User::class, 'siswa_id');
     }
+
+    public function pembayaranForGroupedView()
+    {
+        return \App\Models\Pembayaran::query()
+            ->select([
+                'pembayarans.kode_pembayaran',
+                'pembayarans.kode_tagihan',
+                'pembayarans.tanggal',
+                'pembayarans.metode',
+                'pembayarans.jumlah',
+                'pembayarans.pembayar',
+                'jenis_tagihans.nama as jenis_tagihan_nama',
+                'jenis_tagihans.jumlah as jenis_tagihan_jumlah',
+            ])
+            ->join('tagihans', 'tagihans.kode_tagihan', '=', 'pembayarans.kode_tagihan')
+            ->join('jenis_tagihans', 'jenis_tagihans.id', '=', 'tagihans.jenis_tagihan_id')
+            ->where('tagihans.nis', $this->nis)
+            ->orderByDesc('pembayarans.tanggal')
+            ->get();
+    }
 }

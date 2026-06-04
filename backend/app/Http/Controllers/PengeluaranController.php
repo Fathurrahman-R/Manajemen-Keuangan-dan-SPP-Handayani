@@ -13,10 +13,14 @@ use Illuminate\Support\Facades\Auth;
 
 class PengeluaranController extends Controller
 {
+    use Traits\Sortable;
+
     #[HeaderParameter('Authorization')]
     #[QueryParameter('start_date', description: 'Tanggal mulai (YYYY-MM-DD)', required: false, example: '2025-11-01')]
     #[QueryParameter('end_date', description: 'Tanggal akhir (YYYY-MM-DD)', required: false, example: '2025-11-30')]
     #[QueryParameter('per_page', description: 'Jumlah data per halaman', required: false, example: 30)]
+    #[QueryParameter('sort', description: 'Column to sort by (tanggal, jumlah, keterangan, created_at)', required: false, example: 'tanggal')]
+    #[QueryParameter('direction', description: 'Sort direction (asc or desc)', required: false, example: 'desc')]
     public function index()
     {
         $query = Pengeluaran::query()
@@ -32,6 +36,8 @@ class PengeluaranController extends Controller
         if ($end) {
             $query->whereDate('tanggal', '<=', $end);
         }
+
+        $this->applySorting($query, ['tanggal', 'jumlah', 'keterangan', 'created_at'], 'tanggal', 'desc');
 
         $pengeluarans = $query->paginate(request('per_page', 30));
 

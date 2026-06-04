@@ -8,6 +8,7 @@ use Exception;
 use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\Select;
@@ -45,7 +46,7 @@ class Pembayaran extends Component implements HasActions, HasSchemas, HasTable
     {
         return $table
             ->records(
-                function (?string $search, int $page, int $recordsPerPage): LengthAwarePaginator {
+                function (?string $search, int $page, int $recordsPerPage, ?string $sortColumn = null, ?string $sortDirection = null): LengthAwarePaginator {
                     $this->perPage = $recordsPerPage;
                     $this->currentPage = $page;
                     $params = [
@@ -55,6 +56,11 @@ class Pembayaran extends Component implements HasActions, HasSchemas, HasTable
 
                     if (filled($search)) {
                         $params['search'] = $search;
+                    }
+
+                    if (filled($sortColumn)) {
+                        $params['sort'] = $sortColumn;
+                        $params['direction'] = $sortDirection ?? 'asc';
                     }
 
                     $response = ApiService::client()
@@ -71,39 +77,56 @@ class Pembayaran extends Component implements HasActions, HasSchemas, HasTable
             )
             ->columns([
                 TextColumn::make('kode_pembayaran')->label('Kode Pembayaran')->searchable(),
-                TextColumn::make('tanggal')->label('Tanggal Pembayaran'),
+                TextColumn::make('tanggal')->label('Tanggal Pembayaran')->sortable(),
                 TextColumn::make('pembayar')->label('Dibayar Oleh'),
-                TextColumn::make('jumlah')->label('Jumlah Pembayaran')->money(currency: 'Rp.', decimalPlaces: 0, ),
+                TextColumn::make('jumlah')->label('Jumlah Pembayaran')->sortable()->money(currency: 'Rp.', decimalPlaces: 0, ),
                 TextColumn::make('kode_tagihan.kode_tagihan')->label('Kode Tagihan'),
                 TextColumn::make('kode_tagihan.jenis_tagihan.nama')->label('Jenis Tagihan'),
                 TextColumn::make('kode_tagihan.jenis_tagihan.jumlah')->label('Jumlah Tagihan')->money(currency: 'Rp.', decimalPlaces: 0, ),
                 TextColumn::make('kode_tagihan.siswa.nama')->label('Nama Siswa'),
                 TextColumn::make('metode')->label('Metode Pembayaran'),
             ])
-            // ->filters([
-            //     SelectFilter::make('status')
-            //         ->multiple()
-            //         ->options([
-            //             'Lunas' => 'Lunas',
-            //             'Belum Lunas' => 'Belum Lunas',
-            //             'Belum Dibayar' => 'Belum Dibayar',
-            //         ]),
-            //     SelectFilter::make('jenjang')
-            //         ->label('Jenjang')
-            //         ->multiple()
-            //         ->options([
-            //             'TK' => 'TK',
-            //             'SD' => 'SD',
-            //             'MI' => 'MI',
-            //         ]),
-            // ])
+            ->filters([
+                SelectFilter::make('metode')
+                    ->label('Metode Pembayaran')
+                    ->options([
+                        'Tunai' => 'Tunai',
+                        'Non-Tunai' => 'Non-Tunai',
+                    ]),
+            ])
             ->deferLoading()
             ->striped()
             ->paginated([5, 10, 25])
-            ->defaultPaginationPageOption(2)
+            ->defaultPaginationPageOption(10)
             ->paginatedWhileReordering()
             ->emptyStateHeading('Tidak Ada Pembayaran')
             ->emptyStateDescription('Silahkan menambahkan tagihan')
+            ->bulkActions([
+                BulkAction::make('bulkDelete')
+                    ->label('Hapus Terpilih')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->visible(fn(): bool => in_array('delete-pembayaran', session()->get('data.permissions', [])))
+                    ->requiresConfirmation()
+                    ->modalHeading('Hapus Pembayaran Terpilih')
+                    ->modalDescription('Apakah kamu yakin ingin menghapus semua pembayaran yang dipilih?')
+                    ->modalSubmitActionLabel('Ya, Hapus Semua')
+                    ->action(function (Collection $records): void {
+                        $success = 0;
+                        $failed = 0;
+                        foreach ($records as $record) {
+                            $response = ApiService::client()->delete('/pembayaran/' . $record['kode_pembayaran']);
+                            $response->ok() ? $success++ : $failed++;
+                        }
+                        if ($failed > 0) {
+                            \Filament\Notifications\Notification::make()->title("{$success} berhasil, {$failed} gagal dihapus")->warning()->send();
+                        } else {
+                            \Filament\Notifications\Notification::make()->title("{$success} pembayaran berhasil dihapus")->success()->send();
+                        }
+                        $this->resetTable();
+                        $this->deselectAllTableRecords();
+                    }),
+            ])
             ->headerActions([
                 ...$this->makeImportExportActions('pembayaran', [
                     \Filament\Forms\Components\DatePicker::make('tanggal_mulai')

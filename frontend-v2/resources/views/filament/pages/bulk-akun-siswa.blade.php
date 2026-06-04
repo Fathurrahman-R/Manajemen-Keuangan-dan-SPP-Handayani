@@ -1,3 +1,5 @@
 <x-filament-panels::page>
-    <livewire:bulk-akun-siswa />
+    <div class="w-full">
+        {{ $this->table }}
+    </div>
 </x-filament-panels::page>

@@ -6,6 +6,7 @@ use App\Http\Requests\UserLoginRequest;
 use App\Http\Requests\UserRegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Services\IdentifierService;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,6 +14,10 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    public function __construct(
+        private readonly IdentifierService $identifierService
+    ) {}
+
     public function register(UserRegisterRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -36,7 +41,11 @@ class AuthController extends Controller
     public function login(UserLoginRequest $request): JsonResponse
     {
         $data = $request->validated();
-        $user = User::where('username', $data['username'])->first();
+
+        // Backward compatible: use "identifier" if present, else fall back to "username"
+        $identifier = $data['identifier'] ?? $data['username'] ?? '';
+
+        $user = $this->identifierService->findUserByIdentifier($identifier);
 
         if (!$user || !Hash::check($data['password'], $user->password)) {
             throw new HttpResponseException(response()->json([
@@ -73,6 +82,7 @@ class AuthController extends Controller
             'data' => [
                 'id' => $user->id,
                 'username' => $user->username,
+                'email' => $user->email,
                 'token' => $token->plainTextToken,
                 'expires_at' => $token->accessToken->expires_at->toISOString(),
                 'permissions' => $abilities,

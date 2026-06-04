@@ -24,6 +24,8 @@ use Illuminate\Support\Facades\Log;
 
 class SiswaController extends Controller
 {
+    use Traits\Sortable;
+
     protected AkunSiswaService $akunSiswaService;
 
     public function __construct(AkunSiswaService $akunSiswaService)
@@ -33,6 +35,8 @@ class SiswaController extends Controller
     #[HeaderParameter('Authorization')]
     #[QueryParameter('search')]
     #[QueryParameter('kelas_id')]
+    #[QueryParameter('sort', description: 'Column to sort by (nama, nis, kelas_id, created_at)', required: false, example: 'nama')]
+    #[QueryParameter('direction', description: 'Sort direction (asc or desc)', required: false, example: 'asc')]
     public function index(string $jenjang)
     {
         $baseQuery = Siswa::with(['ayah','ibu','wali','kelas','kategori'])
@@ -52,6 +56,9 @@ class SiswaController extends Controller
         if (!is_null($kelasId) && $kelasId !== '') {
             $query->where('kelas_id', (int) $kelasId);
         }
+
+        $this->applySorting($query, ['nama', 'nis', 'kelas_id', 'created_at'], 'nama', 'asc');
+
         $siswa = $query->paginate(request('per_page', 30));
         return SiswaResource::collection($siswa);
     }

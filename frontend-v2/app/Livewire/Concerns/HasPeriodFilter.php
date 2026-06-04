@@ -3,6 +3,7 @@
 namespace App\Livewire\Concerns;
 
 use App\Services\ApiService;
+use Filament\Forms\Components\Select;
 
 trait HasPeriodFilter
 {
@@ -47,6 +48,35 @@ trait HasPeriodFilter
         } catch (\Throwable $e) {
             $this->tahunAjaranOptions = [];
         }
+    }
+
+    /**
+     * Get Filament Select component for tahun ajaran period filter.
+     * Use this in Blade views: {{ $this->tahunAjaranSelect }}
+     */
+    public function getTahunAjaranSelectComponent(): Select
+    {
+        return Select::make('selectedTahunAjaranId')
+            ->label('Periode')
+            ->options($this->getTahunAjaranSelectOptions())
+            ->default($this->selectedTahunAjaranId)
+            ->live()
+            ->afterStateUpdated(fn ($state) => $this->updatedSelectedTahunAjaranId($state))
+            ->placeholder('Pilih Periode')
+            ->extraAttributes(['class' => 'w-48']);
+    }
+
+    /**
+     * Get tahun ajaran options formatted for Filament Select.
+     */
+    public function getTahunAjaranSelectOptions(): array
+    {
+        return collect($this->tahunAjaranOptions)
+            ->mapWithKeys(function ($option) {
+                $label = $option['nama'] . ($option['status'] === 'Aktif' ? ' (Aktif)' : ' (Historis)');
+                return [(int) $option['id'] => $label];
+            })
+            ->toArray();
     }
 
     public function getAktifId(): ?int

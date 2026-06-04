@@ -9,6 +9,7 @@ use Filament\Tables\Grouping\Group;
 use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\Select;
@@ -47,7 +48,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
     {
         return $table
             ->records(
-                function (?string $search, int $page, int $recordsPerPage, array $filters): LengthAwarePaginator {
+                function (?string $search, int $page, int $recordsPerPage, array $filters, ?string $sortColumn = null, ?string $sortDirection = null): LengthAwarePaginator {
                     $this->perPage = $recordsPerPage;
                     $params = [
                         'per_page' => $this->perPage,
@@ -58,12 +59,17 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                         $params['search'] = $search;
                     }
 
-                    if (filled($filters['status']['value'])) {
+                    if (filled($filters['status']['value'] ?? null)) {
                         $params['status'] = $filters['status']['value'];
                     }
 
-                    if (filled($filters['jenjang']['value'])) {
+                    if (filled($filters['jenjang']['value'] ?? null)) {
                         $params['jenjang'] = $filters['jenjang']['value'];
+                    }
+
+                    if (filled($sortColumn)) {
+                        $params['sort'] = $sortColumn;
+                        $params['direction'] = $sortDirection ?? 'asc';
                     }
 
                     $response = ApiService::client()
@@ -80,16 +86,17 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
             )
             ->columns([
                 TextColumn::make('kode_tagihan')->label('Kode Tagihan')->searchable(),
-                TextColumn::make('siswa.nama')->label('Nama Siswa'),
+                TextColumn::make('siswa.nama')->label('Nama Siswa')->sortable(),
                 TextColumn::make('siswa.nis')->label('NIS'),
                 TextColumn::make('siswa.kelas.nama')->label('Kelas'),
-                TextColumn::make('jenis_tagihan.jatuh_tempo')->label('Jatuh Tempo'),
+                TextColumn::make('jenis_tagihan.jatuh_tempo')->label('Jatuh Tempo')->sortable(),
                 TextColumn::make('jenis_tagihan.nama')->label('Jenis Tagihan'),
-                TextColumn::make('jenis_tagihan.jumlah')->label('Jumlah Tagihan')->money(currency: 'Rp.', decimalPlaces: 0,),
+                TextColumn::make('jenis_tagihan.jumlah')->label('Jumlah Tagihan')->sortable()->money(currency: 'Rp.', decimalPlaces: 0,),
                 TextColumn::make('tmp')->label('Jumlah Yang Telah Dibayarkan')->money(currency: 'Rp.', decimalPlaces: 0,),
                 TextColumn::make('sisa')->state(fn(array $record) => $record['jenis_tagihan']['jumlah'] - $record['tmp'])->label('Sisa')->money(currency: 'Rp.', decimalPlaces: 0,),
                 TextColumn::make('status')
                     ->label('Status')
+                    ->sortable()
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
                         'Lunas' => 'success',
@@ -115,7 +122,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
             ->deferLoading()
             ->striped()
             ->paginated([5, 10, 25])
-            ->defaultPaginationPageOption(2)
+            ->defaultPaginationPageOption(10)
             ->paginatedWhileReordering()
             ->emptyStateHeading('Tidak Ada Tagihan')
             ->emptyStateDescription('Silahkan menambahkan tagihan')
@@ -131,7 +138,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                             return [
                                 $action->getModalSubmitAction()
                                     ->label('Simpan')
-                                    ->color('primaryMain')
+                                    ->color('primary')
                                     ->extraAttributes([
                                         'class' => 'text-white font-semibold'
                                     ]),
@@ -275,6 +282,32 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                         })
                 ])
             ])
+            ->bulkActions([
+                BulkAction::make('bulkDelete')
+                    ->label('Hapus Terpilih')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->visible(fn(): bool => in_array('delete-tagihan', session()->get('data.permissions', [])))
+                    ->requiresConfirmation()
+                    ->modalHeading('Hapus Tagihan Terpilih')
+                    ->modalDescription('Apakah kamu yakin ingin menghapus semua tagihan yang dipilih?')
+                    ->modalSubmitActionLabel('Ya, Hapus Semua')
+                    ->action(function (Collection $records): void {
+                        $success = 0;
+                        $failed = 0;
+                        foreach ($records as $record) {
+                            $response = ApiService::client()->delete('/tagihan/' . $record['kode_tagihan']);
+                            $response->ok() ? $success++ : $failed++;
+                        }
+                        if ($failed > 0) {
+                            Notification::make()->title("{$success} berhasil, {$failed} gagal dihapus")->warning()->send();
+                        } else {
+                            Notification::make()->title("{$success} tagihan berhasil dihapus")->success()->send();
+                        }
+                        $this->resetTable();
+                        $this->deselectAllTableRecords();
+                    }),
+            ])
             ->headerActions([
                 // Import/Export Tagihan
                 ...$this->makeImportExportActions('tagihan', [
@@ -288,7 +321,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
 
                 Action::make('add') // Unique name for your action
                     ->label('Tambah') // Text displayed on the button
-                    ->color('primaryMain') // Optional color
+                    ->color('primary') // Optional color
                     ->button()
                     ->visible(fn(): bool => in_array('create-tagihan', session()->get('data.permissions', [])))
                     ->modalHeading('Tambah Tagihan')
@@ -296,7 +329,7 @@ class Tagihan extends Component implements HasActions, HasSchemas, HasTable
                         return [
                             $action->getModalSubmitAction()
                                 ->label('Simpan')
-                                ->color('primaryMain')
+                                ->color('primary')
                                 ->extraAttributes([
                                     'class' => 'text-white font-semibold'
                                 ]),

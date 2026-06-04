@@ -21,6 +21,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTable
 {
     use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
+    use \App\Livewire\Concerns\HandlesApiErrors;
 
     public ?int $selectedSourcePeriodId = null;
     public ?int $selectedTargetPeriodId = null;
@@ -69,6 +70,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
             ->columns([
                 TextColumn::make('processed_at')
                     ->label('Tanggal')
+                    ->sortable()
                     ->formatStateUsing(fn($state) => $state ? \Carbon\Carbon::parse($state)->format('d/m/Y H:i') : '-'),
                 TextColumn::make('batch_type')
                     ->label('Tipe')
@@ -123,7 +125,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
             ->emptyStateDescription('Belum ada riwayat proses kenaikan kelas.')
             ->striped()
             ->paginated([5, 10, 25])
-            ->defaultPaginationPageOption(5);
+            ->defaultPaginationPageOption(10);
     }
 
     /**
@@ -743,37 +745,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
         }
     }
 
-    /**
-     * Handle API error responses.
-     */
-    protected function handleApiError($response): void
-    {
-        try {
-            $json = $response->json();
-            $errors = $json['errors'] ?? [];
 
-            if (isset($errors['message'])) {
-                $message = is_array($errors['message']) ? $errors['message'][0] : $errors['message'];
-            } else {
-                $firstKey = array_key_first($errors);
-                $message = $firstKey
-                    ? (is_array($errors[$firstKey]) ? $errors[$firstKey][0] : $errors[$firstKey])
-                    : 'Terjadi kesalahan.';
-            }
-
-            Notification::make()
-                ->title($message)
-                ->danger()
-                ->persistent()
-                ->send();
-        } catch (\Throwable $e) {
-            Notification::make()
-                ->title('Terjadi kesalahan yang tidak terduga.')
-                ->danger()
-                ->persistent()
-                ->send();
-        }
-    }
 
     public function render()
     {

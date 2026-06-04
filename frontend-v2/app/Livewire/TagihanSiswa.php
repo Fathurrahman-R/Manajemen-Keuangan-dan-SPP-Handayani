@@ -8,6 +8,7 @@ use Filament\Notifications\Notification;
 
 class TagihanSiswa extends Component
 {
+    use \App\Livewire\Concerns\HandlesApiErrors;
     public array $tagihanData = [];
     public array $siblings = [];
     public ?int $selectedSiswaId = null;
@@ -50,19 +51,11 @@ class TagihanSiswa extends Component
                 $this->siblings = [];
             }
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            Notification::make()
-                ->title('Server tidak dapat dihubungi')
-                ->danger()
-                ->persistent()
-                ->send();
+            $this->notifyConnectionError();
             $this->tagihanData = [];
             $this->siblings = [];
         } catch (\Throwable $e) {
-            Notification::make()
-                ->title('Terjadi kesalahan yang tidak terduga. Silakan coba lagi atau hubungi support.')
-                ->danger()
-                ->persistent()
-                ->send();
+            $this->notifyUnexpectedError();
             $this->tagihanData = [];
             $this->siblings = [];
         }
@@ -78,32 +71,7 @@ class TagihanSiswa extends Component
         return count($this->siblings) > 0;
     }
 
-    protected function handleApiError($response): void
-    {
-        try {
-            $json = $response->json();
-            $errors = $json['errors'] ?? [];
 
-            if (isset($errors['message'])) {
-                $message = is_array($errors['message']) ? $errors['message'][0] : $errors['message'];
-            } else {
-                $firstKey = array_key_first($errors);
-                $message = $firstKey ? (is_array($errors[$firstKey]) ? $errors[$firstKey][0] : $errors[$firstKey]) : 'Terjadi kesalahan.';
-            }
-
-            Notification::make()
-                ->title($message)
-                ->danger()
-                ->persistent()
-                ->send();
-        } catch (\Throwable $e) {
-            Notification::make()
-                ->title('Terjadi kesalahan yang tidak terduga. Silakan coba lagi atau hubungi support.')
-                ->danger()
-                ->persistent()
-                ->send();
-        }
-    }
 
     public function render()
     {

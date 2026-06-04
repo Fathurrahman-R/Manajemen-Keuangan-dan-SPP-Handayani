@@ -44,37 +44,53 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
     {
         return $table
             ->records(
-                function (int $page, int $recordsPerPage, array $filters): LengthAwarePaginator {
+                function (int $page, int $recordsPerPage, array $filters, ?string $sortColumn = null, ?string $sortDirection = null): LengthAwarePaginator {
                     $params = [
                         'bulan' => (int) explode('-', $this->currentMonthYear)[1],
                         'tahun' => (int) explode('-', $this->currentMonthYear)[0],
                     ];
 
-                    if(filled($filters['date']['bulan'])) {
+                    if(filled($filters['date']['bulan'] ?? null)) {
                         $params['bulan'] = $filters['date']['bulan'];
                     }
 
-                    if(filled($filters['date']['tahun'])) {
+                    if(filled($filters['date']['tahun'] ?? null)) {
                         $params['tahun'] = $filters['date']['tahun'];
+                    }
+
+                    if (filled($sortColumn)) {
+                        $params['sort'] = $sortColumn;
+                        $params['direction'] = $sortDirection ?? 'asc';
                     }
 
                     $response = ApiService::client()
                         ->get('/laporan/kas', $params)
                         ->collect();
 
+                    $items = collect($response['data'] ?? [])
+                        ->when(
+                            filled($sortColumn),
+                            fn(Collection $data): Collection => $data->sortBy(
+                                fn(array $record) => data_get($record, $sortColumn),
+                                SORT_REGULAR,
+                                ($sortDirection ?? 'asc') === 'desc'
+                            )->values()
+                        )
+                        ->toArray();
+
                     return new LengthAwarePaginator(
-                        items: $response['data'] ?? [],
-                        total: $response['meta']['total'] ?? 0,
+                        items: $items,
+                        total: $response['meta']['total'] ?? count($items),
                         perPage: $recordsPerPage,
                         currentPage: $page,
                     );
                 }
             )
             ->columns([
-                TextColumn::make('tanggal')->label('Tanggal'),
-                TextColumn::make('total_masuk')->label('Total Masuk')->money(currency: 'Rp.', decimalPlaces: 0,),
-                TextColumn::make('total_keluar')->label('Total Keluar')->money(currency: 'Rp.', decimalPlaces: 0,),
-                TextColumn::make('saldo')->label('Saldo')->money(currency: 'Rp.', decimalPlaces: 0,),
+                TextColumn::make('tanggal')->label('Tanggal')->sortable(),
+                TextColumn::make('total_masuk')->label('Total Masuk')->sortable()->money(currency: 'Rp.', decimalPlaces: 0,),
+                TextColumn::make('total_keluar')->label('Total Keluar')->sortable()->money(currency: 'Rp.', decimalPlaces: 0,),
+                TextColumn::make('saldo')->label('Saldo')->sortable()->money(currency: 'Rp.', decimalPlaces: 0,),
             ])
             ->filters([
                 Filter::make('date')

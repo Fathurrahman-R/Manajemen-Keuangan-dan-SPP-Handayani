@@ -8,6 +8,7 @@ use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -21,6 +22,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
 {
     use InteractsWithActions, InteractsWithSchemas;
     use \App\Livewire\Concerns\HasPeriodFilter;
+    use \App\Livewire\Concerns\HandlesApiErrors;
 
     public string $search = '';
     public string $filterJenjang = '';
@@ -30,6 +32,8 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
 
     public array $siswaData = [];
     public array $meta = [];
+
+    public array $selectedTagihanForPayment = [];
 
     public function mount(): void
     {
@@ -214,6 +218,95 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
         }
     }
 
+    public function payAction(): Action
+    {
+        return Action::make('pay')
+            ->label('Bayar')
+            ->icon('heroicon-o-banknotes')
+            ->color('primary')
+            ->form([
+                Select::make('metode_pembayaran')
+                    ->label('Metode Pembayaran')
+                    ->options([
+                        'Tunai' => 'Tunai',
+                        'Non-Tunai' => 'Non-Tunai',
+                    ])
+                    ->required(),
+                TextInput::make('pembayar')
+                    ->label('Nama Pembayar')
+                    ->required()
+                    ->maxLength(100),
+                TextInput::make('jumlah')
+                    ->label('Jumlah Bayar')
+                    ->numeric()
+                    ->prefix('Rp')
+                    ->required(),
+                DatePicker::make('tanggal')
+                    ->label('Tanggal')
+                    ->default(now())
+                    ->required(),
+            ])
+            ->action(function (array $data): void {
+                $this->processPayment($data);
+            })
+            ->modalHeading('Pembayaran Tagihan')
+            ->modalWidth('md');
+    }
+
+    public function processPayment(array $data): void
+    {
+        if (empty($this->selectedTagihanForPayment)) {
+            Notification::make()
+                ->title('Tidak ada tagihan yang dipilih.')
+                ->warning()
+                ->send();
+            return;
+        }
+
+        try {
+            $response = ApiService::client()->post('/pembayaran/batch', [
+                'kode_tagihan' => $this->selectedTagihanForPayment,
+                'metode' => $data['metode_pembayaran'],
+                'pembayar' => $data['pembayar'],
+            ]);
+
+            if ($response->ok()) {
+                Notification::make()
+                    ->title('Pembayaran Berhasil')
+                    ->success()
+                    ->send();
+
+                // Dispatch event for kwitansi download
+                $pembayaranData = $response->json()['data'] ?? [];
+                $kodePembayaran = collect($pembayaranData)->pluck('kode_pembayaran')->toArray();
+                $this->dispatch('batch-payment-success', kodePembayaran: $kodePembayaran);
+
+                $this->selectedTagihanForPayment = [];
+                $this->loadData();
+            } else {
+                $this->handleApiError($response);
+            }
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            Notification::make()
+                ->title('Server tidak dapat dihubungi')
+                ->danger()
+                ->persistent()
+                ->send();
+        } catch (\Throwable $e) {
+            Notification::make()
+                ->title('Terjadi kesalahan saat memproses pembayaran.')
+                ->danger()
+                ->persistent()
+                ->send();
+        }
+    }
+
+    public function openPayModal(array $selectedTagihan): void
+    {
+        $this->selectedTagihanForPayment = $selectedTagihan;
+        $this->mountAction('pay');
+    }
+
     public function downloadKwitansi(string $kodePembayaran): ?StreamedResponse
     {
         try {
@@ -336,32 +429,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
             });
     }
 
-    protected function handleApiError($response): void
-    {
-        try {
-            $json = $response->json();
-            $errors = $json['errors'] ?? [];
 
-            if (isset($errors['message'])) {
-                $message = is_array($errors['message']) ? $errors['message'][0] : $errors['message'];
-            } else {
-                $firstKey = array_key_first($errors);
-                $message = $firstKey ? (is_array($errors[$firstKey]) ? $errors[$firstKey][0] : $errors[$firstKey]) : 'Terjadi kesalahan.';
-            }
-
-            Notification::make()
-                ->title($message)
-                ->danger()
-                ->persistent()
-                ->send();
-        } catch (\Throwable $e) {
-            Notification::make()
-                ->title('Terjadi kesalahan yang tidak terduga. Silakan coba lagi atau hubungi support.')
-                ->danger()
-                ->persistent()
-                ->send();
-        }
-    }
 
     public function render()
     {

@@ -49,7 +49,7 @@ class Settings extends Page
             Action::make('updateSetting')
                 ->icon('heroicon-o-pencil-square')
                 ->label('Ubah')
-                ->color('primaryMain')
+                ->color('primary')
                 ->modal()
                 ->fillForm(fn(): array => [
                     'id' => $this->setting['id'],
@@ -68,7 +68,7 @@ class Settings extends Page
                     return [
                         $action->getModalSubmitAction()
                             ->label('Simpan')
-                            ->color('primaryMain')
+                            ->color('primary')
                             ->extraAttributes([
                                 'class' => 'text-white font-semibold'
                             ]),

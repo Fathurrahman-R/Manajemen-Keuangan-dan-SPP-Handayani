@@ -2,11 +2,14 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\HasJenjangSubNavigation;
 use Filament\Pages\Page;
 use UnitEnum;
 
 class KenaikanKelasPage extends Page
 {
+    use HasJenjangSubNavigation;
+
     protected string $view = 'filament.pages.kenaikan-kelas';
 
     protected static string | UnitEnum | null $navigationGroup = 'Data Master';
@@ -31,5 +34,10 @@ class KenaikanKelasPage extends Page
         if (!in_array('manage-kenaikan-kelas', $permissions)) {
             abort(403);
         }
+    }
+
+    protected function getJenjangCountEndpoint(): string
+    {
+        return '/siswa/count';
     }
 }

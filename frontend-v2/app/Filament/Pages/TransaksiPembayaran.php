@@ -19,8 +19,7 @@ class TransaksiPembayaran extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        return in_array('view-pembayaran', $permissions);
+        return false; // Handled manually in AdminPanelProvider with flat jenjang items
     }
 
     public function mount(): void
@@ -31,3 +30,4 @@ class TransaksiPembayaran extends Page
         }
     }
 }
+

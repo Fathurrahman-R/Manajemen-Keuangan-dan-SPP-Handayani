@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Auth;
 
 class AkunSiswaController extends Controller
 {
+    use Traits\Sortable;
+
     public function __construct(protected AkunSiswaService $akunSiswaService)
     {
     }
@@ -19,14 +21,20 @@ class AkunSiswaController extends Controller
     /**
      * List all siswa accounts (users with "siswa" role) in admin's active branch.
      */
+    #[QueryParameter('per_page', description: 'Jumlah data per halaman', required: false, example: 15)]
+    #[QueryParameter('sort', description: 'Column to sort by (username, name, created_at)', required: false, example: 'username')]
+    #[QueryParameter('direction', description: 'Sort direction (asc or desc)', required: false, example: 'asc')]
     public function index(Request $request): JsonResponse
     {
         $branchId = Auth::user()->branch_id;
 
         $users = User::role('siswa')
             ->where('branch_id', $branchId)
-            ->with('siswa')
-            ->paginate($request->query('per_page', 15));
+            ->with('siswa');
+
+        $this->applySorting($users, ['username', 'name', 'created_at'], 'username', 'asc');
+
+        $users = $users->paginate($request->query('per_page', 15));
 
         return response()->json($users);
     }
@@ -35,6 +43,9 @@ class AkunSiswaController extends Controller
      * List siswa without accounts (no User linked via siswa_id).
      * Supports ?jenjang= and ?kelas_id= query filters.
      */
+    #[QueryParameter('per_page', description: 'Jumlah data per halaman', required: false, example: 15)]
+    #[QueryParameter('sort', description: 'Column to sort by (nama, nis, kelas_id, created_at)', required: false, example: 'nama')]
+    #[QueryParameter('direction', description: 'Sort direction (asc or desc)', required: false, example: 'asc')]
     public function unregistered(Request $request): JsonResponse
     {
         $branchId = Auth::user()->branch_id;
@@ -50,7 +61,11 @@ class AkunSiswaController extends Controller
             $query->where('kelas_id', (int) $kelasId);
         }
 
-        $siswa = $query->paginate($request->query('per_page', 15));
+        $siswa = $query;
+
+        $this->applySorting($siswa, ['nama', 'nis', 'kelas_id', 'created_at'], 'nama', 'asc');
+
+        $siswa = $siswa->paginate($request->query('per_page', 15));
 
         return response()->json($siswa);
     }
