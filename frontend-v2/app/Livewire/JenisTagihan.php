@@ -2,58 +2,67 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
-use Exception;
+use Illuminate\Http\Client\ConnectionException;
 use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
-use Filament\Schemas\Schema;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
-use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Support\Enums\Alignment;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
-use Filament\Tables\Enums\PaginationMode;
-use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Tables\Table;
-use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
 class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
 {
     use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
+    use HandlesApiErrors;
     use \App\Livewire\Concerns\HasPeriodFilter;
 
     public function table(Table $table): Table
     {
         return $table
             ->records(
-                fn(?string $search, ?string $sortColumn = null, ?string $sortDirection = null): array => ApiService::client()
-                    ->get('/jenis-tagihan', array_filter([
-                        'tahun_ajaran_id' => $this->selectedTahunAjaranId,
-                    ]))
-                    ->collect('data')
-                    ->when(filled($search), fn(Collection $data): Collection => $data->filter(fn(array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))))
-                    ->when(
-                        filled($sortColumn),
-                        fn(Collection $data): Collection => $data->sortBy(
-                            fn(array $record) => data_get($record, $sortColumn),
-                            SORT_REGULAR,
-                            ($sortDirection ?? 'asc') === 'desc'
-                        )->values()
-                    )
-                    ->toArray()
+                function (?string $search, ?string $sortColumn = null, ?string $sortDirection = null): array {
+                    try {
+                        $response = ApiService::client()->get('/jenis-tagihan', array_filter([
+                            'tahun_ajaran_id' => $this->selectedTahunAjaranId,
+                        ]));
+
+                        if (!$response->ok()) {
+                            $this->handleApiError($response);
+                            return [];
+                        }
+
+                        return $response->collect('data')
+                            ->when(filled($search), fn(Collection $data): Collection => $data->filter(fn(array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))))
+                            ->when(
+                                filled($sortColumn),
+                                fn(Collection $data): Collection => $data->sortBy(
+                                    fn(array $record) => data_get($record, $sortColumn),
+                                    SORT_REGULAR,
+                                    ($sortDirection ?? 'asc') === 'desc'
+                                )->values()
+                            )
+                            ->toArray();
+                    } catch (ConnectionException $e) {
+                        $this->notifyConnectionError();
+                        return [];
+                    } catch (\Throwable $e) {
+                        $this->notifyUnexpectedError();
+                        return [];
+                    }
+                }
             )
             ->columns([
                 TextColumn::make('nama')->label('Nama')->sortable()->searchable(),
@@ -62,75 +71,14 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
             ])
             ->deferLoading()
             ->striped()
-            ->paginated([5, 10, 25])
+            ->paginated([5, 10, 25, 50])
             ->defaultPaginationPageOption(10)
             ->paginatedWhileReordering()
             ->emptyStateHeading('Tidak Ada Jenis Tagihan')
             ->emptyStateDescription('Silahkan menambahkan jenis tagihan')
+            ->emptyStateIcon('heroicon-o-document-text')
             ->recordActions([
-                // Action::make('update') // Unique name for your action
-                //     ->tooltip('Ubah Jenis Tagihan')
-                //     ->icon('heroicon-s-pencil-square') // Optional icon
-                //     ->iconButton()
-                //     ->color('warning')
-                //     ->modalHeading('Ubah Jenis Tagihan')
-                //     ->modalFooterActions(function (Action $action) {
-                //         return [
-                //             $action->getModalSubmitAction()
-                //                 ->label('Simpan')
-                //                 ->color('primary')
-                //                 ->extraAttributes([
-                //                     'class' => 'text-white font-semibold'
-                //                 ]),
-                //             $action->getModalCancelAction()->label('Batal'),
-                //         ];
-                //     })
-                //     ->modalFooterActionsAlignment(Alignment::End)
-                //     ->modalSubmitAction()
-                //     ->fillForm(fn(array $record): array => [
-                //         'id' => $record['id'],
-                //         'nama' => $record['nama'],
-                //         'jatuh_tempo' => $record['jatuh_tempo'],
-                //         'jumlah' => $record['jumlah'],
-                //     ])
-                //     ->schema([
-                //         TextInput::make('nama')
-                //             ->label('Nama Tagihan')
-                //             ->required(),
-                //         DatePicker::make('jatuh_tempo')
-                //             ->label('Jatuh Tempo')
-                //             ->native(false)
-                //             ->timezone('Asia/Jakarta')
-                //             ->format('Y-m-d')
-                //             ->displayFormat('d-m-Y')
-                //             ->required(),
-                //         TextInput::make('jumlah')
-                //             ->label('Jumlah')
-                //             ->numeric()
-                //             ->required(),
-                //     ])
-                //     ->action(function (array $data, $record): void {
-                //         $response = Http::withHeaders([
-                //             'Authorization' => session()->get('data')['token']
-                //         ])
-                //             ->put(env('API_URL') . '/jenis-tagihan/' . $record['id'], $data);
-
-                //         if (!$response->ok()) {
-                //             Notification::make()
-                //                 ->title('Jenis Tagihan Gagal Diubah')
-                //                 ->danger()
-                //                 ->send();
-                //         } else {
-                //             Notification::make()
-                //                 ->title('Jenis Tagihan Berhasil Diubah')
-                //                 ->success()
-                //                 ->send();
-                //         }
-                //     })
-                //     ->after(function () {
-                //         $this->resetTable();
-                //     }), // Optional color
-                Action::make('delete') // Unique name for your action
+                Action::make('delete')
                     ->tooltip('Hapus Jenis Tagihan')
                     ->icon('heroicon-s-trash') // Optional icon
                     ->iconButton()
@@ -160,6 +108,7 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                     })
                     ->after(function () {
                         $this->resetTable();
+                    }),
             ])
             ->bulkActions([
                 BulkAction::make('bulkDelete')
@@ -216,7 +165,6 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                             ->timezone('Asia/Jakarta')
                             ->format('Y-m-d')
                             ->displayFormat('d-m-Y')
-                            //                            ->minDate(now())
                             ->required(),
                         TextInput::make('jumlah')
                             ->label('Jumlah')

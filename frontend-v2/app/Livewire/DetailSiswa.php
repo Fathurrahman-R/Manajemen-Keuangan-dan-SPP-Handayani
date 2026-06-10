@@ -4,23 +4,14 @@ namespace App\Livewire;
 
 use App\Services\ApiService;
 use Exception;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Livewire\Component;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Contracts\HasForms;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Concerns\InteractsWithInfolists;
-use Filament\Infolists\Contracts\HasInfolists;
-use Filament\Infolists\Infolist;
-use Filament\Schemas\Components\Flex;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Text;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
-use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\TextSize;
 use Illuminate\Support\Str;
 
@@ -231,8 +222,6 @@ class DetailSiswa extends Component implements HasSchemas
         }
 
         $this->siswa = $response->json()['data'];
-
-        // dd($this->siswa);
 
         return view('livewire.detail-siswa');
     }

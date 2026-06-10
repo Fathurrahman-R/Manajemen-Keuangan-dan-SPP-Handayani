@@ -10,13 +10,14 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
-use Filament\Tables\Actions\BulkAction;
+use Filament\Actions\BulkAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use UnitEnum;
@@ -34,8 +35,6 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
     protected static ?int $navigationSort = 3;
 
     protected string $view = 'filament.pages.manajemen-akun-siswa';
-
-    public array $selectedIds = [];
 
     public static function shouldRegisterNavigation(): bool
     {
@@ -61,37 +60,34 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
     {
         return $table
             ->records(
-                fn(?string $search, ?array $columnSearches, ?array $filters): array => $this->fetchRecords($search, $filters),
+                fn(?string $search, int $page, int $recordsPerPage, array $filters = []): LengthAwarePaginator => $this->fetchRecords($search, $page, $recordsPerPage, $filters),
             )
             ->columns([
                 TextColumn::make('name')
                     ->label('Nama')
                     ->sortable()
                     ->searchable()
-                    ->getStateUsing(fn($record) => $record['name'] ?? $record['siswa']['nama'] ?? '-'),
-                TextColumn::make('email')
-                    ->label('Email')
+                    ->state(fn(array $record): string => $record['name'] ?? $record['siswa']['nama'] ?? '-'),
+                TextColumn::make('username')
+                    ->label('Username')
                     ->sortable()
-                    ->searchable()
-                    ->getStateUsing(fn($record) => $record['email'] ?? $record['username'] ?? '-'),
+                    ->searchable(),
                 TextColumn::make('kelas')
                     ->label('Kelas')
                     ->sortable()
-                    ->searchable()
-                    ->getStateUsing(fn($record) => $record['siswa']['kelas']['nama'] ?? $record['siswa']['kelas_nama'] ?? '-'),
+                    ->state(fn(array $record): string => $record['siswa']['kelas']['nama'] ?? '-'),
                 TextColumn::make('jenjang')
                     ->label('Jenjang')
                     ->sortable()
-                    ->searchable()
-                    ->getStateUsing(fn($record) => $record['siswa']['jenjang'] ?? '-'),
+                    ->state(fn(array $record): string => $record['siswa']['jenjang'] ?? '-'),
                 IconColumn::make('is_active')
-                    ->label('Status Aktif')
+                    ->label('Aktif')
                     ->boolean()
                     ->trueIcon('heroicon-o-check-circle')
                     ->falseIcon('heroicon-o-x-circle')
                     ->trueColor('success')
                     ->falseColor('danger')
-                    ->getStateUsing(fn($record) => $record['is_active'] ?? false),
+                    ->state(fn(array $record): bool => $record['is_active'] ?? false),
             ])
             ->filters([
                 SelectFilter::make('jenjang')
@@ -118,6 +114,37 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                     ->modalHeading('Reset Password')
                     ->modalDescription('Apakah Anda yakin ingin mereset password akun yang dipilih ke default (tanggal lahir DDMMYYYY)?')
                     ->action(fn(Collection $records) => $this->bulkResetPassword($records))
+                    ->deselectRecordsAfterCompletion(),
+                BulkAction::make('viewCredentials')
+                    ->label('Lihat Kredensial')
+                    ->icon('heroicon-o-eye')
+                    ->color('info')
+                    ->modalHeading('Kredensial Akun Siswa')
+                    ->modalWidth('2xl')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Tutup')
+                    ->modalContent(function (Collection $records): \Illuminate\Contracts\View\View {
+                        $ids = $records->pluck('id')->toArray();
+
+                        $response = ApiService::client()
+                            ->get('/akun-siswa/credentials', ['ids' => implode(',', $ids)]);
+
+                        $credentials = $response->ok() ? $response->json('data') : [];
+
+                        return view('livewire.partials.credentials-list', [
+                            'credentials' => $credentials,
+                        ]);
+                    }),
+                BulkAction::make('printPdf')
+                    ->label('Cetak PDF')
+                    ->icon('heroicon-o-printer')
+                    ->color('success')
+                    ->action(function (Collection $records): void {
+                        $ids = $records->pluck('id')->toArray();
+                        $token = session()->get('data.token');
+                        $url = env('API_URL') . '/akun-siswa/credentials/pdf?ids=' . implode(',', $ids) . '&token=' . $token;
+                        $this->dispatch('open-url', url: $url);
+                    })
                     ->deselectRecordsAfterCompletion(),
             ])
             ->recordActions([
@@ -183,111 +210,67 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                     })
                     ->after(fn() => $this->resetTable()),
             ])
-            ->headerActions([
-                \Filament\Actions\Action::make('viewCredentials')
-                    ->label('Lihat Kredensial')
-                    ->color('primary')
-                    ->button()
-                    ->icon('heroicon-o-eye')
-                    ->modalHeading('Kredensial Akun Siswa')
-                    ->modalWidth('2xl')
-                    ->modalSubmitAction(false)
-                    ->modalCancelActionLabel('Tutup')
-                    ->modalContent(function (): \Illuminate\Contracts\View\View {
-                        $ids = $this->selectedIds;
-
-                        if (empty($ids)) {
-                            return view('livewire.partials.credentials-empty');
-                        }
-
-                        $response = ApiService::client()
-                            ->get('/akun-siswa/credentials', ['ids' => implode(',', $ids)]);
-
-                        $credentials = $response->ok() ? $response->json('data') : [];
-
-                        return view('livewire.partials.credentials-list', [
-                            'credentials' => $credentials,
-                        ]);
-                    })
-                    ->extraAttributes([
-                        'class' => 'text-white font-semibold',
-                    ]),
-                \Filament\Actions\Action::make('printPdf')
-                    ->label('Cetak PDF')
-                    ->color('primary')
-                    ->button()
-                    ->icon('heroicon-o-printer')
-                    ->action(function (): void {
-                        $ids = $this->selectedIds;
-
-                        if (empty($ids)) {
-                            Notification::make()
-                                ->title('Perhatian')
-                                ->body('Pilih akun terlebih dahulu untuk mencetak PDF.')
-                                ->warning()
-                                ->send();
-                            return;
-                        }
-
-                        $token = session()->get('data.token');
-                        $url = env('API_URL') . '/akun-siswa/credentials/pdf?ids=' . implode(',', $ids) . '&token=' . $token;
-                        $this->dispatch('open-url', url: $url);
-                    })
-                    ->extraAttributes([
-                        'class' => 'text-white font-semibold',
-                    ]),
-            ])
+            ->headerActions([])
             ->deferLoading()
             ->striped()
             ->searchable()
-            ->paginated([5, 10, 25])
+            ->paginated([10, 25, 50])
             ->defaultPaginationPageOption(10)
             ->emptyStateHeading('Tidak Ada Akun Siswa')
-            ->emptyStateDescription('Belum ada akun siswa yang terdaftar.');
+            ->emptyStateDescription('Belum ada akun siswa yang terdaftar.')
+            ->emptyStateIcon('heroicon-o-document-text');
     }
 
     /**
      * Fetch records from the API with search and filter support.
      */
-    protected function fetchRecords(?string $search, ?array $filters): array
+    protected function fetchRecords(?string $search, int $page, int $recordsPerPage, ?array $filters): LengthAwarePaginator
     {
-        $allRecords = ApiService::client()
-            ->get('/akun-siswa')
-            ->collect('data')
-            ->toArray();
+        try {
+            $response = ApiService::client()->get('/akun-siswa', ['per_page' => 200]);
 
-        $collection = collect($allRecords);
+            if (!$response->ok()) {
+                return new LengthAwarePaginator([], 0, $recordsPerPage, $page);
+            }
 
-        // Apply jenjang filter
-        if (!empty($filters['jenjang']['value'] ?? null)) {
-            $jenjang = $filters['jenjang']['value'];
-            $collection = $collection->filter(
-                fn(array $record) => ($record['siswa']['jenjang'] ?? '') === $jenjang
-            );
+            $allRecords = $response->json('data') ?? [];
+            $collection = collect($allRecords);
+
+            // Apply jenjang filter
+            if (!empty($filters['jenjang']['value'] ?? null)) {
+                $jenjang = $filters['jenjang']['value'];
+                $collection = $collection->filter(
+                    fn(array $record) => ($record['siswa']['jenjang'] ?? '') === $jenjang
+                );
+            }
+
+            // Apply kelas filter
+            if (!empty($filters['kelas']['value'] ?? null)) {
+                $kelas = $filters['kelas']['value'];
+                $collection = $collection->filter(
+                    fn(array $record) => ($record['siswa']['kelas']['nama'] ?? '') === $kelas
+                );
+            }
+
+            // Apply search
+            if (filled($search)) {
+                $searchLower = Str::lower($search);
+                $collection = $collection->filter(
+                    fn(array $record): bool => str_contains(Str::lower($record['name'] ?? ''), $searchLower)
+                        || str_contains(Str::lower($record['username'] ?? ''), $searchLower)
+                        || str_contains(Str::lower($record['siswa']['nama'] ?? ''), $searchLower)
+                        || str_contains(Str::lower($record['siswa']['jenjang'] ?? ''), $searchLower)
+                        || str_contains(Str::lower($record['siswa']['kelas']['nama'] ?? ''), $searchLower)
+                );
+            }
+
+            $total = $collection->count();
+            $items = $collection->slice(($page - 1) * $recordsPerPage, $recordsPerPage)->values()->toArray();
+
+            return new LengthAwarePaginator($items, $total, $recordsPerPage, $page);
+        } catch (\Throwable $e) {
+            return new LengthAwarePaginator([], 0, $recordsPerPage, $page);
         }
-
-        // Apply kelas filter
-        if (!empty($filters['kelas']['value'] ?? null)) {
-            $kelas = $filters['kelas']['value'];
-            $collection = $collection->filter(
-                fn(array $record) => ($record['siswa']['kelas']['nama'] ?? $record['siswa']['kelas_nama'] ?? '') === $kelas
-            );
-        }
-
-        // Apply search
-        if (filled($search)) {
-            $searchLower = Str::lower($search);
-            $collection = $collection->filter(
-                fn(array $record): bool => str_contains(Str::lower($record['name'] ?? ''), $searchLower)
-                    || str_contains(Str::lower($record['username'] ?? ''), $searchLower)
-                    || str_contains(Str::lower($record['email'] ?? ''), $searchLower)
-                    || str_contains(Str::lower($record['siswa']['nama'] ?? ''), $searchLower)
-                    || str_contains(Str::lower($record['siswa']['jenjang'] ?? ''), $searchLower)
-                    || str_contains(Str::lower($record['siswa']['kelas']['nama'] ?? $record['siswa']['kelas_nama'] ?? ''), $searchLower)
-            );
-        }
-
-        return $collection->values()->toArray();
     }
 
     /**
@@ -296,16 +279,19 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
     protected function getKelasOptions(): array
     {
         try {
-            $records = ApiService::client()->get('/akun-siswa')->collect('data');
-            $kelasOptions = $records
-                ->map(fn($record) => $record['siswa']['kelas']['nama'] ?? $record['siswa']['kelas_nama'] ?? null)
+            $response = ApiService::client()->get('/akun-siswa', ['per_page' => 200]);
+            if (!$response->ok()) {
+                return [];
+            }
+
+            $records = collect($response->json('data') ?? []);
+            return $records
+                ->map(fn($record) => $record['siswa']['kelas']['nama'] ?? null)
                 ->filter()
                 ->unique()
                 ->sort()
                 ->mapWithKeys(fn($kelas) => [$kelas => $kelas])
                 ->toArray();
-
-            return $kelasOptions;
         } catch (\Throwable $e) {
             return [];
         }
@@ -385,22 +371,6 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
 
     public function toggleSelection(int $id): void
     {
-        if (in_array($id, $this->selectedIds)) {
-            $this->selectedIds = array_values(array_filter($this->selectedIds, fn($i) => $i !== $id));
-        } else {
-            $this->selectedIds[] = $id;
-        }
-    }
-
-    public function selectAll(): void
-    {
-        $response = ApiService::client()->get('/akun-siswa');
-        $records = $response->collect('data');
-        $this->selectedIds = $records->pluck('id')->toArray();
-    }
-
-    public function deselectAll(): void
-    {
-        $this->selectedIds = [];
+        // Deprecated — using native Filament table bulk selection
     }
 }

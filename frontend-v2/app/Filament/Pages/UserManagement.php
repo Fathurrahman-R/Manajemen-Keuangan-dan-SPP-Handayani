@@ -15,8 +15,6 @@ class UserManagement extends Page
 
     protected static ?string $title = 'Manajemen User';
 
-    // protected static ?string $navigationIcon = 'heroicon-o-users';
-
     protected static ?int $navigationSort = 2;
 
     public static function shouldRegisterNavigation(): bool

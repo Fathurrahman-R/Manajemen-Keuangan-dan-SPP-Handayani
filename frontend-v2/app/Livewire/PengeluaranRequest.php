@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -17,12 +18,13 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Component;
 
 class PengeluaranRequest extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
+    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable, HandlesApiErrors;
 
     public function table(Table $table): Table
     {
@@ -39,14 +41,29 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                     $params['direction'] = $sortDirection ?? 'asc';
                 }
 
-                $response = ApiService::client()->get('/pengeluaran-request', $params)->json();
+                try {
+                    $response = ApiService::client()->get('/pengeluaran-request', $params);
 
-                return new LengthAwarePaginator(
-                    items: $response['data'] ?? [],
-                    total: $response['total'] ?? 0,
-                    perPage: $recordsPerPage,
-                    currentPage: $page,
-                );
+                    if (!$response->ok()) {
+                        $this->handleApiError($response);
+                        return new LengthAwarePaginator(items: [], total: 0, perPage: $recordsPerPage, currentPage: $page);
+                    }
+
+                    $data = $response->json();
+
+                    return new LengthAwarePaginator(
+                        items: $data['data'] ?? [],
+                        total: $data['total'] ?? 0,
+                        perPage: $recordsPerPage,
+                        currentPage: $page,
+                    );
+                } catch (ConnectionException $e) {
+                    $this->notifyConnectionError();
+                    return new LengthAwarePaginator(items: [], total: 0, perPage: $recordsPerPage, currentPage: $page);
+                } catch (\Throwable $e) {
+                    $this->notifyUnexpectedError();
+                    return new LengthAwarePaginator(items: [], total: 0, perPage: $recordsPerPage, currentPage: $page);
+                }
             })
             ->columns([
                 TextColumn::make('uraian')->label('Uraian')->limit(40),
@@ -63,7 +80,8 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                         'rejected' => 'danger',
                         'disbursed' => 'purple',
                         default => 'gray',
-                    }),
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('status')
@@ -166,8 +184,11 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
             ])
             ->deferLoading()
             ->striped()
+            ->paginated([5, 10, 25, 50])
+            ->defaultPaginationPageOption(10)
             ->emptyStateHeading('Belum ada request')
-            ->emptyStateDescription('Buat request pengeluaran baru dengan tombol di atas.');
+            ->emptyStateDescription('Buat request pengeluaran baru dengan tombol di atas.')
+            ->emptyStateIcon('heroicon-o-document-text');
     }
 
     public function render()

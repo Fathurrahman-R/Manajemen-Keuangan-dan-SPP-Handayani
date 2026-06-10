@@ -62,7 +62,7 @@
                                 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800' => $selectedKelasId != $kelas['id'],
                             ])
                         >
-                            {{ $kelas['nama'] }} <span class="text-xs text-gray-500">(Level {{ $kelas['level'] }})</span>
+                            {{ $kelas['nama'] }} <span class="text-xs text-gray-500 dark:text-gray-400">(Level {{ $kelas['level'] }})</span>
                         </button>
                     @empty
                         <div class="flex flex-col items-center justify-center py-6">

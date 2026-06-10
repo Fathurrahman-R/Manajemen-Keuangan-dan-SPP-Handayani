@@ -7,11 +7,9 @@ use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
-use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
-use Filament\Support\Enums\Alignment;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
@@ -83,10 +81,12 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
                     ->state(fn(array $record) => $record['source_tahun_ajaran_nama'] ?? $record['source_tahun_ajaran']['nama'] ?? '-'),
                 TextColumn::make('target_tahun_ajaran_nama')
                     ->label('Ke Periode')
-                    ->state(fn(array $record) => $record['target_tahun_ajaran_nama'] ?? $record['target_tahun_ajaran']['nama'] ?? '-'),
+                    ->state(fn(array $record) => $record['target_tahun_ajaran_nama'] ?? $record['target_tahun_ajaran']['nama'] ?? '-')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('details_count')
                     ->label('Jumlah Siswa')
-                    ->state(fn(array $record) => $record['details_count'] ?? count($record['details'] ?? [])),
+                    ->state(fn(array $record) => $record['details_count'] ?? count($record['details'] ?? []))
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
@@ -94,10 +94,12 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
                         'completed' => 'success',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn($state) => $state === 'completed' ? 'Completed' : 'Undone'),
+                    ->formatStateUsing(fn($state) => $state === 'completed' ? 'Completed' : 'Undone')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('processed_by_name')
                     ->label('User')
-                    ->state(fn(array $record) => $record['processed_by_name'] ?? $record['processed_by_user']['name'] ?? '-'),
+                    ->state(fn(array $record) => $record['processed_by_name'] ?? $record['processed_by_user']['name'] ?? '-')
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->recordActions([
                 Action::make('detail')
@@ -123,8 +125,9 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
             ])
             ->emptyStateHeading('Belum Ada Riwayat')
             ->emptyStateDescription('Belum ada riwayat proses kenaikan kelas.')
+            ->emptyStateIcon('heroicon-o-document-text')
             ->striped()
-            ->paginated([5, 10, 25])
+            ->paginated([5, 10, 25, 50])
             ->defaultPaginationPageOption(10);
     }
 

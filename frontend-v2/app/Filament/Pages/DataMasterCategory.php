@@ -4,7 +4,6 @@ namespace App\Filament\Pages;
 
 use Filament\Pages\Page;
 use UnitEnum;
-use BackedEnum;
 use Filament\Support\Enums\Alignment;
 
 class DataMasterCategory extends Page

@@ -3,19 +3,19 @@
 namespace App\Filament\Pages;
 
 use App\Services\ApiService;
-use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
-use Filament\Tables\Actions\BulkAction;
+use Filament\Actions\BulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use UnitEnum;
@@ -62,29 +62,26 @@ class BulkAkunSiswaPage extends Page implements HasActions, HasSchemas, HasTable
     {
         return $table
             ->records(
-                fn(?string $search, ?array $columnSearches, ?array $filters): array => $this->fetchUnregisteredSiswa($search, $filters),
+                fn(?string $search, int $page, int $recordsPerPage, array $filters = []): LengthAwarePaginator => $this->fetchUnregisteredSiswa($search, $page, $recordsPerPage, $filters),
             )
             ->columns([
                 TextColumn::make('nis')
                     ->label('NIS')
                     ->sortable()
-                    ->searchable()
-                    ->getStateUsing(fn($record) => $record['nis'] ?? '-'),
+                    ->searchable(),
                 TextColumn::make('nama')
                     ->label('Nama')
                     ->sortable()
-                    ->searchable()
-                    ->getStateUsing(fn($record) => $record['nama'] ?? '-'),
+                    ->searchable(),
                 TextColumn::make('jenjang')
                     ->label('Jenjang')
                     ->sortable()
-                    ->searchable()
-                    ->getStateUsing(fn($record) => $record['jenjang'] ?? '-'),
-                TextColumn::make('kelas')
+                    ->searchable(),
+                TextColumn::make('kelas_nama')
                     ->label('Kelas')
                     ->sortable()
                     ->searchable()
-                    ->getStateUsing(fn($record) => $record['kelas']['nama'] ?? $record['kelas_nama'] ?? '-'),
+                    ->state(fn(array $record): string => $record['kelas']['nama'] ?? $record['kelas_nama'] ?? '-'),
             ])
             ->filters([
                 SelectFilter::make('jenjang')
@@ -108,19 +105,20 @@ class BulkAkunSiswaPage extends Page implements HasActions, HasSchemas, HasTable
             ->deferLoading()
             ->striped()
             ->searchable()
-            ->paginated([5, 10, 25])
+            ->paginated([10, 25, 50])
             ->defaultPaginationPageOption(10)
             ->emptyStateHeading('Tidak Ada Siswa Tanpa Akun')
-            ->emptyStateDescription('Semua siswa sudah memiliki akun.');
+            ->emptyStateDescription('Semua siswa sudah memiliki akun.')
+            ->emptyStateIcon('heroicon-o-document-text');
     }
 
     /**
      * Fetch unregistered siswa from the API with search and filter support.
      */
-    protected function fetchUnregisteredSiswa(?string $search, ?array $filters): array
+    protected function fetchUnregisteredSiswa(?string $search, int $page, int $recordsPerPage, ?array $filters): LengthAwarePaginator
     {
         try {
-            $params = [];
+            $params = ['per_page' => 200];
 
             // Apply jenjang filter at API level
             if (!empty($filters['jenjang']['value'] ?? null)) {
@@ -130,7 +128,7 @@ class BulkAkunSiswaPage extends Page implements HasActions, HasSchemas, HasTable
             $response = ApiService::client()->get('/akun-siswa/unregistered', $params);
 
             if (!$response->ok()) {
-                return [];
+                return new LengthAwarePaginator([], 0, $recordsPerPage, $page);
             }
 
             $data = $response->json('data') ?? [];
@@ -140,7 +138,7 @@ class BulkAkunSiswaPage extends Page implements HasActions, HasSchemas, HasTable
             if (!empty($filters['kelas']['value'] ?? null)) {
                 $kelas = $filters['kelas']['value'];
                 $collection = $collection->filter(
-                    fn(array $record) => ($record['kelas']['nama'] ?? $record['kelas_nama'] ?? '') === $kelas
+                    fn(array $record) => ($record['kelas']['nama'] ?? '') === $kelas
                 );
             }
 
@@ -151,17 +149,20 @@ class BulkAkunSiswaPage extends Page implements HasActions, HasSchemas, HasTable
                     fn(array $record): bool => str_contains(Str::lower($record['nis'] ?? ''), $searchLower)
                         || str_contains(Str::lower($record['nama'] ?? ''), $searchLower)
                         || str_contains(Str::lower($record['jenjang'] ?? ''), $searchLower)
-                        || str_contains(Str::lower($record['kelas']['nama'] ?? $record['kelas_nama'] ?? ''), $searchLower)
+                        || str_contains(Str::lower($record['kelas']['nama'] ?? ''), $searchLower)
                 );
             }
 
-            return $collection->values()->toArray();
+            $total = $collection->count();
+            $items = $collection->slice(($page - 1) * $recordsPerPage, $recordsPerPage)->values()->toArray();
+
+            return new LengthAwarePaginator($items, $total, $recordsPerPage, $page);
         } catch (\Throwable $e) {
             Notification::make()
                 ->title('Gagal memuat data siswa')
                 ->danger()
                 ->send();
-            return [];
+            return new LengthAwarePaginator([], 0, $recordsPerPage, $page);
         }
     }
 
@@ -171,7 +172,7 @@ class BulkAkunSiswaPage extends Page implements HasActions, HasSchemas, HasTable
     protected function getKelasOptions(): array
     {
         try {
-            $response = ApiService::client()->get('/akun-siswa/unregistered');
+            $response = ApiService::client()->get('/akun-siswa/unregistered', ['per_page' => 100]);
             if (!$response->ok()) {
                 return [];
             }
@@ -179,7 +180,7 @@ class BulkAkunSiswaPage extends Page implements HasActions, HasSchemas, HasTable
             $data = $response->json('data') ?? [];
 
             return collect($data)
-                ->map(fn($record) => $record['kelas']['nama'] ?? $record['kelas_nama'] ?? null)
+                ->map(fn($record) => $record['kelas']['nama'] ?? null)
                 ->filter()
                 ->unique()
                 ->sort()

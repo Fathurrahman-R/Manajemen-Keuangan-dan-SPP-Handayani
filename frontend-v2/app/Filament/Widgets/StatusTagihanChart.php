@@ -27,9 +27,15 @@ class StatusTagihanChart extends ChartWidget
             : [];
 
         try {
-            $data = ApiService::client()->get('/dashboard/charts/status-tagihan', $params)->json('data') ?? [];
+            $response = ApiService::client()->get('/dashboard/charts/status-tagihan', $params);
+
+            if (!$response->ok()) {
+                return ['datasets' => [], 'labels' => []];
+            }
+
+            $data = $response->json('data') ?? [];
         } catch (\Throwable $e) {
-            $data = [];
+            return ['datasets' => [], 'labels' => []];
         }
 
         return [

@@ -27,9 +27,15 @@ class TunggakanJenjangChart extends ChartWidget
             : [];
 
         try {
-            $data = ApiService::client()->get('/dashboard/charts/tunggakan-jenjang', $params)->json('data') ?? [];
+            $response = ApiService::client()->get('/dashboard/charts/tunggakan-jenjang', $params);
+
+            if (!$response->ok()) {
+                return ['datasets' => [], 'labels' => []];
+            }
+
+            $data = $response->json('data') ?? [];
         } catch (\Throwable $e) {
-            $data = [];
+            return ['datasets' => [], 'labels' => []];
         }
 
         return [

@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
-use Exception;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -15,12 +15,13 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Component;
 
 class EmailPopulation extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
+    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable, HandlesApiErrors;
 
     public array $progress = [];
 
@@ -58,18 +59,30 @@ class EmailPopulation extends Component implements HasActions, HasSchemas, HasTa
                         $params['direction'] = $sortDirection ?? 'asc';
                     }
 
-                    $response = ApiService::client()
-                        ->get('/users/email-population', $params)
-                        ->collect();
+                    try {
+                        $response = ApiService::client()->get('/users/email-population', $params);
 
-                    $data = $response['data'] ?? [];
+                        if (!$response->ok()) {
+                            $this->handleApiError($response);
+                            return new LengthAwarePaginator(items: [], total: 0, perPage: $recordsPerPage, currentPage: $page);
+                        }
 
-                    return new LengthAwarePaginator(
-                        items: $data,
-                        total: $response['meta']['total'] ?? count($data),
-                        perPage: $recordsPerPage,
-                        currentPage: $page,
-                    );
+                        $collected = $response->collect();
+                        $data = $collected['data'] ?? [];
+
+                        return new LengthAwarePaginator(
+                            items: $data,
+                            total: $collected['meta']['total'] ?? count($data),
+                            perPage: $recordsPerPage,
+                            currentPage: $page,
+                        );
+                    } catch (ConnectionException $e) {
+                        $this->notifyConnectionError();
+                        return new LengthAwarePaginator(items: [], total: 0, perPage: $recordsPerPage, currentPage: $page);
+                    } catch (\Throwable $e) {
+                        $this->notifyUnexpectedError();
+                        return new LengthAwarePaginator(items: [], total: 0, perPage: $recordsPerPage, currentPage: $page);
+                    }
                 }
             )
             ->columns([
@@ -109,10 +122,11 @@ class EmailPopulation extends Component implements HasActions, HasSchemas, HasTa
             ])
             ->deferLoading()
             ->striped()
-            ->paginated([5, 10, 25])
+            ->paginated([5, 10, 25, 50])
             ->defaultPaginationPageOption(10)
             ->emptyStateHeading('Tidak Ada Data')
-            ->emptyStateDescription('Semua akun sudah memiliki email atau tidak ada akun yang perlu diisi.');
+            ->emptyStateDescription('Semua akun sudah memiliki email atau tidak ada akun yang perlu diisi.')
+            ->emptyStateIcon('heroicon-o-document-text');
     }
 
     public function updateEmail(int $userId, string $email): void

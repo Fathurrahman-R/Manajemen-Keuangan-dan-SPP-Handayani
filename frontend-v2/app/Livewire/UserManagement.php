@@ -2,7 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
+use Illuminate\Http\Client\ConnectionException;
 use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -27,6 +29,7 @@ use Illuminate\Support\Str;
 class UserManagement extends Component implements HasActions, HasSchemas, HasTable
 {
     use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
+    use HandlesApiErrors;
 
     protected function hasPermission(string $permission): bool
     {
@@ -90,22 +93,40 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
     {
         return $table
             ->records(
-                fn(?string $search, ?string $sortColumn = null, ?string $sortDirection = null): array => ApiService::client()
-                    ->get('/users')
-                    ->collect('data')
-                    ->when(filled($search), fn(Collection $data): Collection => $data->filter(
-                        fn(array $record): bool => str_contains(Str::lower($record['username'] ?? ''), Str::lower($search))
-                            || str_contains(Str::lower($record['branch']['location'] ?? ''), Str::lower($search))
-                    ))
-                    ->when(
-                        filled($sortColumn),
-                        fn(Collection $data): Collection => $data->sortBy(
-                            fn(array $record) => data_get($record, $sortColumn),
-                            SORT_REGULAR,
-                            ($sortDirection ?? 'asc') === 'desc'
-                        )->values()
-                    )
-                    ->toArray(),
+                function (?string $search, array $filters = [], ?string $sortColumn = null, ?string $sortDirection = null): array {
+                    try {
+                        $response = ApiService::client()->get('/users');
+
+                        if (!$response->ok()) {
+                            $this->handleApiError($response);
+                            return [];
+                        }
+
+                        return $response->collect('data')
+                            ->when(filled($search), fn(Collection $data): Collection => $data->filter(
+                                fn(array $record): bool => str_contains(Str::lower($record['username'] ?? ''), Str::lower($search))
+                                    || str_contains(Str::lower($record['branch']['location'] ?? ''), Str::lower($search))
+                            ))
+                            ->when(!empty($filters['role']['value'] ?? null), fn(Collection $data) => $data->filter(
+                                fn(array $record): bool => in_array($filters['role']['value'], $record['roles'] ?? [])
+                            ))
+                            ->when(
+                                filled($sortColumn),
+                                fn(Collection $data): Collection => $data->sortBy(
+                                    fn(array $record) => data_get($record, $sortColumn),
+                                    SORT_REGULAR,
+                                    ($sortDirection ?? 'asc') === 'desc'
+                                )->values()
+                            )
+                            ->toArray();
+                    } catch (ConnectionException $e) {
+                        $this->notifyConnectionError();
+                        return [];
+                    } catch (\Throwable $e) {
+                        $this->notifyUnexpectedError();
+                        return [];
+                    }
+                },
             )
             ->columns([
                 TextColumn::make('username')
@@ -134,11 +155,12 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                     ->label('Role')
                     ->options(fn(): array => $this->getRoleOptions()),
             ])
-            ->paginated([5, 10, 25])
+            ->paginated([5, 10, 25, 50])
             ->defaultPaginationPageOption(10)
             ->paginatedWhileReordering()
             ->emptyStateHeading('Tidak Ada User')
             ->emptyStateDescription('Silahkan menambahkan user')
+            ->emptyStateIcon('heroicon-o-document-text')
             ->recordActions([
                 Action::make('update')
                     ->tooltip('Ubah User')
@@ -266,6 +288,7 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                     })
                     ->after(function () {
                         $this->resetTable();
+                    }),
             ])
             ->bulkActions([
                 BulkAction::make('bulkDelete')

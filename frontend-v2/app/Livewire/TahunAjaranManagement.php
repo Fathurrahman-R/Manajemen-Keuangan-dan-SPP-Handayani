@@ -2,7 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
+use Illuminate\Http\Client\ConnectionException;
 use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -18,6 +20,7 @@ use Filament\Support\Enums\Alignment;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -25,26 +28,45 @@ use Illuminate\Support\Str;
 class TahunAjaranManagement extends Component implements HasActions, HasSchemas, HasTable
 {
     use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
+    use HandlesApiErrors;
 
     public function table(Table $table): Table
     {
         return $table
             ->records(
-                fn(?string $search, ?string $sortColumn = null, ?string $sortDirection = null): array => ApiService::client()
-                    ->get('/tahun-ajaran')
-                    ->collect('data')
-                    ->when(filled($search), fn(Collection $data): Collection => $data->filter(
-                        fn(array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))
-                    ))
-                    ->when(
-                        filled($sortColumn),
-                        fn(Collection $data): Collection => $data->sortBy(
-                            fn(array $record) => data_get($record, $sortColumn),
-                            SORT_REGULAR,
-                            ($sortDirection ?? 'asc') === 'desc'
-                        )->values()
-                    )
-                    ->toArray()
+                function (?string $search, array $filters = [], ?string $sortColumn = null, ?string $sortDirection = null): array {
+                    try {
+                        $response = ApiService::client()->get('/tahun-ajaran');
+
+                        if (!$response->ok()) {
+                            $this->handleApiError($response);
+                            return [];
+                        }
+
+                        return $response->collect('data')
+                            ->when(filled($search), fn(Collection $data): Collection => $data->filter(
+                                fn(array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))
+                            ))
+                            ->when(!empty($filters['status']['value'] ?? null), fn(Collection $data) => $data->filter(
+                                fn(array $record): bool => ($record['status'] ?? '') === $filters['status']['value']
+                            ))
+                            ->when(
+                                filled($sortColumn),
+                                fn(Collection $data): Collection => $data->sortBy(
+                                    fn(array $record) => data_get($record, $sortColumn),
+                                    SORT_REGULAR,
+                                    ($sortDirection ?? 'asc') === 'desc'
+                                )->values()
+                            )
+                            ->toArray();
+                    } catch (ConnectionException $e) {
+                        $this->notifyConnectionError();
+                        return [];
+                    } catch (\Throwable $e) {
+                        $this->notifyUnexpectedError();
+                        return [];
+                    }
+                }
             )
             ->columns([
                 TextColumn::make('nama')->label('Tahun Ajaran')->sortable()->searchable(),
@@ -62,10 +84,18 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
             ])
             ->deferLoading()
             ->striped()
-            ->paginated([5, 10, 25])
+            ->paginated([5, 10, 25, 50])
             ->defaultPaginationPageOption(10)
+            ->filters([
+                SelectFilter::make('status')
+                    ->options([
+                        'Aktif' => 'Aktif',
+                        'Non-Aktif' => 'Non-Aktif',
+                    ]),
+            ])
             ->emptyStateHeading('Tidak Ada Tahun Ajaran')
             ->emptyStateDescription('Silahkan menambahkan tahun ajaran')
+            ->emptyStateIcon('heroicon-o-document-text')
             ->recordActions([
                 ActionGroup::make([
                     Action::make('activate')

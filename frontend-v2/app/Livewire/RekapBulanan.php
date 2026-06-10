@@ -2,41 +2,30 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
 use App\Livewire\Concerns\HasImportExport;
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
-use Filament\Schemas\Schema;
 use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
-use Filament\Support\Enums\Alignment;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
-use Filament\Tables\Enums\PaginationMode;
-use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Tables\Filters\Filter;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Contracts\View\View;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Str;
 
 class RekapBulanan extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable, HasImportExport;
+    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable, HasImportExport, HandlesApiErrors;
 
     public $currentMonthYear;
 
@@ -53,27 +42,39 @@ class RekapBulanan extends Component implements HasActions, HasSchemas, HasTable
                         $params['tahun'] = $filters['date']['tahun'];
                     }
 
-                    $response = ApiService::client()
-                        ->get('/laporan/rekap', $params)
-                        ->collect();
+                    try {
+                        $response = ApiService::client()->get('/laporan/rekap', $params);
 
-                    $items = collect($response['data'] ?? [])
-                        ->when(
-                            filled($sortColumn),
-                            fn(Collection $data): Collection => $data->sortBy(
-                                fn(array $record) => data_get($record, $sortColumn),
-                                SORT_REGULAR,
-                                ($sortDirection ?? 'asc') === 'desc'
-                            )->values()
-                        )
-                        ->toArray();
+                        if (!$response->ok()) {
+                            $this->handleApiError($response);
+                            return new LengthAwarePaginator(items: [], total: 0, perPage: $recordsPerPage, currentPage: $page);
+                        }
 
-                    return new LengthAwarePaginator(
-                        items: $items,
-                        total: $response['meta']['total'] ?? count($items),
-                        perPage: $recordsPerPage,
-                        currentPage: $page,
-                    );
+                        $collected = $response->collect();
+                        $items = collect($collected['data'] ?? [])
+                            ->when(
+                                filled($sortColumn),
+                                fn(Collection $data): Collection => $data->sortBy(
+                                    fn(array $record) => data_get($record, $sortColumn),
+                                    SORT_REGULAR,
+                                    ($sortDirection ?? 'asc') === 'desc'
+                                )->values()
+                            )
+                            ->toArray();
+
+                        return new LengthAwarePaginator(
+                            items: $items,
+                            total: $collected['meta']['total'] ?? count($items),
+                            perPage: $recordsPerPage,
+                            currentPage: $page,
+                        );
+                    } catch (ConnectionException $e) {
+                        $this->notifyConnectionError();
+                        return new LengthAwarePaginator(items: [], total: 0, perPage: $recordsPerPage, currentPage: $page);
+                    } catch (\Throwable $e) {
+                        $this->notifyUnexpectedError();
+                        return new LengthAwarePaginator(items: [], total: 0, perPage: $recordsPerPage, currentPage: $page);
+                    }
                 }
             )
             ->columns([
@@ -93,9 +94,12 @@ class RekapBulanan extends Component implements HasActions, HasSchemas, HasTable
             ])
             ->deferLoading()
             ->striped()
+            ->paginated([5, 10, 25, 50])
+            ->defaultPaginationPageOption(10)
             ->paginatedWhileReordering()
             ->emptyStateHeading('Tidak Ada Rekap Bulanan')
             ->emptyStateDescription('Silahkan menambahkan data pembayaran atau pengeluaran')
+            ->emptyStateIcon('heroicon-o-document-text')
             ->headerActions([
                 Action::make('Export')
                     ->label('Export PDF')

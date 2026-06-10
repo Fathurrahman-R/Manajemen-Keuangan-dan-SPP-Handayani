@@ -30,11 +30,11 @@ class AkunSiswaController extends Controller
 
         $users = User::role('siswa')
             ->where('branch_id', $branchId)
-            ->with('siswa');
+            ->with('siswa.kelas');
 
         $this->applySorting($users, ['username', 'name', 'created_at'], 'username', 'asc');
 
-        $users = $users->paginate($request->query('per_page', 15));
+        $users = $users->paginate($request->query('per_page', 200));
 
         return response()->json($users);
     }
@@ -51,7 +51,8 @@ class AkunSiswaController extends Controller
         $branchId = Auth::user()->branch_id;
 
         $query = Siswa::where('branch_id', $branchId)
-            ->whereDoesntHave('user');
+            ->whereDoesntHave('user')
+            ->with('kelas');
 
         if ($jenjang = $request->query('jenjang')) {
             $query->where('jenjang', strtoupper($jenjang));
@@ -65,7 +66,7 @@ class AkunSiswaController extends Controller
 
         $this->applySorting($siswa, ['nama', 'nis', 'kelas_id', 'created_at'], 'nama', 'asc');
 
-        $siswa = $siswa->paginate($request->query('per_page', 15));
+        $siswa = $siswa->paginate($request->query('per_page', 100));
 
         return response()->json($siswa);
     }

@@ -9,22 +9,22 @@
                 Jika email terdaftar, kami telah mengirimkan link reset password. Periksa inbox Anda.
             </p>
             <div class="mt-4">
-                <a href="{{ filament()->getLoginUrl() }}" class="text-primary-600 hover:text-primary-500 text-sm font-medium">
+                <a href="{{ filament()->getLoginUrl() }}" class="text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300 text-sm font-medium">
                     &larr; Kembali ke Login
                 </a>
             </div>
         </div>
     @else
-        <x-filament-panels::form wire:submit="submit">
+        <form wire:submit="submit">
             {{ $this->form }}
 
             <x-filament::button type="submit" class="w-full">
                 Kirim Link Reset
             </x-filament::button>
-        </x-filament-panels::form>
+        </form>
 
         <div class="mt-4 text-center">
-            <a href="{{ filament()->getLoginUrl() }}" class="text-primary-600 hover:text-primary-500 text-sm font-medium">
+            <a href="{{ filament()->getLoginUrl() }}" class="text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300 text-sm font-medium">
                 &larr; Kembali ke Login
             </a>
         </div>

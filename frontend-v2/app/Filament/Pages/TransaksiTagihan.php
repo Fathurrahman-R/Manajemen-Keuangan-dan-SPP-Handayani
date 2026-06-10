@@ -33,4 +33,9 @@ class TransaksiTagihan extends Page
 
         $this->activeJenjang = request()->query('jenjang', 'KB');
     }
+
+    public function getTitle(): string
+    {
+        return 'Tagihan - ' . ($this->activeJenjang ?: 'Semua');
+    }
 }

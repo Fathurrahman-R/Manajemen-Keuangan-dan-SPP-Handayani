@@ -6,20 +6,19 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Navigation\NavigationItem;
-use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
 use Filament\Support\Enums\Alignment;
-use UnitEnum;
-use Filament\Forms\Components\FileUpload as FileUploadComponent;
 use App\Services\ApiService;
 use Filament\Notifications\Notification;
-use Filament\QueryBuilder\Constraints\Operators\IsFilledOperator;
+use App\Livewire\Concerns\HandlesApiErrors;
+use Illuminate\Http\Client\ConnectionException;
 
 class Settings extends Page
 {
+    use HandlesApiErrors;
+
     protected string $view = 'filament.pages.settings';
 
     protected static ?string $title = 'Pengaturan';
@@ -30,28 +29,34 @@ class Settings extends Page
 
     public function mount()
     {
-        $response = ApiService::client()
-            ->get('/setting');
+        try {
+            $response = ApiService::client()->get('/setting');
 
-        if ($response->successful()) {
-            $this->setting = $response->json()['data'];
-        } else {
-            Notification::make()
-                ->title('Data Sekolah Gagal Diambil')
-                ->danger()
-                ->send();
+            if ($response->ok()) {
+                $this->setting = $response->json('data');
+            } else {
+                $this->handleApiError($response);
+                $this->setting = null;
+            }
+        } catch (ConnectionException $e) {
+            $this->notifyConnectionError();
+            $this->setting = null;
         }
     }
 
     public function getHeaderActions(): array
     {
+        if ($this->setting === null) {
+            return [];
+        }
+
         return [
             Action::make('updateSetting')
                 ->icon('heroicon-o-pencil-square')
                 ->label('Ubah')
                 ->color('primary')
                 ->modal()
-                ->fillForm(fn(): array => [
+                ->fillForm(fn(): array => $this->setting === null ? [] : [
                     'id' => $this->setting['id'],
                     'nama_sekolah' => $this->setting['nama_sekolah'],
                     'lokasi' => $this->setting['lokasi'],
@@ -78,53 +83,67 @@ class Settings extends Page
                 ->modalFooterActionsAlignment(Alignment::End)
                 ->modalSubmitAction()
                 ->schema([
-                    Grid::make(2)
+                    Section::make('Informasi Sekolah')
                         ->schema([
-                            TextInput::make('nama_sekolah')
-                                ->label('Nama Sekolah')
-                                ->required(),
-                            TextInput::make('email')
-                                ->label('Email')
-                                ->required(),
-                        ]),
-
-                    Grid::make(2)
-                        ->schema([
-                            Textarea::make('alamat')
-                                ->label('Alamat')
-                                ->rows(5)
-                                ->required(),
-                            Grid::make(1)
+                            Grid::make(2)
                                 ->schema([
+                                    TextInput::make('nama_sekolah')
+                                        ->label('Nama Sekolah')
+                                        ->required(),
                                     TextInput::make('lokasi')
                                         ->label('Lokasi')
+                                        ->required(),
+                                ]),
+                            Grid::make(2)
+                                ->schema([
+                                    Textarea::make('alamat')
+                                        ->label('Alamat')
+                                        ->rows(3)
                                         ->required(),
                                     TextInput::make('kode_pos')
                                         ->label('Kode Pos')
                                         ->required(),
                                 ]),
+                            FileUpload::make('logo')
+                                ->label('Logo')
+                                ->disk('public')
+                                ->visibility('public')
+                                ->image()
+                                ->moveFiles()
+                                ->storeFiles(false),
                         ]),
-                    Grid::make(2)
+
+                    Section::make('Kontak')
                         ->schema([
-                            TextInput::make('kepala_sekolah')
-                                ->label('Kepala Sekolah')
-                                ->required(),
-                            TextInput::make('bendahara')
-                                ->label('Bendahara')
-                                ->required(),
+                            Grid::make(2)
+                                ->schema([
+                                    TextInput::make('email')
+                                        ->label('Email')
+                                        ->required(),
+                                    TextInput::make('telepon')
+                                        ->label('Telepon')
+                                        ->required(),
+                                ]),
                         ]),
-                    TextInput::make('telepon')
-                        ->label('Telepon')
-                        ->required(),
-                    FileUpload::make('logo')
-                        ->label('Logo')
-                        ->disk('public')
-                        ->visibility('public')
-                        ->image()
-                        ->moveFiles()
-                        ->storeFiles(false)
+
+                    Section::make('Kepemimpinan')
+                        ->schema([
+                            Grid::make(2)
+                                ->schema([
+                                    TextInput::make('kepala_sekolah')
+                                        ->label('Kepala Sekolah')
+                                        ->required(),
+                                    TextInput::make('bendahara')
+                                        ->label('Bendahara')
+                                        ->required(),
+                                ]),
+                        ]),
                 ])
                 ->action(function (array $data, $record): void {
+                    if ($this->setting === null) {
+                        return;
+                    }
+
                     $photo = null;
                     $originalName = null;
 
@@ -152,6 +171,16 @@ class Settings extends Page
                             ->danger()
                             ->send();
                     } else {
+                        // Re-fetch settings to update displayed data
+                        try {
+                            $refreshResponse = ApiService::client()->get('/setting');
+                            if ($refreshResponse->ok()) {
+                                $this->setting = $refreshResponse->json('data');
+                            }
+                        } catch (\Throwable $e) {
+                            // Silently ignore refresh failure — data was saved successfully
+                        }
+
                         Notification::make()
                             ->title('Pengaturan Berhasil Diubah')
                             ->success()

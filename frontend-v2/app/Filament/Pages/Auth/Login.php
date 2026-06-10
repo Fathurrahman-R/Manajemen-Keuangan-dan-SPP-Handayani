@@ -22,15 +22,19 @@ use Illuminate\Validation\ValidationException;
 class Login extends PagesLogin
 {
 
-    public function __construct()
+    public function mount(): void
     {
         $token = session()->get('data.token');
 
         if (!is_null($token)) {
             $roles = session()->get('data.roles', []);
             $target = in_array('siswa', $roles) ? '/tagihan-siswa' : '/data-master-siswa';
-            return redirect()->intended(filament()->getUrl() . $target);
+            $this->redirect(filament()->getUrl() . $target);
+
+            return;
         }
+
+        parent::mount();
     }
 
     public function form(Schema $schema): Schema

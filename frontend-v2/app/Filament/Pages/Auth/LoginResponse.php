@@ -31,7 +31,7 @@ class LoginResponse implements LoginResponseContract
             'view-jenis-tagihan' => '/transaksi-jenis-tagihan',
             'view-kategori' => '/data-master-category',
             'view-kelas' => '/data-master-kelas',
-            'view-pengeluaran' => '/transaksi-pengeluaran',
+            'view-pengeluaran' => '/pengeluaran-request-page',
             'view-kas-harian' => '/laporan-kas-harian',
             'view-rekap-bulanan' => '/laporan-rekap-bulanan',
             'view-roles' => '/role-management',

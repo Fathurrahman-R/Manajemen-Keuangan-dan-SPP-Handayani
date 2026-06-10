@@ -19,9 +19,15 @@ class DashboardStatsWidget extends BaseWidget
             : [];
 
         try {
-            $data = ApiService::client()->get('/dashboard/summary', $params)->json('data') ?? [];
+            $response = ApiService::client()->get('/dashboard/summary', $params);
+
+            if (!$response->ok()) {
+                return $this->fallbackStats();
+            }
+
+            $data = $response->json('data') ?? [];
         } catch (\Throwable $e) {
-            $data = [];
+            return $this->fallbackStats();
         }
 
         return [
@@ -51,6 +57,41 @@ class DashboardStatsWidget extends BaseWidget
                 ->color('warning'),
 
             Stat::make('Pelunasan', ($data['persentase_pelunasan'] ?? 0) . '%')
+                ->description('Persentase pelunasan')
+                ->descriptionIcon('heroicon-m-chart-bar')
+                ->color('success'),
+        ];
+    }
+
+    protected function fallbackStats(): array
+    {
+        return [
+            Stat::make('Total Tagihan', 'Rp 0')
+                ->description('Seluruh tagihan periode ini')
+                ->descriptionIcon('heroicon-m-document-text')
+                ->color('primary'),
+
+            Stat::make('Total Terbayar', 'Rp 0')
+                ->description('Sudah dibayar')
+                ->descriptionIcon('heroicon-m-check-circle')
+                ->color('success'),
+
+            Stat::make('Total Tunggakan', 'Rp 0')
+                ->description('Belum dibayar')
+                ->descriptionIcon('heroicon-m-exclamation-triangle')
+                ->color('danger'),
+
+            Stat::make('Siswa Aktif', '0')
+                ->description('Total siswa aktif')
+                ->descriptionIcon('heroicon-m-users')
+                ->color('info'),
+
+            Stat::make('Siswa Menunggak', '0')
+                ->description('Memiliki tunggakan')
+                ->descriptionIcon('heroicon-m-user-minus')
+                ->color('warning'),
+
+            Stat::make('Pelunasan', '0%')
                 ->description('Persentase pelunasan')
                 ->descriptionIcon('heroicon-m-chart-bar')
                 ->color('success'),

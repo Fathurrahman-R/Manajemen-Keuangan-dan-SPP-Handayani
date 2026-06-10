@@ -2,17 +2,19 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
-use Exception;
+use Illuminate\Http\Client\ConnectionException;
 use Livewire\Component;
 
 class SiswaDashboard extends Component
 {
+    use HandlesApiErrors;
+
     public array $dashboardData = [];
     public ?int $selectedSiswaId = null;
     public array $childOptions = [];
     public bool $loading = true;
-    public ?string $error = null;
 
     public function mount(): void
     {
@@ -33,7 +35,6 @@ class SiswaDashboard extends Component
     public function loadData(): void
     {
         $this->loading = true;
-        $this->error = null;
 
         $params = $this->selectedSiswaId
             ? ['siswa_id' => $this->selectedSiswaId]
@@ -42,14 +43,20 @@ class SiswaDashboard extends Component
         try {
             $response = ApiService::client()->get('/dashboard/siswa', $params);
 
-            if ($response->status() === 403) {
-                $this->error = 'Anda tidak memiliki akses ke data ini.';
+            if (!$response->ok()) {
+                $this->handleApiError($response);
                 $this->dashboardData = [];
-            } else {
-                $this->dashboardData = $response->json('data') ?? [];
+                $this->loading = false;
+                return;
             }
-        } catch (Exception $e) {
-            $this->error = 'Gagal memuat data dashboard. Silakan coba lagi.';
+
+            $this->dashboardData = $response->json('data') ?? [];
+        } catch (ConnectionException $e) {
+            $this->notifyConnectionError();
+            $this->dashboardData = [];
+        } catch (\Throwable $e) {
+            $this->notifyUnexpectedError();
+            $this->dashboardData = [];
         }
 
         $this->loading = false;

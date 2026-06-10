@@ -77,6 +77,12 @@ class TagihanController extends Controller
             $query->where('jenjang', $jenjang);
         }
 
+        // Kelas filter: exact match on kelas_id
+        $kelasId = request('kelas_id');
+        if ($kelasId) {
+            $query->where('kelas_id', (int) $kelasId);
+        }
+
         // Status filter: only include siswa that have at least one tagihan with matching status
         $status = request('status');
         if ($status) {

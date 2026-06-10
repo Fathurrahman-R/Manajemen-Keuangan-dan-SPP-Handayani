@@ -60,11 +60,12 @@ class AuthController extends Controller
             ], 401));
         }
 
-        // Check if user already has an active token
+        // Check if user already has an active token (delete expired tokens first)
+        $user->tokens()->where('expires_at', '<', now())->delete();
+
         if ($user->tokens()->count() > 0) {
-            throw new HttpResponseException(response()->json([
-                'errors' => ['message' => ['Akun kamu sedang login di perangkat lain.']]
-            ], 401));
+            // Force revoke all existing tokens to allow re-login
+            $user->tokens()->delete();
         }
 
         // Gather all permission strings from user's roles

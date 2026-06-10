@@ -289,7 +289,7 @@ class PembayaranController extends Controller
             'siswa' => function ($q) { $q->select(['nis','nama']); },
             'jenis_tagihan' => function ($q) { $q->select(['id','jumlah']); }
         ])
-            ->select(['kode_tagihan','tmp','jenis_tagihan_id','nis'])
+            ->select(['kode_tagihan','tmp','jenis_tagihan_id','nis','status'])
             ->find($kode_tagihan);
 
         if (!$tagihan) {
@@ -298,14 +298,8 @@ class PembayaranController extends Controller
             ], 404));
         }
 
-        $lunas = Pembayaran::query()
-            ->with([
-                'tagihan' => fn($q) => $q->where('status','Lunas')
-            ])
-            ->where('kode_tagihan',$kode_tagihan)
-            ->exists();
-        if ($lunas)
-        {
+        // Check if tagihan is already fully paid
+        if ($tagihan->status === 'Lunas') {
             throw new HttpResponseException(response([
                 'errors' => [ 'message' => ['tagihan sudah dibayar lunas.'] ]
             ], 400));

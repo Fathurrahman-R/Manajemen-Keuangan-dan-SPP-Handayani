@@ -1,3 +1,3 @@
 <x-filament-panels::page>
-    <livewire:kenaikan-kelas :jenjang="$this->activeJenjang" />
+    <livewire:kenaikan-kelas />
 </x-filament-panels::page>

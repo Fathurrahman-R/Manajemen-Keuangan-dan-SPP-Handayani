@@ -27,7 +27,13 @@ class TagihanJatuhTempoWidget extends BaseWidget
                     : [];
 
                 try {
-                    $data = ApiService::client()->get('/dashboard/tagihan-jatuh-tempo', $params)->json('data') ?? [];
+                    $response = ApiService::client()->get('/dashboard/tagihan-jatuh-tempo', $params);
+
+                    if (!$response->ok()) {
+                        return collect([]);
+                    }
+
+                    $data = $response->json('data') ?? [];
                 } catch (\Throwable $e) {
                     $data = [];
                 }
@@ -51,8 +57,9 @@ class TagihanJatuhTempoWidget extends BaseWidget
             ])
             ->paginated(false)
             ->striped()
-            ->emptyStateHeading('Tidak ada tagihan jatuh tempo')
-            ->emptyStateIcon('heroicon-o-calendar');
+            ->emptyStateHeading('Tidak Ada Data')
+            ->emptyStateDescription('Belum ada data yang tersedia.')
+            ->emptyStateIcon('heroicon-o-document-text');
     }
 
     public static function canView(): bool

@@ -3,11 +3,18 @@
 namespace App\Filament\Pages;
 
 use App\Services\ApiService;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 
-class ChangePassword extends Page
+class ChangePassword extends Page implements HasForms
 {
+    use InteractsWithForms;
+
     protected string $view = 'filament.pages.change-password';
 
     protected static ?string $title = 'Ubah Password';
@@ -16,9 +23,7 @@ class ChangePassword extends Page
 
     protected static bool $shouldRegisterNavigation = false;
 
-    public string $current_password = '';
-    public string $new_password = '';
-    public string $new_password_confirmation = '';
+    public ?array $data = [];
 
     public function mount(): void
     {
@@ -26,24 +31,44 @@ class ChangePassword extends Page
         if (!session()->get('data.must_change_password', false)) {
             $this->redirectToMainPage();
         }
+
+        $this->form->fill();
+    }
+
+    public function form(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Section::make('Ubah Password')
+                    ->description('Anda harus mengubah password sebelum melanjutkan. Silakan masukkan password baru Anda.')
+                    ->schema([
+                        TextInput::make('current_password')
+                            ->label('Password Saat Ini')
+                            ->password()
+                            ->required(),
+                        TextInput::make('new_password')
+                            ->label('Password Baru')
+                            ->password()
+                            ->required()
+                            ->minLength(8)
+                            ->confirmed(),
+                        TextInput::make('new_password_confirmation')
+                            ->label('Konfirmasi Password Baru')
+                            ->password()
+                            ->required(),
+                    ]),
+            ])
+            ->statePath('data');
     }
 
     public function submit(): void
     {
-        $this->validate([
-            'current_password' => 'required|string',
-            'new_password' => 'required|string|min:8|confirmed',
-        ], [
-            'current_password.required' => 'Password saat ini wajib diisi.',
-            'new_password.required' => 'Password baru wajib diisi.',
-            'new_password.min' => 'Password baru minimal 8 karakter.',
-            'new_password.confirmed' => 'Konfirmasi password tidak sesuai.',
-        ]);
+        $state = $this->form->getState();
 
         $response = ApiService::client()->post('/users/change-password', [
-            'current_password' => $this->current_password,
-            'new_password' => $this->new_password,
-            'new_password_confirmation' => $this->new_password_confirmation,
+            'current_password' => $state['current_password'],
+            'new_password' => $state['new_password'],
+            'new_password_confirmation' => $state['new_password_confirmation'],
         ]);
 
         if ($response->successful()) {

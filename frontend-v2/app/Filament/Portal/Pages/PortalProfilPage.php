@@ -2,6 +2,7 @@
 
 namespace App\Filament\Portal\Pages;
 
+use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
 use BackedEnum;
 use Filament\Forms\Components\TextInput;
@@ -12,9 +13,11 @@ use Filament\Pages\Page;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
+use Illuminate\Http\Client\ConnectionException;
 
 class PortalProfilPage extends Page implements HasForms, HasSchemas
 {
+    use HandlesApiErrors;
     use InteractsWithForms, InteractsWithSchemas {
         InteractsWithForms::getCachedSchemas insteadof InteractsWithSchemas;
     }
@@ -60,16 +63,22 @@ class PortalProfilPage extends Page implements HasForms, HasSchemas
 
         try {
             $response = ApiService::client()->get('/users/current');
-            if ($response->ok()) {
-                $userData = $response->json('data') ?? [];
-                $this->currentEmail = $userData['email'] ?? null;
-                $this->email = $this->currentEmail ?? '';
-                $this->username = $userData['username'] ?? null;
-                $this->roles = $userData['roles'] ?? [];
-                $this->branchLocation = $userData['branch']['location'] ?? null;
+
+            if (!$response->ok()) {
+                $this->handleApiError($response);
+                return;
             }
+
+            $userData = $response->json('data') ?? [];
+            $this->currentEmail = $userData['email'] ?? null;
+            $this->email = $this->currentEmail ?? '';
+            $this->username = $userData['username'] ?? null;
+            $this->roles = $userData['roles'] ?? [];
+            $this->branchLocation = $userData['branch']['location'] ?? null;
+        } catch (ConnectionException $e) {
+            $this->notifyConnectionError();
         } catch (\Throwable $e) {
-            // Silent
+            $this->notifyUnexpectedError();
         }
     }
 
@@ -134,16 +143,12 @@ class PortalProfilPage extends Page implements HasForms, HasSchemas
                 $this->current_password_for_email = '';
                 Notification::make()->title('Email berhasil diperbarui')->success()->send();
             } else {
-                $errors = $response->json('errors', []);
-                $message = isset($errors['current_password'])
-                    ? (is_array($errors['current_password']) ? $errors['current_password'][0] : $errors['current_password'])
-                    : (isset($errors['email'])
-                        ? (is_array($errors['email']) ? $errors['email'][0] : $errors['email'])
-                        : 'Gagal memperbarui email.');
-                Notification::make()->title('Gagal')->danger()->body($message)->send();
+                $this->handleApiError($response);
             }
+        } catch (ConnectionException $e) {
+            $this->notifyConnectionError();
         } catch (\Throwable $e) {
-            Notification::make()->title('Server tidak dapat dihubungi')->danger()->persistent()->send();
+            $this->notifyUnexpectedError();
         }
     }
 
@@ -168,14 +173,12 @@ class PortalProfilPage extends Page implements HasForms, HasSchemas
                 $this->new_password_confirmation = '';
                 Notification::make()->title('Password berhasil diubah')->success()->send();
             } else {
-                $errors = $response->json('errors', []);
-                $message = isset($errors['current_password'])
-                    ? (is_array($errors['current_password']) ? $errors['current_password'][0] : $errors['current_password'])
-                    : 'Gagal mengubah password.';
-                Notification::make()->title('Gagal')->danger()->body($message)->send();
+                $this->handleApiError($response);
             }
+        } catch (ConnectionException $e) {
+            $this->notifyConnectionError();
         } catch (\Throwable $e) {
-            Notification::make()->title('Server tidak dapat dihubungi')->danger()->persistent()->send();
+            $this->notifyUnexpectedError();
         }
     }
 }

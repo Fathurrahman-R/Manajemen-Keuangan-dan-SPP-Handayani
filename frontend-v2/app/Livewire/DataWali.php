@@ -2,8 +2,10 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
 use Exception;
+use Illuminate\Http\Client\ConnectionException;
 use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -11,7 +13,6 @@ use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Schemas\Schema;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
@@ -20,18 +21,13 @@ use Filament\Support\Enums\Alignment;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
-use Filament\Tables\Enums\PaginationMode;
-use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Tables\Table;
-use Illuminate\Contracts\View\View;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Str;
 
 class DataWali extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
+    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable, HandlesApiErrors;
 
     public $perPage = 5;
 
@@ -40,30 +36,58 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
         return $table
             ->records(
                 function (?string $search, int $page, int $recordsPerPage, ?string $sortColumn = null, ?string $sortDirection = null): LengthAwarePaginator {
-                    $params = [
-                        'per_page' => $this->perPage,
-                        'page' => $page
-                    ];
-                    
-                    if (filled($search)) {
-                        $params['search'] = $search;
+                    try {
+                        $params = [
+                            'per_page' => $this->perPage,
+                            'page' => $page
+                        ];
+
+                        if (filled($search)) {
+                            $params['search'] = $search;
+                        }
+
+                        if (filled($sortColumn)) {
+                            $params['sort'] = $sortColumn;
+                            $params['direction'] = $sortDirection ?? 'asc';
+                        }
+
+                        $response = ApiService::client()->get('/wali', $params);
+
+                        if (!$response->ok()) {
+                            $this->handleApiError($response);
+                            return new LengthAwarePaginator(
+                                items: [],
+                                total: 0,
+                                perPage: $recordsPerPage,
+                                currentPage: $page,
+                            );
+                        }
+
+                        $data = $response->collect();
+
+                        return new LengthAwarePaginator(
+                            items: $data['data'] ?? [],
+                            total: $data['meta']['total'] ?? 0,
+                            perPage: $recordsPerPage,
+                            currentPage: $page,
+                        );
+                    } catch (ConnectionException $e) {
+                        $this->notifyConnectionError();
+                        return new LengthAwarePaginator(
+                            items: [],
+                            total: 0,
+                            perPage: $recordsPerPage,
+                            currentPage: $page,
+                        );
+                    } catch (\Throwable $e) {
+                        $this->notifyUnexpectedError();
+                        return new LengthAwarePaginator(
+                            items: [],
+                            total: 0,
+                            perPage: $recordsPerPage,
+                            currentPage: $page,
+                        );
                     }
-
-                    if (filled($sortColumn)) {
-                        $params['sort'] = $sortColumn;
-                        $params['direction'] = $sortDirection ?? 'asc';
-                    }
-
-                    $response = ApiService::client()
-                    ->get('/wali', $params)
-                    ->collect();
-
-                    return new LengthAwarePaginator(
-                        items: $response['data'] ?? [],
-                        total: $response['meta']['total'] ?? 0,
-                        perPage: $recordsPerPage,
-                        currentPage: $page,
-                    );
                 }
             )
             ->columns([
@@ -71,15 +95,16 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                 TextColumn::make('jenis_kelamin')->label('Jenis Kelamin'),
                 TextColumn::make('agama')->label('Agama'),
                 TextColumn::make('pendidikan_terakhir')->label('Pendidikan Terakhir'),
-                TextColumn::make('pekerjaan')->label('Pekerjaan'),
+                TextColumn::make('pekerjaan')->label('Pekerjaan')->toggleable(isToggledHiddenByDefault: true),
             ])
             ->deferLoading()
             ->striped()
-            ->paginated([5, 10, 25])
+            ->paginated([5, 10, 25, 50])
             ->defaultPaginationPageOption(10)
             ->paginatedWhileReordering()
             ->emptyStateHeading('Tidak Ada Wali')
             ->emptyStateDescription('Silahkan menambahkan wali')
+            ->emptyStateIcon('heroicon-o-document-text')
             ->recordActions([
                 Action::make('view') // Unique name for your action
                     ->tooltip('Lihat Wali')
@@ -197,6 +222,7 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                     ->failureNotificationTitle('Wali Gagal Dihapus')
                     ->after(function () {
                         $this->resetTable();
+                    }),
             ])
             ->bulkActions([
                 BulkAction::make('bulkDelete')

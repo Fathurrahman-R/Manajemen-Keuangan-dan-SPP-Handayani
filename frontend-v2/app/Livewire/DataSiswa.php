@@ -3,9 +3,10 @@
 namespace App\Livewire;
 
 use App\Models\User;
-use Exception;
 use App\Services\ApiService;
+use App\Livewire\Concerns\HandlesApiErrors;
 use App\Livewire\Concerns\HasImportExport;
+use Illuminate\Http\Client\ConnectionException;
 use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -25,8 +26,7 @@ use Filament\Support\Enums\Alignment;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
-use Filament\Tables\Enums\PaginationMode;
-use Filament\Tables\Enums\RecordActionsPosition;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Contracts\View\View;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -36,7 +36,7 @@ use Illuminate\Support\Str;
 
 class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable, HasImportExport;
+    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable, HasImportExport, HandlesApiErrors;
 
     public $activeTab = 'KB';
     public $perPage = 5;
@@ -52,37 +52,70 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
     {
         return $table
             ->records(
-                function (?string $search, int $page, int $recordsPerPage, ?string $sortColumn = null, ?string $sortDirection = null): LengthAwarePaginator {
-                    $this->perPage = $recordsPerPage;
-                    $this->currentPage = $page;
-                    $params = [
-                        'per_page' => $this->perPage,
-                        'page' => $this->currentPage,
-                    ];
+                function (?string $search, int $page, int $recordsPerPage, array $filters = [], ?string $sortColumn = null, ?string $sortDirection = null): LengthAwarePaginator {
+                    try {
+                        $this->perPage = $recordsPerPage;
+                        $this->currentPage = $page;
+                        $params = [
+                            'per_page' => $this->perPage,
+                            'page' => $this->currentPage,
+                        ];
 
-                    if (filled($search)) {
-                        $params['search'] = $search;
+                        if (filled($search)) {
+                            $params['search'] = $search;
+                        }
+
+                        if (!is_null($this->kelasId)) {
+                            $params['kelas_id'] = $this->kelasId;
+                        }
+
+                        if (!empty($filters['status']['value'] ?? null)) {
+                            $params['status'] = $filters['status']['value'];
+                        }
+
+                        if (filled($sortColumn)) {
+                            $params['sort'] = $sortColumn;
+                            $params['direction'] = $sortDirection ?? 'asc';
+                        }
+
+                        $response = ApiService::client()
+                            ->get('/siswa/' . $this->activeTab, $params);
+
+                        if (!$response->ok()) {
+                            $this->handleApiError($response);
+                            return new LengthAwarePaginator(
+                                items: [],
+                                total: 0,
+                                perPage: $recordsPerPage,
+                                currentPage: $page,
+                            );
+                        }
+
+                        $data = $response->collect();
+
+                        return new LengthAwarePaginator(
+                            items: $data['data'] ?? [],
+                            total: $data['meta']['total'] ?? 0,
+                            perPage: $recordsPerPage,
+                            currentPage: $page,
+                        );
+                    } catch (ConnectionException $e) {
+                        $this->notifyConnectionError();
+                        return new LengthAwarePaginator(
+                            items: [],
+                            total: 0,
+                            perPage: $recordsPerPage,
+                            currentPage: $page,
+                        );
+                    } catch (\Throwable $e) {
+                        $this->notifyUnexpectedError();
+                        return new LengthAwarePaginator(
+                            items: [],
+                            total: 0,
+                            perPage: $recordsPerPage,
+                            currentPage: $page,
+                        );
                     }
-
-                    if (!is_null($this->kelasId)) {
-                        $params['kelas_id'] = $this->kelasId;
-                    }
-
-                    if (filled($sortColumn)) {
-                        $params['sort'] = $sortColumn;
-                        $params['direction'] = $sortDirection ?? 'asc';
-                    }
-
-                    $response = ApiService::client()
-                        ->get('/siswa/' . $this->activeTab, $params)
-                        ->collect();
-
-                    return new LengthAwarePaginator(
-                        items: $response['data'] ?? [],
-                        total: $response['meta']['total'] ?? 0,
-                        perPage: $recordsPerPage,
-                        currentPage: $page,
-                    );
                 }
             )
             ->columns([
@@ -93,28 +126,41 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                     ->hidden(fn($livewire) => $livewire->activeTab !== 'MI'),
                 TextColumn::make('nama')->label('Nama')->sortable()->searchable(),
                 TextColumn::make('kelas.nama')->label(__('Kelas')),
-                TextColumn::make('jenis_kelamin')->label('Jenis Kelamin')->searchable(),
-                TextColumn::make('tanggal_lahir')->label('Tanggal Lahir')->sortable()->searchable(),
-                TextColumn::make('agama')->label('Agama')->searchable(),
+                TextColumn::make('jenis_kelamin')->label('Jenis Kelamin')->searchable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('tanggal_lahir')->label('Tanggal Lahir')->sortable()->searchable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('agama')->label('Agama')->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('wali.nama')
                     ->label('Nama Wali')
-                    ->visible(fn($livewire) => $livewire->activeTab !== 'MI'),
+                    ->visible(fn($livewire) => $livewire->activeTab !== 'MI')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('ayah.nama')
                     ->label('Nama Ayah')
                     ->state(fn(array $record) => $record['ayah']['nama'] ?? '-')
-                    ->hidden(fn($livewire) => $livewire->activeTab !== 'MI'),
+                    ->hidden(fn($livewire) => $livewire->activeTab !== 'MI')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('ibu.nama')
                     ->label('Nama Ibu')
                     ->state(fn(array $record) => $record['ibu']['nama'] ?? '-')
-                    ->hidden(fn($livewire) => $livewire->activeTab !== 'MI'),
+                    ->hidden(fn($livewire) => $livewire->activeTab !== 'MI')
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->deferLoading()
             ->striped()
-            ->paginated([5, 10, 25])
+            ->paginated([5, 10, 25, 50])
             ->defaultPaginationPageOption(10)
             ->paginatedWhileReordering()
+            ->filters([
+                SelectFilter::make('status')
+                    ->options([
+                        'Aktif' => 'Aktif',
+                        'Lulus' => 'Lulus',
+                        'Pindah' => 'Pindah',
+                        'Keluar' => 'Keluar',
+                    ]),
+            ])
             ->emptyStateHeading('Tidak Ada Siswa')
             ->emptyStateDescription('Silahkan menambahkan siswa')
+            ->emptyStateIcon('heroicon-o-document-text')
             ->recordActions([
                 Action::make('view') // Unique name for your action
                     ->tooltip('Lihat Siswa')
@@ -367,7 +413,6 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                         'keterangan' => $record['keterangan'],
                         'status' => $record['status'],
                         'wali_nama' => $record['wali']['nama'],
-//                        'wali_agama' => $record['wali']['agama'],
                         'wali_jenis_kelamin' => $record['wali']['jenis_kelamin'],
                         'wali_pendidikan_terakhir' => $record['wali']['pendidikan_terakhir'],
                         'wali_pekerjaan' => $record['wali']['pekerjaan'],
@@ -567,6 +612,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                     })
                     ->after(function () {
                         $this->resetTable();
+                    }),
             ])
             ->bulkActions([
                 BulkAction::make('bulkDelete')
@@ -956,7 +1002,6 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                     'password' => Hash::make($data['tanggal_lahir']),
                                 ]);
                             } catch (\Throwable $th) {
-                                //throw $th;
                             }
                             
                             Notification::make()
@@ -1220,7 +1265,6 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                     'password' => Hash::make($data['tanggal_lahir']),
                                 ]);
                             } catch (\Throwable $th) {
-                                //throw $th;
                             }
 
                             Notification::make()

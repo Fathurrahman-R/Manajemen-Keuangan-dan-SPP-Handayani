@@ -30,39 +30,37 @@
                 @endif
 
                 {{-- Search --}}
-                <div class="relative flex-1 max-w-sm">
-                    <input
-                        type="text"
-                        wire:model.live.debounce.300ms="search"
-                        placeholder="Cari nama atau NIS..."
-                        class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-400"
-                    />
-                    <svg class="absolute left-3 top-2.5 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
+                <div class="flex-1 max-w-sm">
+                    <x-filament::input.wrapper prefix-icon="heroicon-m-magnifying-glass">
+                        <x-filament::input
+                            type="text"
+                            wire:model.live.debounce.300ms="search"
+                            placeholder="Cari nama atau NIS..."
+                        />
+                    </x-filament::input.wrapper>
                 </div>
 
-                {{-- Jenjang Filter --}}
-                <select
-                    wire:model.live="filterJenjang"
-                    class="border border-gray-300 dark:border-gray-600 rounded-lg text-sm py-2 px-3 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-900 dark:text-gray-100"
-                >
-                    <option value="">Semua Jenjang</option>
-                    <option value="TK">TK</option>
-                    <option value="KB">KB</option>
-                    <option value="MI">MI</option>
-                </select>
+                {{-- Kelas Filter (replaces jenjang — jenjang is fixed per page) --}}
+                @if(count($kelasOptions) > 0)
+                    <x-filament::input.wrapper>
+                        <x-filament::input.select wire:model.live="filterKelas">
+                            <option value="">Semua Kelas</option>
+                            @foreach($kelasOptions as $id => $nama)
+                                <option value="{{ $id }}">{{ $nama }}</option>
+                            @endforeach
+                        </x-filament::input.select>
+                    </x-filament::input.wrapper>
+                @endif
 
                 {{-- Status Filter --}}
-                <select
-                    wire:model.live="filterStatus"
-                    class="border border-gray-300 dark:border-gray-600 rounded-lg text-sm py-2 px-3 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-900 dark:text-gray-100"
-                >
-                    <option value="">Semua Status</option>
-                    <option value="Belum Dibayar">Belum Dibayar</option>
-                    <option value="Belum Lunas">Belum Lunas</option>
-                    <option value="Lunas">Lunas</option>
-                </select>
+                <x-filament::input.wrapper>
+                    <x-filament::input.select wire:model.live="filterStatus">
+                        <option value="">Semua Status</option>
+                        <option value="Belum Dibayar">Belum Dibayar</option>
+                        <option value="Belum Lunas">Belum Lunas</option>
+                        <option value="Lunas">Lunas</option>
+                    </x-filament::input.select>
+                </x-filament::input.wrapper>
             </div>
 
             {{-- Add Tagihan Button --}}
@@ -117,7 +115,7 @@
             $totalSisaCard = collect($unpaid)->sum(fn($t) => ($t['jenis_tagihan']['jumlah'] ?? 0) - ($t['tmp'] ?? 0));
         @endphp
 
-        <x-filament::section x-data="{
+        <div wire:key="siswa-card-{{ $siswa['nis'] }}" x-data="{
                 selectedTagihan: [],
                 unpaidItems: @js($unpaid),
                 get allSelected() {
@@ -128,22 +126,19 @@
                         .filter(t => this.selectedTagihan.includes(t.kode_tagihan))
                         .reduce((sum, t) => sum + ((t.jenis_tagihan?.jumlah || 0) - (t.tmp || 0)), 0);
                 },
-                get selectedItems() {
-                    return this.unpaidItems.filter(t => this.selectedTagihan.includes(t.kode_tagihan));
-                },
                 toggleAll() {
                     if (this.allSelected) {
                         this.selectedTagihan = [];
                     } else {
-                        this.selectedTagihan = this.unpaidItems.map(t => t.kode_tagihan);
+                        this.selectedTagihan = [...this.unpaidItems.map(t => t.kode_tagihan)];
                     }
                 },
                 toggleItem(kode) {
                     const idx = this.selectedTagihan.indexOf(kode);
                     if (idx > -1) {
-                        this.selectedTagihan.splice(idx, 1);
+                        this.selectedTagihan = this.selectedTagihan.filter(k => k !== kode);
                     } else {
-                        this.selectedTagihan.push(kode);
+                        this.selectedTagihan = [...this.selectedTagihan, kode];
                     }
                 },
                 formatRupiah(amount) {
@@ -151,51 +146,51 @@
                 },
                 openPayment() {
                     if (this.selectedTagihan.length === 0) return;
-                    $wire.openPayModal(this.selectedTagihan);
+                    $wire.openPayModal([...this.selectedTagihan]);
                 }
-            }" class="overflow-hidden">
-            {{-- Card Header --}}
-            <div class="bg-gray-50 dark:bg-gray-900 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
-                            <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="font-semibold text-gray-900 dark:text-gray-100">{{ $siswa['nama'] }}</h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">
-                                NIS: {{ $siswa['nis'] }} |
-                                {{ $siswa['jenjang'] }}{{ isset($siswa['kelas']['nama']) ? ' - ' . $siswa['kelas']['nama'] : '' }}
-                            </p>
-                        </div>
+            }">
+        <x-filament::section class="overflow-hidden !p-0">
+            {{-- Header: Profil siswa (baris atas) --}}
+            <div class="px-4 pt-4 pb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="text-sm font-bold text-primary-700 dark:text-primary-300">{{ strtoupper(substr($siswa['nama'], 0, 2)) }}</span>
                     </div>
-                    <div class="text-right">
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Total Sisa</p>
-                        <p class="font-bold text-red-600 dark:text-red-400">Rp. {{ number_format($totalSisaCard, 0, '', '.') }}</p>
+                    <div class="min-w-0">
+                        <h3 class="font-semibold text-gray-900 dark:text-gray-100 truncate">{{ $siswa['nama'] }}</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            NIS: {{ $siswa['nis'] }} · {{ $siswa['jenjang'] }}{{ isset($siswa['kelas']['nama']) ? ' – ' . $siswa['kelas']['nama'] : '' }}
+                        </p>
                     </div>
                 </div>
             </div>
 
-            {{-- Card Body --}}
-            <div class="p-4">
-                {{-- Unpaid Tagihan Section --}}
+            {{-- Header: Total Sisa (blok penuh, background merah muda) --}}
+            @if($totalSisaCard > 0)
+                <div class="mx-4 mb-3 px-4 py-2 bg-red-50 dark:bg-red-900/20 rounded-lg flex items-center justify-between">
+                    <span class="text-sm text-red-600 dark:text-red-400 font-medium">Total sisa tagihan</span>
+                    <span class="text-base font-bold text-red-700 dark:text-red-300">Rp. {{ number_format($totalSisaCard, 0, '', '.') }}</span>
+                </div>
+            @endif
+
+            {{-- Body --}}
+            <div class="px-4 pb-4">
+                {{-- Unpaid Tagihan --}}
                 @if(count($unpaid) > 0)
                     {{-- Select All (Admin only) --}}
                     @if($this->isAdmin())
-                        <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100 dark:border-gray-700">
+                        <div class="flex items-center gap-3 py-2 border-b border-gray-100 dark:border-gray-700 mb-3">
                             <input
                                 type="checkbox"
                                 :checked="allSelected"
                                 @change="toggleAll()"
-                                class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-900"
+                                class="w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-900"
                             />
-                            <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Pilih Semua</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Pilih semua</span>
                         </div>
                     @endif
 
-                    <div class="space-y-2">
+                    <div class="space-y-3">
                         @foreach($unpaid as $tagihan)
                             @php
                                 $sisa = ($tagihan['jenis_tagihan']['jumlah'] ?? 0) - ($tagihan['tmp'] ?? 0);
@@ -203,62 +198,72 @@
                                 $isOverdue = $jatuhTempo && \Carbon\Carbon::parse($jatuhTempo)->lt(now()->startOfDay());
                                 $statusColor = $tagihan['status'] === 'Belum Lunas' ? 'warning' : 'danger';
                             @endphp
-                            <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition {{ $isOverdue ? 'border-l-4 border-red-400' : '' }}">
-                                {{-- Checkbox (Admin only) --}}
-                                @if($this->isAdmin())
-                                    <input
-                                        type="checkbox"
-                                        value="{{ $tagihan['kode_tagihan'] }}"
-                                        :checked="selectedTagihan.includes('{{ $tagihan['kode_tagihan'] }}')"
-                                        @change="toggleItem('{{ $tagihan['kode_tagihan'] }}')"
-                                        class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-900"
-                                    />
-                                @endif
+                            <div class="border-l-4 {{ $isOverdue ? 'border-red-400' : 'border-gray-200 dark:border-gray-600' }} pl-3 py-2">
+                                {{-- Row 1: Checkbox + Nama + Nominal --}}
+                                <div class="flex items-start gap-3">
+                                    @if($this->isAdmin())
+                                        <input
+                                            type="checkbox"
+                                            value="{{ $tagihan['kode_tagihan'] }}"
+                                            :checked="selectedTagihan.includes('{{ $tagihan['kode_tagihan'] }}')"
+                                            @change="toggleItem('{{ $tagihan['kode_tagihan'] }}')"
+                                            class="w-5 h-5 mt-0.5 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-900 flex-shrink-0"
+                                        />
+                                    @endif
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-start justify-between gap-2">
+                                            <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $tagihan['jenis_tagihan']['nama'] ?? '-' }}</span>
+                                            <div class="text-right flex-shrink-0">
+                                                <p class="text-sm font-bold text-gray-900 dark:text-gray-100">Rp. {{ number_format($sisa, 0, '', '.') }}</p>
+                                                @if($tagihan['tmp'] > 0)
+                                                    <p class="text-xs text-gray-400">dari Rp. {{ number_format($tagihan['jenis_tagihan']['jumlah'] ?? 0, 0, '', '.') }}</p>
+                                                @endif
+                                            </div>
+                                        </div>
 
-                                {{-- Tagihan Info --}}
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{{ $tagihan['jenis_tagihan']['nama'] ?? '-' }}</span>
-                                        @if($isOverdue)
-                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                                                Jatuh Tempo
+                                        {{-- Row 2: Tanggal + Badges --}}
+                                        <div class="flex items-center gap-2 flex-wrap mt-1">
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                {{ $jatuhTempo ? \Carbon\Carbon::parse($jatuhTempo)->format('d M Y') : '-' }}
+                                                · {{ $tagihan['kode_tagihan'] }}
                                             </span>
+                                            <x-filament::badge :color="$statusColor" size="sm">
+                                                {{ $tagihan['status'] }}
+                                            </x-filament::badge>
+                                            @if($isOverdue)
+                                                <x-filament::badge color="danger" size="sm">
+                                                    Jatuh tempo
+                                                </x-filament::badge>
+                                            @endif
+                                        </div>
+
+                                        {{-- Row 3: Action buttons (full-width, tap-friendly) --}}
+                                        @if($this->isAdmin())
+                                            <div class="flex items-center gap-2 mt-2">
+                                                <button
+                                                    type="button"
+                                                    wire:click="cicilTagihan('{{ $tagihan['kode_tagihan'] }}')"
+                                                    wire:loading.attr="disabled"
+                                                    class="flex-1 inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 py-2 text-sm font-medium rounded-lg border border-green-300 dark:border-green-700 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 transition"
+                                                >
+                                                    <x-heroicon-o-banknotes class="w-4 h-4" />
+                                                    Bayar
+                                                </button>
+                                                @if($this->canDelete())
+                                                    <button
+                                                        type="button"
+                                                        wire:click="deleteTagihan('{{ $tagihan['kode_tagihan'] }}')"
+                                                        wire:loading.attr="disabled"
+                                                        class="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 py-2 text-sm font-medium rounded-lg border border-red-300 dark:border-red-700 text-red-700 dark:text-red-400 bg-white dark:bg-gray-900 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+                                                    >
+                                                        <x-heroicon-o-trash class="w-4 h-4" />
+                                                        Hapus
+                                                    </button>
+                                                @endif
+                                            </div>
                                         @endif
                                     </div>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">
-                                        {{ $jatuhTempo ? \Carbon\Carbon::parse($jatuhTempo)->format('d M Y') : '-' }}
-                                        · Kode: {{ $tagihan['kode_tagihan'] }}
-                                    </p>
                                 </div>
-
-                                {{-- Amount Info --}}
-                                <div class="text-right flex-shrink-0">
-                                    <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">Rp. {{ number_format($sisa, 0, '', '.') }}</p>
-                                    @if($tagihan['tmp'] > 0)
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">dari Rp. {{ number_format($tagihan['jenis_tagihan']['jumlah'] ?? 0, 0, '', '.') }}</p>
-                                    @endif
-                                </div>
-
-                                {{-- Status Badge --}}
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                                    {{ $statusColor === 'warning' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' }}">
-                                    {{ $tagihan['status'] }}
-                                </span>
-
-                                {{-- Delete Button (Admin only) --}}
-                                @if($this->canDelete())
-                                    <button
-                                        wire:click="deleteTagihan('{{ $tagihan['kode_tagihan'] }}')"
-                                        wire:confirm="Apakah kamu yakin untuk menghapus tagihan ini?"
-                                        wire:loading.attr="disabled"
-                                        class="text-red-400 hover:text-red-600 p-1 rounded transition"
-                                        title="Hapus Tagihan"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                        </svg>
-                                    </button>
-                                @endif
                             </div>
                         @endforeach
                     </div>
@@ -268,47 +273,50 @@
                 @if(count($paid) > 0)
                     <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
                         <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Lunas</p>
-                        <div class="space-y-1">
+                        <div class="space-y-2">
                             @foreach($paid as $tagihan)
-                                <div class="flex items-center gap-3 p-2 rounded-lg opacity-60">
-                                    <div class="flex-1 min-w-0">
-                                        <span class="text-sm text-gray-700 dark:text-gray-300">{{ $tagihan['jenis_tagihan']['nama'] ?? '-' }}</span>
-                                        <p class="text-xs text-gray-400">
-                                            {{ isset($tagihan['jenis_tagihan']['jatuh_tempo']) ? \Carbon\Carbon::parse($tagihan['jenis_tagihan']['jatuh_tempo'])->format('d M Y') : '-' }}
-                                        </p>
+                                <div class="border-l-4 border-green-300 dark:border-green-700 pl-3 py-2 opacity-60">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <div>
+                                            <span class="text-sm text-gray-700 dark:text-gray-300">{{ $tagihan['jenis_tagihan']['nama'] ?? '-' }}</span>
+                                            <p class="text-xs text-gray-400 mt-0.5">
+                                                {{ isset($tagihan['jenis_tagihan']['jatuh_tempo']) ? \Carbon\Carbon::parse($tagihan['jenis_tagihan']['jatuh_tempo'])->format('d M Y') : '-' }}
+                                            </p>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm text-gray-600 dark:text-gray-400">Rp. {{ number_format($tagihan['jenis_tagihan']['jumlah'] ?? 0, 0, '', '.') }}</span>
+                                            <x-filament::badge color="success" size="sm">Lunas</x-filament::badge>
+                                        </div>
                                     </div>
-                                    <div class="text-right">
-                                        <p class="text-sm text-gray-600 dark:text-gray-400">Rp. {{ number_format($tagihan['jenis_tagihan']['jumlah'] ?? 0, 0, '', '.') }}</p>
-                                    </div>
-                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                                        Lunas
-                                    </span>
                                 </div>
                             @endforeach
                         </div>
                     </div>
                 @endif
 
-                {{-- Rekap & Bayar Section (Admin only) --}}
+                {{-- Rekap & Bayar Batch (Admin only) --}}
                 @if($this->isAdmin() && count($unpaid) > 0)
                     <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-                        <div class="flex items-center justify-between" x-show="selectedTagihan.length > 0" x-cloak>
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3" x-show="selectedTagihan.length > 0" style="display: none;">
                             <div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Rekap Pembayaran</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Bayar lunas yang dipilih</p>
                                 <p class="text-lg font-bold text-primary-600" x-text="formatRupiah(rekapTotal)"></p>
                             </div>
                             <button
-                                @click="openPayment()"
-                                :disabled="selectedTagihan.length === 0"
-                                class="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                x-on:click="openPayment()"
+                                x-bind:disabled="selectedTagihan.length === 0"
+                                type="button"
+                                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 text-sm font-semibold rounded-lg text-white bg-primary-600 hover:bg-primary-500 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-primary-500 dark:hover:bg-primary-400 transition"
                             >
-                                Bayar (<span x-text="selectedTagihan.length"></span>)
+                                <x-heroicon-o-banknotes class="w-4 h-4" />
+                                Bayar Lunas (<span x-text="selectedTagihan.length"></span>)
                             </button>
                         </div>
                     </div>
                 @endif
             </div>
         </x-filament::section>
+        </div>
     @empty
         {{-- Empty State --}}
         <x-filament::section>
@@ -318,7 +326,7 @@
                 </svg>
                 <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Tidak Ada Tagihan</h3>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    @if(filled($search) || filled($filterJenjang) || filled($filterStatus))
+                    @if(filled($search) || filled($filterKelas) || filled($filterStatus))
                         Tidak ada siswa yang cocok dengan filter yang diterapkan.
                     @else
                         Belum ada tagihan yang tersedia.
@@ -351,36 +359,39 @@
                 </span>
 
                 {{-- Navigation Buttons --}}
-                <div class="flex items-center gap-1">
-                    <button
+                <div class="flex items-center gap-1 flex-wrap">
+                    <x-filament::button
+                        outlined
+                        size="sm"
                         wire:click="previousPage"
-                        @disabled(($meta['current_page'] ?? 1) <= 1)
-                        class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition dark:text-gray-300"
+                        :disabled="($meta['current_page'] ?? 1) <= 1"
                     >
                         &laquo; Prev
-                    </button>
+                    </x-filament::button>
 
                     @for($i = 1; $i <= ($meta['last_page'] ?? 1); $i++)
                         @if($i <= 3 || $i > ($meta['last_page'] ?? 1) - 3 || abs($i - ($meta['current_page'] ?? 1)) <= 1)
-                            <button
+                            <x-filament::button
+                                :outlined="$i !== ($meta['current_page'] ?? 1)"
+                                :color="$i === ($meta['current_page'] ?? 1) ? 'primary' : 'gray'"
+                                size="sm"
                                 wire:click="goToPage({{ $i }})"
-                                class="px-3 py-1 text-sm border rounded-lg transition
-                                    {{ $i === ($meta['current_page'] ?? 1) ? 'bg-primary-600 text-white border-primary-600' : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-300' }}"
                             >
                                 {{ $i }}
-                            </button>
+                            </x-filament::button>
                         @elseif($i === 4 || $i === ($meta['last_page'] ?? 1) - 3)
                             <span class="px-2 text-gray-400">...</span>
                         @endif
                     @endfor
 
-                    <button
+                    <x-filament::button
+                        outlined
+                        size="sm"
                         wire:click="nextPage"
-                        @disabled(($meta['current_page'] ?? 1) >= ($meta['last_page'] ?? 1))
-                        class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition dark:text-gray-300"
+                        :disabled="($meta['current_page'] ?? 1) >= ($meta['last_page'] ?? 1)"
                     >
                         Next &raquo;
-                    </button>
+                    </x-filament::button>
                 </div>
             </div>
         </x-filament::section>

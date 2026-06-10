@@ -15,8 +15,6 @@ class RoleManagement extends Page
 
     protected static ?string $title = 'Manajemen Role';
 
-    // protected static ?string $navigationIcon = 'heroicon-o-shield-check';
-
     protected static ?int $navigationSort = 1;
 
     public static function shouldRegisterNavigation(): bool

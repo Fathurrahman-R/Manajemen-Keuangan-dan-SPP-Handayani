@@ -45,6 +45,8 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\Navigation\NavigationGroup;
 use Filament\Navigation\NavigationItem;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
+use Illuminate\Support\Facades\Blade;
 
 use function Filament\Support\original_request;
 
@@ -59,7 +61,7 @@ class AdminPanelProvider extends PanelProvider
             ->homeUrl('data-master-siswa')
             ->login(Login::class)
             ->passwordReset(ForgotPassword::class)
-            ->profile(EditProfile::class)
+            ->profile(false)
             ->darkMode(true)
             ->spa(config('handayani.features.spa_loading_enabled', true))
             ->breadcrumbs(true)
@@ -67,6 +69,10 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([])
             ->userMenuItems([
+                'profile' => fn(Action $action) => $action
+                    ->label('Profil Saya')
+                    ->icon('heroicon-o-user')
+                    ->url(fn(): string => EditProfile::getUrl()),
                 'logout' => fn(Action $action) => $action
                     ->label('Logout')
                     ->action(function (): void {
@@ -103,6 +109,12 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 CustomAuthentication::class,
             ])
+            ->databaseNotifications()
+            ->databaseNotificationsPolling(null)
+            ->renderHook(
+                PanelsRenderHook::BODY_START,
+                fn () => Blade::render('<livewire:notification-poller />')
+            )
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

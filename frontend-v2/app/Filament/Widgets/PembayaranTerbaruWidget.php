@@ -27,7 +27,13 @@ class PembayaranTerbaruWidget extends BaseWidget
                     : [];
 
                 try {
-                    $data = ApiService::client()->get('/dashboard/pembayaran-terbaru', $params)->json('data') ?? [];
+                    $response = ApiService::client()->get('/dashboard/pembayaran-terbaru', $params);
+
+                    if (!$response->ok()) {
+                        return collect([]);
+                    }
+
+                    $data = $response->json('data') ?? [];
                 } catch (\Throwable $e) {
                     $data = [];
                 }
@@ -52,8 +58,9 @@ class PembayaranTerbaruWidget extends BaseWidget
             ])
             ->paginated(false)
             ->striped()
-            ->emptyStateHeading('Belum ada pembayaran')
-            ->emptyStateIcon('heroicon-o-banknotes');
+            ->emptyStateHeading('Tidak Ada Data')
+            ->emptyStateDescription('Belum ada data yang tersedia.')
+            ->emptyStateIcon('heroicon-o-document-text');
     }
 
     public static function canView(): bool

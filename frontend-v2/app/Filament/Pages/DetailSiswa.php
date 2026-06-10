@@ -2,7 +2,6 @@
 
 namespace App\Filament\Pages;
 
-use UnitEnum;
 use Filament\Pages\Page;
 
 class DetailSiswa extends Page

@@ -14,13 +14,6 @@
         </x-filament::section>
     @endif
 
-    {{-- Error State --}}
-    @if($error)
-        <x-filament::section>
-            <p class="text-sm text-red-700 dark:text-red-400">{{ $error }}</p>
-        </x-filament::section>
-    @endif
-
     {{-- Loading State --}}
     @if($loading)
         <x-filament::section>

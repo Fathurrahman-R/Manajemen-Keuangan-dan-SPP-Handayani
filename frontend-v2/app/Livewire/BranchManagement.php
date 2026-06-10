@@ -2,8 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
-use Exception;
+use Illuminate\Http\Client\ConnectionException;
 use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -25,6 +26,7 @@ use Illuminate\Support\Str;
 class BranchManagement extends Component implements HasActions, HasSchemas, HasTable
 {
     use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
+    use HandlesApiErrors;
 
     protected function hasPermission(string $permission): bool
     {
@@ -36,35 +38,51 @@ class BranchManagement extends Component implements HasActions, HasSchemas, HasT
     {
         return $table
             ->records(
-                fn(?string $search, ?string $sortColumn = null, ?string $sortDirection = null): array => ApiService::client()
-                    ->get('/branches')
-                    ->collect('data')
-                    ->when(
-                        filled($search),
-                        fn(Collection $data): Collection => $data->filter(
-                            fn(array $record): bool => str_contains(Str::lower($record['location']), Str::lower($search))
-                        )
-                    )
-                    ->when(
-                        filled($sortColumn),
-                        fn(Collection $data): Collection => $data->sortBy(
-                            fn(array $record) => data_get($record, $sortColumn),
-                            SORT_REGULAR,
-                            ($sortDirection ?? 'asc') === 'desc'
-                        )->values()
-                    )
-                    ->toArray()
+                function (?string $search, ?string $sortColumn = null, ?string $sortDirection = null): array {
+                    try {
+                        $response = ApiService::client()->get('/branches');
+
+                        if (!$response->ok()) {
+                            $this->handleApiError($response);
+                            return [];
+                        }
+
+                        return $response->collect('data')
+                            ->when(
+                                filled($search),
+                                fn(Collection $data): Collection => $data->filter(
+                                    fn(array $record): bool => str_contains(Str::lower($record['location']), Str::lower($search))
+                                )
+                            )
+                            ->when(
+                                filled($sortColumn),
+                                fn(Collection $data): Collection => $data->sortBy(
+                                    fn(array $record) => data_get($record, $sortColumn),
+                                    SORT_REGULAR,
+                                    ($sortDirection ?? 'asc') === 'desc'
+                                )->values()
+                            )
+                            ->toArray();
+                    } catch (ConnectionException $e) {
+                        $this->notifyConnectionError();
+                        return [];
+                    } catch (\Throwable $e) {
+                        $this->notifyUnexpectedError();
+                        return [];
+                    }
+                }
             )
             ->columns([
                 TextColumn::make('location')->label('Nama Cabang')->sortable()->searchable(),
             ])
             ->deferLoading()
             ->striped()
-            ->paginated([5, 10, 25])
+            ->paginated([5, 10, 25, 50])
             ->defaultPaginationPageOption(10)
             ->paginatedWhileReordering()
             ->emptyStateHeading('Tidak Ada Cabang')
             ->emptyStateDescription('Silahkan menambahkan cabang baru')
+            ->emptyStateIcon('heroicon-o-document-text')
             ->recordActions([
                 Action::make('edit')
                     ->label('Ubah')
