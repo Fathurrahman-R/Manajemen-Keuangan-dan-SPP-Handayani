@@ -44,6 +44,7 @@ class SiswaDashboard extends Component
             $response = ApiService::client()->get('/dashboard/siswa', $params);
 
             if (!$response->ok()) {
+                \Illuminate\Support\Facades\Log::error('SiswaDashboard API not ok: ' . $response->status() . ' - ' . $response->body());
                 $this->handleApiError($response);
                 $this->dashboardData = [];
                 $this->loading = false;
@@ -55,6 +56,7 @@ class SiswaDashboard extends Component
             $this->notifyConnectionError();
             $this->dashboardData = [];
         } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('SiswaDashboard error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             $this->notifyUnexpectedError();
             $this->dashboardData = [];
         }

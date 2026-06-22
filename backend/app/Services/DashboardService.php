@@ -427,12 +427,34 @@ class DashboardService
      */
     public function getSiswaDashboard(int $siswaId, int $branchId): array
     {
-        $siswa = Siswa::where('id', $siswaId)->where('branch_id', $branchId)->firstOrFail();
+        $siswa = Siswa::where('id', $siswaId)->where('branch_id', $branchId)->first();
+
+        if (!$siswa) {
+            return [
+                'total_tagihan' => 0,
+                'total_terbayar' => 0,
+                'total_tunggakan' => 0,
+                'tagihan_list' => [],
+                'pembayaran_terbaru' => [],
+            ];
+        }
+
         $tahunAjaranId = $this->resolveTahunAjaranId(null, $branchId);
 
-        $totalTagihan = Tagihan::where('nis', $siswa->nis)
-            ->where('branch_id', $branchId)
-            ->where('tahun_ajaran_id', $tahunAjaranId)
+        // If no active tahun ajaran, return empty data
+        if ($tahunAjaranId === null) {
+            return [
+                'total_tagihan' => 0,
+                'total_terbayar' => 0,
+                'total_tunggakan' => 0,
+                'tagihan_list' => [],
+                'pembayaran_terbaru' => [],
+            ];
+        }
+
+        $totalTagihan = Tagihan::where('tagihans.nis', $siswa->nis)
+            ->where('tagihans.branch_id', $branchId)
+            ->where('tagihans.tahun_ajaran_id', $tahunAjaranId)
             ->join('jenis_tagihans', 'tagihans.jenis_tagihan_id', '=', 'jenis_tagihans.id')
             ->sum('jenis_tagihans.jumlah');
 

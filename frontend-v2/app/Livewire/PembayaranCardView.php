@@ -22,6 +22,7 @@ class PembayaranCardView extends Component implements HasActions, HasSchemas
     public int $perPage = 5;
     public int $page = 1;
 
+    public bool $loading = true;
     public array $siswaData = [];
     public array $meta = [];
 
@@ -32,6 +33,8 @@ class PembayaranCardView extends Component implements HasActions, HasSchemas
 
     public function loadData(): void
     {
+        $this->loading = true;
+
         $params = [
             'per_page' => $this->perPage,
             'page' => $this->page,
@@ -66,6 +69,8 @@ class PembayaranCardView extends Component implements HasActions, HasSchemas
             $this->siswaData = [];
             $this->meta = [];
         }
+
+        $this->loading = false;
     }
 
 
@@ -92,6 +97,7 @@ class PembayaranCardView extends Component implements HasActions, HasSchemas
     {
         $this->page = $page;
         $this->loadData();
+        $this->dispatch('scroll-to-top');
     }
 
     public function previousPage(): void
@@ -99,6 +105,7 @@ class PembayaranCardView extends Component implements HasActions, HasSchemas
         if ($this->page > 1) {
             $this->page--;
             $this->loadData();
+            $this->dispatch('scroll-to-top');
         }
     }
 
@@ -107,6 +114,7 @@ class PembayaranCardView extends Component implements HasActions, HasSchemas
         if ($this->page < ($this->meta['last_page'] ?? 1)) {
             $this->page++;
             $this->loadData();
+            $this->dispatch('scroll-to-top');
         }
     }
 
@@ -117,21 +125,38 @@ class PembayaranCardView extends Component implements HasActions, HasSchemas
 
     public function deletePembayaran(string $kodePembayaran): void
     {
-        try {
-            $response = ApiService::client()->delete('/pembayaran/' . $kodePembayaran);
+        $this->deletingKodePembayaran = $kodePembayaran;
+        $this->mountAction('deletePembayaran');
+    }
 
-            if ($response->ok()) {
-                Notification::make()
-                    ->title('Pembayaran Berhasil Dihapus')
-                    ->success()
-                    ->send();
-                $this->loadData();
-            } else {
-                $this->handleApiError($response);
-            }
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            $this->notifyConnectionError();
-        }
+    public ?string $deletingKodePembayaran = null;
+
+    public function deletePembayaranAction(): \Filament\Actions\Action
+    {
+        return \Filament\Actions\Action::make('deletePembayaran')
+            ->requiresConfirmation()
+            ->modalHeading('Hapus Pembayaran')
+            ->modalDescription('Apakah kamu yakin ingin menghapus pembayaran ini? Tindakan ini tidak dapat dibatalkan.')
+            ->modalSubmitActionLabel('Hapus')
+            ->color('danger')
+            ->action(function (): void {
+                if (!$this->deletingKodePembayaran) return;
+
+                try {
+                    $response = ApiService::client()->delete('/pembayaran/' . $this->deletingKodePembayaran);
+
+                    if ($response->ok()) {
+                        Notification::make()->title('Pembayaran Berhasil Dihapus')->success()->send();
+                        $this->loadData();
+                    } else {
+                        $this->handleApiError($response);
+                    }
+                } catch (\Illuminate\Http\Client\ConnectionException $e) {
+                    $this->notifyConnectionError();
+                }
+
+                $this->deletingKodePembayaran = null;
+            });
     }
 
     public function downloadKwitansi(string $kodePembayaran): StreamedResponse

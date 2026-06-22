@@ -71,9 +71,13 @@ class Setting extends Component implements HasSchemas, HasActions
                         ->size(TextSize::Large)
                         ->default($this->setting['telepon']),
                     ImageEntry::make('logo')
-                        ->disk('public')
-                        ->visibility('public')
-                        ->default($this->setting['logo'] ? env('PHOTO_STORAGE_URL', 'http://localhost:8001/storage') . '/' . $this->setting['logo'] : url('assets/img/default.png'))
+                        ->label('Logo')
+                        ->default(fn() => $this->setting['logo']
+                            ? env('PHOTO_STORAGE_URL', env('API_URL', 'http://localhost:8080') . '/../storage') . '/' . $this->setting['logo']
+                            : null)
+                        ->defaultImageUrl(url('assets/img/default.png'))
+                        ->height(80)
+                        ->circular(false)
                 ])
             ])
             ->fill($this->setting);

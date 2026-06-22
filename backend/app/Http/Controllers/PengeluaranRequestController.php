@@ -21,9 +21,15 @@ class PengeluaranRequestController extends Controller
     public function index(Request $request): JsonResponse
     {
         $branchId = $request->user()->branch_id;
+        $userId = $request->user()->id;
 
         $query = PengeluaranRequest::where('branch_id', $branchId)
-            ->with(['requester:id,name,username'])
+            ->with(['requester:id,name,username', 'approvalLogs:id,pengeluaran_request_id,new_status,note,user_id,created_at', 'approvalLogs.user:id,name'])
+            // Draft requests are only visible to the requester
+            ->where(function ($q) use ($userId) {
+                $q->where('status', '!=', 'draft')
+                  ->orWhere('requester_id', $userId);
+            })
             ->orderByDesc('created_at');
 
         if ($request->has('status')) {
@@ -131,6 +137,11 @@ class PengeluaranRequestController extends Controller
             return response()->json(['message' => 'Request tidak ditemukan.'], 404);
         }
 
+        // Only the requester can submit their own request
+        if ($pengeluaranRequest->requester_id !== $request->user()->id) {
+            return response()->json(['message' => 'Hanya pengaju yang dapat submit request ini.'], 403);
+        }
+
         $result = $this->workflowService->submit($pengeluaranRequest, $request->user());
 
         return response()->json(['data' => $result]);
@@ -171,6 +182,11 @@ class PengeluaranRequestController extends Controller
 
         if (!$pengeluaranRequest) {
             return response()->json(['message' => 'Request tidak ditemukan.'], 404);
+        }
+
+        // Only the requester can disburse their own approved request
+        if ($pengeluaranRequest->requester_id !== $request->user()->id) {
+            return response()->json(['message' => 'Hanya pengaju yang dapat mencairkan request ini.'], 403);
         }
 
         $result = $this->workflowService->disburse($pengeluaranRequest, $request->user());

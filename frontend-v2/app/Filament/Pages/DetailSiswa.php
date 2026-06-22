@@ -26,7 +26,8 @@ class DetailSiswa extends Page
     public function getBreadcrumbs(): array
     {
         return [
-            '/admin/data-master-siswa' => 'Data Siswa'
+            url('/data-master-siswa?jenjang=' . $this->jenjang) => 'Data Siswa - ' . $this->jenjang,
+            '' => 'Detail Siswa',
         ];
     }
 }

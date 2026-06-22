@@ -157,8 +157,22 @@ class KenaikanKelasController extends Controller
         $branchId = Auth::user()->branch_id;
 
         $batches = BatchPromosi::where('branch_id', $branchId)
+            ->with(['kelas:id,nama', 'sourceTahunAjaran:id,nama', 'targetTahunAjaran:id,nama', 'processedBy:id,name'])
+            ->withCount('details')
             ->orderBy('processed_at', 'desc')
             ->paginate(15);
+
+        // Add processed_by_user manually to avoid column/relation name conflicts
+        // (processed_by is the integer FK column, processedBy is the relation)
+        $batches->getCollection()->transform(function ($batch) {
+            $batchArray = $batch->toArray();
+            // processedBy relation serializes as 'processed_by' which overwrites the FK column
+            // so we rename it to 'processed_by_user' for clarity
+            $batchArray['processed_by_user'] = $batchArray['processed_by'] ?? null;
+            // Restore the original FK integer value
+            $batchArray['processed_by'] = $batch->getAttributes()['processed_by'];
+            return $batchArray;
+        });
 
         return response()->json($batches, 200);
     }
@@ -180,10 +194,16 @@ class KenaikanKelasController extends Controller
             ], 404));
         }
 
-        $batch->load(['details.siswa', 'details.sourceKelas', 'details.targetKelas']);
+        $batch->load(['details.siswa', 'details.sourceKelas', 'details.targetKelas', 'kelas:id,nama', 'sourceTahunAjaran:id,nama', 'targetTahunAjaran:id,nama', 'processedBy:id,name']);
+
+        // Build response with explicit key mapping to avoid column/relation naming conflicts
+        $batchData = $batch->toArray();
+        // processedBy relation serializes as 'processed_by' which overwrites the FK integer
+        $batchData['processed_by_user'] = $batchData['processed_by'] ?? null;
+        $batchData['processed_by'] = $batch->getAttributes()['processed_by'];
 
         return response()->json([
-            'data' => $batch,
+            'data' => $batchData,
         ], 200);
     }
 

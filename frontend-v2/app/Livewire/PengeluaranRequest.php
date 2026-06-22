@@ -99,6 +99,7 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                     ->icon('heroicon-o-paper-airplane')
                     ->color('info')
                     ->visible(fn($record) => in_array($record['status'], ['draft', 'rejected'])
+                        && ($record['requester_id'] ?? null) == session()->get('data.id')
                         && in_array('create-pengeluaran-request', session()->get('data.permissions', [])))
                     ->requiresConfirmation()
                     ->action(function ($record) {
@@ -142,12 +143,49 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                             $this->resetTable();
                         }
                     }),
+                \Filament\Actions\Action::make('viewReason')
+                    ->label('Alasan Ditolak')
+                    ->icon('heroicon-o-information-circle')
+                    ->color('danger')
+                    ->visible(fn($record) => $record['status'] === 'rejected')
+                    ->modalHeading('Alasan Penolakan')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Tutup')
+                    ->modalContent(function ($record): \Illuminate\Contracts\View\View {
+                        $logs = $record['approval_logs'] ?? [];
+                        $rejectionLog = collect($logs)->firstWhere('new_status', 'rejected');
+                        $reason = $rejectionLog['note'] ?? 'Alasan tidak tersedia.';
+                        $rejectedBy = $rejectionLog['user']['name'] ?? null;
+                        $rejectedAt = isset($rejectionLog['created_at']) ? \Carbon\Carbon::parse($rejectionLog['created_at'])->format('d M Y, H:i') : null;
+                        return view('livewire.partials.rejection-reason', compact('reason', 'rejectedBy', 'rejectedAt'));
+                    }),
+                \Filament\Actions\Action::make('viewNote')
+                    ->label('Catatan Approval')
+                    ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                    ->color('info')
+                    ->visible(function ($record) {
+                        if (!in_array($record['status'], ['approved', 'disbursed'])) return false;
+                        $logs = $record['approval_logs'] ?? [];
+                        $approveLog = collect($logs)->firstWhere('new_status', 'approved');
+                        return $approveLog && !empty($approveLog['note']);
+                    })
+                    ->modalHeading('Catatan Approval')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Tutup')
+                    ->modalContent(function ($record): \Illuminate\Contracts\View\View {
+                        $logs = $record['approval_logs'] ?? [];
+                        $approveLog = collect($logs)->firstWhere('new_status', 'approved');
+                        $note = $approveLog['note'] ?? '';
+                        $approvedBy = $approveLog['user']['name'] ?? null;
+                        $approvedAt = isset($approveLog['created_at']) ? \Carbon\Carbon::parse($approveLog['created_at'])->format('d M Y, H:i') : null;
+                        return view('livewire.partials.approval-note', compact('note', 'approvedBy', 'approvedAt'));
+                    }),
                 \Filament\Actions\Action::make('disburse')
                     ->label('Cairkan')
                     ->icon('heroicon-o-banknotes')
-                    ->color('purple')
+                    ->color('success')
                     ->visible(fn($record) => $record['status'] === 'approved'
-                        && in_array('disburse-pengeluaran', session()->get('data.permissions', [])))
+                        && ($record['requester_id'] ?? null) == session()->get('data.id'))
                     ->requiresConfirmation()
                     ->modalHeading('Cairkan Dana')
                     ->modalDescription('Yakin ingin mencairkan pengeluaran ini? Pengeluaran akan dicatat di kas.')
@@ -157,6 +195,21 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                             Notification::make()->title('Pencairan berhasil')->success()->send();
                             $this->resetTable();
                         }
+                    }),
+                \Filament\Actions\Action::make('viewDisburse')
+                    ->label('Info Pencairan')
+                    ->icon('heroicon-o-banknotes')
+                    ->color('gray')
+                    ->visible(fn($record) => $record['status'] === 'disbursed')
+                    ->modalHeading('Informasi Pencairan')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Tutup')
+                    ->modalContent(function ($record): \Illuminate\Contracts\View\View {
+                        $logs = $record['approval_logs'] ?? [];
+                        $disburseLog = collect($logs)->firstWhere('new_status', 'disbursed');
+                        $disbursedBy = $disburseLog['user']['name'] ?? 'Tidak diketahui';
+                        $disbursedAt = isset($disburseLog['created_at']) ? \Carbon\Carbon::parse($disburseLog['created_at'])->format('d M Y, H:i') : '-';
+                        return view('livewire.partials.disburse-info', compact('disbursedBy', 'disbursedAt'));
                     }),
             ])
             ->headerActions([

@@ -29,6 +29,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
     public int $perPage = 5;
     public int $page = 1;
 
+    public bool $loading = true;
     public array $siswaData = [];
     public array $meta = [];
     public array $kelasOptions = [];
@@ -62,6 +63,8 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
 
     public function loadData(): void
     {
+        $this->loading = true;
+
         $params = [
             'per_page' => $this->perPage,
             'page' => $this->page,
@@ -118,6 +121,8 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
             $this->siswaData = [];
             $this->meta = [];
         }
+
+        $this->loading = false;
     }
 
     public function updatedSearch(): void
@@ -148,6 +153,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
     {
         $this->page = $page;
         $this->loadData();
+        $this->dispatch('scroll-to-top');
     }
 
     public function previousPage(): void
@@ -155,6 +161,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
         if ($this->page > 1) {
             $this->page--;
             $this->loadData();
+            $this->dispatch('scroll-to-top');
         }
     }
 
@@ -163,6 +170,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
         if ($this->page < ($this->meta['last_page'] ?? 1)) {
             $this->page++;
             $this->loadData();
+            $this->dispatch('scroll-to-top');
         }
     }
 
@@ -297,7 +305,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                 'pembayar' => $data['pembayar'],
             ]);
 
-            if ($response->ok()) {
+            if ($response->successful()) {
                 Notification::make()
                     ->title('Pembayaran Berhasil')
                     ->success()
@@ -322,6 +330,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
         } catch (\Throwable $e) {
             Notification::make()
                 ->title('Terjadi kesalahan saat memproses pembayaran.')
+                ->body($e->getMessage())
                 ->danger()
                 ->persistent()
                 ->send();

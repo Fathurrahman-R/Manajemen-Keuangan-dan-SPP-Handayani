@@ -115,6 +115,10 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::BODY_START,
                 fn () => Blade::render('<livewire:notification-poller />')
             )
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn () => Blade::render('@include("components.pagination-loading")')
+            )
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

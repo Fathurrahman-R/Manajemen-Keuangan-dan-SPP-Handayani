@@ -229,6 +229,18 @@ class DashboardController extends Controller
             }
         }
 
+        if (!isset($siswaId) || !$siswaId) {
+            return response()->json([
+                'data' => [
+                    'total_tagihan' => 0,
+                    'total_terbayar' => 0,
+                    'total_tunggakan' => 0,
+                    'tagihan_list' => [],
+                    'pembayaran_terbaru' => [],
+                ],
+            ]);
+        }
+
         return response()->json([
             'data' => $this->dashboardService->getSiswaDashboard($siswaId, $branchId),
         ]);

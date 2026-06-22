@@ -146,12 +146,12 @@ class Settings extends Page
 
                     $photo = null;
                     $originalName = null;
+                    $logoData = $data['logo'] ?? null;
 
-                    if ($data['logo']) {
-                        $logoName = $data['logo']->getFilename();
-                        $originalName = $data['logo']->getClientOriginalName();
-                        $logoPath = $data['logo']->getPath();
-                        $photo = file_get_contents($logoPath . '/' . $logoName, 'r');
+                    // Only process if logo is a new uploaded file (not the existing string path)
+                    if ($logoData && $logoData instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                        $photo = file_get_contents($logoData->getRealPath());
+                        $originalName = $logoData->getClientOriginalName();
                     }
 
                     unset($data['logo']);

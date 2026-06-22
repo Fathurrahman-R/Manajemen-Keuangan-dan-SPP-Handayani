@@ -1,4 +1,15 @@
-<div class="space-y-6">
+<div class="space-y-6 relative">
+    {{-- Loading overlay — only for data-fetching actions (filter, search, pagination) --}}
+    <div wire:loading.flex wire:target="loadData, search, filterKelas, filterStatus, selectedTahunAjaranId, perPage, goToPage, previousPage, nextPage" class="absolute inset-0 z-10 items-center justify-center bg-white/60 dark:bg-gray-900/60 rounded-xl">
+        <div class="flex flex-col items-center gap-2">
+            <svg class="animate-spin h-8 w-8 text-primary-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Memuat...</p>
+        </div>
+    </div>
+
     {{-- Warning banner when no active period --}}
     @if($this->hasNoPeriodeAktif() && $this->hasTahunAjaranOptions())
         <x-filament::section>
@@ -149,7 +160,7 @@
                     $wire.openPayModal([...this.selectedTagihan]);
                 }
             }">
-        <x-filament::section class="overflow-hidden !p-0">
+        <div class="rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
             {{-- Header: Profil siswa (baris atas) --}}
             <div class="px-4 pt-4 pb-3">
                 <div class="flex items-center gap-3">
@@ -297,7 +308,7 @@
                 {{-- Rekap & Bayar Batch (Admin only) --}}
                 @if($this->isAdmin() && count($unpaid) > 0)
                     <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3" x-show="selectedTagihan.length > 0" style="display: none;">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3" x-show="selectedTagihan.length > 0" x-cloak x-transition>
                             <div>
                                 <p class="text-xs text-gray-500 dark:text-gray-400">Bayar lunas yang dipilih</p>
                                 <p class="text-lg font-bold text-primary-600" x-text="formatRupiah(rekapTotal)"></p>
@@ -315,7 +326,7 @@
                     </div>
                 @endif
             </div>
-        </x-filament::section>
+        </div>
         </div>
     @empty
         {{-- Empty State --}}
@@ -399,4 +410,12 @@
 
     {{-- Filament Action Modals --}}
     <x-filament-actions::modals />
+
+    @script
+    <script>
+        $wire.on('scroll-to-top', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    </script>
+    @endscript
 </div>

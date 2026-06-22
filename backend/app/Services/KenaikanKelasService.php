@@ -601,13 +601,17 @@ class KenaikanKelasService
             $userId,
             $branchId
         ) {
+            // Determine kelas_id from first siswa for batch record
+            $firstSiswa = Siswa::find($siswaIds[0]);
+            $kelasId = $firstSiswa?->kelas_id;
+
             // 3a. Create BatchPromosi record
             $batch = BatchPromosi::create([
                 'id' => Str::uuid()->toString(),
                 'batch_type' => 'kelulusan',
                 'source_tahun_ajaran_id' => $sourceTahunAjaran->id,
                 'target_tahun_ajaran_id' => $targetTahunAjaranId,
-                'kelas_id' => null,
+                'kelas_id' => $kelasId,
                 'processed_by' => $userId,
                 'processed_at' => now(),
                 'status' => 'completed',

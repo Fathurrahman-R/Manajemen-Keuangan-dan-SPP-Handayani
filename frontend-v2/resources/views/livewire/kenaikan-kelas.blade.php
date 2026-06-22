@@ -37,6 +37,7 @@
         <x-slot name="heading">Daftar Siswa</x-slot>
 
         {{-- Jenjang Tabs --}}
+        <div>
         <x-filament::tabs label="Jenjang tabs">
             @foreach(['MI', 'TK', 'KB'] as $jenjang)
                 <x-filament::tabs.item
@@ -47,8 +48,14 @@
                 </x-filament::tabs.item>
             @endforeach
         </x-filament::tabs>
+        </div>
 
-        <div class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-6 relative" style="min-height: 300px;">
+            {{-- Single loading overlay — centered in the grid area --}}
+            <div wire:loading wire:target="selectedKelasId, activeJenjangTab" class="absolute inset-0 z-10 flex items-center justify-center bg-white/70 dark:bg-gray-900/70 rounded-lg" style="top: 0; bottom: 0;">
+                <x-filament::loading-indicator class="h-10 w-10 text-primary-500" />
+            </div>
+
             {{-- Kelas List --}}
             <div class="md:col-span-1">
                 <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Daftar Kelas</h3>
@@ -157,16 +164,7 @@
 
                         {{-- Process Button --}}
                         <div class="mt-4 flex items-center gap-3">
-                            <x-filament::button
-                                wire:click="processAll"
-                                wire:confirm="Apakah Anda yakin ingin memproses kenaikan kelas untuk {{ array_sum($summary) }} siswa? Tindakan ini akan membuat perubahan pada data siswa."
-                                color="primary"
-                                :disabled="$processing || count($students) === 0 || !$selectedTargetPeriodId"
-                                icon="{{ $processing ? 'heroicon-o-arrow-path' : 'heroicon-o-check-circle' }}"
-                                :class="$processing ? 'animate-pulse' : ''"
-                            >
-                                {{ $processing ? 'Memproses...' : 'Proses Kenaikan Kelas' }}
-                            </x-filament::button>
+                            {{ $this->processAction }}
                             <span class="text-xs text-gray-500 dark:text-gray-400">
                                 Total: {{ array_sum($summary) }} siswa
                             </span>
@@ -194,85 +192,88 @@
     </x-filament::section>
 
     {{-- Batch Detail Modal --}}
-    @if($selectedBatchDetail)
-        <x-filament::modal :close-by-clicking-away="true" :close-button="true" width="4xl" id="batch-detail-modal" visible>
-            <x-slot name="heading">
-                Detail Batch: {{ $this->translateBatchType($selectedBatchDetail['batch_type'] ?? '') }}
-            </x-slot>
+    <x-filament::modal :close-by-clicking-away="true" :close-button="true" width="4xl" id="batch-detail-modal" wire:model.live="showDetailModal">
+        <x-slot name="heading">
+            Detail Batch: {{ $this->translateBatchType($selectedBatchDetail['batch_type'] ?? '') }}
+        </x-slot>
 
-            <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                        <span class="text-gray-500 dark:text-gray-400">Tanggal:</span>
-                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ isset($selectedBatchDetail['processed_at']) ? \Carbon\Carbon::parse($selectedBatchDetail['processed_at'])->format('d/m/Y H:i') : '-' }}</span>
-                    </div>
-                    <div>
-                        <span class="text-gray-500 dark:text-gray-400">Status:</span>
-                        @if(($selectedBatchDetail['status'] ?? '') === 'completed')
-                            <x-filament::badge color="success">Completed</x-filament::badge>
-                        @else
-                            <x-filament::badge color="gray">Undone</x-filament::badge>
-                        @endif
-                    </div>
-                    <div>
-                        <span class="text-gray-500 dark:text-gray-400">Kelas Asal:</span>
-                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ $selectedBatchDetail['kelas_nama'] ?? $selectedBatchDetail['kelas']['nama'] ?? '-' }}</span>
-                    </div>
-                    <div>
-                        <span class="text-gray-500 dark:text-gray-400">Diproses oleh:</span>
-                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ $selectedBatchDetail['processed_by_name'] ?? $selectedBatchDetail['processed_by_user']['name'] ?? '-' }}</span>
-                    </div>
+        @if($selectedBatchDetail)
+        <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                    <span class="text-gray-500 dark:text-gray-400">Tanggal:</span>
+                    <span class="font-medium text-gray-900 dark:text-gray-100">{{ isset($selectedBatchDetail['processed_at']) ? \Carbon\Carbon::parse($selectedBatchDetail['processed_at'])->format('d/m/Y H:i') : '-' }}</span>
                 </div>
-
-                {{-- Detail students --}}
-                <div class="fi-ta-content rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden max-h-96 overflow-y-auto">
-                    <table class="fi-ta-table w-full table-auto divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead class="bg-gray-50 dark:bg-gray-800/50 sticky top-0">
-                            <tr>
-                                <th class="px-3 py-2 text-start text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">NIS</th>
-                                <th class="px-3 py-2 text-start text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Nama</th>
-                                <th class="px-3 py-2 text-start text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Aksi</th>
-                                <th class="px-3 py-2 text-start text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Kelas Asal</th>
-                                <th class="px-3 py-2 text-start text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Kelas Tujuan</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                            @foreach($selectedBatchDetail['details'] ?? [] as $detail)
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                    <td class="px-3 py-2 text-sm text-gray-900 dark:text-gray-100">{{ $detail['siswa']['nis'] ?? $detail['siswa_nis'] ?? '-' }}</td>
-                                    <td class="px-3 py-2 text-sm text-gray-900 dark:text-gray-100">{{ $detail['siswa']['nama'] ?? $detail['siswa_nama'] ?? '-' }}</td>
-                                    <td class="px-3 py-2 text-sm">
-                                        @php
-                                            $actionLabel = match($detail['action'] ?? '') {
-                                                'naik_kelas' => 'Naik Kelas',
-                                                'lulus' => 'Lulus',
-                                                'tinggal_kelas' => 'Tinggal Kelas',
-                                                'pindah_jenjang' => 'Pindah Jenjang',
-                                                default => ucfirst(str_replace('_', ' ', $detail['action'] ?? '-')),
-                                            };
-                                        @endphp
-                                        <x-filament::badge :color="match($detail['action'] ?? '') {
-                                            'naik_kelas' => 'info',
-                                            'lulus' => 'success',
-                                            'tinggal_kelas' => 'warning',
-                                            'pindah_jenjang' => 'purple',
-                                            default => 'gray',
-                                        }">{{ $actionLabel }}</x-filament::badge>
-                                    </td>
-                                    <td class="px-3 py-2 text-sm text-gray-900 dark:text-gray-100">{{ $detail['source_kelas']['nama'] ?? $detail['source_kelas_nama'] ?? '-' }}</td>
-                                    <td class="px-3 py-2 text-sm text-gray-900 dark:text-gray-100">{{ $detail['target_kelas']['nama'] ?? $detail['target_kelas_nama'] ?? '-' }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                <div>
+                    <span class="text-gray-500 dark:text-gray-400">Status:</span>
+                    @if(($selectedBatchDetail['status'] ?? '') === 'completed')
+                        <x-filament::badge color="success">Completed</x-filament::badge>
+                    @else
+                        <x-filament::badge color="gray">Undone</x-filament::badge>
+                    @endif
+                </div>
+                <div>
+                    <span class="text-gray-500 dark:text-gray-400">Kelas Asal:</span>
+                    <span class="font-medium text-gray-900 dark:text-gray-100">{{ $selectedBatchDetail['kelas']['nama'] ?? $selectedBatchDetail['kelas_nama'] ?? '-' }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-500 dark:text-gray-400">Diproses oleh:</span>
+                    <span class="font-medium text-gray-900 dark:text-gray-100">{{ $selectedBatchDetail['processed_by_user']['name'] ?? '-' }}</span>
                 </div>
             </div>
 
-            <x-slot name="footerActions">
-                <x-filament::button color="gray" wire:click="closeBatchDetail">
-                    Tutup
-                </x-filament::button>
-            </x-slot>
-        </x-filament::modal>
-    @endif
+            {{-- Detail students --}}
+            <div class="fi-ta-content rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden max-h-96 overflow-y-auto">
+                <table class="fi-ta-table w-full table-auto divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-800/50 sticky top-0">
+                        <tr>
+                            <th class="px-3 py-2 text-start text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">NIS</th>
+                            <th class="px-3 py-2 text-start text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Nama</th>
+                            <th class="px-3 py-2 text-start text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Aksi</th>
+                            <th class="px-3 py-2 text-start text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Kelas Asal</th>
+                            <th class="px-3 py-2 text-start text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Kelas Tujuan</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        @foreach($selectedBatchDetail['details'] ?? [] as $detail)
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                <td class="px-3 py-2 text-sm text-gray-900 dark:text-gray-100">{{ $detail['siswa']['nis'] ?? $detail['siswa_nis'] ?? '-' }}</td>
+                                <td class="px-3 py-2 text-sm text-gray-900 dark:text-gray-100">{{ $detail['siswa']['nama'] ?? $detail['siswa_nama'] ?? '-' }}</td>
+                                <td class="px-3 py-2 text-sm">
+                                    @php
+                                        $actionLabel = match($detail['action'] ?? '') {
+                                            'naik_kelas' => 'Naik Kelas',
+                                            'lulus' => 'Lulus',
+                                            'tinggal_kelas' => 'Tinggal Kelas',
+                                            'pindah_jenjang' => 'Pindah Jenjang',
+                                            default => ucfirst(str_replace('_', ' ', $detail['action'] ?? '-')),
+                                        };
+                                    @endphp
+                                    <x-filament::badge :color="match($detail['action'] ?? '') {
+                                        'naik_kelas' => 'info',
+                                        'lulus' => 'success',
+                                        'tinggal_kelas' => 'warning',
+                                        'pindah_jenjang' => 'purple',
+                                        default => 'gray',
+                                    }">{{ $actionLabel }}</x-filament::badge>
+                                </td>
+                                <td class="px-3 py-2 text-sm text-gray-900 dark:text-gray-100">{{ $detail['source_kelas']['nama'] ?? $detail['source_kelas_nama'] ?? '-' }}</td>
+                                <td class="px-3 py-2 text-sm text-gray-900 dark:text-gray-100">{{ $detail['target_kelas']['nama'] ?? $detail['target_kelas_nama'] ?? '-' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @endif
+
+        <x-slot name="footerActions">
+            <x-filament::button color="gray" wire:click="closeBatchDetail">
+                Tutup
+            </x-filament::button>
+        </x-slot>
+    </x-filament::modal>
+
+    {{-- Filament Actions Modals (for confirmation modal) --}}
+    <x-filament-actions::modals />
 </div>

@@ -36,6 +36,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
     public bool $processing = false;
     public array $history = [];
     public ?array $selectedBatchDetail = null;
+    public bool $showDetailModal = false;
 
     public function mount(): void
     {
@@ -49,6 +50,24 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
         $this->activeJenjangTab = 'MI';
         $this->loadKelasList();
         $this->loadHistory();
+    }
+
+    /**
+     * Filament Action for "Proses Kenaikan Kelas" confirmation modal.
+     */
+    public function processAction(): Action
+    {
+        return Action::make('process')
+            ->label('Proses Kenaikan Kelas')
+            ->icon('heroicon-o-check-circle')
+            ->color('primary')
+            ->disabled(fn() => $this->processing || count($this->students) === 0 || !$this->selectedTargetPeriodId)
+            ->requiresConfirmation()
+            ->modalHeading('Konfirmasi Proses Kenaikan Kelas')
+            ->modalDescription(fn() => 'Apakah Anda yakin ingin memproses kenaikan kelas untuk ' . array_sum($this->summary) . ' siswa? Tindakan ini akan membuat perubahan pada data siswa.')
+            ->modalSubmitActionLabel('Ya, Proses')
+            ->modalCancelActionLabel('Batal')
+            ->action(fn() => $this->processAll());
     }
 
     /**
@@ -73,15 +92,15 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
                 TextColumn::make('batch_type')
                     ->label('Tipe')
                     ->formatStateUsing(fn($state) => $this->translateBatchType($state ?? '')),
-                TextColumn::make('kelas_nama')
+                TextColumn::make('kelas_asal')
                     ->label('Kelas Asal')
-                    ->state(fn(array $record) => $record['kelas_nama'] ?? $record['kelas']['nama'] ?? '-'),
-                TextColumn::make('source_tahun_ajaran_nama')
+                    ->state(fn(array $record) => $record['kelas']['nama'] ?? $record['kelas_nama'] ?? '-'),
+                TextColumn::make('dari_periode')
                     ->label('Dari Periode')
-                    ->state(fn(array $record) => $record['source_tahun_ajaran_nama'] ?? $record['source_tahun_ajaran']['nama'] ?? '-'),
-                TextColumn::make('target_tahun_ajaran_nama')
+                    ->state(fn(array $record) => $record['source_tahun_ajaran']['nama'] ?? $record['source_tahun_ajaran_nama'] ?? '-'),
+                TextColumn::make('ke_periode')
                     ->label('Ke Periode')
-                    ->state(fn(array $record) => $record['target_tahun_ajaran_nama'] ?? $record['target_tahun_ajaran']['nama'] ?? '-')
+                    ->state(fn(array $record) => $record['target_tahun_ajaran']['nama'] ?? $record['target_tahun_ajaran_nama'] ?? '-')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('details_count')
                     ->label('Jumlah Siswa')
@@ -96,9 +115,9 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
                     })
                     ->formatStateUsing(fn($state) => $state === 'completed' ? 'Completed' : 'Undone')
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('processed_by_name')
+                TextColumn::make('processed_by_user')
                     ->label('User')
-                    ->state(fn(array $record) => $record['processed_by_name'] ?? $record['processed_by_user']['name'] ?? '-')
+                    ->state(fn(array $record) => $record['processed_by_user']['name'] ?? '-')
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->recordActions([
@@ -108,7 +127,19 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
                     ->iconButton()
                     ->tooltip('Lihat Detail')
                     ->color('info')
-                    ->action(fn(array $record) => $this->showBatchDetail($record['id'])),
+                    ->modalHeading(fn(array $record) => 'Detail: ' . $this->translateBatchType($record['batch_type'] ?? ''))
+                    ->modalWidth('4xl')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Tutup')
+                    ->modalContent(function (array $record): \Illuminate\Contracts\View\View {
+                        try {
+                            $response = ApiService::client()->get("/kenaikan-kelas/batches/{$record['id']}");
+                            $detail = $response->ok() ? ($response->json()['data'] ?? null) : null;
+                        } catch (\Throwable $e) {
+                            $detail = null;
+                        }
+                        return view('livewire.partials.batch-detail', ['detail' => $detail]);
+                    }),
                 Action::make('undo')
                     ->label('Undo')
                     ->icon('heroicon-o-arrow-uturn-left')
@@ -464,7 +495,9 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
             $response = ApiService::client()->get('/kenaikan-kelas/batches');
 
             if ($response->ok()) {
-                $this->history = $response->json()['data'] ?? [];
+                $json = $response->json();
+                // The backend returns paginated data, so 'data' is the items array
+                $this->history = $json['data'] ?? [];
             } else {
                 $this->history = [];
             }
@@ -483,6 +516,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
 
             if ($response->ok()) {
                 $this->selectedBatchDetail = $response->json()['data'] ?? null;
+                $this->showDetailModal = true;
             } else {
                 $this->selectedBatchDetail = null;
                 Notification::make()
@@ -504,6 +538,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
      */
     public function closeBatchDetail(): void
     {
+        $this->showDetailModal = false;
         $this->selectedBatchDetail = null;
     }
 
@@ -697,7 +732,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
                     $summaryParts[] = 'Tinggal Kelas: ' . ($results['tinggal_kelas']['total_success'] ?? 0) . ' siswa';
                 }
                 if (isset($results['lulus'])) {
-                    $summaryParts[] = 'Lulus: ' . ($results['lulus']['total_success'] ?? 0) . ' siswa';
+                    $summaryParts[] = 'Lulus: ' . ($results['lulus']['total_graduated'] ?? $results['lulus']['total_success'] ?? 0) . ' siswa';
                 }
                 if (isset($results['pindah_jenjang'])) {
                     $summaryParts[] = 'Pindah Jenjang: ' . count($results['pindah_jenjang']) . ' siswa';
