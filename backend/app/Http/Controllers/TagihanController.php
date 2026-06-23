@@ -59,7 +59,7 @@ class TagihanController extends Controller
 
         // Non-admin users can only see their own data
         if (!$user->hasAnyRole(['superadmin', 'admin'])) {
-            $query->where('nis', $user->username);
+            $query->where('nis', $user->siswa?->nis ?? $user->username);
         }
 
         // Search filter: case-insensitive substring match on nama or nis
@@ -134,7 +134,7 @@ class TagihanController extends Controller
             ->where('tahun_ajaran_id', $tahunAjaranId);
 
         if (!$user->hasAnyRole(['superadmin', 'admin'])) {
-            $query->whereHas('siswa', fn($q) => $q->where('nis', $user->username));
+            $query->whereHas('siswa', fn($q) => $q->where('nis', $user->siswa?->nis ?? $user->username));
         }
 
         $search = request('search');

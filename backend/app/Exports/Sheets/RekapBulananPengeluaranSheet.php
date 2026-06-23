@@ -21,15 +21,17 @@ class RekapBulananPengeluaranSheet implements FromQuery, WithHeadings, WithMappi
 
     public function query(): Builder
     {
-        return $this->query;
+        return $this->query->with(['pengeluaranRequest.requester', 'pengeluaranRequest.approvalLogs.user']);
     }
 
     public function headings(): array
     {
         return [
             'Tanggal',
-            'Uraian',
+            'Nama Pengeluaran',
             'Jumlah',
+            'Pengaju',
+            'Penyetuju',
         ];
     }
 
@@ -42,6 +44,8 @@ class RekapBulananPengeluaranSheet implements FromQuery, WithHeadings, WithMappi
             $pengeluaran->tanggal,
             $pengeluaran->uraian,
             $pengeluaran->jumlah,
+            $pengeluaran->pengaju_name,
+            $pengeluaran->penyetuju_name,
         ];
     }
 }

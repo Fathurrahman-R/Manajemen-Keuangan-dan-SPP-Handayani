@@ -21,5 +21,6 @@ class PermissionBinding
         Permissions::DASHBOARD_PERMISSIONS,
         Permissions::APPROVAL_WORKFLOW_PERMISSIONS,
         Permissions::BRANCH_PERMISSIONS,
+        Permissions::MIDTRANS_PERMISSIONS,
     ];
 }

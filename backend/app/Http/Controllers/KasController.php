@@ -8,6 +8,7 @@ use App\Models\Pengeluaran;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -218,5 +219,115 @@ class KasController extends Controller
         }
 
         return KasResource::collection($kas);
+    }
+
+    /**
+     * Detail of a single Kas Harian row (one date) — list of pemasukan and
+     * pengeluaran transactions for the given branch on the given date.
+     *
+     * GET /api/laporan/kas/detail?tanggal=YYYY-MM-DD
+     */
+    #[HeaderParameter('Authorization')]
+    #[QueryParameter('tanggal', description: 'Tanggal (YYYY-MM-DD)', required: true, example: '2025-11-15')]
+    public function kasDetail(Request $request): JsonResponse
+    {
+        $request->validate([
+            'tanggal' => 'required|date_format:Y-m-d',
+        ]);
+
+        $branchId = Auth::user()->branch_id;
+        $tanggal = $request->query('tanggal');
+
+        return response()->json([
+            'data' => [
+                'tanggal' => $tanggal,
+                'pemasukan' => $this->buildPemasukanDetail(
+                    Pembayaran::query()
+                        ->where('branch_id', $branchId)
+                        ->whereDate('tanggal', $tanggal),
+                ),
+                'pengeluaran' => $this->buildPengeluaranDetail(
+                    Pengeluaran::query()
+                        ->where('branch_id', $branchId)
+                        ->whereDate('tanggal', $tanggal),
+                ),
+            ],
+        ]);
+    }
+
+    /**
+     * Detail of a single Rekap Bulanan row (one month) — list of pemasukan and
+     * pengeluaran transactions for the given branch in the given month/year.
+     *
+     * GET /api/laporan/rekap/detail?bulan=11&tahun=2025
+     */
+    #[HeaderParameter('Authorization')]
+    #[QueryParameter('bulan', description: 'Bulan (1-12)', required: true, example: 11)]
+    #[QueryParameter('tahun', description: 'Tahun 4 digit', required: true, example: 2025)]
+    public function rekapDetail(Request $request): JsonResponse
+    {
+        $request->validate([
+            'bulan' => 'required|integer|min:1|max:12',
+            'tahun' => 'required|digits:4',
+        ]);
+
+        $branchId = Auth::user()->branch_id;
+        $bulan = (int) $request->query('bulan');
+        $tahun = (int) $request->query('tahun');
+
+        return response()->json([
+            'data' => [
+                'bulan' => $bulan,
+                'tahun' => $tahun,
+                'pemasukan' => $this->buildPemasukanDetail(
+                    Pembayaran::query()
+                        ->where('branch_id', $branchId)
+                        ->whereYear('tanggal', $tahun)
+                        ->whereMonth('tanggal', $bulan),
+                ),
+                'pengeluaran' => $this->buildPengeluaranDetail(
+                    Pengeluaran::query()
+                        ->where('branch_id', $branchId)
+                        ->whereYear('tanggal', $tahun)
+                        ->whereMonth('tanggal', $bulan),
+                ),
+            ],
+        ]);
+    }
+
+    /** @return list<array{tanggal:string,nis:?string,nama:?string,nama_tagihan:?string,jumlah:int}> */
+    private function buildPemasukanDetail($baseQuery): array
+    {
+        return $baseQuery
+            ->with(['tagihan.siswa:id,nis,nama', 'tagihan.jenis_tagihan:id,nama'])
+            ->orderBy('tanggal')
+            ->get()
+            ->map(fn ($p) => [
+                'tanggal' => (string) $p->tanggal,
+                'nis' => $p->tagihan?->nis,
+                'nama' => $p->tagihan?->siswa?->nama,
+                'nama_tagihan' => $p->tagihan?->jenis_tagihan?->nama,
+                'jumlah' => (int) $p->jumlah,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /** @return list<array{tanggal:string,nama_pengeluaran:string,jumlah:int,pengaju:?string,penyetuju:?string}> */
+    private function buildPengeluaranDetail($baseQuery): array
+    {
+        return $baseQuery
+            ->with(['pengeluaranRequest.requester:id,name', 'pengeluaranRequest.approvalLogs.user:id,name'])
+            ->orderBy('tanggal')
+            ->get()
+            ->map(fn ($p) => [
+                'tanggal' => (string) $p->tanggal,
+                'nama_pengeluaran' => (string) $p->uraian,
+                'jumlah' => (int) $p->jumlah,
+                'pengaju' => $p->pengaju_name,
+                'penyetuju' => $p->penyetuju_name,
+            ])
+            ->values()
+            ->all();
     }
 }

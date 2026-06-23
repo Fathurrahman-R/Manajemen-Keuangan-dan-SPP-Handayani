@@ -23,6 +23,9 @@ return [
 
         // Enable loading screen indicators and SPA transition animations
         'spa_loading_enabled' => env('HANDAYANI_SPA_LOADING_ENABLED', true),
+
+        // Enable Midtrans online payment gateway integration
+        'midtrans_enabled' => env('HANDAYANI_MIDTRANS_ENABLED', false),
     ],
 
     'portal' => [
@@ -31,5 +34,19 @@ return [
 
         // Whether breadcrumbs should be shown in the portal top nav
         'breadcrumbs' => env('HANDAYANI_PORTAL_BREADCRUMBS', false),
+    ],
+
+    'midtrans' => [
+        // Flat admin fee charged to student per transaction (integer Rupiah)
+        'fee_flat' => (int) env('HANDAYANI_MIDTRANS_FEE_FLAT', 4000),
+
+        // Minimum payment amount allowed (integer Rupiah)
+        'min_amount' => 10_000,
+
+        // Midtrans Snap.js script URL (sandbox default)
+        'snap_url' => env('MIDTRANS_SNAP_URL', 'https://app.sandbox.midtrans.com/snap/snap.js'),
+
+        // Midtrans client key (public, safe for frontend usage)
+        'client_key' => env('MIDTRANS_CLIENT_KEY'),
     ],
 ];

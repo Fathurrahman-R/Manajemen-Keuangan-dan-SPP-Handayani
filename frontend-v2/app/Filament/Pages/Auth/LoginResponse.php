@@ -15,10 +15,10 @@ class LoginResponse implements LoginResponseContract
             return redirect()->to($intendedUrl);
         }
 
-        // Siswa role langsung ke halaman tagihan
+        // Siswa role langsung ke portal panel
         $roles = session()->get('data.roles', []);
         if (in_array('siswa', $roles)) {
-            return redirect()->to(filament()->getUrl() . '/tagihan-siswa');
+            return redirect()->to('/' . config('handayani.portal.path', 'portal'));
         }
 
         $permissions = session()->get('data.permissions', []);

@@ -56,7 +56,7 @@ class PortalRiwayatPembayaranPage extends Page implements HasTable
 
                     try {
                         $response = ApiService::client()
-                            ->get('/pembayaran', $params)
+                            ->get('/pembayaran/siswa', $params)
                             ->collect();
 
                         return new LengthAwarePaginator(
@@ -87,7 +87,16 @@ class PortalRiwayatPembayaranPage extends Page implements HasTable
                     ->sortable()
                     ->money(currency: 'Rp.', decimalPlaces: 0),
                 TextColumn::make('metode')
-                    ->label('Metode'),
+                    ->label('Metode')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'online_midtrans' => __('midtrans.badge_online', [], 'id'),
+                        default => __('midtrans.badge_offline', [], 'id'),
+                    })
+                    ->color(fn (string $state): string => match ($state) {
+                        'online_midtrans' => 'success',
+                        default => 'gray',
+                    }),
                 TextColumn::make('kode_tagihan.jenis_tagihan.nama')
                     ->label('Jenis Tagihan'),
             ])

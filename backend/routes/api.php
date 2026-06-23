@@ -26,6 +26,9 @@ use App\Http\Controllers\AyahController;
 use App\Http\Controllers\IbuController;
 use App\Http\Controllers\AkunSiswaController;
 use App\Http\Controllers\EmailOptOutController;
+use App\Http\Controllers\MidtransAdminController;
+use App\Http\Controllers\MidtransNotificationController;
+use App\Http\Controllers\MidtransTransactionController;
 use App\Http\Controllers\NotificationLogController;
 use App\Http\Controllers\NotificationSettingController;
 use App\Http\Controllers\UserController;
@@ -52,6 +55,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Siswa-accessible route (role:siswa middleware)
     Route::get('/tagihan/siswa', [TagihanController::class, 'siswaView'])->middleware('role:siswa');
+    Route::get('/pembayaran/siswa', [PembayaranController::class, 'siswaView'])->middleware('role:siswa');
 
     // Dashboard routes
     Route::prefix('/dashboard')->group(function () {
@@ -210,7 +214,9 @@ Route::middleware('auth:sanctum')->group(function () {
         // Laporan routes
         Route::prefix('/laporan')->group(function () {
             Route::get('/kas', [KasController::class, 'kasHarian'])->middleware('permission:view-kas-harian');
+            Route::get('/kas/detail', [KasController::class, 'kasDetail'])->middleware('permission:view-kas-harian');
             Route::get('/rekap', [KasController::class, 'rekapBulanan'])->middleware('permission:view-rekap-bulanan');
+            Route::get('/rekap/detail', [KasController::class, 'rekapDetail'])->middleware('permission:view-rekap-bulanan');
             Route::prefix('/export')->group(function () {
                 Route::get('/kas', [PdfGeneratorController::class, 'exportKas'])->middleware('permission:export-laporan');
                 Route::get('/rekap', [PdfGeneratorController::class, 'exportRekapBulanan'])->middleware('permission:export-laporan');
@@ -312,5 +318,30 @@ Route::middleware('auth:sanctum')->group(function () {
             // Job status - accessible with either permission
             Route::get('/job/{jobId}/status', [ImportExportController::class, 'jobStatus']);
         });
+    });
+});
+
+// ──────────────────────────────────────────────────────────────
+// Midtrans Webhook - public, no Sanctum (protected by signature)
+// ──────────────────────────────────────────────────────────────
+Route::post('/midtrans/notification', [MidtransNotificationController::class, 'handle']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    // Portal Siswa - Midtrans
+    Route::middleware('permission:pay-tagihan-online')->group(function () {
+        Route::get('/midtrans/fee-channels', [MidtransTransactionController::class, 'feeChannels']);
+        Route::post('/midtrans/transactions', [MidtransTransactionController::class, 'initiate']);
+        Route::post('/midtrans/transactions/batch', [MidtransTransactionController::class, 'initiateBatch']);
+        Route::get('/midtrans/transactions/{order_id}', [MidtransTransactionController::class, 'show']);
+    });
+
+    // Admin - Midtrans
+    Route::middleware('permission:view-midtrans-transactions')->group(function () {
+        Route::get('/midtrans/admin/transactions', [MidtransAdminController::class, 'index']);
+        Route::get('/midtrans/admin/transactions/{order_id}', [MidtransAdminController::class, 'show']);
+        Route::get('/midtrans/admin/transactions/{order_id}/logs', [MidtransAdminController::class, 'logs']);
+    });
+    Route::middleware('permission:sync-midtrans-transactions')->group(function () {
+        Route::post('/midtrans/admin/transactions/{order_id}/sync', [MidtransAdminController::class, 'sync']);
     });
 });

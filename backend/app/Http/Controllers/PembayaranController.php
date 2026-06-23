@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\PembayaranRecorded;
+use App\Exceptions\Midtrans\CannotDeleteOnlinePembayaranException;
 use App\Http\Requests\BatchPaymentRequest;
 use App\Http\Requests\BayarLunasRequest;
 use App\Http\Requests\BayarTidakLunasRequest;
@@ -37,7 +38,7 @@ class PembayaranController extends Controller
             ->where('branch_id', $user->branch_id);
 
         if ($user && !$user->hasAnyRole(['superadmin', 'admin'])) {
-            $query->where('nis', $user->username);
+            $query->where('nis', $user->siswa?->nis ?? $user->username);
         }
 
         $search = request('search');
@@ -91,7 +92,7 @@ class PembayaranController extends Controller
 
         if ($user && !$user->hasAnyRole(['superadmin', 'admin'])) {
             $query->whereHas('tagihan', function ($q) use ($user) {
-                $q->where('nis', $user->username);
+                $q->where('nis', $user->siswa?->nis ?? $user->username);
             });
         }
 
@@ -200,12 +201,20 @@ class PembayaranController extends Controller
             'tagihan.jenis_tagihan' => function ($q) {
                 $q->select(['id','jumlah']);
             }
-        ])->select(['kode_pembayaran','kode_tagihan','jumlah'])->find($kode_pembayaran);
+        ])->select(['kode_pembayaran','kode_tagihan','jumlah','metode'])->find($kode_pembayaran);
 
         if (!$pembayaran || !$pembayaran->tagihan) {
             throw new HttpResponseException(response([
                 'errors' => [ 'message' => ['pembayaran tidak ditemukan.'] ]
             ], 404));
+        }
+
+        // Guard: online Midtrans pembayaran cannot be deleted unless user has both permissions
+        if (($pembayaran->metode ?? null) === 'online_midtrans') {
+            $user = Auth::user();
+            if (! ($user->can('delete-pembayaran') && $user->can('manage-midtrans-config'))) {
+                throw new CannotDeleteOnlinePembayaranException($kode_pembayaran);
+            }
         }
 
         $tagihan = $pembayaran->tagihan;
@@ -349,5 +358,52 @@ class PembayaranController extends Controller
             ], 404));
         }
         return (new KwitansiResource($pembayaran));
+    }
+
+    /**
+     * List Pembayaran for the logged-in siswa. Used by the Portal "Riwayat
+     * Pembayaran" page since the admin `/pembayaran` endpoint is gated by
+     * `deny_siswa` + `permission:view-pembayaran`.
+     */
+    #[HeaderParameter('Authorization')]
+    #[QueryParameter('search', description: 'Pencarian kode_pembayaran', required: false, example: 'PAY-2025')]
+    #[QueryParameter('per_page', description: 'Jumlah data per halaman', required: false, example: 10)]
+    public function siswaView(Request $request)
+    {
+        $user = Auth::user();
+
+        if (! $user->siswa_id) {
+            return response()->json([
+                'errors' => ['message' => ['Akun ini bukan akun siswa.']]
+            ], 403);
+        }
+
+        $siswa = $user->siswa;
+        if (! $siswa) {
+            return response()->json([
+                'errors' => ['message' => ['Data siswa tidak ditemukan.']]
+            ], 404);
+        }
+
+        $query = Pembayaran::query()
+            ->with([
+                'tagihan' => fn($q) => $q->with(['jenis_tagihan'])->select(['kode_tagihan','nis','jenis_tagihan_id','tmp','status']),
+                'tagihan.siswa' => fn($q) => $q->select(['id','nis','nama']),
+            ])
+            ->where('branch_id', $user->branch_id)
+            ->whereHas('tagihan', fn($q) => $q->where('nis', $siswa->nis))
+            ->select(['kode_pembayaran','kode_tagihan','tanggal','metode','jumlah','pembayar']);
+
+        $search = $request->query('search');
+        if ($search) {
+            $query->where('kode_pembayaran', 'like', "%{$search}%");
+        }
+
+        $query->orderByDesc('tanggal')->orderByDesc('kode_pembayaran');
+
+        $perPage = min((int) $request->query('per_page', 10), 100);
+        $pembayaran = $query->paginate($perPage);
+
+        return PembayaranResource::collection($pembayaran);
     }
 }

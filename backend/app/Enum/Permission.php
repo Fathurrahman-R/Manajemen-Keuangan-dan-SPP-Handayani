@@ -103,4 +103,10 @@ enum Permission: string
     case READ_BRANCH = 'read-branch';
     case UPDATE_BRANCH = 'update-branch';
     case DELETE_BRANCH = 'delete-branch';
+
+    //midtrans permissions
+    case PAY_TAGIHAN_ONLINE = 'pay-tagihan-online';
+    case VIEW_MIDTRANS_TRX = 'view-midtrans-transactions';
+    case SYNC_MIDTRANS_TRX = 'sync-midtrans-transactions';
+    case MANAGE_MIDTRANS_CONFIG = 'manage-midtrans-config';
 }

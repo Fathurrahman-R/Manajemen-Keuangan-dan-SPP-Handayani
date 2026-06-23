@@ -6,6 +6,7 @@ use App\Filament\Pages\Auth\Login;
 use App\Filament\Portal\Pages\PortalBerandaPage;
 use App\Filament\Portal\Pages\PortalTagihanPage;
 use App\Filament\Portal\Pages\PortalRiwayatPembayaranPage;
+use App\Filament\Portal\Pages\PortalStatusPembayaranPage;
 use App\Filament\Portal\Pages\PortalProfilPage;
 use App\Http\Middleware\CustomAuthentication;
 use App\Services\BrandingService;
@@ -50,6 +51,7 @@ class PortalPanelProvider extends PanelProvider
                 PortalBerandaPage::class,
                 PortalTagihanPage::class,
                 PortalRiwayatPembayaranPage::class,
+                PortalStatusPembayaranPage::class,
                 PortalProfilPage::class,
             ])
             ->navigation(function (NavigationBuilder $builder): NavigationBuilder {

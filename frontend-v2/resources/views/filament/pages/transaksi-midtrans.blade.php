@@ -1,3 +1,3 @@
 <x-filament-panels::page>
-    <livewire:tagihan-siswa />
+    <livewire:transaksi-midtrans />
 </x-filament-panels::page>

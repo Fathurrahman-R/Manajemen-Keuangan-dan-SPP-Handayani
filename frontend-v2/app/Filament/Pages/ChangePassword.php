@@ -114,7 +114,7 @@ class ChangePassword extends Page implements HasForms
         $roles = session()->get('data.roles', []);
 
         if (in_array('siswa', $roles)) {
-            $this->redirect(filament()->getUrl() . '/tagihan-siswa');
+            $this->redirect('/' . config('handayani.portal.path', 'portal'));
         } else {
             $this->redirect(filament()->getUrl() . '/data-master-siswa');
         }

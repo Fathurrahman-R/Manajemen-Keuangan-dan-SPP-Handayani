@@ -28,8 +28,14 @@ class Login extends PagesLogin
 
         if (!is_null($token)) {
             $roles = session()->get('data.roles', []);
-            $target = in_array('siswa', $roles) ? '/tagihan-siswa' : '/data-master-siswa';
-            $this->redirect(filament()->getUrl() . $target);
+
+            if (in_array('siswa', $roles)) {
+                $this->redirect('/' . config('handayani.portal.path', 'portal'));
+
+                return;
+            }
+
+            $this->redirect(filament()->getUrl() . '/data-master-siswa');
 
             return;
         }

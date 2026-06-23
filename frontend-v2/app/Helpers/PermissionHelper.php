@@ -24,6 +24,7 @@ class PermissionHelper
             'create-pengeluaran-request',
             'approve-pengeluaran',
             'disburse-pengeluaran',
+            'view-midtrans-transactions',
         ],
         'laporan' => [
             'view-dashboard',

@@ -103,4 +103,11 @@ class Permissions
         'update' => Permission::UPDATE_BRANCH,
         'delete' => Permission::DELETE_BRANCH,
     ];
+
+    public const MIDTRANS_PERMISSIONS = [
+        'pay-online' => Permission::PAY_TAGIHAN_ONLINE,
+        'view-transactions' => Permission::VIEW_MIDTRANS_TRX,
+        'sync-transactions' => Permission::SYNC_MIDTRANS_TRX,
+        'manage-config' => Permission::MANAGE_MIDTRANS_CONFIG,
+    ];
 }

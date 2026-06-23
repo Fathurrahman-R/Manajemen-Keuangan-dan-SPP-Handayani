@@ -83,6 +83,24 @@ class RekapBulanan extends Component implements HasActions, HasSchemas, HasTable
                 TextColumn::make('total_keluar')->label('Total Keluar')->sortable()->money(currency: 'Rp.', decimalPlaces: 0,),
                 TextColumn::make('saldo')->label('Saldo')->sortable()->money(currency: 'Rp.', decimalPlaces: 0,),
             ])
+            ->recordActions([
+                Action::make('detail')
+                    ->label('Detail')
+                    ->icon('heroicon-o-eye')
+                    ->color('gray')
+                    ->size('sm')
+                    ->modalHeading(fn (array $record) => 'Detail Rekap — ' . ($record['tanggal'] ?? '-'))
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Tutup')
+                    ->modalWidth('5xl')
+                    ->modalContent(function (array $record) {
+                        [$bulan, $tahun] = $this->resolveBulanTahun((string) ($record['tanggal'] ?? ''));
+                        return view('livewire.partials.detail-laporan', [
+                            'bulan' => $bulan,
+                            'tahun' => $tahun,
+                        ]);
+                    }),
+            ])
             ->filters([
                 Filter::make('date')
                     ->schema([
@@ -103,17 +121,23 @@ class RekapBulanan extends Component implements HasActions, HasSchemas, HasTable
             ->headerActions([
                 Action::make('Export')
                     ->label('Export PDF')
-                    ->action(function () {
-                        $filters = $this->getTableFilterState('date');
-                        $params = [
-                            'tahun' => (int) explode('-', $this->currentMonthYear)[0],
-                        ];
+                    ->color('danger')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->modalHeading('Export PDF Rekap Bulanan')
+                    ->modalSubmitActionLabel('Export')
+                    ->schema([
+                        \Filament\Forms\Components\TextInput::make('tahun')
+                            ->label('Tahun')
+                            ->numeric()
+                            ->default(now()->year)
+                            ->minValue(2000)
+                            ->maxValue(now()->year + 1)
+                            ->required(),
+                    ])
+                    ->action(function (array $data) {
+                        $params = ['tahun' => (int) $data['tahun']];
 
-                        if(filled($filters['tahun'])) {
-                            $params['tahun'] = $filters['tahun'];
-                        }
-
-                        $filename = 'Rekap bulanan -' . $params['tahun'] . '.pdf';
+                        $filename = 'Rekap Bulanan-' . $params['tahun'] . '.pdf';
                         $response = ApiService::client()
                             ->withHeaders(['Accept' => 'application/pdf'])
                             ->get('/laporan/export/rekap', $params);
@@ -121,14 +145,12 @@ class RekapBulanan extends Component implements HasActions, HasSchemas, HasTable
                         Storage::disk('local')->put($filename, $response->body());
                         $path = Storage::disk('local')->path($filename);
 
-                        // Return a response that prompts the file download
                         return response()
                             ->streamDownload(function () use ($path) {
                                 echo file_get_contents($path);
-                                // Clean up the temporary file after streaming
                                 unlink($path);
                             }, $filename, [
-                                'Content-Type' => 'application/pdf', // Set the correct MIME type
+                                'Content-Type' => 'application/pdf',
                             ]);
                     }),
                 Action::make('export_excel')
@@ -162,5 +184,21 @@ class RekapBulanan extends Component implements HasActions, HasSchemas, HasTable
         $this->currentMonthYear = Carbon::now()->format('Y-m-d');
 
         return view('livewire.rekap-bulanan');
+    }
+
+    /**
+     * Map the localised month name shown in the row back to (bulan, tahun).
+     * The backend service emits localised Indonesian month names like "Januari".
+     */
+    private function resolveBulanTahun(string $bulanView): array
+    {
+        $tahun = (int) (explode('-', $this->currentMonthYear)[0] ?? Carbon::now()->year);
+        try {
+            $bulan = (int) Carbon::createFromLocaleFormat('F', 'id', $bulanView)->month;
+        } catch (\Throwable $e) {
+            $bulan = (int) Carbon::now()->month;
+        }
+
+        return [$bulan, $tahun];
     }
 }

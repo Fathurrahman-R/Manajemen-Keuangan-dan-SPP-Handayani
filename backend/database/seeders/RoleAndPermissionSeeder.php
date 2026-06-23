@@ -37,16 +37,20 @@ class RoleAndPermissionSeeder extends Seeder
         );
 
         // Assign admin permissions from PermissionBinding
+        // Exclude manage-midtrans-config from admin — only superadmin should have it (Req 3.4)
         $adminPermissions = collect(PermissionBinding::ADMIN_PERMISSIONS)
             ->flatten()
             ->map(fn($p) => $p->value)
+            ->filter(fn($p) => $p !== Permission::MANAGE_MIDTRANS_CONFIG->value)
+            ->values()
             ->toArray();
         $admin->syncPermissions($adminPermissions);
 
-        // Assign siswa permissions — only view-tagihan-siswa and view-own-billing
+        // Assign siswa permissions — view-tagihan-siswa, view-own-billing, and pay-tagihan-online
         $siswa->syncPermissions([
             Permission::VIEW_TAGIHAN_SISWA->value,
             Permission::VIEW_OWN_BILLING->value,
+            Permission::PAY_TAGIHAN_ONLINE->value,
         ]);
 
         // Clear cache after seeding

@@ -28,13 +28,10 @@ class RekapBulananPemasukanSheet implements FromQuery, WithHeadings, WithMapping
     {
         return [
             'Tanggal',
-            'Kode Pembayaran',
-            'NIS',
-            'Nama Siswa',
-            'Jenis Tagihan',
-            'Metode',
+            'NIS/NISN',
+            'Nama',
+            'Nama Tagihan',
             'Jumlah',
-            'Pembayar',
         ];
     }
 
@@ -45,13 +42,10 @@ class RekapBulananPemasukanSheet implements FromQuery, WithHeadings, WithMapping
     {
         return [
             $pembayaran->tanggal,
-            $pembayaran->kode_pembayaran,
             $pembayaran->tagihan?->nis,
             $pembayaran->tagihan?->siswa?->nama,
             $pembayaran->tagihan?->jenis_tagihan?->nama,
-            $pembayaran->metode,
             $pembayaran->jumlah,
-            $pembayaran->pembayar,
         ];
     }
 }

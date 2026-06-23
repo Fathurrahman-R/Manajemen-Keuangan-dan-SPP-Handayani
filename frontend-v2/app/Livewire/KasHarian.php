@@ -93,6 +93,22 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
                 TextColumn::make('total_keluar')->label('Total Keluar')->sortable()->money(currency: 'Rp.', decimalPlaces: 0,),
                 TextColumn::make('saldo')->label('Saldo')->sortable()->money(currency: 'Rp.', decimalPlaces: 0,),
             ])
+            ->recordActions([
+                Action::make('detail')
+                    ->label('Detail')
+                    ->icon('heroicon-o-eye')
+                    ->color('gray')
+                    ->size('sm')
+                    ->modalHeading(fn (array $record) => 'Detail Kas — ' . ($record['tanggal'] ?? '-'))
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Tutup')
+                    ->modalWidth('5xl')
+                    ->modalContent(function (array $record) {
+                        return view('livewire.partials.detail-laporan', [
+                            'tanggal' => $this->resolveIsoDate((string) ($record['tanggal'] ?? '')),
+                        ]);
+                    }),
+            ])
             ->filters([
                 Filter::make('date')
                     ->schema([
@@ -119,22 +135,33 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
             ->headerActions([
                 Action::make('Export')
                     ->label('Export PDF')
-                    ->action(function () {
-                        $filters = $this->getTableFilterState('date');
+                    ->color('danger')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->modalHeading('Export PDF Kas Harian')
+                    ->modalSubmitActionLabel('Export')
+                    ->schema([
+                        \Filament\Forms\Components\Select::make('bulan')
+                            ->label('Bulan')
+                            ->options(collect(range(1, 12))
+                                ->mapWithKeys(fn ($m) => [$m => \Carbon\Carbon::create(null, $m)->translatedFormat('F')])
+                                ->toArray())
+                            ->default(now()->month)
+                            ->required(),
+                        \Filament\Forms\Components\TextInput::make('tahun')
+                            ->label('Tahun')
+                            ->numeric()
+                            ->default(now()->year)
+                            ->minValue(2000)
+                            ->maxValue(now()->year + 1)
+                            ->required(),
+                    ])
+                    ->action(function (array $data) {
                         $params = [
-                            'bulan' => (int) explode('-', $this->currentMonthYear)[1],
-                            'tahun' => (int) explode('-', $this->currentMonthYear)[0],
+                            'bulan' => (int) $data['bulan'],
+                            'tahun' => (int) $data['tahun'],
                         ];
 
-                        if(filled($filters['bulan'])) {
-                            $params['bulan'] = $filters['bulan'];
-                        }
-
-                        if(filled($filters['tahun'])) {
-                            $params['tahun'] = $filters['tahun'];
-                        }
-
-                        $filename = 'Kas harian-' . $params['bulan'] . '.pdf';
+                        $filename = 'Kas harian-' . str_pad((string) $params['bulan'], 2, '0', STR_PAD_LEFT) . '-' . $params['tahun'] . '.pdf';
                         $response = ApiService::client()
                             ->withHeaders(['Accept' => 'application/pdf'])
                             ->get('/laporan/export/kas', $params);
@@ -142,15 +169,13 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
                         Storage::disk('local')->put($filename, $response->body());
                         $path = Storage::disk('local')->path($filename);
 
-                        // Return a response that prompts the file download
                         return response()
                             ->streamDownload(function () use ($path) {
-                            echo file_get_contents($path);
-                            // Clean up the temporary file after streaming
-                            unlink($path);
-                        }, $filename, [
-                            'Content-Type' => 'application/pdf', // Set the correct MIME type
-                        ]);
+                                echo file_get_contents($path);
+                                unlink($path);
+                            }, $filename, [
+                                'Content-Type' => 'application/pdf',
+                            ]);
                     }),
                 Action::make('export_excel')
                     ->label('Export Excel/CSV')
@@ -188,5 +213,19 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
         $this->currentMonthYear = Carbon::now()->format('Y-m-d');
 
         return view('livewire.kas-harian');
+    }
+
+    /**
+     * Convert the localised "DD MMMM YYYY" date used in table rows back to
+     * an ISO `Y-m-d` value so the backend detail endpoint can match it.
+     */
+    private function resolveIsoDate(string $tanggalView): string
+    {
+        try {
+            return Carbon::createFromLocaleFormat('d F Y', 'id', $tanggalView)->format('Y-m-d');
+        } catch (\Throwable $e) {
+            // Fallback for any other format.
+            return Carbon::parse($tanggalView)->format('Y-m-d');
+        }
     }
 }

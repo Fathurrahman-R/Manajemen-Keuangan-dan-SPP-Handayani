@@ -20,7 +20,11 @@ class KasHarianCsvExport implements FromCollection, WithHeadings
         return [
             'Tanggal',
             'Tipe',
-            'Uraian',
+            'NIS/NISN',
+            'Nama',
+            'Nama Tagihan / Pengeluaran',
+            'Pengaju',
+            'Penyetuju',
             'Jumlah',
         ];
     }
@@ -32,22 +36,31 @@ class KasHarianCsvExport implements FromCollection, WithHeadings
         // Add pemasukan records
         $pemasukan = $this->pemasukanQuery->with(['tagihan.siswa', 'tagihan.jenis_tagihan'])->get();
         foreach ($pemasukan as $item) {
-            $uraian = ($item->tagihan?->siswa?->nama ?? '-') . ' - ' . ($item->tagihan?->jenis_tagihan?->nama ?? '-');
             $rows->push([
                 'tanggal' => $item->tanggal,
                 'tipe' => 'Pemasukan',
-                'uraian' => $uraian,
+                'nis' => $item->tagihan?->nis,
+                'nama' => $item->tagihan?->siswa?->nama,
+                'detail' => $item->tagihan?->jenis_tagihan?->nama,
+                'pengaju' => null,
+                'penyetuju' => null,
                 'jumlah' => $item->jumlah,
             ]);
         }
 
         // Add pengeluaran records
-        $pengeluaran = $this->pengeluaranQuery->get();
+        $pengeluaran = $this->pengeluaranQuery
+            ->with(['pengeluaranRequest.requester', 'pengeluaranRequest.approvalLogs.user'])
+            ->get();
         foreach ($pengeluaran as $item) {
             $rows->push([
                 'tanggal' => $item->tanggal,
                 'tipe' => 'Pengeluaran',
-                'uraian' => $item->uraian,
+                'nis' => null,
+                'nama' => null,
+                'detail' => $item->uraian,
+                'pengaju' => $item->pengaju_name,
+                'penyetuju' => $item->penyetuju_name,
                 'jumlah' => $item->jumlah,
             ]);
         }

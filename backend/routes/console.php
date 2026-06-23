@@ -9,3 +9,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('notifications:send-reminders')->dailyAt('08:00');
+
+Schedule::command('midtrans:prune-logs')->daily();

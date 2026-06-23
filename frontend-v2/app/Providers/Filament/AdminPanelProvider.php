@@ -19,10 +19,10 @@ use App\Filament\Pages\PengeluaranRequestPage;
 use App\Filament\Pages\RoleManagement;
 use App\Filament\Pages\Settings;
 use App\Filament\Pages\SiswaDashboardPage;
-use App\Filament\Pages\TagihanSiswaPage;
 use App\Filament\Pages\TahunAjaranManagement as TahunAjaranPage;
 use App\Filament\Pages\UserManagement;
 use App\Filament\Pages\TransaksiJenisTagihan;
+use App\Filament\Pages\TransaksiMidtransPage;
 use App\Filament\Pages\TransaksiPembayaran;
 use App\Filament\Pages\TransaksiTagihan;
 use App\Helpers\PermissionHelper;
@@ -192,11 +192,22 @@ class AdminPanelProvider extends PanelProvider
         }
 
         if (in_array('siswa', session()->get('data.roles', []))) {
+            // Siswa users primarily live in the dedicated Portal panel
+            // (`/portal`), so the Admin panel sidebar links into that panel
+            // instead of duplicating the pages here.
+            $portalPath = '/' . config('handayani.portal.path', 'portal');
+
             $items[] = NavigationItem::make()
                 ->label('Tagihan Saya')
                 ->icon('heroicon-o-credit-card')
-                ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.tagihan-siswa-page'))
-                ->url(fn(): string => TagihanSiswaPage::getUrl());
+                ->isActiveWhen(fn(): bool => str_contains(request()->path(), 'tagihan'))
+                ->url(fn() => $portalPath . '/tagihan');
+
+            $items[] = NavigationItem::make()
+                ->label('Riwayat Pembayaran')
+                ->icon('heroicon-o-clock')
+                ->isActiveWhen(fn(): bool => str_contains(request()->path(), 'riwayat-pembayaran'))
+                ->url(fn() => $portalPath . '/riwayat-pembayaran');
         }
 
         return $items;
@@ -301,6 +312,15 @@ class AdminPanelProvider extends PanelProvider
                 || PermissionHelper::has('approve-pengeluaran')
                 || PermissionHelper::has('disburse-pengeluaran'))
             ->url(fn(): string => PengeluaranRequestPage::getUrl());
+
+        // Transaksi Midtrans — only visible when feature is enabled
+        if (config('handayani.features.midtrans_enabled') && PermissionHelper::has('view-midtrans-transactions')) {
+            $items[] = NavigationItem::make()
+                ->label('Transaksi Midtrans')
+                ->icon('heroicon-o-credit-card')
+                ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.transaksi-midtrans'))
+                ->url(fn(): string => TransaksiMidtransPage::getUrl());
+        }
 
         return $items;
     }

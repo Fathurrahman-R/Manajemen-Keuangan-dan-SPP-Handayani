@@ -25,6 +25,11 @@ class TagihanItemResource extends JsonResource
             ],
             'tmp' => $this->tmp,
             'status' => $this->status,
+            'midtrans_pending' => \App\Models\MidtransTransaction::query()
+                ->where('kode_tagihan', $this->kode_tagihan)
+                ->where('status', 'pending')
+                ->where('expired_at', '>', now())
+                ->exists(),
         ];
     }
 }

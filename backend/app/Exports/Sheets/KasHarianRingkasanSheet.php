@@ -4,10 +4,12 @@ namespace App\Exports\Sheets;
 
 use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Events\AfterSheet;
 
-class KasHarianRingkasanSheet implements FromCollection, WithHeadings, WithTitle
+class KasHarianRingkasanSheet implements FromCollection, WithHeadings, WithTitle, WithEvents
 {
     public function __construct(
         private Builder $pemasukanQuery,
@@ -24,28 +26,99 @@ class KasHarianRingkasanSheet implements FromCollection, WithHeadings, WithTitle
     public function headings(): array
     {
         return [
+            'Tanggal',
+            'Total Pemasukan',
+            'Total Pengeluaran',
+            'Saldo',
             'Keterangan',
-            'Jumlah',
         ];
     }
 
     public function collection()
     {
-        $totalPemasukan = (clone $this->pemasukanQuery)->sum('jumlah');
-        $totalPengeluaran = (clone $this->pengeluaranQuery)->sum('jumlah');
-        $saldo = $totalPemasukan - $totalPengeluaran;
+        // Pull all underlying transactions, eager-load enough to render
+        // human-readable line items in the "Keterangan" column.
+        $pemasukan = (clone $this->pemasukanQuery)
+            ->with(['tagihan.siswa:id,nis,nama', 'tagihan.jenis_tagihan:id,nama'])
+            ->get();
+        $pengeluaran = (clone $this->pengeluaranQuery)
+            ->with(['pengeluaranRequest.requester:id,name', 'pengeluaranRequest.approvalLogs.user:id,name'])
+            ->get();
 
-        $namaBulan = [
-            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
-        ];
+        // Group both streams by date (YYYY-MM-DD) so each row in the sheet is
+        // a single day with a running breakdown of what happened that day.
+        $byTanggal = collect();
 
-        return collect([
-            ['Periode', $namaBulan[$this->bulan] . ' ' . $this->tahun],
-            ['Total Pemasukan', $totalPemasukan],
-            ['Total Pengeluaran', $totalPengeluaran],
-            ['Saldo', $saldo],
+        foreach ($pemasukan as $p) {
+            $tgl = (string) $p->tanggal;
+            $byTanggal[$tgl] = $byTanggal[$tgl] ?? ['masuk' => 0, 'keluar' => 0, 'lines' => []];
+            $byTanggal[$tgl]['masuk'] += (int) $p->jumlah;
+            $nama = $p->tagihan?->siswa?->nama ?? '-';
+            $jenis = $p->tagihan?->jenis_tagihan?->nama ?? 'Pembayaran';
+            $byTanggal[$tgl]['lines'][] = sprintf(
+                'Pemasukan — %s (%s) Rp %s',
+                $nama,
+                $jenis,
+                number_format((int) $p->jumlah, 0, ',', '.'),
+            );
+        }
+
+        foreach ($pengeluaran as $e) {
+            $tgl = (string) $e->tanggal;
+            $byTanggal[$tgl] = $byTanggal[$tgl] ?? ['masuk' => 0, 'keluar' => 0, 'lines' => []];
+            $byTanggal[$tgl]['keluar'] += (int) $e->jumlah;
+            $byTanggal[$tgl]['lines'][] = sprintf(
+                'Pengeluaran — %s Rp %s',
+                $e->uraian ?? '-',
+                number_format((int) $e->jumlah, 0, ',', '.'),
+            );
+        }
+
+        $rows = collect();
+        $totalMasuk = 0;
+        $totalKeluar = 0;
+
+        foreach ($byTanggal->sortKeys() as $tgl => $data) {
+            $totalMasuk += $data['masuk'];
+            $totalKeluar += $data['keluar'];
+
+            $rows->push([
+                $tgl,
+                $data['masuk'],
+                $data['keluar'],
+                $data['masuk'] - $data['keluar'],
+                implode("\n", $data['lines']),
+            ]);
+        }
+
+        // Footer total row.
+        $rows->push([
+            'TOTAL',
+            $totalMasuk,
+            $totalKeluar,
+            $totalMasuk - $totalKeluar,
+            '',
         ]);
+
+        return $rows;
+    }
+
+    /**
+     * Enable wrap-text + top alignment on the "Keterangan" column so the
+     * per-day breakdown stays readable inside Excel.
+     */
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event): void {
+                $sheet = $event->sheet->getDelegate();
+                $highest = $sheet->getHighestRow();
+                $sheet->getStyle('E1:E' . $highest)
+                    ->getAlignment()
+                    ->setWrapText(true)
+                    ->setVertical('top');
+                $sheet->getColumnDimension('E')->setWidth(60);
+            },
+        ];
     }
 }

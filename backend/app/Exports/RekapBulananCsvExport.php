@@ -20,7 +20,11 @@ class RekapBulananCsvExport implements FromCollection, WithHeadings
         return [
             'Bulan',
             'Tipe',
-            'Uraian',
+            'NIS/NISN',
+            'Nama',
+            'Nama Tagihan / Pengeluaran',
+            'Pengaju',
+            'Penyetuju',
             'Jumlah',
         ];
     }
@@ -39,23 +43,32 @@ class RekapBulananCsvExport implements FromCollection, WithHeadings
         $pemasukan = $this->pemasukanQuery->with(['tagihan.siswa', 'tagihan.jenis_tagihan'])->get();
         foreach ($pemasukan as $item) {
             $bulan = (int) date('n', strtotime($item->tanggal));
-            $uraian = ($item->tagihan?->siswa?->nama ?? '-') . ' - ' . ($item->tagihan?->jenis_tagihan?->nama ?? '-');
             $rows->push([
                 'bulan' => $namaBulan[$bulan] ?? $bulan,
                 'tipe' => 'Pemasukan',
-                'uraian' => $uraian,
+                'nis' => $item->tagihan?->nis,
+                'nama' => $item->tagihan?->siswa?->nama,
+                'detail' => $item->tagihan?->jenis_tagihan?->nama,
+                'pengaju' => null,
+                'penyetuju' => null,
                 'jumlah' => $item->jumlah,
             ]);
         }
 
         // Add pengeluaran records
-        $pengeluaran = $this->pengeluaranQuery->get();
+        $pengeluaran = $this->pengeluaranQuery
+            ->with(['pengeluaranRequest.requester', 'pengeluaranRequest.approvalLogs.user'])
+            ->get();
         foreach ($pengeluaran as $item) {
             $bulan = (int) date('n', strtotime($item->tanggal));
             $rows->push([
                 'bulan' => $namaBulan[$bulan] ?? $bulan,
                 'tipe' => 'Pengeluaran',
-                'uraian' => $item->uraian,
+                'nis' => null,
+                'nama' => null,
+                'detail' => $item->uraian,
+                'pengaju' => $item->pengaju_name,
+                'penyetuju' => $item->penyetuju_name,
                 'jumlah' => $item->jumlah,
             ]);
         }
