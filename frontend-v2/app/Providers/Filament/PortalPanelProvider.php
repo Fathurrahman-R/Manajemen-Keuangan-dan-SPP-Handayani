@@ -19,11 +19,13 @@ use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 use function Filament\Support\original_request;
@@ -105,6 +107,10 @@ class PortalPanelProvider extends PanelProvider
             ->authMiddleware([
                 CustomAuthentication::class,
             ])
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn () => Blade::render('@include("components.sidebar-scroll-preserve")')
+            )
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

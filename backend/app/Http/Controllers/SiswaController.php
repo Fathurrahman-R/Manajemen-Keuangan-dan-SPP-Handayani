@@ -35,6 +35,8 @@ class SiswaController extends Controller
     #[HeaderParameter('Authorization')]
     #[QueryParameter('search')]
     #[QueryParameter('kelas_id')]
+    #[QueryParameter('jenis_kelamin')]
+    #[QueryParameter('agama')]
     #[QueryParameter('sort', description: 'Column to sort by (nama, nis, kelas_id, created_at)', required: false, example: 'nama')]
     #[QueryParameter('direction', description: 'Sort direction (asc or desc)', required: false, example: 'asc')]
     public function index(string $jenjang)
@@ -55,6 +57,21 @@ class SiswaController extends Controller
         $kelasId = request('kelas_id');
         if (!is_null($kelasId) && $kelasId !== '') {
             $query->where('kelas_id', (int) $kelasId);
+        }
+
+        $jenisKelamin = request('jenis_kelamin');
+        if (!is_null($jenisKelamin) && $jenisKelamin !== '') {
+            $query->where('jenis_kelamin', $jenisKelamin);
+        }
+
+        $agama = request('agama');
+        if (!is_null($agama) && $agama !== '') {
+            $query->where('agama', $agama);
+        }
+
+        $status = request('status');
+        if (!is_null($status) && $status !== '') {
+            $query->where('status', $status);
         }
 
         $this->applySorting($query, ['nama', 'nis', 'kelas_id', 'created_at'], 'nama', 'asc');

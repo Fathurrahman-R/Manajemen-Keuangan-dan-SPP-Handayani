@@ -124,9 +124,34 @@ class RoleController extends Controller
      *   }
      * }
      */
+    /**
+     * List all permissions grouped by domain area, plus a high-level
+     * audience separation between admin/karyawan and siswa permissions.
+     *
+     * Response shape:
+     * {
+     *   "data": {
+     *     "audiences": {
+     *       "admin": {
+     *         "label": "Admin / Karyawan",
+     *         "groups": {
+     *           "Users": [ { "name": "view-user", "label": "View User" }, ... ],
+     *           ...
+     *         }
+     *       },
+     *       "siswa": {
+     *         "label": "Siswa / Wali",
+     *         "groups": {
+     *           "Akun Siswa": [ ... ]
+     *         }
+     *       }
+     *     }
+     *   }
+     * }
+     */
     public function permissions(): JsonResponse
     {
-        $groups = [
+        $adminGroups = [
             'Users'              => \App\Constant\Permissions::USERS_PERMISSIONS,
             'Siswa'              => \App\Constant\Permissions::SISWA_PERMISSIONS,
             'Kelas'              => \App\Constant\Permissions::KELAS_PERMISSIONS,
@@ -141,12 +166,17 @@ class RoleController extends Controller
             'Kenaikan Kelas'     => \App\Constant\Permissions::KENAIKAN_KELAS_PERMISSIONS,
             'Akun Siswa'         => \App\Constant\Permissions::AKUN_SISWA_PERMISSIONS,
             'Import Export'      => \App\Constant\Permissions::IMPORT_EXPORT_PERMISSIONS,
-            'Dashboard'          => \App\Constant\Permissions::DASHBOARD_PERMISSIONS,
+            'Dashboard'          => [
+                'view' => \App\Enum\Permission::VIEW_DASHBOARD,
+            ],
             'Branch'             => \App\Constant\Permissions::BRANCH_PERMISSIONS,
-            'Midtrans'           => \App\Constant\Permissions::MIDTRANS_PERMISSIONS,
+            'Midtrans (Admin)'   => [
+                'view-transactions' => \App\Enum\Permission::VIEW_MIDTRANS_TRX,
+                'sync-transactions' => \App\Enum\Permission::SYNC_MIDTRANS_TRX,
+                'manage-config'     => \App\Enum\Permission::MANAGE_MIDTRANS_CONFIG,
+            ],
         ];
 
-        // Roles & Permissions group lives only in the enum, not in Permissions constants.
         $rolesGroup = [
             \App\Enum\Permission::VIEW_ROLES,
             \App\Enum\Permission::CREATE_ROLE,
@@ -159,13 +189,11 @@ class RoleController extends Controller
             \App\Enum\Permission::DETACH_PERMISSIONS,
         ];
 
-        $output = [];
-
-        foreach ($groups as $label => $constant) {
-            $output[$label] = $this->flattenPermissionGroup($constant);
+        $admin = [];
+        foreach ($adminGroups as $label => $constant) {
+            $admin[$label] = $this->flattenPermissionGroup($constant);
         }
-
-        $output['Roles & Permissions'] = array_map(
+        $admin['Roles & Permissions'] = array_map(
             fn(\App\Enum\Permission $p) => [
                 'name'  => $p->value,
                 'label' => $this->humanizePermission($p->value),
@@ -173,7 +201,37 @@ class RoleController extends Controller
             $rolesGroup,
         );
 
-        return response()->json(['data' => $output]);
+        $siswa = [
+            'Tagihan & Pembayaran' => array_map(
+                fn(\App\Enum\Permission $p) => [
+                    'name'  => $p->value,
+                    'label' => $this->humanizePermission($p->value),
+                ],
+                [
+                    \App\Enum\Permission::VIEW_OWN_BILLING,
+                    \App\Enum\Permission::VIEW_TAGIHAN_SISWA,
+                    \App\Enum\Permission::PAY_TAGIHAN_ONLINE,
+                ],
+            ),
+        ];
+
+        return response()->json([
+            'data' => [
+                'audiences' => [
+                    'admin' => [
+                        'label'  => 'Admin / Karyawan',
+                        'groups' => $admin,
+                    ],
+                    'siswa' => [
+                        'label'  => 'Siswa / Wali',
+                        'groups' => $siswa,
+                    ],
+                ],
+                // Backward-compatible flat shape (existing FE may still consume this).
+                ...$admin,
+                'Siswa Portal' => $siswa['Tagihan & Pembayaran'],
+            ],
+        ]);
     }
 
     /**

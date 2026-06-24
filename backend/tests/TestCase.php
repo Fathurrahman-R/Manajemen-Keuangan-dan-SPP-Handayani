@@ -134,7 +134,7 @@ abstract class TestCase extends BaseTestCase
             ->for($tagihan, 'tagihan')
             ->create([
                 'jumlah' => 50000,
-                'metode' => 'Tunai',
+                'metode' => 'offline',
                 'pembayar' => $wali->nama
             ]);
         $setting = AppSetting::factory()->create();
@@ -167,7 +167,7 @@ abstract class TestCase extends BaseTestCase
             ->for($tagihan, 'tagihan')
             ->create([
                 'jumlah' => $jt->jumlah,
-                'metode' => 'Tunai',
+                'metode' => 'offline',
                 'pembayar' => $wali->nama
             ]);
         $setting = AppSetting::factory()->create();
@@ -223,7 +223,7 @@ abstract class TestCase extends BaseTestCase
             ->create([
                 'tanggal' => '2025-01-01',
                 'jumlah' => $jt->jumlah,
-                'metode' => 'Tunai',
+                'metode' => 'offline',
                 'pembayar' => $wali->nama
             ]);
         // Tambahan pemasukan di Januari
@@ -232,7 +232,7 @@ abstract class TestCase extends BaseTestCase
             ->create([
                 'tanggal' => '2025-01-10',
                 'jumlah' => 50000,
-                'metode' => 'Tunai',
+                'metode' => 'offline',
                 'pembayar' => $wali->nama
             ]);
         // Pemasukan di bulan lain (Februari) — memastikan tidak mempengaruhi saldo Januari
@@ -241,7 +241,7 @@ abstract class TestCase extends BaseTestCase
             ->create([
                 'tanggal' => '2025-02-01',
                 'jumlah' => $jt->jumlah,
-                'metode' => 'Tunai',
+                'metode' => 'offline',
                 'pembayar' => $wali->nama
             ]);
         Pengeluaran::factory()->create([
@@ -274,7 +274,7 @@ abstract class TestCase extends BaseTestCase
         \App\Models\Pembayaran::factory()->for($tagihan,'tagihan')->create([
             'tanggal' => '2024-12-15',
             'jumlah' => 75000,
-            'metode' => 'Tunai'
+            'metode' => 'offline'
         ]);
         \App\Models\Pengeluaran::factory()->create([
             'tanggal' => '2024-12-20',
@@ -284,7 +284,7 @@ abstract class TestCase extends BaseTestCase
         \App\Models\Pembayaran::factory()->for($tagihan,'tagihan')->create([
             'tanggal' => '2025-01-05',
             'jumlah' => 50000,
-            'metode' => 'Tunai'
+            'metode' => 'offline'
         ]);
         \App\Models\Pengeluaran::factory()->create([
             'tanggal' => '2025-01-10',
@@ -319,12 +319,12 @@ abstract class TestCase extends BaseTestCase
         Pembayaran::factory()->for($tagihan, 'tagihan')->create([
             'tanggal' => '2025-01-01',
             'jumlah' => 100000,
-            'metode' => 'Tunai'
+            'metode' => 'offline'
         ]);
         Pembayaran::factory()->for($tagihan, 'tagihan')->create([
             'tanggal' => '2025-02-01',
             'jumlah' => 150000,
-            'metode' => 'Tunai'
+            'metode' => 'offline'
         ]);
 
         // Pengeluaran Jan & Feb
@@ -357,7 +357,7 @@ abstract class TestCase extends BaseTestCase
         \App\Models\Pembayaran::factory()->for($tagihan,'tagihan')->create([
             'tanggal'=>'2024-11-01',
             'jumlah'=>60000,
-            'metode'=>'Tunai'
+            'metode'=>'offline'
         ]);
         \App\Models\Pengeluaran::factory()->create([
             'tanggal'=>'2024-12-01',
@@ -367,12 +367,12 @@ abstract class TestCase extends BaseTestCase
         \App\Models\Pembayaran::factory()->for($tagihan,'tagihan')->create([
             'tanggal'=>'2025-01-10',
             'jumlah'=>50000,
-            'metode'=>'Tunai'
+            'metode'=>'offline'
         ]);
         \App\Models\Pembayaran::factory()->for($tagihan,'tagihan')->create([
             'tanggal'=>'2025-02-05',
             'jumlah'=>40000,
-            'metode'=>'Tunai'
+            'metode'=>'offline'
         ]);
         \App\Models\Pengeluaran::factory()->create([
             'tanggal'=>'2025-02-15',
@@ -760,7 +760,7 @@ abstract class TestCase extends BaseTestCase
         \App\Models\Pembayaran::factory()->create([
             'kode_tagihan' => $tagihan->kode_tagihan,
             'jumlah' => 100000,
-            'metode' => 'Tunai'
+            'metode' => 'offline'
         ]);
         return compact('admin','jt','siswa','tagihan');
     }

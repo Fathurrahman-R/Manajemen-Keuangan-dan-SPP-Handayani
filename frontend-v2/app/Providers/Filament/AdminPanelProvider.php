@@ -56,7 +56,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('')
             ->path('')
-            ->homeUrl('data-master-siswa')
+            ->homeUrl('dashboard-page')
             ->login(Login::class)
             ->passwordReset(ForgotPassword::class)
             ->profile(false)
@@ -117,6 +117,10 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::BODY_END,
                 fn () => Blade::render('@include("components.pagination-loading")')
             )
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn () => Blade::render('@include("components.sidebar-scroll-preserve")')
+            )
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -144,6 +148,19 @@ class AdminPanelProvider extends PanelProvider
             $groups[] = NavigationGroup::make('siswa_portal')
                 ->label('')
                 ->items($siswaItems);
+        }
+
+        // Dashboard sebagai item teratas (flat) — admin landing setelah login.
+        if (PermissionHelper::has('view-dashboard')) {
+            $groups[] = NavigationGroup::make('dashboard')
+                ->label('')
+                ->items([
+                    NavigationItem::make()
+                        ->label('Dashboard')
+                        ->icon('heroicon-o-home')
+                        ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.dashboard-page'))
+                        ->url(fn(): string => DashboardPage::getUrl()),
+                ]);
         }
 
         if (PermissionHelper::hasAnyInGroup('akademik')) {
@@ -324,17 +341,12 @@ class AdminPanelProvider extends PanelProvider
     }
 
     /**
-     * Laporan group items: Dashboard, Kas Harian, Rekap Bulanan.
+     * Laporan group items: Kas Harian, Rekap Bulanan.
+     * (Dashboard moved out as a flat top-level item.)
      */
     protected function buildLaporanItems(): array
     {
         return [
-            NavigationItem::make()
-                ->label('Dashboard')
-                ->icon('heroicon-o-chart-pie')
-                ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.dashboard-page'))
-                ->visible(fn(): bool => PermissionHelper::has('view-dashboard'))
-                ->url(fn(): string => DashboardPage::getUrl()),
             NavigationItem::make()
                 ->label('Kas Harian')
                 ->icon('heroicon-o-document-currency-dollar')

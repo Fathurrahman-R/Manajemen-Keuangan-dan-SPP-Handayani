@@ -23,7 +23,7 @@ class PembayaranFactory extends Factory
             'kode_pembayaran'=>GenerateKodePembayaran::generate(),
             'kode_tagihan'=>Tagihan::factory(),
             'tanggal'=>$this->faker->date(),
-            'metode'=>$this->faker->randomElement(['Tunai','Non-Tunai']),
+            'metode'=>'offline',
             'jumlah'=>$this->faker->randomFloat(12,50000,100000),
             'pembayar'=>$this->faker->name()
         ];

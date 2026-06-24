@@ -75,7 +75,7 @@ class PembayaranTest extends TestCase
         $this->post('api/pembayaran/bayar/'.$tagihan->kode_tagihan,
             [
                 'jumlah'=>100000,
-                'metode'=>'Tunai',
+                'metode'=>'offline',
                 'pembayar'=>$wali->nama
             ],
             [
@@ -112,7 +112,7 @@ class PembayaranTest extends TestCase
         ]);
         $response = $this->post('api/pembayaran/lunas/'.$tagihan->kode_tagihan,
             [
-                'metode'=>'Tunai',
+                'metode'=>'offline',
                 'pembayar'=>$wali->nama
             ],
             [
@@ -207,7 +207,7 @@ class PembayaranTest extends TestCase
         $data = $this->createTagihan();
         $this->post('api/pembayaran/bayar/'.$data['tagihan']->kode_tagihan,[
             'jumlah'=>1,
-            'metode'=>'Tunai',
+            'metode'=>'offline',
             'pembayar'=>'TEST'
         ],['Authorization'=>$data['user']->token])
             ->assertStatus(200)
@@ -218,7 +218,7 @@ class PembayaranTest extends TestCase
         $data = $this->createTagihan();
         $this->post('api/pembayaran/bayar/'.$data['tagihan']->kode_tagihan,[
             'jumlah'=>$data['tagihan']->jenis_tagihan->jumlah + 1,
-            'metode'=>'Tunai',
+            'metode'=>'offline',
             'pembayar'=>'TEST'
         ],['Authorization'=>$data['user']->token])
             ->assertStatus(200);
@@ -228,16 +228,16 @@ class PembayaranTest extends TestCase
         $data = $this->createTagihan();
         $this->post('api/pembayaran/bayar/'.$data['tagihan']->kode_tagihan,[
             'jumlah'=>10,
-            'metode'=>'TRANSFER',
+            'metode'=>'INVALID_METODE',
             'pembayar'=>'TEST'
         ],['Authorization'=>$data['user']->token])
-            ->assertStatus(200);
+            ->assertStatus(400);
     }
     public function testCreatePembayaranCicilJumlahRequired()
     {
         $data = $this->createTagihan();
         $this->post('api/pembayaran/bayar/'.$data['tagihan']->kode_tagihan,[
-            'metode'=>'Tunai',
+            'metode'=>'offline',
             'pembayar'=>'TEST'
         ],['Authorization'=>$data['user']->token])
             ->assertStatus(200);
@@ -246,7 +246,7 @@ class PembayaranTest extends TestCase
     {
         $data = $this->createTagihan();
         $this->post('api/pembayaran/lunas/'.$data['tagihan']->kode_tagihan,[
-            'metode'=>'Tunai',
+            'metode'=>'offline',
             'pembayar'=>'TEST'
         ],['Authorization'=>$data['user']->token])
             ->assertStatus(200)
@@ -265,7 +265,7 @@ class PembayaranTest extends TestCase
     {
         $data = $this->createTagihan();
         $this->post('api/pembayaran/lunas/'.$data['tagihan']->kode_tagihan,[
-            'metode'=>'Tunai'
+            'metode'=>'offline'
         ],['Authorization'=>$data['user']->token])
             ->assertStatus(200);
     }
@@ -300,7 +300,7 @@ class PembayaranTest extends TestCase
         $data = $this->createTagihan();
         $this->post('api/pembayaran/bayar/'.$data['tagihan']->kode_tagihan,[
             'jumlah'=>10,
-            'metode'=>'Tunai',
+            'metode'=>'offline',
             'pembayar'=>'TEST'
         ])
             ->assertStatus(200);

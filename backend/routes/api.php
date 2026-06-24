@@ -60,6 +60,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // Admin dashboard endpoints — require view-dashboard permission
         Route::middleware('permission:view-dashboard')->group(function () {
             Route::get('/summary', [DashboardController::class, 'summary']);
+            Route::get('/all-time-summary', [DashboardController::class, 'allTimeSummary']);
+            Route::get('/kas-summary', [DashboardController::class, 'kasSummary']);
             Route::get('/charts/pembayaran-bulanan', [DashboardController::class, 'chartPembayaranBulanan']);
             Route::get('/charts/tunggakan-jenjang', [DashboardController::class, 'chartTunggakanJenjang']);
             Route::get('/charts/kas-bulanan', [DashboardController::class, 'chartKasBulanan']);
@@ -116,6 +118,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Kelas routes
         Route::prefix('/kelas')->group(function () {
+            Route::get('/', [KelasController::class, 'all'])->middleware('permission:view-kelas');
             Route::get('/{jenjang}', [KelasController::class, 'index'])->middleware('permission:view-kelas');
             Route::post('/{jenjang}', [KelasController::class, 'create'])->middleware('permission:create-kelas');
             Route::get('/{jenjang}/{id}', [KelasController::class, 'get'])->middleware('permission:read-kelas');
@@ -149,6 +152,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Tagihan routes (admin)
         Route::get('/tagihan/grouped', [TagihanController::class, 'grouped'])->middleware('permission:view-tagihan');
+        Route::get('/tagihan/export-pdf', [TagihanController::class, 'exportPdf'])->middleware('permission:view-tagihan');
         Route::get('/tagihan', [TagihanController::class, 'index'])->middleware('permission:view-tagihan');
         Route::prefix('/tagihan')->group(function () {
             Route::post('/', [TagihanController::class, 'create'])->middleware('permission:create-tagihan');

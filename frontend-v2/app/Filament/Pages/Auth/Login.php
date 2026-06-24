@@ -35,7 +35,7 @@ class Login extends PagesLogin
                 return;
             }
 
-            $this->redirect(filament()->getUrl() . '/data-master-siswa');
+            $this->redirect(filament()->getUrl() . '/dashboard-page');
 
             return;
         }

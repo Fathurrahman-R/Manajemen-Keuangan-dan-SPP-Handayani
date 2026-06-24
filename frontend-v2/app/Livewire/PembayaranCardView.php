@@ -16,19 +16,51 @@ class PembayaranCardView extends Component implements HasActions, HasSchemas
 {
     use InteractsWithActions, InteractsWithSchemas;
     use \App\Livewire\Concerns\HandlesApiErrors;
+    use \App\Livewire\Concerns\HasPeriodFilter;
 
     public string $search = '';
     public string $filterJenjang = '';
+    public string $filterKelas = '';
+    public string $filterMetode = '';
+    public string $sort = 'latest';
     public int $perPage = 5;
     public int $page = 1;
 
     public bool $loading = true;
     public array $siswaData = [];
     public array $meta = [];
+    public array $kelasOptions = [];
 
     public function mount(): void
     {
+        $this->mountHasPeriodFilter();
+        $this->loadKelasOptions();
         $this->loadData();
+    }
+
+    public function loadKelasOptions(): void
+    {
+        try {
+            // Kalau jenjang dipilih, fetch kelas hanya untuk jenjang itu.
+            $endpoint = filled($this->filterJenjang) ? '/kelas/' . $this->filterJenjang : '/kelas';
+            $response = ApiService::client()->get($endpoint);
+            if ($response->ok()) {
+                $this->kelasOptions = collect($response->json('data') ?? [])
+                    ->mapWithKeys(function ($k) {
+                        $label = $k['nama'];
+                        // Kalau endpoint global (lintas jenjang), tampilkan jenjang dalam label.
+                        if (filled($this->filterJenjang) === false && !empty($k['jenjang'])) {
+                            $label .= ' (' . $k['jenjang'] . ')';
+                        }
+                        return [$k['id'] => $label];
+                    })
+                    ->toArray();
+            } else {
+                $this->kelasOptions = [];
+            }
+        } catch (\Throwable $e) {
+            $this->kelasOptions = [];
+        }
     }
 
     public function loadData(): void
@@ -46,6 +78,22 @@ class PembayaranCardView extends Component implements HasActions, HasSchemas
 
         if (filled($this->filterJenjang)) {
             $params['jenjang'] = $this->filterJenjang;
+        }
+
+        if (filled($this->filterKelas)) {
+            $params['kelas_id'] = $this->filterKelas;
+        }
+
+        if (filled($this->filterMetode)) {
+            $params['metode'] = $this->filterMetode;
+        }
+
+        if (filled($this->sort)) {
+            $params['sort'] = $this->sort;
+        }
+
+        if ($this->selectedTahunAjaranId) {
+            $params['tahun_ajaran_id'] = $this->selectedTahunAjaranId;
         }
 
         try {
@@ -82,6 +130,26 @@ class PembayaranCardView extends Component implements HasActions, HasSchemas
     }
 
     public function updatedFilterJenjang(): void
+    {
+        $this->page = 1;
+        $this->filterKelas = '';
+        $this->loadKelasOptions();
+        $this->loadData();
+    }
+
+    public function updatedFilterKelas(): void
+    {
+        $this->page = 1;
+        $this->loadData();
+    }
+
+    public function updatedFilterMetode(): void
+    {
+        $this->page = 1;
+        $this->loadData();
+    }
+
+    public function updatedSort(): void
     {
         $this->page = 1;
         $this->loadData();

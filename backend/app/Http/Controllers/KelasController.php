@@ -12,6 +12,17 @@ use Illuminate\Support\Facades\Auth;
 class KelasController extends Controller
 {
     #[HeaderParameter('Authorization')]
+    public function all()
+    {
+        $kelas = Kelas::where('kelas.branch_id', Auth::user()->branch_id)
+            ->orderBy('jenjang')
+            ->orderBy('level')
+            ->orderBy('nama')
+            ->get();
+        return KelasResource::collection($kelas);
+    }
+
+    #[HeaderParameter('Authorization')]
     public function index(string $jenjang)
     {
         $jenjangUp = strtoupper($jenjang);

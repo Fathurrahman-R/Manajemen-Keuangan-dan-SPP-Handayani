@@ -32,6 +32,37 @@ class DashboardController extends Controller
     }
 
     /**
+     * Get kas summary (pemasukan vs pengeluaran) for a tahun ajaran or all-time.
+     */
+    public function kasSummary(Request $request): JsonResponse
+    {
+        $request->validate([
+            'tahun_ajaran_id' => 'nullable|integer|exists:tahun_ajarans,id',
+            'all_time' => 'nullable|boolean',
+        ]);
+
+        $branchId = $request->user()->branch_id;
+        $allTime = (bool) $request->boolean('all_time');
+        $tahunAjaranId = $allTime ? null : $request->input('tahun_ajaran_id');
+
+        return response()->json([
+            'data' => $this->dashboardService->getKasSummary($branchId, $tahunAjaranId),
+        ]);
+    }
+
+    /**
+     * Get all-time aggregate summary (across every tahun ajaran).
+     */
+    public function allTimeSummary(Request $request): JsonResponse
+    {
+        $branchId = $request->user()->branch_id;
+
+        return response()->json([
+            'data' => $this->dashboardService->getAllTimeSummary($branchId),
+        ]);
+    }
+
+    /**
      * Get pembayaran per bulan chart data.
      */
     public function chartPembayaranBulanan(Request $request): JsonResponse

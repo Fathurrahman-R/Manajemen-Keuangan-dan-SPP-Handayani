@@ -91,6 +91,20 @@ class TagihanController extends Controller
             });
         }
 
+        // Jatuh tempo filter (jenis_tagihan.jatuh_tempo): from / to (YYYY-MM-DD).
+        $jatuhTempoFrom = request('jatuh_tempo_from');
+        $jatuhTempoTo = request('jatuh_tempo_to');
+        if ($jatuhTempoFrom || $jatuhTempoTo) {
+            $query->whereHas('tagihan.jenis_tagihan', function ($q) use ($jatuhTempoFrom, $jatuhTempoTo) {
+                if ($jatuhTempoFrom) {
+                    $q->whereDate('jatuh_tempo', '>=', $jatuhTempoFrom);
+                }
+                if ($jatuhTempoTo) {
+                    $q->whereDate('jatuh_tempo', '<=', $jatuhTempoTo);
+                }
+            });
+        }
+
         // Sort alphabetically by nama
         $query->orderBy('nama', 'asc');
 
@@ -400,6 +414,96 @@ class TagihanController extends Controller
                 'selected_siswa_nama' => $selectedSiswa->nama,
             ]
         ]);
+    }
+
+    /**
+     * Export laporan tagihan ke PDF dengan filter status, jatuh tempo, dan branch info.
+     */
+    public function exportPdf(Request $request)
+    {
+        $request->validate([
+            'tahun_ajaran_id' => 'nullable|integer|exists:tahun_ajarans,id',
+            'jenjang' => 'nullable|string|in:KB,TK,MI',
+            'kelas_id' => 'nullable|integer',
+            'status' => 'nullable|array',
+            'status.*' => 'string|in:Lunas,Belum Lunas,Belum Dibayar',
+            'jatuh_tempo_from' => 'nullable|date',
+            'jatuh_tempo_to' => 'nullable|date',
+            'search' => 'nullable|string',
+        ]);
+
+        $user = $request->user();
+        $tahunAjaranId = $this->resolveTahunAjaranFilter($user);
+
+        $query = Tagihan::query()
+            ->with([
+                'siswa' => fn($q) => $q->select(['id', 'nis', 'nama', 'jenjang', 'kelas_id'])->with('kelas'),
+                'jenis_tagihan' => fn($q) => $q->select(['id', 'nama', 'jatuh_tempo', 'jumlah']),
+            ])
+            ->where('branch_id', $user->branch_id);
+
+        if ($tahunAjaranId) {
+            $query->where('tahun_ajaran_id', $tahunAjaranId);
+        }
+
+        if ($jenjang = $request->input('jenjang')) {
+            $query->whereHas('siswa', fn($q) => $q->where('jenjang', $jenjang));
+        }
+
+        if ($kelasId = $request->input('kelas_id')) {
+            $query->whereHas('siswa', fn($q) => $q->where('kelas_id', (int) $kelasId));
+        }
+
+        if ($search = $request->input('search')) {
+            $query->whereHas('siswa', fn($q) =>
+                $q->where('nama', 'like', "%{$search}%")
+                  ->orWhere('nis', 'like', "%{$search}%")
+            );
+        }
+
+        $statuses = (array) $request->input('status', []);
+        if (count($statuses) > 0) {
+            $query->whereIn('status', $statuses);
+        }
+
+        if ($from = $request->input('jatuh_tempo_from')) {
+            $query->whereHas('jenis_tagihan', fn($q) => $q->whereDate('jatuh_tempo', '>=', $from));
+        }
+        if ($to = $request->input('jatuh_tempo_to')) {
+            $query->whereHas('jenis_tagihan', fn($q) => $q->whereDate('jatuh_tempo', '<=', $to));
+        }
+
+        $tagihans = $query->orderBy('kode_tagihan', 'asc')->get();
+
+        $rows = $tagihans->map(fn(Tagihan $t) => [
+            'kode_tagihan'   => $t->kode_tagihan,
+            'nama'           => $t->siswa->nama ?? '-',
+            'nis'            => $t->siswa->nis ?? '-',
+            'jenjang'        => $t->siswa->jenjang ?? '-',
+            'kelas'          => $t->siswa->kelas->nama ?? '-',
+            'jenis_tagihan'  => $t->jenis_tagihan->nama ?? '-',
+            'jatuh_tempo'    => $t->jenis_tagihan->jatuh_tempo
+                ? \Carbon\Carbon::parse($t->jenis_tagihan->jatuh_tempo)->format('d/m/Y')
+                : '-',
+            'status'         => $t->status,
+            'jumlah'         => $t->jenis_tagihan->jumlah ?? 0,
+            'tmp'            => $t->tmp,
+        ])->toArray();
+
+        $branchName = $user->branch?->nama ?? config('app.name');
+        $periode = $tahunAjaranId
+            ? (TahunAjaran::find($tahunAjaranId)?->nama ?? '-')
+            : 'Semua Periode';
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('Laporan.tagihan-pdf', [
+            'rows'         => $rows,
+            'branchName'   => $branchName,
+            'periode'      => $periode,
+            'jenjang'      => $request->input('jenjang'),
+            'statusFilter' => $statuses,
+        ])->setPaper('A4', 'landscape');
+
+        return $pdf->download('laporan-tagihan-' . now()->format('Ymd-His') . '.pdf');
     }
 
     /**

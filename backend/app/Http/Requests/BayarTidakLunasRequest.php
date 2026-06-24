@@ -32,7 +32,7 @@ class BayarTidakLunasRequest extends FormRequest
             ],
             'metode'=>[
                 'required',
-                'in:Tunai,Non-Tunai'
+                'in:offline,online_midtrans'
             ],
             'pembayar'=>[
                 'required',

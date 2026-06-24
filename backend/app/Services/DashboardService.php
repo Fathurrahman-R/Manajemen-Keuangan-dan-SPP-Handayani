@@ -133,6 +133,75 @@ class DashboardService
     }
 
     /**
+     * Get kas (pemasukan vs pengeluaran) summary for either a single
+     * tahun ajaran (date range based on TahunAjaran::tanggal_mulai/selesai)
+     * or all-time (when $tahunAjaranId is null).
+     */
+    public function getKasSummary(int $branchId, ?int $tahunAjaranId): array
+    {
+        $cacheKey = $this->getCacheKey('kas-summary', $branchId, $tahunAjaranId ?? 0);
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($branchId, $tahunAjaranId) {
+            $pembayaranQuery = Pembayaran::join(
+                'tagihans',
+                'pembayarans.kode_tagihan',
+                '=',
+                'tagihans.kode_tagihan'
+            )->where('tagihans.branch_id', $branchId);
+
+            $pengeluaranQuery = Pengeluaran::where('branch_id', $branchId);
+
+            if ($tahunAjaranId) {
+                $tahunAjaran = TahunAjaran::where('id', $tahunAjaranId)
+                    ->where('branch_id', $branchId)
+                    ->first();
+
+                if ($tahunAjaran) {
+                    $pembayaranQuery->where('tagihans.tahun_ajaran_id', $tahunAjaranId);
+
+                    $pengeluaranQuery->whereBetween('tanggal', [
+                        $tahunAjaran->tanggal_mulai,
+                        $tahunAjaran->tanggal_selesai,
+                    ]);
+                }
+            }
+
+            $totalPemasukan = (int) $pembayaranQuery->sum('pembayarans.jumlah');
+            $totalPengeluaran = (int) $pengeluaranQuery->sum('jumlah');
+
+            return [
+                'total_pemasukan'   => $totalPemasukan,
+                'total_pengeluaran' => $totalPengeluaran,
+                'saldo'             => $totalPemasukan - $totalPengeluaran,
+                'is_all_time'       => $tahunAjaranId === null,
+            ];
+        });
+    }
+
+    /**
+     * Get all-time aggregate summary (across every tahun ajaran in this branch).
+     */
+    public function getAllTimeSummary(int $branchId): array
+    {
+        $cacheKey = $this->getCacheKey('all-time-summary', $branchId, 0);
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($branchId) {
+            $totalTagihan = Tagihan::where('tagihans.branch_id', $branchId)
+                ->join('jenis_tagihans', 'tagihans.jenis_tagihan_id', '=', 'jenis_tagihans.id')
+                ->sum('jenis_tagihans.jumlah');
+
+            $kas = $this->getKasSummary($branchId, null);
+
+            return [
+                'total_tagihan'     => (int) $totalTagihan,
+                'total_pemasukan'   => $kas['total_pemasukan'],
+                'total_pengeluaran' => $kas['total_pengeluaran'],
+                'saldo'             => $kas['saldo'],
+            ];
+        });
+    }
+
+    /**
      * Get monthly payment chart data (12 months).
      */
     public function getChartPembayaranBulanan(int $branchId, ?int $tahunAjaranId): array

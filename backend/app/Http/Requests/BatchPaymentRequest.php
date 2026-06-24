@@ -38,7 +38,7 @@ class BatchPaymentRequest extends FormRequest
             ],
             'metode' => [
                 'required',
-                'in:Tunai,Non-Tunai',
+                'in:offline,online_midtrans',
             ],
             'pembayar' => [
                 'required',
@@ -59,7 +59,7 @@ class BatchPaymentRequest extends FormRequest
             'kode_tagihan.*.string' => 'Kode tagihan harus berupa string.',
             'kode_tagihan.*.exists' => 'Kode tagihan :input tidak ditemukan.',
             'metode.required' => 'Metode pembayaran wajib diisi.',
-            'metode.in' => 'Metode harus Tunai atau Non-Tunai.',
+            'metode.in' => 'Metode harus offline atau online_midtrans.',
             'pembayar.required' => 'Nama pembayar wajib diisi.',
             'pembayar.string' => 'Nama pembayar harus berupa string.',
             'pembayar.max' => 'Pembayar maksimal 100 karakter.',

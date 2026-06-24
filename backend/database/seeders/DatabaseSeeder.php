@@ -376,7 +376,7 @@ class DatabaseSeeder extends Seeder
                         'kode_pembayaran' => $kodePembayaran,
                         'kode_tagihan' => $kodeTagihan,
                         'tanggal' => fake()->dateTimeBetween('-3 months', 'now')->format('Y-m-d'),
-                        'metode' => fake()->randomElement(['Tunai', 'Non-Tunai']),
+                        'metode' => 'offline',
                         'jumlah' => $tmp,
                         'pembayar' => fake()->name(),
                         'branch_id' => $branch->id,

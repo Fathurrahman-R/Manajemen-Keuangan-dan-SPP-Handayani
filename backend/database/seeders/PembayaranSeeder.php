@@ -13,7 +13,7 @@ class PembayaranSeeder extends Seeder
             'kode_pembayaran' => 'PAY-2511-0001',
             'kode_tagihan' => 'TAG-2511-0001',
             'tanggal' => now()->format('Y-m-d'),
-            'metode' => 'Tunai',
+            'metode' => 'offline',
             'jumlah' => 100000,
             'pembayar' => 'Soerojo'
         ]);

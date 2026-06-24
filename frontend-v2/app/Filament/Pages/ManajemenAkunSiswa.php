@@ -167,21 +167,41 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                         $ids = $records->pluck('id')->toArray();
                         $response = ApiService::client()
                             ->get('/akun-siswa/credentials', ['ids' => implode(',', $ids)]);
-                        $credentials = $response->ok() ? $response->json('data') : [];
+                        $credentials = $response->ok() ? ($response->json('data') ?? []) : [];
 
-                        return view('livewire.partials.credentials-list', [
+                        return view('livewire.partials.credentials-modal', [
                             'credentials' => $credentials,
+                            'key' => 'creds-' . md5(implode(',', $ids)),
                         ]);
                     }),
                 BulkAction::make('printPdf')
                     ->label('Cetak PDF')
                     ->icon('heroicon-o-printer')
                     ->color('success')
-                    ->action(function (Collection $records): void {
+                    ->action(function (Collection $records) {
                         $ids = $records->pluck('id')->toArray();
-                        $token = session()->get('data.token');
-                        $url = env('API_URL') . '/akun-siswa/credentials-pdf?ids=' . implode(',', $ids) . '&token=' . $token;
-                        $this->dispatch('open-url', url: $url);
+
+                        $response = ApiService::client()
+                            ->withHeaders(['Accept' => 'application/pdf'])
+                            ->get('/akun-siswa/credentials-pdf', ['ids' => implode(',', $ids)]);
+
+                        if (!$response->ok()) {
+                            Notification::make()
+                                ->title('Gagal mencetak PDF')
+                                ->body('Tidak dapat mengambil data kredensial dari server.')
+                                ->danger()
+                                ->send();
+                            return null;
+                        }
+
+                        $body = $response->body();
+                        $filename = 'kredensial-akun-siswa-' . now()->format('Ymd-His') . '.pdf';
+
+                        return response()->streamDownload(function () use ($body) {
+                            echo $body;
+                        }, $filename, [
+                            'Content-Type' => 'application/pdf',
+                        ]);
                     })
                     ->deselectRecordsAfterCompletion(),
             ])

@@ -25,6 +25,7 @@ class LoginResponse implements LoginResponseContract
 
         // Map permission ke halaman, urut berdasarkan prioritas
         $permissionRoutes = [
+            'view-dashboard' => '/dashboard-page',
             'view-siswa' => '/data-master-siswa',
             'view-pembayaran' => '/transaksi-pembayaran',
             'view-tagihan' => '/transaksi-tagihan',

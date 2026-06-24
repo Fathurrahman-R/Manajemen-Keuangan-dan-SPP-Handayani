@@ -7,7 +7,16 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Tabel notifikasi database Filament untuk frontend-v2.
+     *
+     * Frontend-v2 panel Filament memakai `databaseNotifications()`. Karena
+     * tabel `notifications` di backend sudah dipakai untuk skema in-app
+     * notification kustom (kolom `user_id`, `title`, `message`, `is_read`,
+     * dst), Filament dipindah ke tabel terpisah `filament_notifications`
+     * yang mengikuti schema bawaan Laravel database notifications.
+     *
+     * Model `App\Models\FilamentDatabaseNotification` di frontend-v2
+     * memetakan `protected $table = 'filament_notifications'`.
      */
     public function up(): void
     {
@@ -21,9 +30,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('filament_notifications');

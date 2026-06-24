@@ -634,7 +634,7 @@ class ExportServicePropertyTest extends TestCase
         ]);
 
         $jumlah = $faker->randomFloat(2, 10000, 500000);
-        $metode = $faker->randomElement(['Tunai', 'Non-Tunai']);
+        $metode = $faker->randomElement(['offline', 'online_midtrans']);
         $tanggal = $faker->dateTimeBetween('2024-01-01', '2024-12-31')->format('Y-m-d');
 
         $pembayaran = Pembayaran::factory()->create([

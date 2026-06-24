@@ -7,6 +7,8 @@ use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -26,6 +28,8 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
     public string $jenjang = '';     // set from parent page (KB/TK/MI)
     public string $filterKelas = ''; // replaces filterJenjang
     public string $filterStatus = '';
+    public ?string $filterJatuhTempoFrom = null;
+    public ?string $filterJatuhTempoTo = null;
     public int $perPage = 5;
     public int $page = 1;
 
@@ -92,6 +96,14 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
             $params['status'] = $this->filterStatus;
         }
 
+        if (filled($this->filterJatuhTempoFrom)) {
+            $params['jatuh_tempo_from'] = $this->filterJatuhTempoFrom;
+        }
+
+        if (filled($this->filterJatuhTempoTo)) {
+            $params['jatuh_tempo_to'] = $this->filterJatuhTempoTo;
+        }
+
         try {
             $response = ApiService::client()->get('/tagihan/grouped', $params);
 
@@ -138,6 +150,18 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
     }
 
     public function updatedFilterStatus(): void
+    {
+        $this->page = 1;
+        $this->loadData();
+    }
+
+    public function updatedFilterJatuhTempoFrom(): void
+    {
+        $this->page = 1;
+        $this->loadData();
+    }
+
+    public function updatedFilterJatuhTempoTo(): void
     {
         $this->page = 1;
         $this->loadData();
@@ -271,8 +295,8 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                 Select::make('metode')
                     ->label('Metode Pembayaran')
                     ->options([
-                        'Tunai' => 'Tunai',
-                        'Non-Tunai' => 'Non-Tunai',
+                        'offline' => 'Offline (Tunai/Transfer)',
+                        'online_midtrans' => 'Online (Midtrans)',
                     ])
                     ->required(),
                 TextInput::make('pembayar')
@@ -369,8 +393,8 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                 Select::make('metode')
                     ->label('Metode Pembayaran')
                     ->options([
-                        'Tunai' => 'Tunai',
-                        'Non-Tunai' => 'Non-Tunai',
+                        'offline' => 'Offline (Tunai/Transfer)',
+                        'online_midtrans' => 'Online (Midtrans)',
                     ])
                     ->required(),
                 TextInput::make('pembayar')
@@ -446,6 +470,96 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
         }
     }
 
+    /**
+     * Filament Action: Export laporan PDF tagihan dengan filter status & jatuh tempo.
+     */
+    public function exportPdfAction(): Action
+    {
+        return Action::make('exportPdf')
+            ->label('Export PDF')
+            ->icon('heroicon-o-document-arrow-down')
+            ->color('gray')
+            ->button()
+            ->visible(fn(): bool => in_array('view-tagihan', session()->get('data.permissions', [])))
+            ->modalHeading('Export Laporan Tagihan (PDF)')
+            ->modalSubmitActionLabel('Export')
+            ->modalCancelActionLabel('Batal')
+            ->schema([
+                CheckboxList::make('status')
+                    ->label('Status Tagihan')
+                    ->options([
+                        'Belum Dibayar' => 'Belum Dibayar',
+                        'Belum Lunas'   => 'Belum Lunas',
+                        'Lunas'         => 'Lunas',
+                    ])
+                    ->columns(3)
+                    ->bulkToggleable()
+                    ->required()
+                    ->helperText('Pilih minimal satu status untuk diikutsertakan dalam laporan.'),
+                DatePicker::make('jatuh_tempo_from')
+                    ->label('Jatuh Tempo Dari')
+                    ->native(false),
+                DatePicker::make('jatuh_tempo_to')
+                    ->label('Jatuh Tempo Sampai')
+                    ->native(false),
+            ])
+            ->action(function (array $data) {
+                $params = [];
+
+                if ($this->selectedTahunAjaranId) {
+                    $params['tahun_ajaran_id'] = $this->selectedTahunAjaranId;
+                }
+                if (filled($this->jenjang)) {
+                    $params['jenjang'] = $this->jenjang;
+                }
+                if (filled($this->filterKelas)) {
+                    $params['kelas_id'] = $this->filterKelas;
+                }
+                if (filled($this->search)) {
+                    $params['search'] = $this->search;
+                }
+                if (!empty($data['status'])) {
+                    $params['status'] = $data['status'];
+                }
+                if (!empty($data['jatuh_tempo_from'])) {
+                    $params['jatuh_tempo_from'] = $data['jatuh_tempo_from'];
+                }
+                if (!empty($data['jatuh_tempo_to'])) {
+                    $params['jatuh_tempo_to'] = $data['jatuh_tempo_to'];
+                }
+
+                try {
+                    $response = ApiService::client()
+                        ->withHeaders(['Accept' => 'application/pdf'])
+                        ->get('/tagihan/export-pdf', $params);
+
+                    if (!$response->ok()) {
+                        Notification::make()
+                            ->title('Gagal mengekspor laporan')
+                            ->body('Server menolak permintaan: ' . $response->status())
+                            ->danger()
+                            ->send();
+                        return null;
+                    }
+
+                    $body = $response->body();
+                    $filename = 'laporan-tagihan-' . now()->format('Ymd-His') . '.pdf';
+
+                    return response()->streamDownload(function () use ($body) {
+                        echo $body;
+                    }, $filename, [
+                        'Content-Type' => 'application/pdf',
+                    ]);
+                } catch (\Throwable $e) {
+                    Notification::make()
+                        ->title('Tidak dapat terhubung ke server')
+                        ->danger()
+                        ->send();
+                    return null;
+                }
+            });
+    }
+
     public function addTagihanAction(): Action
     {
         return Action::make('addTagihan')
@@ -465,13 +579,25 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
             })
             ->modalFooterActionsAlignment(Alignment::End)
             ->schema([
+                Select::make('tahun_ajaran_id')
+                    ->label('Periode Ajaran')
+                    ->options(function () {
+                        return collect($this->tahunAjaranOptions ?? [])
+                            ->mapWithKeys(fn($opt) => [
+                                $opt['id'] => $opt['nama'] . ($opt['status'] === 'Aktif' ? ' (Aktif)' : '')
+                            ])->toArray();
+                    })
+                    ->default(fn() => $this->selectedTahunAjaranId)
+                    ->live()
+                    ->required(),
                 Select::make('jenis_tagihan_id')
                     ->label('Jenis Tagihan')
                     ->searchable()
                     ->searchPrompt('Cari Jenis Tagihan')
-                    ->options(function () {
-                        $params = $this->selectedTahunAjaranId
-                            ? ['tahun_ajaran_id' => $this->selectedTahunAjaranId]
+                    ->options(function (\Filament\Schemas\Components\Utilities\Get $get) {
+                        $tahunAjaranId = $get('tahun_ajaran_id') ?: $this->selectedTahunAjaranId;
+                        $params = $tahunAjaranId
+                            ? ['tahun_ajaran_id' => $tahunAjaranId]
                             : [];
                         $response = ApiService::client()->get('/jenis-tagihan', $params);
                         if (!$response->ok()) return [];
@@ -481,6 +607,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                                 return [$item['id'] => $item['nama'] . ' - ' . $jumlah];
                             })->toArray();
                     })
+                    ->live()
                     ->required(),
                 Select::make('kelas_id')
                     ->label('Kelas')
@@ -507,15 +634,6 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                             ->toArray();
                     })
                     ->required(),
-                Select::make('tahun_ajaran_id')
-                    ->label('Periode Ajaran')
-                    ->options(function () {
-                        return collect($this->tahunAjaranOptions ?? [])
-                            ->mapWithKeys(fn($opt) => [
-                                $opt['id'] => $opt['nama'] . ($opt['status'] === 'Aktif' ? ' (Aktif)' : '')
-                            ])->toArray();
-                    })
-                    ->default(fn() => $this->selectedTahunAjaranId),
             ])
             ->action(function (array $data): void {
                 try {

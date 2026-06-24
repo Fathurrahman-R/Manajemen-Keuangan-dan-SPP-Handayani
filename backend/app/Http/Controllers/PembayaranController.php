@@ -28,6 +28,10 @@ class PembayaranController extends Controller
     #[HeaderParameter('Authorization')]
     #[QueryParameter('search', description: 'Pencarian nama / nis siswa', required: false, example: 'Ahmad')]
     #[QueryParameter('jenjang', description: 'Filter jenjang (TK/MI/KB)', required: false, example: 'MI')]
+    #[QueryParameter('kelas_id', description: 'Filter kelas (id)', required: false, example: 3)]
+    #[QueryParameter('metode', description: 'Filter metode pembayaran (offline/online_midtrans)', required: false, example: 'offline')]
+    #[QueryParameter('tahun_ajaran_id', description: 'Filter periode ajaran', required: false, example: 1)]
+    #[QueryParameter('sort', description: 'Sort siswa berdasarkan pembayaran terbaru/terlama (latest/oldest) atau nama', required: false, example: 'latest')]
     #[QueryParameter('per_page', description: 'Jumlah siswa per halaman (max 100)', required: false, example: 10)]
     public function grouped()
     {
@@ -39,6 +43,15 @@ class PembayaranController extends Controller
 
         if ($user && !$user->hasAnyRole(['superadmin', 'admin'])) {
             $query->where('nis', $user->siswa?->nis ?? $user->username);
+        }
+
+        $tahunAjaranId = request('tahun_ajaran_id');
+        if ($tahunAjaranId) {
+            // Hanya tampilkan siswa yang punya pembayaran (via tagihan) di periode terpilih.
+            $query->whereHas('tagihan', function ($q) use ($tahunAjaranId) {
+                $q->where('tahun_ajaran_id', (int) $tahunAjaranId)
+                  ->whereHas('pembayaran');
+            });
         }
 
         $search = request('search');
@@ -54,14 +67,45 @@ class PembayaranController extends Controller
             $query->where('jenjang', $jenjang);
         }
 
-        $query->orderBy('nama', 'asc');
+        $kelasId = request('kelas_id');
+        if (!is_null($kelasId) && $kelasId !== '') {
+            $query->where('kelas_id', (int) $kelasId);
+        }
+
+        $metode = request('metode');
+        if ($metode) {
+            $query->whereHas('tagihan.pembayaran', function ($q) use ($metode) {
+                $q->where('metode', $metode);
+            });
+        }
+
+        $sort = request('sort', 'nama');
+        if ($sort === 'latest' || $sort === 'oldest') {
+            $direction = $sort === 'latest' ? 'desc' : 'asc';
+
+            // Subquery: ambil tanggal pembayaran terakhir per siswa (via tagihan.nis -> siswa.nis).
+            $latestSub = \App\Models\Pembayaran::query()
+                ->selectRaw('tagihans.nis AS nis, MAX(pembayarans.tanggal) AS last_paid_at')
+                ->join('tagihans', 'tagihans.kode_tagihan', '=', 'pembayarans.kode_tagihan')
+                ->groupBy('tagihans.nis');
+
+            $query
+                ->leftJoinSub($latestSub, 'last_pay', function ($join) {
+                    $join->on('last_pay.nis', '=', 'siswas.nis');
+                })
+                ->select('siswas.*')
+                ->orderBy('last_pay.last_paid_at', $direction)
+                ->orderBy('siswas.nama', 'asc');
+        } else {
+            $query->orderBy('nama', 'asc');
+        }
 
         $perPage = min((int) request('per_page', 10), 100);
         $siswaList = $query->paginate($perPage);
 
         $siswaList->load(['kelas']);
-        $siswaList->each(function ($siswa) {
-            $siswa->setRelation('pembayaran', $siswa->pembayaranForGroupedView());
+        $siswaList->each(function ($siswa) use ($metode, $tahunAjaranId) {
+            $siswa->setRelation('pembayaran', $siswa->pembayaranForGroupedView($metode, $tahunAjaranId ? (int) $tahunAjaranId : null));
         });
 
         return PembayaranGroupedResource::collection($siswaList);

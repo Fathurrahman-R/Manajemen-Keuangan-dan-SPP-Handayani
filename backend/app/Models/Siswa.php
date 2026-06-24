@@ -85,9 +85,9 @@ class Siswa extends Model
         return $this->hasOne(User::class, 'siswa_id');
     }
 
-    public function pembayaranForGroupedView()
+    public function pembayaranForGroupedView(?string $metode = null, ?int $tahunAjaranId = null)
     {
-        return \App\Models\Pembayaran::query()
+        $query = \App\Models\Pembayaran::query()
             ->select([
                 'pembayarans.kode_pembayaran',
                 'pembayarans.kode_tagihan',
@@ -101,7 +101,16 @@ class Siswa extends Model
             ->join('tagihans', 'tagihans.kode_tagihan', '=', 'pembayarans.kode_tagihan')
             ->join('jenis_tagihans', 'jenis_tagihans.id', '=', 'tagihans.jenis_tagihan_id')
             ->where('tagihans.nis', $this->nis)
-            ->orderByDesc('pembayarans.tanggal')
-            ->get();
+            ->orderByDesc('pembayarans.tanggal');
+
+        if ($metode) {
+            $query->where('pembayarans.metode', $metode);
+        }
+
+        if ($tahunAjaranId) {
+            $query->where('tagihans.tahun_ajaran_id', $tahunAjaranId);
+        }
+
+        return $query->get();
     }
 }

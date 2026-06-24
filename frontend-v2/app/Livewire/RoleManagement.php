@@ -32,19 +32,19 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
 
     /**
      * Cached permission groups fetched from the backend.
-     * Shape: ['Group Label' => ['permission-name' => 'Human Label', ...], ...]
+     * Shape: ['Audience Label' => ['Group Label' => ['permission-name' => 'Human Label', ...], ...], ...]
      */
-    protected ?array $permissionGroupsCache = null;
+    protected ?array $permissionAudiencesCache = null;
 
     /**
-     * Fetch permission groups from the backend `/roles/permissions` endpoint.
+     * Fetch permission audiences from the backend `/roles/permissions` endpoint.
      * Result is cached per-request to avoid repeated API calls when the
      * modal is rendered alongside the table.
      */
-    protected function getPermissionGroups(): array
+    protected function getPermissionAudiences(): array
     {
-        if ($this->permissionGroupsCache !== null) {
-            return $this->permissionGroupsCache;
+        if ($this->permissionAudiencesCache !== null) {
+            return $this->permissionAudiencesCache;
         }
 
         try {
@@ -52,36 +52,78 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
 
             if (!$response->ok()) {
                 $this->handleApiError($response);
-                return $this->permissionGroupsCache = [];
+                return $this->permissionAudiencesCache = [];
             }
 
             $raw = $response->json('data') ?? [];
+            $audiences = $raw['audiences'] ?? null;
 
-            $groups = [];
-            foreach ($raw as $groupName => $permissions) {
-                if (!is_array($permissions)) {
-                    continue;
-                }
-                $map = [];
-                foreach ($permissions as $perm) {
-                    if (!isset($perm['name'])) {
+            if (!is_array($audiences)) {
+                // Backward compat: treat the whole flat payload as a single "admin" audience
+                $audiences = [
+                    'admin' => [
+                        'label' => 'Admin / Karyawan',
+                        'groups' => array_filter(
+                            $raw,
+                            fn($v, $k) => is_array($v) && $k !== 'audiences',
+                            ARRAY_FILTER_USE_BOTH
+                        ),
+                    ],
+                ];
+            }
+
+            $normalised = [];
+            foreach ($audiences as $key => $audience) {
+                $label = $audience['label'] ?? $key;
+                $groups = $audience['groups'] ?? [];
+
+                $normalisedGroups = [];
+                foreach ($groups as $groupName => $permissions) {
+                    if (!is_array($permissions)) {
                         continue;
                     }
-                    $map[$perm['name']] = $perm['label'] ?? $perm['name'];
+                    $map = [];
+                    foreach ($permissions as $perm) {
+                        if (!isset($perm['name'])) {
+                            continue;
+                        }
+                        $map[$perm['name']] = $perm['label'] ?? $perm['name'];
+                    }
+                    if ($map !== []) {
+                        $normalisedGroups[$groupName] = $map;
+                    }
                 }
-                if ($map !== []) {
-                    $groups[$groupName] = $map;
+                if ($normalisedGroups !== []) {
+                    $normalised[$key] = [
+                        'label'  => $label,
+                        'groups' => $normalisedGroups,
+                    ];
                 }
             }
 
-            return $this->permissionGroupsCache = $groups;
+            return $this->permissionAudiencesCache = $normalised;
         } catch (ConnectionException $e) {
             $this->notifyConnectionError();
-            return $this->permissionGroupsCache = [];
+            return $this->permissionAudiencesCache = [];
         } catch (\Throwable $e) {
             $this->notifyUnexpectedError();
-            return $this->permissionGroupsCache = [];
+            return $this->permissionAudiencesCache = [];
         }
+    }
+
+    /**
+     * Flat helper: returns ['group_label' => [...permissions...]] across all audiences.
+     * Useful for collecting/distributing permissions back into form fields.
+     */
+    protected function getPermissionGroups(): array
+    {
+        $flat = [];
+        foreach ($this->getPermissionAudiences() as $audience) {
+            foreach ($audience['groups'] ?? [] as $group => $perms) {
+                $flat[$group] = $perms;
+            }
+        }
+        return $flat;
     }
 
     protected function getPermissionFormSchema(): array
@@ -94,16 +136,30 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
                 ->maxLength(255),
         ];
 
-        foreach ($this->getPermissionGroups() as $group => $permissions) {
-            $schema[] = Section::make($group)
-                ->schema([
-                    CheckboxList::make('permissions_' . Str::snake($group))
-                        ->label('Permissions ' . Str::lower($group))
-                        ->options($permissions)
-                        ->bulkToggleable()
-                        ->columns(2),
-                ])
-                ->collapsible();
+        foreach ($this->getPermissionAudiences() as $audience) {
+            $audienceLabel = $audience['label'] ?? '';
+            $audienceGroups = $audience['groups'] ?? [];
+
+            $children = [];
+            foreach ($audienceGroups as $group => $permissions) {
+                $children[] = Section::make($group)
+                    ->schema([
+                        CheckboxList::make('permissions_' . Str::snake($group))
+                            ->label('Permissions ' . Str::lower($group))
+                            ->options($permissions)
+                            ->bulkToggleable()
+                            ->columns(2),
+                    ])
+                    ->collapsible();
+            }
+
+            if ($children !== []) {
+                $schema[] = Section::make($audienceLabel)
+                    ->description('Permissions yang relevan untuk audiens ini.')
+                    ->schema($children)
+                    ->collapsible()
+                    ->compact();
+            }
         }
 
         return $schema;

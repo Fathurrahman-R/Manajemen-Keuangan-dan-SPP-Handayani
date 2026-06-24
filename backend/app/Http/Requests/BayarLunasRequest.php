@@ -27,7 +27,7 @@ class BayarLunasRequest extends FormRequest
         return [
             'metode'=>[
                 'required',
-                'in:Tunai,Non-Tunai'
+                'in:offline,online_midtrans'
             ],
             'pembayar'=>[
                 'required',

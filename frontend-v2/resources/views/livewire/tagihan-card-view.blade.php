@@ -1,6 +1,6 @@
 <div class="space-y-6 relative">
     {{-- Loading overlay — only for data-fetching actions (filter, search, pagination) --}}
-    <div wire:loading.flex wire:target="loadData, search, filterKelas, filterStatus, selectedTahunAjaranId, perPage, goToPage, previousPage, nextPage" class="absolute inset-0 z-10 items-center justify-center bg-white/60 dark:bg-gray-900/60 rounded-xl">
+    <div wire:loading.flex wire:target="loadData, search, filterKelas, filterStatus, filterJatuhTempoFrom, filterJatuhTempoTo, selectedTahunAjaranId, perPage, goToPage, previousPage, nextPage" class="absolute inset-0 z-10 items-center justify-center bg-white/60 dark:bg-gray-900/60 rounded-xl">
         <div class="flex flex-col items-center gap-2">
             <svg class="animate-spin h-8 w-8 text-primary-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -24,10 +24,38 @@
     @endif
 
     <x-filament::section>
-        <div class="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-            <div class="flex flex-col md:flex-row gap-3 flex-1 w-full">
-                {{-- Period Selector (Filament Select) --}}
-                @if($this->hasTahunAjaranOptions())
+        {{-- Baris 1: Header bar dengan judul + action buttons --}}
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <div class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <x-heroicon-o-funnel class="h-4 w-4 text-gray-400" />
+                <span>Filter &amp; Aksi</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                @if($this->isAdmin())
+                    {{ $this->exportPdfAction }}
+                @endif
+                @if($this->canCreate())
+                    {{ $this->addTagihanAction }}
+                @endif
+            </div>
+        </div>
+
+        {{-- Baris 2: Search full width --}}
+        <div class="mb-3">
+            <x-filament::input.wrapper prefix-icon="heroicon-m-magnifying-glass">
+                <x-filament::input
+                    type="text"
+                    wire:model.live.debounce.300ms="search"
+                    placeholder="Cari nama atau NIS siswa..."
+                />
+            </x-filament::input.wrapper>
+        </div>
+
+        {{-- Baris 3: Filter dropdown (Periode, Kelas, Status) dengan label di atas --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+            @if($this->hasTahunAjaranOptions())
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Periode Ajaran</label>
                     <x-filament::input.wrapper>
                         <x-filament::input.select wire:model.live="selectedTahunAjaranId">
                             @foreach($tahunAjaranOptions as $option)
@@ -38,21 +66,12 @@
                             @endforeach
                         </x-filament::input.select>
                     </x-filament::input.wrapper>
-                @endif
-
-                {{-- Search --}}
-                <div class="flex-1 max-w-sm">
-                    <x-filament::input.wrapper prefix-icon="heroicon-m-magnifying-glass">
-                        <x-filament::input
-                            type="text"
-                            wire:model.live.debounce.300ms="search"
-                            placeholder="Cari nama atau NIS..."
-                        />
-                    </x-filament::input.wrapper>
                 </div>
+            @endif
 
-                {{-- Kelas Filter (replaces jenjang — jenjang is fixed per page) --}}
-                @if(count($kelasOptions) > 0)
+            @if(count($kelasOptions) > 0)
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Kelas</label>
                     <x-filament::input.wrapper>
                         <x-filament::input.select wire:model.live="filterKelas">
                             <option value="">Semua Kelas</option>
@@ -61,9 +80,11 @@
                             @endforeach
                         </x-filament::input.select>
                     </x-filament::input.wrapper>
-                @endif
+                </div>
+            @endif
 
-                {{-- Status Filter --}}
+            <div>
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Status Tagihan</label>
                 <x-filament::input.wrapper>
                     <x-filament::input.select wire:model.live="filterStatus">
                         <option value="">Semua Status</option>
@@ -73,13 +94,27 @@
                     </x-filament::input.select>
                 </x-filament::input.wrapper>
             </div>
+        </div>
 
-            {{-- Add Tagihan Button --}}
-            @if($this->canCreate())
-                <div>
-                    {{ $this->addTagihanAction }}
-                </div>
-            @endif
+        {{-- Baris 4: Filter jatuh tempo dengan label "Jatuh Tempo" --}}
+        <div>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Rentang Jatuh Tempo</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <x-filament::input.wrapper>
+                    <x-filament::input
+                        type="date"
+                        wire:model.live="filterJatuhTempoFrom"
+                        placeholder="Dari"
+                    />
+                </x-filament::input.wrapper>
+                <x-filament::input.wrapper>
+                    <x-filament::input
+                        type="date"
+                        wire:model.live="filterJatuhTempoTo"
+                        placeholder="Sampai"
+                    />
+                </x-filament::input.wrapper>
+            </div>
         </div>
     </x-filament::section>
 

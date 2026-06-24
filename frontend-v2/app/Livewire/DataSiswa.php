@@ -65,12 +65,22 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                             $params['search'] = $search;
                         }
 
-                        if (!is_null($this->kelasId)) {
+                        if (!empty($filters['kelas']['value'] ?? null)) {
+                            $params['kelas_id'] = $filters['kelas']['value'];
+                        } elseif (!is_null($this->kelasId)) {
                             $params['kelas_id'] = $this->kelasId;
                         }
 
                         if (!empty($filters['status']['value'] ?? null)) {
                             $params['status'] = $filters['status']['value'];
+                        }
+
+                        if (!empty($filters['jenis_kelamin']['value'] ?? null)) {
+                            $params['jenis_kelamin'] = $filters['jenis_kelamin']['value'];
+                        }
+
+                        if (!empty($filters['agama']['value'] ?? null)) {
+                            $params['agama'] = $filters['agama']['value'];
                         }
 
                         if (filled($sortColumn)) {
@@ -150,12 +160,39 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
             ->defaultPaginationPageOption(10)
             ->paginatedWhileReordering()
             ->filters([
+                SelectFilter::make('kelas')
+                    ->label('Kelas')
+                    ->options(function () {
+                        $response = ApiService::client()->get('/kelas/' . $this->activeTab);
+                        if (!$response->ok()) {
+                            return [];
+                        }
+                        return collect($response->json('data') ?? [])
+                            ->mapWithKeys(fn($item) => [$item['id'] => $item['nama']])
+                            ->toArray();
+                    }),
                 SelectFilter::make('status')
                     ->options([
                         'Aktif' => 'Aktif',
                         'Lulus' => 'Lulus',
                         'Pindah' => 'Pindah',
                         'Keluar' => 'Keluar',
+                    ]),
+                SelectFilter::make('jenis_kelamin')
+                    ->label('Jenis Kelamin')
+                    ->options([
+                        'L' => 'Laki-laki',
+                        'P' => 'Perempuan',
+                    ]),
+                SelectFilter::make('agama')
+                    ->label('Agama')
+                    ->options([
+                        'Islam' => 'Islam',
+                        'Kristen' => 'Kristen',
+                        'Katolik' => 'Katolik',
+                        'Hindu' => 'Hindu',
+                        'Buddha' => 'Buddha',
+                        'Konghucu' => 'Konghucu',
                     ]),
             ])
             ->emptyStateHeading('Tidak Ada Siswa')
@@ -641,47 +678,6 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                     }),
             ])
             ->headerActions([
-                // Kelas filter tied to active tab
-                Action::make('filter_kelas')
-                    ->label('Filter Kelas')
-                    ->color('gray')
-                    ->button()
-                    ->modalHeading('Filter Kelas')
-                    ->modalSubmitActionLabel('Terapkan')
-                    ->modalCancelActionLabel('Batal')
-                    ->schema([
-                        Select::make('kelas_id')
-                            ->label('Kelas')
-                            ->searchable()
-                            ->searchPrompt('Cari Kelas')
-                            ->options(function () {
-                                $response = ApiService::client()->get('/kelas/' . $this->activeTab);
-
-                                if (!$response->ok()) {
-                                    return [];
-                                }
-
-                                $data = $response->json();
-
-                                return collect($data['data'])->mapWithKeys(fn($item) => [$item['id'] => $item['nama']])->toArray();
-                            })
-                            ->required(),
-                    ])
-                    ->action(function (array $data): void {
-                        $this->kelasId = (int) $data['kelas_id'];
-                        $this->resetTable();
-                    }),
-
-                // Clear kelas filter
-                Action::make('clear_kelas_filter')
-                    ->label('Hapus Filter Kelas')
-                    ->color('gray')
-                    ->button()
-                    ->action(function (): void {
-                        $this->kelasId = null;
-                        $this->resetTable();
-                    }),
-
                 // Import/Export Siswa
                 ...$this->makeImportExportActions('siswa', [
                     Select::make('jenjang')
