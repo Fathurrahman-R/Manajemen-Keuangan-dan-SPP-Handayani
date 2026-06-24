@@ -30,80 +30,58 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
     use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
     use HandlesApiErrors;
 
+    /**
+     * Cached permission groups fetched from the backend.
+     * Shape: ['Group Label' => ['permission-name' => 'Human Label', ...], ...]
+     */
+    protected ?array $permissionGroupsCache = null;
+
+    /**
+     * Fetch permission groups from the backend `/roles/permissions` endpoint.
+     * Result is cached per-request to avoid repeated API calls when the
+     * modal is rendered alongside the table.
+     */
     protected function getPermissionGroups(): array
     {
-        return [
-            'Users' => [
-                'view-user' => 'View User',
-                'create-user' => 'Create User',
-                'read-user' => 'Read User',
-                'update-user' => 'Update User',
-                'delete-user' => 'Delete User',
-            ],
-            'Siswa' => [
-                'view-siswa' => 'View Siswa',
-                'create-siswa' => 'Create Siswa',
-                'read-siswa' => 'Read Siswa',
-                'update-siswa' => 'Update Siswa',
-                'delete-siswa' => 'Delete Siswa',
-            ],
-            'Kelas' => [
-                'view-kelas' => 'View Kelas',
-                'create-kelas' => 'Create Kelas',
-                'read-kelas' => 'Read Kelas',
-                'update-kelas' => 'Update Kelas',
-                'delete-kelas' => 'Delete Kelas',
-            ],
-            'Kategori' => [
-                'view-kategori' => 'View Kategori',
-                'create-kategori' => 'Create Kategori',
-                'read-kategori' => 'Read Kategori',
-                'update-kategori' => 'Update Kategori',
-                'delete-kategori' => 'Delete Kategori',
-            ],
-            'Pembayaran' => [
-                'view-pembayaran' => 'View Pembayaran',
-                'delete-pembayaran' => 'Delete Pembayaran',
-                'print-kwitansi' => 'Print Kwitansi',
-            ],
-            'Jenis Tagihan' => [
-                'view-jenis-tagihan' => 'View Jenis Tagihan',
-                'create-jenis-tagihan' => 'Create Jenis Tagihan',
-                'read-jenis-tagihan' => 'Read Jenis Tagihan',
-                'update-jenis-tagihan' => 'Update Jenis Tagihan',
-                'delete-jenis-tagihan' => 'Delete Jenis Tagihan',
-            ],
-            'Tagihan' => [
-                'view-tagihan' => 'View Tagihan',
-                'create-tagihan' => 'Create Tagihan',
-                'read-tagihan' => 'Read Tagihan',
-                'update-tagihan' => 'Update Tagihan',
-                'delete-tagihan' => 'Delete Tagihan',
-            ],
-            'Pengeluaran' => [
-                'view-pengeluaran' => 'View Pengeluaran',
-                'create-pengeluaran' => 'Create Pengeluaran',
-                'read-pengeluaran' => 'Read Pengeluaran',
-                'update-pengeluaran' => 'Update Pengeluaran',
-                'delete-pengeluaran' => 'Delete Pengeluaran',
-            ],
-            'Laporan' => [
-                'view-kas-harian' => 'View Kas Harian',
-                'view-rekap-bulanan' => 'View Rekap Bulanan',
-                'export-laporan' => 'Export Laporan',
-            ],
-            'Roles' => [
-                'view-roles' => 'View Roles',
-                'create-role' => 'Create Role',
-                'update-role' => 'Update Role',
-                'delete-role' => 'Delete Role',
-                'attach-role' => 'Attach Role',
-                'detach-role' => 'Detach Role',
-                'view-permissions' => 'View Permissions',
-                'attach-permissions' => 'Attach Permissions',
-                'detach-permissions' => 'Detach Permissions',
-            ],
-        ];
+        if ($this->permissionGroupsCache !== null) {
+            return $this->permissionGroupsCache;
+        }
+
+        try {
+            $response = ApiService::client()->get('/roles/permissions');
+
+            if (!$response->ok()) {
+                $this->handleApiError($response);
+                return $this->permissionGroupsCache = [];
+            }
+
+            $raw = $response->json('data') ?? [];
+
+            $groups = [];
+            foreach ($raw as $groupName => $permissions) {
+                if (!is_array($permissions)) {
+                    continue;
+                }
+                $map = [];
+                foreach ($permissions as $perm) {
+                    if (!isset($perm['name'])) {
+                        continue;
+                    }
+                    $map[$perm['name']] = $perm['label'] ?? $perm['name'];
+                }
+                if ($map !== []) {
+                    $groups[$groupName] = $map;
+                }
+            }
+
+            return $this->permissionGroupsCache = $groups;
+        } catch (ConnectionException $e) {
+            $this->notifyConnectionError();
+            return $this->permissionGroupsCache = [];
+        } catch (\Throwable $e) {
+            $this->notifyUnexpectedError();
+            return $this->permissionGroupsCache = [];
+        }
     }
 
     protected function getPermissionFormSchema(): array

@@ -4,13 +4,13 @@ namespace App\Filament\Pages;
 
 use App\Services\ApiService;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
-use Filament\Actions\BulkAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -21,7 +21,15 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use UnitEnum;
+use Livewire\Attributes\Url;
 
+/**
+ * Halaman Manajemen Akun Siswa.
+ *
+ * Menggabungkan dua mode:
+ * - tab "terdaftar"     : daftar akun siswa yang sudah dibuat (ex-ManajemenAkunSiswa)
+ * - tab "belum-terdaftar": siswa yang belum punya akun + bulk-create (ex-BulkAkunSiswaPage)
+ */
 class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTable
 {
     use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
@@ -36,6 +44,12 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
 
     protected string $view = 'filament.pages.manajemen-akun-siswa';
 
+    public const TAB_TERDAFTAR = 'terdaftar';
+    public const TAB_BELUM_TERDAFTAR = 'belum-terdaftar';
+
+    #[Url(as: 'tab')]
+    public string $tab = self::TAB_TERDAFTAR;
+
     public static function shouldRegisterNavigation(): bool
     {
         $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
@@ -48,19 +62,47 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
         if (!in_array('manage-akun-siswa', $permissions)) {
             abort(403);
         }
+
+        if (!in_array($this->tab, [self::TAB_TERDAFTAR, self::TAB_BELUM_TERDAFTAR], true)) {
+            $this->tab = self::TAB_TERDAFTAR;
+        }
     }
 
-    protected function hasPermission(string $permission): bool
+    public function setTab(string $tab): void
     {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        return in_array($permission, $permissions);
+        if (!in_array($tab, [self::TAB_TERDAFTAR, self::TAB_BELUM_TERDAFTAR], true)) {
+            return;
+        }
+
+        $this->tab = $tab;
+        $this->resetTable();
+    }
+
+    public function getTabs(): array
+    {
+        return [
+            self::TAB_TERDAFTAR => 'Sudah Terdaftar',
+            self::TAB_BELUM_TERDAFTAR => 'Belum Terdaftar',
+        ];
     }
 
     public function table(Table $table): Table
     {
+        if ($this->tab === self::TAB_BELUM_TERDAFTAR) {
+            return $this->buildUnregisteredTable($table);
+        }
+
+        return $this->buildRegisteredTable($table);
+    }
+
+    // ==== Tab: terdaftar ====
+
+    protected function buildRegisteredTable(Table $table): Table
+    {
         return $table
             ->records(
-                fn(?string $search, int $page, int $recordsPerPage, array $filters = []): LengthAwarePaginator => $this->fetchRecords($search, $page, $recordsPerPage, $filters),
+                fn(?string $search, int $page, int $recordsPerPage, array $filters = []): LengthAwarePaginator
+                    => $this->fetchRegistered($search, $page, $recordsPerPage, $filters),
             )
             ->columns([
                 TextColumn::make('name')
@@ -74,11 +116,9 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                     ->searchable(),
                 TextColumn::make('kelas')
                     ->label('Kelas')
-                    ->sortable()
                     ->state(fn(array $record): string => $record['siswa']['kelas']['nama'] ?? '-'),
                 TextColumn::make('jenjang')
                     ->label('Jenjang')
-                    ->sortable()
                     ->state(fn(array $record): string => $record['siswa']['jenjang'] ?? '-'),
                 IconColumn::make('is_active')
                     ->label('Aktif')
@@ -95,7 +135,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                     ->options(['KB' => 'KB', 'TK' => 'TK', 'MI' => 'MI']),
                 SelectFilter::make('kelas')
                     ->label('Kelas')
-                    ->options(fn() => $this->getKelasOptions()),
+                    ->options(fn() => $this->kelasOptionsForRegistered()),
             ])
             ->bulkActions([
                 BulkAction::make('toggleActive')
@@ -125,10 +165,8 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                     ->modalCancelActionLabel('Tutup')
                     ->modalContent(function (Collection $records): \Illuminate\Contracts\View\View {
                         $ids = $records->pluck('id')->toArray();
-
                         $response = ApiService::client()
                             ->get('/akun-siswa/credentials', ['ids' => implode(',', $ids)]);
-
                         $credentials = $response->ok() ? $response->json('data') : [];
 
                         return view('livewire.partials.credentials-list', [
@@ -142,13 +180,13 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                     ->action(function (Collection $records): void {
                         $ids = $records->pluck('id')->toArray();
                         $token = session()->get('data.token');
-                        $url = env('API_URL') . '/akun-siswa/credentials/pdf?ids=' . implode(',', $ids) . '&token=' . $token;
+                        $url = env('API_URL') . '/akun-siswa/credentials-pdf?ids=' . implode(',', $ids) . '&token=' . $token;
                         $this->dispatch('open-url', url: $url);
                     })
                     ->deselectRecordsAfterCompletion(),
             ])
             ->recordActions([
-                \Filament\Actions\Action::make('resetPassword')
+                Action::make('resetPassword')
                     ->tooltip('Reset Password')
                     ->icon('heroicon-s-key')
                     ->iconButton()
@@ -158,8 +196,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                     ->modalDescription('Apakah Anda yakin ingin mereset password akun ini ke default (tanggal lahir DDMMYYYY)?')
                     ->modalSubmitActionLabel('Reset')
                     ->action(function ($record): void {
-                        $response = ApiService::client()
-                            ->post('/akun-siswa/' . $record['id'] . '/reset-password');
+                        $response = ApiService::client()->post('/akun-siswa/' . $record['id'] . '/reset-password');
 
                         if ($response->status() === 404) {
                             Notification::make()->title('Gagal')->body('Akun tidak ditemukan.')->danger()->send();
@@ -178,7 +215,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                             ->send();
                     })
                     ->after(fn() => $this->resetTable()),
-                \Filament\Actions\Action::make('toggleActive')
+                Action::make('toggleActive')
                     ->tooltip(fn($record) => ($record['is_active'] ?? false) ? 'Nonaktifkan' : 'Aktifkan')
                     ->icon(fn($record) => ($record['is_active'] ?? false) ? 'heroicon-s-x-circle' : 'heroicon-s-check-circle')
                     ->iconButton()
@@ -190,8 +227,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                         : 'Apakah Anda yakin ingin mengaktifkan akun ini?')
                     ->modalSubmitActionLabel('Ya')
                     ->action(function ($record): void {
-                        $response = ApiService::client()
-                            ->patch('/akun-siswa/' . $record['id'] . '/toggle-active');
+                        $response = ApiService::client()->patch('/akun-siswa/' . $record['id'] . '/toggle-active');
 
                         if ($response->status() === 404) {
                             Notification::make()->title('Gagal')->body('Akun tidak ditemukan.')->danger()->send();
@@ -221,10 +257,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
             ->emptyStateIcon('heroicon-o-document-text');
     }
 
-    /**
-     * Fetch records from the API with search and filter support.
-     */
-    protected function fetchRecords(?string $search, int $page, int $recordsPerPage, ?array $filters): LengthAwarePaginator
+    protected function fetchRegistered(?string $search, int $page, int $recordsPerPage, ?array $filters): LengthAwarePaginator
     {
         try {
             $response = ApiService::client()->get('/akun-siswa', ['per_page' => 200]);
@@ -233,34 +266,26 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                 return new LengthAwarePaginator([], 0, $recordsPerPage, $page);
             }
 
-            $allRecords = $response->json('data') ?? [];
-            $collection = collect($allRecords);
+            $collection = collect($response->json('data') ?? []);
 
-            // Apply jenjang filter
             if (!empty($filters['jenjang']['value'] ?? null)) {
                 $jenjang = $filters['jenjang']['value'];
-                $collection = $collection->filter(
-                    fn(array $record) => ($record['siswa']['jenjang'] ?? '') === $jenjang
-                );
+                $collection = $collection->filter(fn(array $r) => ($r['siswa']['jenjang'] ?? '') === $jenjang);
             }
 
-            // Apply kelas filter
             if (!empty($filters['kelas']['value'] ?? null)) {
                 $kelas = $filters['kelas']['value'];
-                $collection = $collection->filter(
-                    fn(array $record) => ($record['siswa']['kelas']['nama'] ?? '') === $kelas
-                );
+                $collection = $collection->filter(fn(array $r) => ($r['siswa']['kelas']['nama'] ?? '') === $kelas);
             }
 
-            // Apply search
             if (filled($search)) {
-                $searchLower = Str::lower($search);
+                $needle = Str::lower($search);
                 $collection = $collection->filter(
-                    fn(array $record): bool => str_contains(Str::lower($record['name'] ?? ''), $searchLower)
-                        || str_contains(Str::lower($record['username'] ?? ''), $searchLower)
-                        || str_contains(Str::lower($record['siswa']['nama'] ?? ''), $searchLower)
-                        || str_contains(Str::lower($record['siswa']['jenjang'] ?? ''), $searchLower)
-                        || str_contains(Str::lower($record['siswa']['kelas']['nama'] ?? ''), $searchLower)
+                    fn(array $r): bool => str_contains(Str::lower($r['name'] ?? ''), $needle)
+                        || str_contains(Str::lower($r['username'] ?? ''), $needle)
+                        || str_contains(Str::lower($r['siswa']['nama'] ?? ''), $needle)
+                        || str_contains(Str::lower($r['siswa']['jenjang'] ?? ''), $needle)
+                        || str_contains(Str::lower($r['siswa']['kelas']['nama'] ?? ''), $needle)
                 );
             }
 
@@ -273,10 +298,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
         }
     }
 
-    /**
-     * Get kelas options for the filter.
-     */
-    protected function getKelasOptions(): array
+    protected function kelasOptionsForRegistered(): array
     {
         try {
             $response = ApiService::client()->get('/akun-siswa', ['per_page' => 200]);
@@ -284,9 +306,8 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                 return [];
             }
 
-            $records = collect($response->json('data') ?? []);
-            return $records
-                ->map(fn($record) => $record['siswa']['kelas']['nama'] ?? null)
+            return collect($response->json('data') ?? [])
+                ->map(fn($r) => $r['siswa']['kelas']['nama'] ?? null)
                 ->filter()
                 ->unique()
                 ->sort()
@@ -297,80 +318,193 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
         }
     }
 
-    /**
-     * Bulk toggle active status for selected accounts.
-     */
     protected function bulkToggleActive(Collection $records): void
     {
-        $successCount = 0;
-        $failCount = 0;
+        $success = 0;
+        $fail = 0;
 
-        foreach ($records as $record) {
-            $response = ApiService::client()->patch('/akun-siswa/' . $record['id'] . '/toggle-active');
-            if ($response->ok()) {
-                $successCount++;
-            } else {
-                $failCount++;
-            }
+        foreach ($records as $r) {
+            $response = ApiService::client()->patch('/akun-siswa/' . $r['id'] . '/toggle-active');
+            $response->ok() ? $success++ : $fail++;
         }
 
-        if ($successCount > 0) {
-            Notification::make()
-                ->title('Berhasil')
-                ->body("{$successCount} akun berhasil diubah statusnya.")
-                ->success()
-                ->send();
+        if ($success > 0) {
+            Notification::make()->title('Berhasil')->body("{$success} akun berhasil diubah statusnya.")->success()->send();
         }
-
-        if ($failCount > 0) {
-            Notification::make()
-                ->title('Sebagian Gagal')
-                ->body("{$failCount} akun gagal diubah statusnya.")
-                ->warning()
-                ->send();
+        if ($fail > 0) {
+            Notification::make()->title('Sebagian Gagal')->body("{$fail} akun gagal diubah statusnya.")->warning()->send();
         }
 
         $this->resetTable();
     }
 
-    /**
-     * Bulk reset password for selected accounts.
-     */
     protected function bulkResetPassword(Collection $records): void
     {
-        $successCount = 0;
-        $failCount = 0;
+        $success = 0;
+        $fail = 0;
 
-        foreach ($records as $record) {
-            $response = ApiService::client()->post('/akun-siswa/' . $record['id'] . '/reset-password');
-            if ($response->ok()) {
-                $successCount++;
-            } else {
-                $failCount++;
-            }
+        foreach ($records as $r) {
+            $response = ApiService::client()->post('/akun-siswa/' . $r['id'] . '/reset-password');
+            $response->ok() ? $success++ : $fail++;
         }
 
-        if ($successCount > 0) {
-            Notification::make()
-                ->title('Password Berhasil Direset')
-                ->body("{$successCount} akun berhasil direset passwordnya ke default.")
-                ->success()
-                ->send();
+        if ($success > 0) {
+            Notification::make()->title('Password Berhasil Direset')->body("{$success} akun berhasil direset passwordnya ke default.")->success()->send();
         }
-
-        if ($failCount > 0) {
-            Notification::make()
-                ->title('Sebagian Gagal')
-                ->body("{$failCount} akun gagal direset passwordnya.")
-                ->warning()
-                ->send();
+        if ($fail > 0) {
+            Notification::make()->title('Sebagian Gagal')->body("{$fail} akun gagal direset passwordnya.")->warning()->send();
         }
 
         $this->resetTable();
     }
 
-    public function toggleSelection(int $id): void
+    // ==== Tab: belum-terdaftar ====
+
+    protected function buildUnregisteredTable(Table $table): Table
     {
-        // Deprecated — using native Filament table bulk selection
+        return $table
+            ->records(
+                fn(?string $search, int $page, int $recordsPerPage, array $filters = []): LengthAwarePaginator
+                    => $this->fetchUnregistered($search, $page, $recordsPerPage, $filters),
+            )
+            ->columns([
+                TextColumn::make('nis')->label('NIS')->searchable()->sortable(),
+                TextColumn::make('nama')->label('Nama')->searchable()->sortable(),
+                TextColumn::make('jenjang')->label('Jenjang')->sortable(),
+                TextColumn::make('kelas_nama')
+                    ->label('Kelas')
+                    ->state(fn(array $record): string => $record['kelas']['nama'] ?? $record['kelas_nama'] ?? '-'),
+            ])
+            ->filters([
+                SelectFilter::make('jenjang')
+                    ->label('Jenjang')
+                    ->options(['KB' => 'KB', 'TK' => 'TK', 'MI' => 'MI']),
+                SelectFilter::make('kelas')
+                    ->label('Kelas')
+                    ->options(fn() => $this->kelasOptionsForUnregistered()),
+            ])
+            ->bulkActions([
+                BulkAction::make('buatAkun')
+                    ->label('Buat Akun')
+                    ->icon('heroicon-o-user-plus')
+                    ->color('primary')
+                    ->requiresConfirmation()
+                    ->modalHeading('Buat Akun Siswa')
+                    ->modalDescription(fn(Collection $records) => "Apakah Anda yakin ingin membuat akun untuk {$records->count()} siswa yang dipilih?")
+                    ->action(fn(Collection $records) => $this->bulkCreateAccounts($records))
+                    ->deselectRecordsAfterCompletion(),
+            ])
+            ->deferLoading()
+            ->striped()
+            ->searchable()
+            ->paginated([10, 25, 50])
+            ->defaultPaginationPageOption(10)
+            ->emptyStateHeading('Tidak Ada Siswa Tanpa Akun')
+            ->emptyStateDescription('Semua siswa sudah memiliki akun.')
+            ->emptyStateIcon('heroicon-o-document-text');
+    }
+
+    protected function fetchUnregistered(?string $search, int $page, int $recordsPerPage, ?array $filters): LengthAwarePaginator
+    {
+        try {
+            $params = ['per_page' => 200];
+
+            if (!empty($filters['jenjang']['value'] ?? null)) {
+                $params['jenjang'] = $filters['jenjang']['value'];
+            }
+
+            $response = ApiService::client()->get('/akun-siswa/unregistered', $params);
+
+            if (!$response->ok()) {
+                return new LengthAwarePaginator([], 0, $recordsPerPage, $page);
+            }
+
+            $collection = collect($response->json('data') ?? []);
+
+            if (!empty($filters['kelas']['value'] ?? null)) {
+                $kelas = $filters['kelas']['value'];
+                $collection = $collection->filter(fn(array $r) => ($r['kelas']['nama'] ?? '') === $kelas);
+            }
+
+            if (filled($search)) {
+                $needle = Str::lower($search);
+                $collection = $collection->filter(
+                    fn(array $r): bool => str_contains(Str::lower($r['nis'] ?? ''), $needle)
+                        || str_contains(Str::lower($r['nama'] ?? ''), $needle)
+                        || str_contains(Str::lower($r['jenjang'] ?? ''), $needle)
+                        || str_contains(Str::lower($r['kelas']['nama'] ?? ''), $needle)
+                );
+            }
+
+            $total = $collection->count();
+            $items = $collection->slice(($page - 1) * $recordsPerPage, $recordsPerPage)->values()->toArray();
+
+            return new LengthAwarePaginator($items, $total, $recordsPerPage, $page);
+        } catch (\Throwable $e) {
+            Notification::make()->title('Gagal memuat data siswa')->danger()->send();
+            return new LengthAwarePaginator([], 0, $recordsPerPage, $page);
+        }
+    }
+
+    protected function kelasOptionsForUnregistered(): array
+    {
+        try {
+            $response = ApiService::client()->get('/akun-siswa/unregistered', ['per_page' => 100]);
+            if (!$response->ok()) {
+                return [];
+            }
+
+            return collect($response->json('data') ?? [])
+                ->map(fn($r) => $r['kelas']['nama'] ?? null)
+                ->filter()
+                ->unique()
+                ->sort()
+                ->mapWithKeys(fn($kelas) => [$kelas => $kelas])
+                ->toArray();
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    protected function bulkCreateAccounts(Collection $records): void
+    {
+        $ids = $records->pluck('id')->toArray();
+
+        if (empty($ids)) {
+            Notification::make()->title('Pilih minimal satu siswa untuk membuat akun.')->warning()->send();
+            return;
+        }
+
+        try {
+            $response = ApiService::client()->post('/akun-siswa/bulk', ['siswa_ids' => $ids]);
+
+            if ($response->ok()) {
+                $data = $response->json('data') ?? [];
+                $created = $data['created'] ?? 0;
+                $errors = $data['errors'] ?? [];
+
+                if ($created > 0) {
+                    Notification::make()
+                        ->title('Akun Berhasil Dibuat')
+                        ->body("{$created} akun siswa berhasil dibuat.")
+                        ->success()
+                        ->send();
+                }
+
+                if (!empty($errors)) {
+                    Notification::make()
+                        ->title('Sebagian Gagal')
+                        ->body(count($errors) . ' akun gagal dibuat.')
+                        ->warning()
+                        ->send();
+                }
+            } else {
+                Notification::make()->title('Gagal')->body('Terjadi kesalahan saat membuat akun.')->danger()->send();
+            }
+        } catch (\Throwable $e) {
+            Notification::make()->title('Gagal')->body('Terjadi kesalahan saat membuat akun.')->danger()->send();
+        }
+
+        $this->resetTable();
     }
 }

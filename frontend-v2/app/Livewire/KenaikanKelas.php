@@ -35,8 +35,6 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
     public array $targetJenjangKelasList = [];
     public bool $processing = false;
     public array $history = [];
-    public ?array $selectedBatchDetail = null;
-    public bool $showDetailModal = false;
 
     public function mount(): void
     {
@@ -504,42 +502,6 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
         } catch (\Throwable $e) {
             $this->history = [];
         }
-    }
-
-    /**
-     * Show batch detail modal.
-     */
-    public function showBatchDetail(string $batchId): void
-    {
-        try {
-            $response = ApiService::client()->get("/kenaikan-kelas/batches/{$batchId}");
-
-            if ($response->ok()) {
-                $this->selectedBatchDetail = $response->json()['data'] ?? null;
-                $this->showDetailModal = true;
-            } else {
-                $this->selectedBatchDetail = null;
-                Notification::make()
-                    ->title('Gagal memuat detail batch.')
-                    ->danger()
-                    ->send();
-            }
-        } catch (\Throwable $e) {
-            $this->selectedBatchDetail = null;
-            Notification::make()
-                ->title('Terjadi kesalahan saat memuat detail batch.')
-                ->danger()
-                ->send();
-        }
-    }
-
-    /**
-     * Close the batch detail view.
-     */
-    public function closeBatchDetail(): void
-    {
-        $this->showDetailModal = false;
-        $this->selectedBatchDetail = null;
     }
 
     /**

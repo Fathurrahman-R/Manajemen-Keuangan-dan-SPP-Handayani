@@ -5,7 +5,6 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BranchApprovalSettingController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\EmailPopulationController;
 use App\Http\Controllers\ImportExportController;
 use App\Http\Controllers\JenisTagihanController;
 use App\Http\Controllers\KasController;
@@ -22,8 +21,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SiswaController;
 use App\Http\Controllers\TagihanController;
 use App\Http\Controllers\TahunAjaranController;
-use App\Http\Controllers\AyahController;
-use App\Http\Controllers\IbuController;
+use App\Http\Controllers\ParentSearchController;
 use App\Http\Controllers\AkunSiswaController;
 use App\Http\Controllers\EmailOptOutController;
 use App\Http\Controllers\MidtransAdminController;
@@ -101,7 +99,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/', [RoleController::class, 'store'])->middleware('permission:create-role');
             Route::post('/attach', [RoleController::class, 'attach'])->middleware('permission:attach-role');
             Route::post('/detach', [RoleController::class, 'detach'])->middleware('permission:detach-role');
-            Route::get('/permissions', [RoleController::class, 'permissions'])->middleware('permission:view-permissions');
+            Route::get('/permissions', [RoleController::class, 'permissions'])->middleware('permission:view-roles');
             Route::get('/{id}', [RoleController::class, 'show'])->middleware('permission:view-roles');
             Route::put('/{id}', [RoleController::class, 'update'])->middleware('permission:update-role');
             Route::delete('/{id}', [RoleController::class, 'destroy'])->middleware('permission:delete-role');
@@ -144,10 +142,10 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         // Ayah routes (parent search for siswa creation)
-        Route::get('/ayah', [AyahController::class, 'index'])->middleware('permission:create-siswa');
+        Route::get('/ayah', [ParentSearchController::class, 'ayah'])->middleware('permission:create-siswa');
 
         // Ibu routes (parent search for siswa creation)
-        Route::get('/ibu', [IbuController::class, 'index'])->middleware('permission:create-siswa');
+        Route::get('/ibu', [ParentSearchController::class, 'ibu'])->middleware('permission:create-siswa');
 
         // Tagihan routes (admin)
         Route::get('/tagihan/grouped', [TagihanController::class, 'grouped'])->middleware('permission:view-tagihan');
@@ -247,14 +245,6 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/credentials', [AkunSiswaController::class, 'credentials']);
             Route::get('/credentials-pdf', [AkunSiswaController::class, 'credentialsPdf']);
         });
-
-        // Email Population routes (for migration tool)
-        Route::prefix('/users/email-population')->group(function () {
-            Route::get('/', [EmailPopulationController::class, 'index']);
-            Route::get('/progress', [EmailPopulationController::class, 'progress']);
-        });
-        Route::patch('/users/{id}/email', [EmailPopulationController::class, 'update'])
-            ->where('id', '[0-9]+');
 
         // Notification routes
         Route::prefix('/notifications')->group(function () {

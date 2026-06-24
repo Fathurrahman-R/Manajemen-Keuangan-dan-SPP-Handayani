@@ -6,7 +6,6 @@ use App\Config\NavigationConfig;
 use App\Filament\Pages\Auth\EditProfile;
 use App\Filament\Pages\Auth\ForgotPassword;
 use App\Filament\Pages\Auth\Login;
-use App\Filament\Pages\BulkAkunSiswaPage;
 use App\Filament\Pages\DashboardPage;
 use App\Filament\Pages\DataMasterCategory;
 use App\Filament\Pages\DataMasterKelas;
@@ -18,7 +17,6 @@ use App\Filament\Pages\ManajemenAkunSiswa;
 use App\Filament\Pages\PengeluaranRequestPage;
 use App\Filament\Pages\RoleManagement;
 use App\Filament\Pages\Settings;
-use App\Filament\Pages\SiswaDashboardPage;
 use App\Filament\Pages\TahunAjaranManagement as TahunAjaranPage;
 use App\Filament\Pages\UserManagement;
 use App\Filament\Pages\TransaksiJenisTagihan;
@@ -176,39 +174,39 @@ class AdminPanelProvider extends PanelProvider
     }
 
     /**
-     * Siswa/Wali navigation items (visible only for siswa role without admin access).
+     * Siswa/Wali navigation items.
+     *
+     * Siswa/wali users live in the dedicated Portal panel (`/portal`).
+     * If a siswa/wali somehow lands on the Admin panel, the sidebar links
+     * back into the portal instead of duplicating the pages here.
      */
     protected function buildSiswaNavigationItems(): array
     {
         $items = [];
 
-        if (in_array('view-own-billing', session()->get('data.permissions', []))
-            && !in_array('view-dashboard', session()->get('data.permissions', []))) {
-            $items[] = NavigationItem::make()
-                ->label('Dashboard Saya')
-                ->icon('heroicon-o-home')
-                ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.siswa-dashboard-page'))
-                ->url(fn(): string => SiswaDashboardPage::getUrl());
+        if (!in_array('siswa', session()->get('data.roles', []))) {
+            return $items;
         }
 
-        if (in_array('siswa', session()->get('data.roles', []))) {
-            // Siswa users primarily live in the dedicated Portal panel
-            // (`/portal`), so the Admin panel sidebar links into that panel
-            // instead of duplicating the pages here.
-            $portalPath = '/' . config('handayani.portal.path', 'portal');
+        $portalPath = '/' . config('handayani.portal.path', 'portal');
 
-            $items[] = NavigationItem::make()
-                ->label('Tagihan Saya')
-                ->icon('heroicon-o-credit-card')
-                ->isActiveWhen(fn(): bool => str_contains(request()->path(), 'tagihan'))
-                ->url(fn() => $portalPath . '/tagihan');
+        $items[] = NavigationItem::make()
+            ->label('Beranda')
+            ->icon('heroicon-o-home')
+            ->isActiveWhen(fn(): bool => str_contains(request()->path(), 'beranda'))
+            ->url(fn() => $portalPath . '/beranda');
 
-            $items[] = NavigationItem::make()
-                ->label('Riwayat Pembayaran')
-                ->icon('heroicon-o-clock')
-                ->isActiveWhen(fn(): bool => str_contains(request()->path(), 'riwayat-pembayaran'))
-                ->url(fn() => $portalPath . '/riwayat-pembayaran');
-        }
+        $items[] = NavigationItem::make()
+            ->label('Tagihan Saya')
+            ->icon('heroicon-o-credit-card')
+            ->isActiveWhen(fn(): bool => str_contains(request()->path(), 'tagihan'))
+            ->url(fn() => $portalPath . '/tagihan');
+
+        $items[] = NavigationItem::make()
+            ->label('Riwayat Pembayaran')
+            ->icon('heroicon-o-clock')
+            ->isActiveWhen(fn(): bool => str_contains(request()->path(), 'riwayat-pembayaran'))
+            ->url(fn() => $portalPath . '/riwayat-pembayaran');
 
         return $items;
     }
@@ -376,12 +374,6 @@ class AdminPanelProvider extends PanelProvider
                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.manajemen-akun-siswa'))
                 ->visible(fn(): bool => PermissionHelper::has('manage-akun-siswa'))
                 ->url(fn(): string => ManajemenAkunSiswa::getUrl()),
-            NavigationItem::make()
-                ->label('Bulk Akun Siswa')
-                ->icon('heroicon-o-user-plus')
-                ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.bulk-akun-siswa-page'))
-                ->visible(fn(): bool => PermissionHelper::has('manage-akun-siswa'))
-                ->url(fn(): string => BulkAkunSiswaPage::getUrl()),
             NavigationItem::make()
                 ->label('Pengaturan Aplikasi')
                 ->icon('heroicon-o-cog-6-tooth')

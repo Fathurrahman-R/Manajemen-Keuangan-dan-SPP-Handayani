@@ -8,6 +8,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * Lokal User model untuk frontend-v2.
+ *
+ * frontend-v2 TIDAK mengelola data user secara mandiri — sumber kebenaran ada
+ * di backend (`backend/app/Models/User.php`). Tabel `users` di DB lokal hanya
+ * dipakai oleh Filament untuk:
+ *   1. Menyimpan referensi user yang sudah login (Filament::auth()->loginUsingId)
+ *      sehingga user menu, profile dropdown, dsb. dapat resolve nama user.
+ *   2. Foreign key `notifiable_id` untuk tabel `filament_notifications`
+ *      (database notifications Filament).
+ *
+ * Jangan tulis logika domain (permission, branch rules, dsb.) di sini. Semua
+ * permission/role/branch dibaca dari session (`data.permissions`, `data.roles`,
+ * `data.branch_id`) yang diisi oleh respons login dari backend.
+ */
 class User extends Authenticatable implements FilamentUser
 {
     use HasFactory, Notifiable;
