@@ -24,6 +24,12 @@ class DashboardService
 
     /**
      * Resolve tahun_ajaran_id — returns Periode_Aktif when null.
+     *
+     * NOTE: Helper ini DULUNYA juga dipakai oleh method dashboard ber-cache,
+     * yang menyebabkan request "Semua Periode" (null) selalu di-coerce ke
+     * periode aktif. Sekarang setiap method dashboard punya parameter
+     * `$allPeriods` untuk membedakan "default ke aktif" vs "lintas semua
+     * periode" — helper ini tetap dipertahankan untuk backward-compat.
      */
     public function resolveTahunAjaranId(?int $tahunAjaranId, int $branchId): ?int
     {
@@ -33,6 +39,19 @@ class DashboardService
 
         $aktif = TahunAjaran::getAktif($branchId);
         return $aktif?->id;
+    }
+
+    /**
+     * Apply tahun_ajaran_id filter ke query kalau bukan mode all-periods.
+     * Dipakai di hampir semua method dashboard agar query bisa di-skip
+     * filter saat user pilih "Semua Periode".
+     */
+    private function applyPeriodFilter($query, ?int $tahunAjaranId, bool $allPeriods, string $column = 'tagihans.tahun_ajaran_id')
+    {
+        if (!$allPeriods && $tahunAjaranId !== null) {
+            $query->where($column, $tahunAjaranId);
+        }
+        return $query;
     }
 
     /**
@@ -90,19 +109,27 @@ class DashboardService
     /**
      * Get dashboard summary KPI data.
      */
-    public function getSummary(int $branchId, ?int $tahunAjaranId): array
+    public function getSummary(int $branchId, ?int $tahunAjaranId, bool $allPeriods = false): array
     {
-        $tahunAjaranId = $this->resolveTahunAjaranId($tahunAjaranId, $branchId);
-        $cacheKey = $this->getCacheKey('summary', $branchId, $tahunAjaranId);
+        if (!$allPeriods) {
+            $tahunAjaranId = $this->resolveTahunAjaranId($tahunAjaranId, $branchId);
+        } else {
+            $tahunAjaranId = null;
+        }
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($branchId, $tahunAjaranId) {
-            $totalTagihan = Tagihan::where('tagihans.branch_id', $branchId)
-                ->where('tagihans.tahun_ajaran_id', $tahunAjaranId)
-                ->join('jenis_tagihans', 'tagihans.jenis_tagihan_id', '=', 'jenis_tagihans.id')
-                ->sum('jenis_tagihans.jumlah');
+        $cacheKey = $this->getCacheKey('summary' . ($allPeriods ? '-all' : ''), $branchId, $tahunAjaranId);
 
-            $totalTerbayar = Pembayaran::whereHas('tagihan', function ($q) use ($branchId, $tahunAjaranId) {
-                $q->where('branch_id', $branchId)->where('tahun_ajaran_id', $tahunAjaranId);
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($branchId, $tahunAjaranId, $allPeriods) {
+            $totalTagihanQuery = Tagihan::where('tagihans.branch_id', $branchId)
+                ->join('jenis_tagihans', 'tagihans.jenis_tagihan_id', '=', 'jenis_tagihans.id');
+            $this->applyPeriodFilter($totalTagihanQuery, $tahunAjaranId, $allPeriods);
+            $totalTagihan = $totalTagihanQuery->sum('jenis_tagihans.jumlah');
+
+            $totalTerbayar = Pembayaran::whereHas('tagihan', function ($q) use ($branchId, $tahunAjaranId, $allPeriods) {
+                $q->where('branch_id', $branchId);
+                if (!$allPeriods && $tahunAjaranId !== null) {
+                    $q->where('tahun_ajaran_id', $tahunAjaranId);
+                }
             })->sum('jumlah');
 
             $totalTunggakan = $totalTagihan - $totalTerbayar;
@@ -111,11 +138,14 @@ class DashboardService
                 ->where('status', 'Aktif')
                 ->count();
 
-            $jumlahSiswaMenunggak = Tagihan::where('branch_id', $branchId)
-                ->where('tahun_ajaran_id', $tahunAjaranId)
-                ->where('status', '!=', 'Lunas')
-                ->distinct('nis')
-                ->count('nis');
+            $jumlahSiswaMenunggakQuery = Tagihan::where('branch_id', $branchId)
+                ->where('status', '!=', 'Lunas');
+            $this->applyPeriodFilter($jumlahSiswaMenunggakQuery, $tahunAjaranId, $allPeriods, 'tahun_ajaran_id');
+            $jumlahSiswaMenunggak = $jumlahSiswaMenunggakQuery->distinct('nis')->count('nis');
+
+            $jumlahSiswaPunyaTagihanQuery = Tagihan::where('branch_id', $branchId);
+            $this->applyPeriodFilter($jumlahSiswaPunyaTagihanQuery, $tahunAjaranId, $allPeriods, 'tahun_ajaran_id');
+            $jumlahSiswaPunyaTagihan = $jumlahSiswaPunyaTagihanQuery->distinct('nis')->count('nis');
 
             $persentasePelunasan = $totalTagihan > 0
                 ? round(($totalTerbayar / $totalTagihan) * 100, 2)
@@ -126,6 +156,7 @@ class DashboardService
                 'total_terbayar' => $totalTerbayar,
                 'total_tunggakan' => $totalTunggakan,
                 'jumlah_siswa_aktif' => $jumlahSiswaAktif,
+                'jumlah_siswa_punya_tagihan' => $jumlahSiswaPunyaTagihan,
                 'jumlah_siswa_menunggak' => $jumlahSiswaMenunggak,
                 'persentase_pelunasan' => $persentasePelunasan,
             ];
@@ -204,19 +235,26 @@ class DashboardService
     /**
      * Get monthly payment chart data (12 months).
      */
-    public function getChartPembayaranBulanan(int $branchId, ?int $tahunAjaranId): array
+    public function getChartPembayaranBulanan(int $branchId, ?int $tahunAjaranId, bool $allPeriods = false): array
     {
-        $tahunAjaranId = $this->resolveTahunAjaranId($tahunAjaranId, $branchId);
-        $cacheKey = $this->getCacheKey('pembayaran-bulanan', $branchId, $tahunAjaranId);
+        if (!$allPeriods) {
+            $tahunAjaranId = $this->resolveTahunAjaranId($tahunAjaranId, $branchId);
+        } else {
+            $tahunAjaranId = null;
+        }
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($branchId, $tahunAjaranId) {
-            $data = Pembayaran::select(
+        $cacheKey = $this->getCacheKey('pembayaran-bulanan' . ($allPeriods ? '-all' : ''), $branchId, $tahunAjaranId);
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($branchId, $tahunAjaranId, $allPeriods) {
+            $query = Pembayaran::select(
                 DB::raw('MONTH(pembayarans.tanggal) as bulan'),
                 DB::raw('SUM(pembayarans.jumlah) as total')
             )
                 ->join('tagihans', 'pembayarans.kode_tagihan', '=', 'tagihans.kode_tagihan')
-                ->where('tagihans.branch_id', $branchId)
-                ->where('tagihans.tahun_ajaran_id', $tahunAjaranId)
+                ->where('tagihans.branch_id', $branchId);
+            $this->applyPeriodFilter($query, $tahunAjaranId, $allPeriods);
+
+            $data = $query
                 ->groupBy(DB::raw('MONTH(pembayarans.tanggal)'))
                 ->pluck('total', 'bulan')
                 ->toArray();
@@ -237,29 +275,34 @@ class DashboardService
     /**
      * Get tunggakan per jenjang chart data.
      */
-    public function getChartTunggakanJenjang(int $branchId, ?int $tahunAjaranId): array
+    public function getChartTunggakanJenjang(int $branchId, ?int $tahunAjaranId, bool $allPeriods = false): array
     {
-        $tahunAjaranId = $this->resolveTahunAjaranId($tahunAjaranId, $branchId);
-        $cacheKey = $this->getCacheKey('tunggakan-jenjang', $branchId, $tahunAjaranId);
+        if (!$allPeriods) {
+            $tahunAjaranId = $this->resolveTahunAjaranId($tahunAjaranId, $branchId);
+        } else {
+            $tahunAjaranId = null;
+        }
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($branchId, $tahunAjaranId) {
+        $cacheKey = $this->getCacheKey('tunggakan-jenjang' . ($allPeriods ? '-all' : ''), $branchId, $tahunAjaranId);
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($branchId, $tahunAjaranId, $allPeriods) {
             $jenjangList = ['TK', 'MI', 'KB'];
             $result = [];
 
             foreach ($jenjangList as $jenjang) {
-                $totalTagihan = Tagihan::where('tagihans.branch_id', $branchId)
-                    ->where('tagihans.tahun_ajaran_id', $tahunAjaranId)
+                $totalTagihanQuery = Tagihan::where('tagihans.branch_id', $branchId)
                     ->join('siswas', 'tagihans.nis', '=', 'siswas.nis')
                     ->where('siswas.jenjang', $jenjang)
-                    ->join('jenis_tagihans', 'tagihans.jenis_tagihan_id', '=', 'jenis_tagihans.id')
-                    ->sum('jenis_tagihans.jumlah');
+                    ->join('jenis_tagihans', 'tagihans.jenis_tagihan_id', '=', 'jenis_tagihans.id');
+                $this->applyPeriodFilter($totalTagihanQuery, $tahunAjaranId, $allPeriods);
+                $totalTagihan = $totalTagihanQuery->sum('jenis_tagihans.jumlah');
 
-                $totalTerbayar = Pembayaran::join('tagihans', 'pembayarans.kode_tagihan', '=', 'tagihans.kode_tagihan')
+                $totalTerbayarQuery = Pembayaran::join('tagihans', 'pembayarans.kode_tagihan', '=', 'tagihans.kode_tagihan')
                     ->join('siswas', 'tagihans.nis', '=', 'siswas.nis')
                     ->where('tagihans.branch_id', $branchId)
-                    ->where('tagihans.tahun_ajaran_id', $tahunAjaranId)
-                    ->where('siswas.jenjang', $jenjang)
-                    ->sum('pembayarans.jumlah');
+                    ->where('siswas.jenjang', $jenjang);
+                $this->applyPeriodFilter($totalTerbayarQuery, $tahunAjaranId, $allPeriods);
+                $totalTerbayar = $totalTerbayarQuery->sum('pembayarans.jumlah');
 
                 $result[] = [
                     'jenjang' => $jenjang,
@@ -276,38 +319,57 @@ class DashboardService
     /**
      * Get kas bulanan chart data (pemasukan vs pengeluaran per month).
      */
-    public function getChartKasBulanan(int $branchId, ?int $tahunAjaranId): array
+    public function getChartKasBulanan(int $branchId, ?int $tahunAjaranId, bool $allPeriods = false): array
     {
-        $tahunAjaranId = $this->resolveTahunAjaranId($tahunAjaranId, $branchId);
-        $cacheKey = $this->getCacheKey('kas-bulanan', $branchId, $tahunAjaranId);
+        if (!$allPeriods) {
+            $tahunAjaranId = $this->resolveTahunAjaranId($tahunAjaranId, $branchId);
+        } else {
+            $tahunAjaranId = null;
+        }
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($branchId, $tahunAjaranId) {
-            // Pemasukan (pembayaran grouped by month)
-            $pemasukan = Pembayaran::select(
+        $cacheKey = $this->getCacheKey('kas-bulanan' . ($allPeriods ? '-all' : ''), $branchId, $tahunAjaranId);
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($branchId, $tahunAjaranId, $allPeriods) {
+            // Pemasukan (pembayaran grouped by month).
+            $pemasukanQuery = Pembayaran::select(
                 DB::raw('MONTH(pembayarans.tanggal) as bulan'),
                 DB::raw('SUM(pembayarans.jumlah) as total')
             )
                 ->join('tagihans', 'pembayarans.kode_tagihan', '=', 'tagihans.kode_tagihan')
-                ->where('tagihans.branch_id', $branchId)
-                ->where('tagihans.tahun_ajaran_id', $tahunAjaranId)
+                ->where('tagihans.branch_id', $branchId);
+            $this->applyPeriodFilter($pemasukanQuery, $tahunAjaranId, $allPeriods);
+
+            $pemasukan = $pemasukanQuery
                 ->groupBy(DB::raw('MONTH(pembayarans.tanggal)'))
                 ->pluck('total', 'bulan')
                 ->toArray();
 
-            // Pengeluaran filtered by TahunAjaran date range
-            $tahunAjaran = TahunAjaran::find($tahunAjaranId);
+            // Pengeluaran:
+            //   mode periode tertentu → filter by date range tahun ajaran
+            //   mode all-periods    → akumulasi semua pengeluaran branch
             $pengeluaran = [];
-
-            if ($tahunAjaran) {
+            if ($allPeriods) {
                 $pengeluaran = Pengeluaran::select(
                     DB::raw('MONTH(tanggal) as bulan'),
                     DB::raw('SUM(jumlah) as total')
                 )
                     ->where('branch_id', $branchId)
-                    ->whereBetween('tanggal', [$tahunAjaran->tanggal_mulai, $tahunAjaran->tanggal_selesai])
                     ->groupBy(DB::raw('MONTH(tanggal)'))
                     ->pluck('total', 'bulan')
                     ->toArray();
+            } else {
+                $tahunAjaran = TahunAjaran::find($tahunAjaranId);
+                if ($tahunAjaran) {
+                    $pengeluaran = Pengeluaran::select(
+                        DB::raw('MONTH(tanggal) as bulan'),
+                        DB::raw('SUM(jumlah) as total')
+                    )
+                        ->where('branch_id', $branchId)
+                        ->whereBetween('tanggal', [$tahunAjaran->tanggal_mulai, $tahunAjaran->tanggal_selesai])
+                        ->groupBy(DB::raw('MONTH(tanggal)'))
+                        ->pluck('total', 'bulan')
+                        ->toArray();
+                }
             }
 
             $result = [];
@@ -327,20 +389,24 @@ class DashboardService
     /**
      * Get status tagihan chart data.
      */
-    public function getChartStatusTagihan(int $branchId, ?int $tahunAjaranId): array
+    public function getChartStatusTagihan(int $branchId, ?int $tahunAjaranId, bool $allPeriods = false): array
     {
-        $tahunAjaranId = $this->resolveTahunAjaranId($tahunAjaranId, $branchId);
-        $cacheKey = $this->getCacheKey('status-tagihan', $branchId, $tahunAjaranId);
+        if (!$allPeriods) {
+            $tahunAjaranId = $this->resolveTahunAjaranId($tahunAjaranId, $branchId);
+        } else {
+            $tahunAjaranId = null;
+        }
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($branchId, $tahunAjaranId) {
+        $cacheKey = $this->getCacheKey('status-tagihan' . ($allPeriods ? '-all' : ''), $branchId, $tahunAjaranId);
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($branchId, $tahunAjaranId, $allPeriods) {
             $statusList = ['Lunas', 'Belum Lunas', 'Belum Dibayar'];
 
-            $counts = Tagihan::where('branch_id', $branchId)
-                ->where('tahun_ajaran_id', $tahunAjaranId)
+            $countsQuery = Tagihan::where('branch_id', $branchId)
                 ->select('status', DB::raw('COUNT(*) as jumlah'))
-                ->groupBy('status')
-                ->pluck('jumlah', 'status')
-                ->toArray();
+                ->groupBy('status');
+            $this->applyPeriodFilter($countsQuery, $tahunAjaranId, $allPeriods, 'tahun_ajaran_id');
+            $counts = $countsQuery->pluck('jumlah', 'status')->toArray();
 
             $totalCount = array_sum($counts);
 
@@ -361,39 +427,71 @@ class DashboardService
     /**
      * Get top 10 siswa with highest tunggakan.
      */
-    public function getTopTunggakan(int $branchId, ?int $tahunAjaranId): array
+    public function getTopTunggakan(int $branchId, ?int $tahunAjaranId, bool $allPeriods = false): array
     {
-        $tahunAjaranId = $this->resolveTahunAjaranId($tahunAjaranId, $branchId);
-        $cacheKey = $this->getCacheKey('top-tunggakan', $branchId, $tahunAjaranId);
+        if (!$allPeriods) {
+            $tahunAjaranId = $this->resolveTahunAjaranId($tahunAjaranId, $branchId);
+        } else {
+            $tahunAjaranId = null;
+        }
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($branchId, $tahunAjaranId) {
-            // Get per-siswa tagihan totals and pembayaran totals
-            $results = DB::select("
-                SELECT 
+        $cacheKey = $this->getCacheKey('top-tunggakan' . ($allPeriods ? '-all' : ''), $branchId, $tahunAjaranId);
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($branchId, $tahunAjaranId, $allPeriods) {
+            // Bangun klausa periode: kosong saat all-periods, AND ke t/t2/sk
+            // saat periode tertentu.
+            if ($allPeriods) {
+                $periodFilterT  = '';
+                $periodFilterT2 = '';
+                $periodFilterSK = '';
+                $bindings = [$branchId, $branchId, $branchId];
+            } else {
+                $periodFilterT  = ' AND t.tahun_ajaran_id = ?';
+                $periodFilterT2 = ' AND t2.tahun_ajaran_id = ?';
+                $periodFilterSK = ' AND sk.tahun_ajaran_id = ?';
+                $bindings = [
+                    $branchId,                      // subquery total_terbayar t2.branch_id
+                    $tahunAjaranId,                 // subquery total_terbayar t2.tahun_ajaran_id
+                    $branchId,                      // join tagihans t.branch_id
+                    $tahunAjaranId,                 // join tagihans t.tahun_ajaran_id
+                    $tahunAjaranId,                 // siswa_kelas sk.tahun_ajaran_id
+                    $branchId,                      // siswas.branch_id
+                ];
+            }
+
+            $sql = "
+                SELECT
                     s.nis,
                     s.nama,
                     s.jenjang,
                     COALESCE(k.nama, '-') as kelas,
                     COALESCE(SUM(jt.jumlah), 0) as total_tagihan,
                     COALESCE((
-                        SELECT SUM(p.jumlah) 
-                        FROM pembayarans p 
-                        JOIN tagihans t2 ON p.kode_tagihan = t2.kode_tagihan 
-                        WHERE t2.nis = s.nis 
-                        AND t2.branch_id = ? 
-                        AND t2.tahun_ajaran_id = ?
+                        SELECT SUM(p.jumlah)
+                        FROM pembayarans p
+                        JOIN tagihans t2 ON p.kode_tagihan = t2.kode_tagihan
+                        WHERE t2.nis = s.nis
+                          AND t2.branch_id = ?{$periodFilterT2}
                     ), 0) as total_terbayar
                 FROM siswas s
-                JOIN tagihans t ON t.nis = s.nis AND t.branch_id = ? AND t.tahun_ajaran_id = ?
+                JOIN tagihans t ON t.nis = s.nis AND t.branch_id = ?{$periodFilterT}
                 JOIN jenis_tagihans jt ON t.jenis_tagihan_id = jt.id
-                LEFT JOIN siswa_kelas sk ON sk.siswa_id = s.id AND sk.tahun_ajaran_id = ?
+                LEFT JOIN siswa_kelas sk ON sk.siswa_id = s.id{$periodFilterSK}
                 LEFT JOIN kelas k ON sk.kelas_id = k.id
                 WHERE s.branch_id = ?
                 GROUP BY s.nis, s.nama, s.jenjang, k.nama
                 HAVING (total_tagihan - total_terbayar) > 0
                 ORDER BY (total_tagihan - total_terbayar) DESC
                 LIMIT 10
-            ", [$branchId, $tahunAjaranId, $branchId, $tahunAjaranId, $tahunAjaranId, $branchId]);
+            ";
+
+            // Susun ulang bindings sesuai urutan placeholder dalam SQL.
+            // Urutan placeholder: t2.branch_id, [t2.tahun_ajaran_id], t.branch_id, [t.tahun_ajaran_id], [sk.tahun_ajaran_id], s.branch_id
+            $orderedBindings = $allPeriods
+                ? [$branchId, $branchId, $branchId]
+                : [$branchId, $tahunAjaranId, $branchId, $tahunAjaranId, $tahunAjaranId, $branchId];
+
+            $results = DB::select($sql, $orderedBindings);
 
             return collect($results)->map(function ($row) {
                 return [
@@ -412,16 +510,21 @@ class DashboardService
     /**
      * Get tagihan due within next 7 days.
      */
-    public function getTagihanJatuhTempo(int $branchId, ?int $tahunAjaranId): array
+    public function getTagihanJatuhTempo(int $branchId, ?int $tahunAjaranId, bool $allPeriods = false): array
     {
-        $tahunAjaranId = $this->resolveTahunAjaranId($tahunAjaranId, $branchId);
-        $cacheKey = $this->getCacheKey('tagihan-jatuh-tempo', $branchId, $tahunAjaranId);
+        if (!$allPeriods) {
+            $tahunAjaranId = $this->resolveTahunAjaranId($tahunAjaranId, $branchId);
+        } else {
+            $tahunAjaranId = null;
+        }
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($branchId, $tahunAjaranId) {
+        $cacheKey = $this->getCacheKey('tagihan-jatuh-tempo' . ($allPeriods ? '-all' : ''), $branchId, $tahunAjaranId);
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($branchId, $tahunAjaranId, $allPeriods) {
             $today = now()->toDateString();
             $nextWeek = now()->addDays(7)->toDateString();
 
-            return Tagihan::select(
+            $query = Tagihan::select(
                 'tagihans.kode_tagihan',
                 'siswas.nama as nama_siswa',
                 'jenis_tagihans.nama as nama_jenis_tagihan',
@@ -432,11 +535,12 @@ class DashboardService
                 ->join('siswas', 'tagihans.nis', '=', 'siswas.nis')
                 ->join('jenis_tagihans', 'tagihans.jenis_tagihan_id', '=', 'jenis_tagihans.id')
                 ->where('tagihans.branch_id', $branchId)
-                ->where('tagihans.tahun_ajaran_id', $tahunAjaranId)
                 ->where('tagihans.status', '!=', 'Lunas')
                 ->whereBetween('jenis_tagihans.jatuh_tempo', [$today, $nextWeek])
-                ->orderBy('jenis_tagihans.jatuh_tempo', 'asc')
-                ->get()
+                ->orderBy('jenis_tagihans.jatuh_tempo', 'asc');
+            $this->applyPeriodFilter($query, $tahunAjaranId, $allPeriods);
+
+            return $query->get()
                 ->map(function ($item) {
                     return [
                         'kode_tagihan' => $item->kode_tagihan,
@@ -454,13 +558,18 @@ class DashboardService
     /**
      * Get 5 most recent pembayaran.
      */
-    public function getPembayaranTerbaru(int $branchId, ?int $tahunAjaranId): array
+    public function getPembayaranTerbaru(int $branchId, ?int $tahunAjaranId, bool $allPeriods = false): array
     {
-        $tahunAjaranId = $this->resolveTahunAjaranId($tahunAjaranId, $branchId);
-        $cacheKey = $this->getCacheKey('pembayaran-terbaru', $branchId, $tahunAjaranId);
+        if (!$allPeriods) {
+            $tahunAjaranId = $this->resolveTahunAjaranId($tahunAjaranId, $branchId);
+        } else {
+            $tahunAjaranId = null;
+        }
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($branchId, $tahunAjaranId) {
-            return Pembayaran::select(
+        $cacheKey = $this->getCacheKey('pembayaran-terbaru' . ($allPeriods ? '-all' : ''), $branchId, $tahunAjaranId);
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($branchId, $tahunAjaranId, $allPeriods) {
+            $query = Pembayaran::select(
                 'pembayarans.kode_pembayaran',
                 'siswas.nama as nama_siswa',
                 'jenis_tagihans.nama as nama_jenis_tagihan',
@@ -472,11 +581,12 @@ class DashboardService
                 ->join('siswas', 'tagihans.nis', '=', 'siswas.nis')
                 ->join('jenis_tagihans', 'tagihans.jenis_tagihan_id', '=', 'jenis_tagihans.id')
                 ->where('tagihans.branch_id', $branchId)
-                ->where('tagihans.tahun_ajaran_id', $tahunAjaranId)
                 ->orderBy('pembayarans.tanggal', 'desc')
                 ->orderBy('pembayarans.created_at', 'desc')
-                ->limit(5)
-                ->get()
+                ->limit(5);
+            $this->applyPeriodFilter($query, $tahunAjaranId, $allPeriods);
+
+            return $query->get()
                 ->map(function ($item) {
                     return [
                         'kode_pembayaran' => $item->kode_pembayaran,
@@ -494,7 +604,7 @@ class DashboardService
     /**
      * Get siswa personal dashboard data (no caching).
      */
-    public function getSiswaDashboard(int $siswaId, int $branchId): array
+    public function getSiswaDashboard(int $siswaId, int $branchId, ?int $tahunAjaranId = null, bool $allPeriods = false): array
     {
         $siswa = Siswa::where('id', $siswaId)->where('branch_id', $branchId)->first();
 
@@ -508,32 +618,43 @@ class DashboardService
             ];
         }
 
-        $tahunAjaranId = $this->resolveTahunAjaranId(null, $branchId);
+        // Saat $allPeriods = true, kita TIDAK memfilter tahun ajaran (lihat
+        // semua data lintas periode). Saat $tahunAjaranId diberikan, pakai
+        // periode itu. Kalau tidak keduanya, default ke periode aktif.
+        if (!$allPeriods) {
+            $tahunAjaranId = $this->resolveTahunAjaranId($tahunAjaranId, $branchId);
 
-        // If no active tahun ajaran, return empty data
-        if ($tahunAjaranId === null) {
-            return [
-                'total_tagihan' => 0,
-                'total_terbayar' => 0,
-                'total_tunggakan' => 0,
-                'tagihan_list' => [],
-                'pembayaran_terbaru' => [],
-            ];
+            if ($tahunAjaranId === null) {
+                return [
+                    'total_tagihan' => 0,
+                    'total_terbayar' => 0,
+                    'total_tunggakan' => 0,
+                    'tagihan_list' => [],
+                    'pembayaran_terbaru' => [],
+                ];
+            }
         }
 
-        $totalTagihan = Tagihan::where('tagihans.nis', $siswa->nis)
-            ->where('tagihans.branch_id', $branchId)
-            ->where('tagihans.tahun_ajaran_id', $tahunAjaranId)
-            ->join('jenis_tagihans', 'tagihans.jenis_tagihan_id', '=', 'jenis_tagihans.id')
-            ->sum('jenis_tagihans.jumlah');
+        $applyPeriode = function ($query, string $tableAlias = 'tagihans') use ($allPeriods, $tahunAjaranId) {
+            if (!$allPeriods && $tahunAjaranId !== null) {
+                $query->where("{$tableAlias}.tahun_ajaran_id", $tahunAjaranId);
+            }
+            return $query;
+        };
 
-        $totalTerbayar = Pembayaran::join('tagihans', 'pembayarans.kode_tagihan', '=', 'tagihans.kode_tagihan')
+        $totalTagihanQuery = Tagihan::where('tagihans.nis', $siswa->nis)
+            ->where('tagihans.branch_id', $branchId)
+            ->join('jenis_tagihans', 'tagihans.jenis_tagihan_id', '=', 'jenis_tagihans.id');
+        $applyPeriode($totalTagihanQuery);
+        $totalTagihan = $totalTagihanQuery->sum('jenis_tagihans.jumlah');
+
+        $totalTerbayarQuery = Pembayaran::join('tagihans', 'pembayarans.kode_tagihan', '=', 'tagihans.kode_tagihan')
             ->where('tagihans.nis', $siswa->nis)
-            ->where('tagihans.branch_id', $branchId)
-            ->where('tagihans.tahun_ajaran_id', $tahunAjaranId)
-            ->sum('pembayarans.jumlah');
+            ->where('tagihans.branch_id', $branchId);
+        $applyPeriode($totalTerbayarQuery);
+        $totalTerbayar = $totalTerbayarQuery->sum('pembayarans.jumlah');
 
-        $tagihanList = Tagihan::select(
+        $tagihanListQuery = Tagihan::select(
             'jenis_tagihans.nama as nama_jenis_tagihan',
             'jenis_tagihans.jumlah',
             'jenis_tagihans.jatuh_tempo',
@@ -541,9 +662,9 @@ class DashboardService
         )
             ->join('jenis_tagihans', 'tagihans.jenis_tagihan_id', '=', 'jenis_tagihans.id')
             ->where('tagihans.nis', $siswa->nis)
-            ->where('tagihans.branch_id', $branchId)
-            ->where('tagihans.tahun_ajaran_id', $tahunAjaranId)
-            ->get()
+            ->where('tagihans.branch_id', $branchId);
+        $applyPeriode($tagihanListQuery);
+        $tagihanList = $tagihanListQuery->get()
             ->map(fn($item) => [
                 'nama_jenis_tagihan' => $item->nama_jenis_tagihan,
                 'jumlah' => (float) $item->jumlah,
@@ -552,7 +673,8 @@ class DashboardService
             ])
             ->toArray();
 
-        $pembayaranTerbaru = Pembayaran::select(
+        $pembayaranTerbaruQuery = Pembayaran::select(
+            'pembayarans.kode_pembayaran',
             'pembayarans.tanggal',
             'jenis_tagihans.nama as nama_jenis_tagihan',
             'pembayarans.metode',
@@ -561,13 +683,15 @@ class DashboardService
             ->join('tagihans', 'pembayarans.kode_tagihan', '=', 'tagihans.kode_tagihan')
             ->join('jenis_tagihans', 'tagihans.jenis_tagihan_id', '=', 'jenis_tagihans.id')
             ->where('tagihans.nis', $siswa->nis)
-            ->where('tagihans.branch_id', $branchId)
-            ->where('tagihans.tahun_ajaran_id', $tahunAjaranId)
+            ->where('tagihans.branch_id', $branchId);
+        $applyPeriode($pembayaranTerbaruQuery);
+        $pembayaranTerbaru = $pembayaranTerbaruQuery
             ->orderBy('pembayarans.tanggal', 'desc')
             ->orderBy('pembayarans.created_at', 'desc')
             ->limit(5)
             ->get()
             ->map(fn($item) => [
+                'kode_pembayaran' => $item->kode_pembayaran,
                 'tanggal' => $item->tanggal,
                 'nama_jenis_tagihan' => $item->nama_jenis_tagihan,
                 'metode' => $item->metode,

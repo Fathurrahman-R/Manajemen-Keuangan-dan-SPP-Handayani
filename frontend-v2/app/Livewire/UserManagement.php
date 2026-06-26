@@ -68,6 +68,14 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                 ->required()
                 ->minLength(1)
                 ->maxLength(100),
+            TextInput::make('name')
+                ->label('Nama Lengkap')
+                ->maxLength(255),
+            TextInput::make('email')
+                ->label('Email')
+                ->email()
+                ->maxLength(255)
+                ->helperText('Wajib diisi untuk admin/operator agar bisa menerima notifikasi & reset password.'),
             TextInput::make('password')
                 ->label('Password')
                 ->password()
@@ -131,21 +139,46 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
             ->columns([
                 TextColumn::make('username')
                     ->label('Username')
-                    ->sortable(),
+                    ->sortable()
+                    ->searchable(),
+                TextColumn::make('name')
+                    ->label('Nama')
+                    ->sortable()
+                    ->searchable()
+                    ->placeholder('-')
+                    ->toggleable(),
+                TextColumn::make('email')
+                    ->label('Email')
+                    ->sortable()
+                    ->searchable()
+                    ->placeholder('-')
+                    ->copyable()
+                    ->toggleable(),
                 TextColumn::make('branch.location')
-                    ->label('Lokasi Cabang')
-                    ->formatStateUsing(function ($state, $record) {
-                        return $record['branch']['location'] ?? '-';
-                    }),
+                    ->label('Cabang')
+                    ->formatStateUsing(fn ($state, $record) => $record['branch']['location'] ?? '-'),
                 TextColumn::make('roles')
                     ->label('Role')
-                    ->sortable()
+                    ->badge()
+                    ->color('primary')
                     ->formatStateUsing(function ($state, $record) {
                         if (isset($record['roles']) && is_array($record['roles'])) {
                             return implode(', ', $record['roles']);
                         }
                         return '-';
                     }),
+                \Filament\Tables\Columns\IconColumn::make('is_active')
+                    ->label('Aktif')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger'),
+                TextColumn::make('created_at')
+                    ->label('Dibuat')
+                    ->date('d/m/Y')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->deferLoading()
             ->striped()
@@ -184,6 +217,8 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->fillForm(fn(array $record): array => [
                         'username' => $record['username'] ?? '',
+                        'name' => $record['name'] ?? '',
+                        'email' => $record['email'] ?? '',
                         'password' => '',
                         'branch_id' => $record['branch']['id'] ?? null,
                         'roles' => $record['roles'] ?? [],
@@ -192,6 +227,8 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                     ->action(function (array $data, $record): void {
                         $payload = [
                             'username' => $data['username'],
+                            'name' => $data['name'] ?? null,
+                            'email' => $data['email'] ?: null,
                             'branch_id' => (int) $data['branch_id'],
                             'roles' => $data['roles'],
                         ];
@@ -249,6 +286,31 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                     ->after(function () {
                         $this->resetTable();
                     }),
+                Action::make('toggleActive')
+                    ->tooltip(fn($record) => ($record['is_active'] ?? false) ? 'Nonaktifkan' : 'Aktifkan')
+                    ->icon(fn($record) => ($record['is_active'] ?? false) ? 'heroicon-s-x-circle' : 'heroicon-s-check-circle')
+                    ->iconButton()
+                    ->color(fn($record) => ($record['is_active'] ?? false) ? 'danger' : 'success')
+                    ->visible(fn(): bool => $this->hasPermission('update-user'))
+                    ->requiresConfirmation()
+                    ->modalHeading(fn($record) => ($record['is_active'] ?? false) ? 'Nonaktifkan User' : 'Aktifkan User')
+                    ->modalDescription(fn($record) => ($record['is_active'] ?? false)
+                        ? 'User yang dinonaktifkan tidak akan bisa login. Token aktif akan dicabut.'
+                        : 'User akan diaktifkan kembali dan bisa login.')
+                    ->modalSubmitActionLabel('Ya')
+                    ->action(function ($record): void {
+                        $response = ApiService::client()->patch('/users/' . $record['id'] . '/toggle-active');
+
+                        if (!$response->ok()) {
+                            Notification::make()->title('Gagal')->body('Terjadi kesalahan pada server.')->danger()->send();
+                            return;
+                        }
+
+                        $data = $response->json('data');
+                        $status = ($data['is_active'] ?? false) ? 'diaktifkan' : 'dinonaktifkan';
+                        Notification::make()->title('Berhasil')->body("User berhasil {$status}.")->success()->send();
+                    })
+                    ->after(fn() => $this->resetTable()),
                 Action::make('delete')
                     ->tooltip('Hapus User')
                     ->icon('heroicon-s-trash')
@@ -340,6 +402,8 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                     ->action(function (array $data): void {
                         $payload = [
                             'username' => $data['username'],
+                            'name' => $data['name'] ?? null,
+                            'email' => $data['email'] ?: null,
                             'password' => $data['password'],
                             'branch_id' => (int) $data['branch_id'],
                             'roles' => $data['roles'],

@@ -24,7 +24,7 @@ class TagihanJatuhTempoWidget extends BaseWidget
             ->records(function (): Collection {
                 $params = $this->selectedTahunAjaranId
                     ? ['tahun_ajaran_id' => $this->selectedTahunAjaranId]
-                    : [];
+                    : ['all_periods' => true];
 
                 try {
                     $response = ApiService::client()->get('/dashboard/tagihan-jatuh-tempo', $params);

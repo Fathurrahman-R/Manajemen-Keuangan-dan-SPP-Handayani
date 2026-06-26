@@ -24,7 +24,7 @@ class StatusTagihanChart extends ChartWidget
     {
         $params = $this->selectedTahunAjaranId
             ? ['tahun_ajaran_id' => $this->selectedTahunAjaranId]
-            : [];
+            : ['all_periods' => true];
 
         try {
             $response = ApiService::client()->get('/dashboard/charts/status-tagihan', $params);

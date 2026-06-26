@@ -79,7 +79,19 @@ class UserController extends Controller
             });
         }
 
-        $this->applySorting($query, ['username', 'email', 'created_at'], 'id', 'asc');
+        if ($search = $request->query('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('username', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('name', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->has('is_active')) {
+            $query->where('is_active', $request->boolean('is_active'));
+        }
+
+        $this->applySorting($query, ['username', 'email', 'name', 'created_at'], 'id', 'asc');
 
         $users = $query->paginate($perPage);
 
@@ -95,8 +107,11 @@ class UserController extends Controller
 
         $user = User::create([
             'username' => $data['username'],
+            'name' => $data['name'] ?? null,
+            'email' => $data['email'] ?? null,
             'password' => Hash::make($data['password']),
             'branch_id' => $data['branch_id'],
+            'is_active' => $data['is_active'] ?? true,
         ]);
 
         $user->syncRoles($data['roles']);
@@ -142,12 +157,24 @@ class UserController extends Controller
             $user->username = $data['username'];
         }
 
+        if (array_key_exists('email', $data)) {
+            $user->email = $data['email'];
+        }
+
+        if (array_key_exists('name', $data)) {
+            $user->name = $data['name'];
+        }
+
         if (isset($data['password'])) {
             $user->password = Hash::make($data['password']);
         }
 
         if (isset($data['branch_id'])) {
             $user->branch_id = $data['branch_id'];
+        }
+
+        if (array_key_exists('is_active', $data)) {
+            $user->is_active = (bool) $data['is_active'];
         }
 
         $user->save();
@@ -188,6 +215,35 @@ class UserController extends Controller
         return response()->json([
             'data' => true,
             'message' => 'Password berhasil diubah.'
+        ]);
+    }
+
+    /**
+     * Toggle active flag for a user. Tidak mempengaruhi role/permission;
+     * user yang inaktif akan ditolak login oleh middleware autentikasi.
+     */
+    public function toggleActive(int $id): JsonResponse
+    {
+        $user = User::find($id);
+        if (!$user) {
+            throw new HttpResponseException(response()->json([
+                'errors' => ['message' => ['User tidak ditemukan.']]
+            ], 404));
+        }
+
+        $user->is_active = ! (bool) $user->is_active;
+        $user->save();
+
+        // Kalau user dinonaktifkan, revoke semua token aktifnya.
+        if (! $user->is_active) {
+            $user->tokens()->delete();
+        }
+
+        return response()->json([
+            'data' => [
+                'id' => $user->id,
+                'is_active' => $user->is_active,
+            ],
         ]);
     }
 

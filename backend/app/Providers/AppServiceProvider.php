@@ -33,6 +33,22 @@ class AppServiceProvider extends ServiceProvider
         \Carbon\Carbon::setLocale(config('app.locale'));
         date_default_timezone_set(config('app.timezone'));
 
+        // ────────────────────────────────────────────────────────────────
+        // Best practice spatie/laravel-permission untuk superadmin:
+        //
+        // Gate::before() memberikan superadmin akses ke SEMUA gate &
+        // policy tanpa harus mendaftarkan permission satu per satu.
+        // Ini dipakai oleh:
+        //   - $user->can('view-anything')        → selalu true untuk superadmin
+        //   - Filament canViewPanel/canAccess    → bypass otomatis
+        //   - Policy ($this->authorize)          → bypass otomatis
+        //
+        // CATATAN: Middleware `permission:foo` dari Spatie tetap akan
+        // memeriksa `permissions.has(foo)`, jadi superadmin juga di-grant
+        // semua permission di RoleAndPermissionSeeder/SyncPermissionsCommand
+        // sebagai backup eksplisit. Dengan dua lapis ini, superadmin tidak
+        // akan pernah ter-blok dari halaman atau aksi apa pun.
+        // ────────────────────────────────────────────────────────────────
         Gate::before(function ($user, $ability) {
             if ($user === null) {
                 return null;

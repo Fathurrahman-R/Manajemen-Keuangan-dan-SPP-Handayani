@@ -11,6 +11,13 @@ class DashboardPage extends Page
 {
     use HasPeriodFilter;
 
+    /**
+     * Dashboard wajib menampilkan periode aktif sebagai default — tidak
+     * mengizinkan pseudo-option "Semua Periode" karena beberapa metrik
+     * (tunggakan, status tagihan) tidak bermakna lintas periode.
+     */
+    public bool $allowAllPeriodsOption = false;
+
     protected string $view = 'filament.pages.dashboard';
 
     protected static ?string $navigationLabel = 'Dashboard';

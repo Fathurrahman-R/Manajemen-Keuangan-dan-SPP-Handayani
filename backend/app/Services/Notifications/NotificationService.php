@@ -125,7 +125,7 @@ class NotificationService
         }
 
         // Resolve recipient
-        $siswa->loadMissing(['wali', 'ibu', 'ayah']);
+        $siswa->loadMissing(['user', 'wali', 'ibu', 'ayah']);
         $email = $this->recipientResolver->resolve($siswa);
 
         if (!$email) {
@@ -215,7 +215,7 @@ class NotificationService
     public function sendKwitansiPembayaran(Pembayaran $pembayaran): void
     {
         // Load siswa from pembayaran->tagihan->siswa relationship
-        $pembayaran->loadMissing(['tagihan.siswa.wali', 'tagihan.siswa.ibu', 'tagihan.siswa.ayah']);
+        $pembayaran->loadMissing(['tagihan.siswa.user', 'tagihan.siswa.wali', 'tagihan.siswa.ibu', 'tagihan.siswa.ayah']);
         $siswa = $pembayaran->tagihan->siswa;
         $branchId = $pembayaran->branch_id;
         $tagihanKode = $pembayaran->kode_tagihan;

@@ -19,7 +19,7 @@ class DashboardKasStatsWidget extends BaseWidget
     {
         $params = $this->selectedTahunAjaranId
             ? ['tahun_ajaran_id' => $this->selectedTahunAjaranId]
-            : [];
+            : ['all_periods' => true];
 
         try {
             $response = ApiService::client()->get('/dashboard/kas-summary', $params);

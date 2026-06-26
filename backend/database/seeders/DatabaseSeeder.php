@@ -12,6 +12,7 @@ use App\Models\Kelas;
 use App\Models\NotificationSetting;
 use App\Models\Pembayaran;
 use App\Models\Pengeluaran;
+use App\Models\PengeluaranRequest;
 use App\Models\Siswa;
 use App\Models\SiswaKelas;
 use App\Models\Tagihan;
@@ -159,6 +160,9 @@ class DatabaseSeeder extends Seeder
 
         // 11. Pengeluaran for main branch
         $this->seedPengeluaranForBranch($mainBranch);
+
+        // 12. PengeluaranRequest for main branch
+        $this->seedPengeluaranRequestsForBranch($mainBranch, $admin);
     }
 
     private function seedSiswaForBranch(Branch $branch, array $kelasPerJenjang, array $tahunAjarans): void
@@ -310,17 +314,20 @@ class DatabaseSeeder extends Seeder
     {
         $aktiveTahunAjaran = collect($tahunAjarans)->firstWhere('status', 'Aktif');
 
-        // Jenis Tagihan
+        // Jenis Tagihan — jatuh_tempo dihitung relatif terhadap hari ini agar
+        // dashboard "Tagihan Jatuh Tempo 7 Hari" punya data yang relevan
+        // ketika seeder dijalankan kapan saja.
+        $today = \Carbon\Carbon::today();
         $jenisTagihanData = [
-            ['nama' => 'SPP Januari', 'jatuh_tempo' => '2025-01-15', 'jumlah' => 150000],
-            ['nama' => 'SPP Februari', 'jatuh_tempo' => '2025-02-15', 'jumlah' => 150000],
-            ['nama' => 'SPP Maret', 'jatuh_tempo' => '2025-03-15', 'jumlah' => 150000],
-            ['nama' => 'SPP April', 'jatuh_tempo' => '2025-04-15', 'jumlah' => 150000],
-            ['nama' => 'SPP Mei', 'jatuh_tempo' => '2025-05-15', 'jumlah' => 150000],
-            ['nama' => 'SPP Juni', 'jatuh_tempo' => '2025-06-15', 'jumlah' => 150000],
-            ['nama' => 'Pendaftaran Ulang', 'jatuh_tempo' => '2024-07-30', 'jumlah' => 500000],
-            ['nama' => 'Seragam', 'jatuh_tempo' => '2024-08-15', 'jumlah' => 350000],
-            ['nama' => 'Buku Paket', 'jatuh_tempo' => '2024-08-01', 'jumlah' => 200000],
+            ['nama' => 'SPP Bulan Ini',     'jatuh_tempo' => $today->copy()->addDays(3)->format('Y-m-d'),  'jumlah' => 150000],
+            ['nama' => 'SPP Bulan Depan',   'jatuh_tempo' => $today->copy()->addDays(33)->format('Y-m-d'), 'jumlah' => 150000],
+            ['nama' => 'SPP 2 Bulan Lagi',  'jatuh_tempo' => $today->copy()->addDays(63)->format('Y-m-d'), 'jumlah' => 150000],
+            ['nama' => 'SPP 3 Bulan Lagi',  'jatuh_tempo' => $today->copy()->addDays(93)->format('Y-m-d'), 'jumlah' => 150000],
+            ['nama' => 'SPP 4 Bulan Lagi',  'jatuh_tempo' => $today->copy()->addDays(123)->format('Y-m-d'),'jumlah' => 150000],
+            ['nama' => 'SPP 5 Bulan Lagi',  'jatuh_tempo' => $today->copy()->addDays(153)->format('Y-m-d'),'jumlah' => 150000],
+            ['nama' => 'Pendaftaran Ulang', 'jatuh_tempo' => $today->copy()->subDays(15)->format('Y-m-d'), 'jumlah' => 500000],
+            ['nama' => 'Seragam',           'jatuh_tempo' => $today->copy()->subDays(30)->format('Y-m-d'), 'jumlah' => 350000],
+            ['nama' => 'Buku Paket',        'jatuh_tempo' => $today->copy()->subDays(45)->format('Y-m-d'), 'jumlah' => 200000],
         ];
 
         $jenisTagihans = [];
@@ -406,6 +413,35 @@ class DatabaseSeeder extends Seeder
                 'tanggal' => fake()->dateTimeBetween('-3 months', 'now')->format('Y-m-d'),
                 'uraian' => $data['uraian'],
                 'jumlah' => $data['jumlah'],
+                'tahun_ajaran_id' => 1,
+                'branch_id' => $branch->id,
+            ]);
+        }
+    }
+
+    private function seedPengeluaranRequestsForBranch(Branch $branch, User $admin): void
+    {
+        $requests = [
+            ['uraian' => 'Pembelian kertas A4 5 rim',          'jumlah' => 275000,   'status' => 'draft',     'days_ago' => 2],
+            ['uraian' => 'Bayar internet bulan ini',           'jumlah' => 450000,   'status' => 'submitted', 'days_ago' => 5],
+            ['uraian' => 'Pembelian tinta printer',            'jumlah' => 180000,   'status' => 'approved',  'days_ago' => 10],
+            ['uraian' => 'Biaya cleaning service',             'jumlah' => 600000,   'status' => 'disbursed', 'days_ago' => 20],
+            ['uraian' => 'Perbaikan atap bocor',               'jumlah' => 2500000,  'status' => 'rejected',  'days_ago' => 15],
+            ['uraian' => 'Pembelian spidol whiteboard 1 lusin','jumlah' => 85000,    'status' => 'draft',     'days_ago' => 1],
+            ['uraian' => 'Transport rapat koordinasi',         'jumlah' => 300000,   'status' => 'submitted', 'days_ago' => 7],
+            ['uraian' => 'Pembelian buku referensi guru',      'jumlah' => 750000,   'status' => 'approved',  'days_ago' => 12],
+        ];
+
+        foreach ($requests as $data) {
+            PengeluaranRequest::create([
+                'uraian' => $data['uraian'],
+                'jumlah' => $data['jumlah'],
+                // Gunakan tanggal lampau (bukan mendatang) agar data tetap muncul
+                // di laporan historis dan tidak tergantung tahun ajaran aktif
+                'tanggal_kebutuhan' => now()->subDays($data['days_ago'])->format('Y-m-d'),
+                'kategori_pengeluaran' => fake()->randomElement(['ATK', 'Utilitas', 'Perbaikan', 'Kebersihan', null]),
+                'status' => $data['status'],
+                'requester_id' => $admin->id,
                 'branch_id' => $branch->id,
             ]);
         }

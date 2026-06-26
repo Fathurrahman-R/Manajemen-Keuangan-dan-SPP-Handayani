@@ -73,6 +73,7 @@ class SyncPermissionsCommand extends Command
             Permission::VIEW_TAGIHAN_SISWA->value,
             Permission::VIEW_OWN_BILLING->value,
             Permission::PAY_TAGIHAN_ONLINE->value,
+            Permission::PRINT_KWITANSI->value,
         ];
         $siswa->syncPermissions($siswaPermissions);
         $this->info('Role siswa: ' . count($siswaPermissions) . ' permission.');

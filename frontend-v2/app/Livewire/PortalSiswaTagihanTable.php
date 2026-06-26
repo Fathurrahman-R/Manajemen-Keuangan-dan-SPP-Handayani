@@ -19,12 +19,21 @@ class PortalSiswaTagihanTable extends Component implements HasActions, HasSchema
     use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     public ?int $selectedSiswaId = null;
+    public ?int $selectedTahunAjaranId = null;
 
     public function table(Table $table): Table
     {
         return $table
             ->records(function (?string $search): LengthAwarePaginator {
-                $params = $this->selectedSiswaId ? ['siswa_id' => $this->selectedSiswaId] : [];
+                $params = [];
+                if ($this->selectedSiswaId) $params['siswa_id'] = $this->selectedSiswaId;
+
+                if ($this->selectedTahunAjaranId !== null) {
+                    $params['tahun_ajaran_id'] = $this->selectedTahunAjaranId;
+                } else {
+                    $params['all_periods'] = true;
+                }
+
                 try {
                     $response = ApiService::client()->get('/dashboard/siswa', $params);
                     $rows = $response->ok() ? (collect($response->json('data.tagihan_list') ?? [])->all()) : [];

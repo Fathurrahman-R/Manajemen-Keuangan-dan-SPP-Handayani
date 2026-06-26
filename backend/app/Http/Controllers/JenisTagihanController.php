@@ -26,12 +26,14 @@ class JenisTagihanController extends Controller
             return JenisTagihanResource::collection(collect());
         }
 
-        $jt = JenisTagihan::query()
-            ->where('branch_id', $user->branch_id)
-            ->where('tahun_ajaran_id', $tahunAjaranId)
-            ->get();
+        $query = JenisTagihan::query()
+            ->where('branch_id', $user->branch_id);
 
-        return JenisTagihanResource::collection($jt);
+        if ($tahunAjaranId !== 'all') {
+            $query->where('tahun_ajaran_id', $tahunAjaranId);
+        }
+
+        return JenisTagihanResource::collection($query->get());
     }
 
     #[HeaderParameter('Authorization')]
@@ -138,11 +140,25 @@ class JenisTagihanController extends Controller
 
     /**
      * Resolve the tahun_ajaran_id filter from request or default to Periode_Aktif.
-     * Returns null if no filter provided and no Periode_Aktif exists.
+     *
+     * Return value:
+     *   - int  : id periode terpilih (atau periode aktif default)
+     *   - 'all': user request "Semua Periode" via `all_periods=1` atau `tahun_ajaran_id=0`
+     *   - null : tidak ada periode aktif dan tidak ada filter eksplisit
      */
-    private function resolveTahunAjaranFilter($user): ?int
+    private function resolveTahunAjaranFilter($user): int|string|null
     {
+        // Eksplisit minta semua periode
+        if (request()->boolean('all_periods')) {
+            return 'all';
+        }
+
         $tahunAjaranId = request('tahun_ajaran_id');
+
+        // tahun_ajaran_id=0 juga diperlakukan sebagai "semua periode" (back-compat)
+        if ($tahunAjaranId !== null && $tahunAjaranId !== '' && (int) $tahunAjaranId === 0) {
+            return 'all';
+        }
 
         if ($tahunAjaranId) {
             // Validate branch ownership

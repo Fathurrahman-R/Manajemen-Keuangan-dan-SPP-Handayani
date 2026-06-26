@@ -315,6 +315,40 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
                     ->after(function () {
                         $this->resetTable();
                     }),
+                Action::make('delete')
+                    ->tooltip('Hapus Role')
+                    ->icon('heroicon-s-trash')
+                    ->iconButton()
+                    ->color('danger')
+                    ->visible(fn(): bool => $this->hasPermission('delete-role'))
+                    ->requiresConfirmation()
+                    ->modalHeading('Hapus Role')
+                    ->modalDescription(fn(array $record) => "Apakah kamu yakin ingin menghapus role \"{$record['name']}\"? Tindakan ini tidak dapat dibatalkan.")
+                    ->modalSubmitActionLabel('Ya, Hapus')
+                    ->modalCancelActionLabel('Batal')
+                    ->action(function (array $record): void {
+                        $response = ApiService::client()->delete('/roles/' . $record['id']);
+
+                        if ($response->ok()) {
+                            Notification::make()
+                                ->title('Role Berhasil Dihapus')
+                                ->success()
+                                ->send();
+                        } else {
+                            $body = $response->json();
+                            $errorMessage = 'Role gagal dihapus.';
+                            if (isset($body['errors']['message'])) {
+                                $messages = $body['errors']['message'];
+                                $errorMessage = is_array($messages) ? implode(' ', $messages) : $messages;
+                            }
+                            Notification::make()
+                                ->title('Gagal')
+                                ->body($errorMessage)
+                                ->danger()
+                                ->send();
+                        }
+                    })
+                    ->after(fn() => $this->resetTable()),
             ])
             ->bulkActions([
                 BulkAction::make('bulkDelete')

@@ -47,8 +47,13 @@ class MidtransTransactionController extends Controller
      */
     public function feeChannels(\App\Services\Midtrans\MidtransFeeService $feeService): JsonResponse
     {
+        // Optional preview: ?amount=12345 untuk hitung fee per channel saat
+        // siswa sudah mengetikkan jumlah bayar di modal.
+        $preview = (int) request('amount', 0);
+        $preview = $preview > 0 ? $preview : null;
+
         return response()->json([
-            'data' => $feeService->availableChannels(),
+            'data' => $feeService->availableChannels($preview),
             'default' => config('midtrans.default_channel', 'qris'),
         ]);
     }

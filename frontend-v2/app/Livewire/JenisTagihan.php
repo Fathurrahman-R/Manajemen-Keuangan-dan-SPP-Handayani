@@ -35,9 +35,11 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
             ->records(
                 function (?string $search, ?string $sortColumn = null, ?string $sortDirection = null): array {
                     try {
-                        $response = ApiService::client()->get('/jenis-tagihan', array_filter([
-                            'tahun_ajaran_id' => $this->selectedTahunAjaranId,
-                        ]));
+                        $params = $this->selectedTahunAjaranId
+                            ? ['tahun_ajaran_id' => $this->selectedTahunAjaranId]
+                            : ['all_periods' => 1];
+
+                        $response = ApiService::client()->get('/jenis-tagihan', $params);
 
                         if (!$response->ok()) {
                             $this->handleApiError($response);

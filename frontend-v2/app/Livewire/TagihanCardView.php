@@ -76,6 +76,8 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
 
         if ($this->selectedTahunAjaranId) {
             $params['tahun_ajaran_id'] = $this->selectedTahunAjaranId;
+        } else {
+            $params['all_periods'] = 1;
         }
 
         if (filled($this->search)) {
@@ -508,6 +510,8 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
 
                 if ($this->selectedTahunAjaranId) {
                     $params['tahun_ajaran_id'] = $this->selectedTahunAjaranId;
+                } else {
+                    $params['all_periods'] = 1;
                 }
                 if (filled($this->jenjang)) {
                     $params['jenjang'] = $this->jenjang;

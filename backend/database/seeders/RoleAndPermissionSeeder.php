@@ -46,11 +46,12 @@ class RoleAndPermissionSeeder extends Seeder
             ->toArray();
         $admin->syncPermissions($adminPermissions);
 
-        // Assign siswa permissions — view-tagihan-siswa, view-own-billing, and pay-tagihan-online
+        // Assign siswa permissions — view-tagihan-siswa, view-own-billing, pay-tagihan-online, dan print-kwitansi
         $siswa->syncPermissions([
             Permission::VIEW_TAGIHAN_SISWA->value,
             Permission::VIEW_OWN_BILLING->value,
             Permission::PAY_TAGIHAN_ONLINE->value,
+            Permission::PRINT_KWITANSI->value,
         ]);
 
         // Clear cache after seeding

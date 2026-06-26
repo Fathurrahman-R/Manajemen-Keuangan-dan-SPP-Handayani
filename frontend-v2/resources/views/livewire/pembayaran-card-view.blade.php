@@ -36,6 +36,7 @@
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Periode Ajaran</label>
                     <x-filament::input.wrapper>
                         <x-filament::input.select wire:model.live="selectedTahunAjaranId">
+                            <option value="">Semua Periode</option>
                             @foreach($tahunAjaranOptions as $option)
                                 <option value="{{ $option['id'] }}">
                                     {{ $option['nama'] }}

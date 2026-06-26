@@ -3,12 +3,22 @@
 namespace App\Filament\Portal\Pages;
 
 use App\Filament\Widgets\PortalSiswaStatsWidget;
+use App\Livewire\Concerns\HasPeriodFilter;
 use BackedEnum;
 use Filament\Pages\Page;
 use Livewire\Attributes\Url;
 
 class PortalBerandaPage extends Page
 {
+    use HasPeriodFilter;
+
+    /**
+     * Beranda portal: default ke "Semua Periode" supaya siswa/wali melihat
+     * akumulasi sejak awal masuk sampai sekarang. Tetap bisa di-filter ke
+     * periode tertentu via dropdown.
+     */
+    public bool $allowAllPeriodsOption = true;
+
     protected string $view = 'filament.portal.pages.beranda';
 
     protected static ?string $navigationLabel = 'Beranda';
@@ -45,6 +55,8 @@ class PortalBerandaPage extends Page
         if (in_array('wali', $roles)) {
             $this->childOptions = session()->get('data.children', []);
         }
+
+        $this->mountHasPeriodFilter();
     }
 
     public function updatedSelectedSiswaId(): void
@@ -62,15 +74,5 @@ class PortalBerandaPage extends Page
     public function getHeaderWidgetsColumns(): int|array
     {
         return 3;
-    }
-
-    /**
-     * Pass selectedSiswaId to the stats widget.
-     */
-    public function getWidgetData(): array
-    {
-        return [
-            'selectedSiswaId' => $this->selectedSiswaId,
-        ];
     }
 }

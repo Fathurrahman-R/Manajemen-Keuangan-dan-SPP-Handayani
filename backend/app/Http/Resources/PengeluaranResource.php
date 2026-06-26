@@ -20,7 +20,12 @@ class PengeluaranResource extends JsonResource
             'tanggal' => Carbon::parse($this->tanggal)->locale('id')->translatedFormat('d F Y'),
             'uraian' => $this->uraian,
             'jumlah' => (float) $this->jumlah,
-            'branch_id' => $this->branch_id
+            'branch_id' => $this->branch_id,
+            'tahun_ajaran_id' => $this->tahun_ajaran_id,
+            'tahun_ajaran' => $this->whenLoaded('tahunAjaran', fn () => [
+                'id' => $this->tahunAjaran?->id,
+                'nama' => $this->tahunAjaran?->nama,
+            ]),
         ];
     }
 }

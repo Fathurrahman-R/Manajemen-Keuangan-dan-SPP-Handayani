@@ -44,16 +44,20 @@ class TagihanController extends Controller
     {
         $user = Auth::user();
 
-        // Resolve tahun_ajaran_id filter
+        // Resolve tahun_ajaran_id filter — bisa int (specific), 'all' (semua periode), atau null (tidak ada periode aktif)
         $tahunAjaranId = $this->resolveTahunAjaranFilter($user);
         if ($tahunAjaranId === null) {
             // No active period and no filter provided — return empty
             return response()->json(['data' => [], 'meta' => ['current_page' => 1, 'last_page' => 1, 'per_page' => 10, 'total' => 0]]);
         }
 
+        $allPeriods = $tahunAjaranId === 'all';
+
         $query = Siswa::query()
-            ->whereHas('tagihan', function ($q) use ($tahunAjaranId) {
-                $q->where('tahun_ajaran_id', $tahunAjaranId);
+            ->whereHas('tagihan', function ($q) use ($tahunAjaranId, $allPeriods) {
+                if (!$allPeriods) {
+                    $q->where('tahun_ajaran_id', $tahunAjaranId);
+                }
             })
             ->where('branch_id', $user->branch_id);
 
@@ -86,8 +90,11 @@ class TagihanController extends Controller
         // Status filter: only include siswa that have at least one tagihan with matching status
         $status = request('status');
         if ($status) {
-            $query->whereHas('tagihan', function ($q) use ($status, $tahunAjaranId) {
-                $q->where('status', $status)->where('tahun_ajaran_id', $tahunAjaranId);
+            $query->whereHas('tagihan', function ($q) use ($status, $tahunAjaranId, $allPeriods) {
+                $q->where('status', $status);
+                if (!$allPeriods) {
+                    $q->where('tahun_ajaran_id', $tahunAjaranId);
+                }
             });
         }
 
@@ -112,10 +119,14 @@ class TagihanController extends Controller
         $perPage = min((int) request('per_page', 10), 100);
         $siswaList = $query->paginate($perPage);
 
-        // Eager load tagihan (scoped to period) with jenis_tagihan and kelas
+        // Eager load tagihan (scoped to period jika ada filter) with jenis_tagihan and kelas
         $siswaList->load(['kelas']);
-        $siswaList->each(function ($siswa) use ($tahunAjaranId) {
-            $siswa->setRelation('tagihan', $siswa->tagihan()->where('tahun_ajaran_id', $tahunAjaranId)->with('jenis_tagihan')->get());
+        $siswaList->each(function ($siswa) use ($tahunAjaranId, $allPeriods) {
+            $tagihanQuery = $siswa->tagihan();
+            if (!$allPeriods) {
+                $tagihanQuery->where('tahun_ajaran_id', $tahunAjaranId);
+            }
+            $siswa->setRelation('tagihan', $tagihanQuery->with('jenis_tagihan')->get());
         });
 
         return TagihanGroupedResource::collection($siswaList);
@@ -138,14 +149,19 @@ class TagihanController extends Controller
             return response()->json(['data' => [], 'meta' => ['current_page' => 1, 'last_page' => 1, 'per_page' => 30, 'total' => 0]]);
         }
 
+        $allPeriods = $tahunAjaranId === 'all';
+
         $query = Tagihan::query()
             ->with([
                 'siswa' => function ($q) { $q->select(['id','nis','nama','jenjang','kelas_id','kategori_id']); },
                 'jenis_tagihan' => function ($q) { $q->select(['id','nama','jatuh_tempo','jumlah']); },
             ])
             ->select(['kode_tagihan','jenis_tagihan_id','nis','tmp','status','branch_id','tahun_ajaran_id'])
-            ->where('branch_id', $user->branch_id)
-            ->where('tahun_ajaran_id', $tahunAjaranId);
+            ->where('branch_id', $user->branch_id);
+
+        if (!$allPeriods) {
+            $query->where('tahun_ajaran_id', $tahunAjaranId);
+        }
 
         if (!$user->hasAnyRole(['superadmin', 'admin'])) {
             $query->whereHas('siswa', fn($q) => $q->where('nis', $user->siswa?->nis ?? $user->username));
@@ -422,7 +438,8 @@ class TagihanController extends Controller
     public function exportPdf(Request $request)
     {
         $request->validate([
-            'tahun_ajaran_id' => 'nullable|integer|exists:tahun_ajarans,id',
+            'tahun_ajaran_id' => 'nullable|integer',
+            'all_periods' => 'nullable|boolean',
             'jenjang' => 'nullable|string|in:KB,TK,MI',
             'kelas_id' => 'nullable|integer',
             'status' => 'nullable|array',
@@ -434,6 +451,7 @@ class TagihanController extends Controller
 
         $user = $request->user();
         $tahunAjaranId = $this->resolveTahunAjaranFilter($user);
+        $allPeriods = $tahunAjaranId === 'all';
 
         $query = Tagihan::query()
             ->with([
@@ -442,7 +460,7 @@ class TagihanController extends Controller
             ])
             ->where('branch_id', $user->branch_id);
 
-        if ($tahunAjaranId) {
+        if ($tahunAjaranId && !$allPeriods) {
             $query->where('tahun_ajaran_id', $tahunAjaranId);
         }
 
@@ -491,9 +509,11 @@ class TagihanController extends Controller
         ])->toArray();
 
         $branchName = $user->branch?->nama ?? config('app.name');
-        $periode = $tahunAjaranId
-            ? (TahunAjaran::find($tahunAjaranId)?->nama ?? '-')
-            : 'Semua Periode';
+        $periode = $allPeriods
+            ? 'Semua Periode'
+            : ($tahunAjaranId
+                ? (TahunAjaran::find($tahunAjaranId)?->nama ?? '-')
+                : 'Semua Periode');
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('Laporan.tagihan-pdf', [
             'rows'         => $rows,
@@ -508,11 +528,25 @@ class TagihanController extends Controller
 
     /**
      * Resolve the tahun_ajaran_id filter from request or default to Periode_Aktif.
-     * Returns null if no filter provided and no Periode_Aktif exists.
+     *
+     * Return value:
+     *   - int  : id periode terpilih (atau periode aktif default)
+     *   - 'all': user request "Semua Periode" via `all_periods=1` atau `tahun_ajaran_id=0`
+     *   - null : tidak ada periode aktif dan tidak ada filter eksplisit
      */
-    private function resolveTahunAjaranFilter($user): ?int
+    private function resolveTahunAjaranFilter($user): int|string|null
     {
+        // Eksplisit minta semua periode
+        if (request()->boolean('all_periods')) {
+            return 'all';
+        }
+
         $tahunAjaranId = request('tahun_ajaran_id');
+
+        // tahun_ajaran_id=0 juga diperlakukan sebagai "semua periode" (back-compat)
+        if ($tahunAjaranId !== null && $tahunAjaranId !== '' && (int) $tahunAjaranId === 0) {
+            return 'all';
+        }
 
         if ($tahunAjaranId) {
             // Validate branch ownership

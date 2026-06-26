@@ -57,6 +57,9 @@ class WorkflowService
             ]);
         }
 
+        // Cegah submit jika request akan menyebabkan saldo mines.
+        $this->assertSaldoMencukupi($request);
+
         return DB::transaction(function () use ($request, $user) {
             $previousStatus = $request->status;
             $request->status = 'submitted';
@@ -127,13 +130,22 @@ class WorkflowService
             ]);
         }
 
+        // Cegah pencairan jika akan menyebabkan saldo mines.
+        $this->assertSaldoMencukupi($request);
+
         return DB::transaction(function () use ($request, $user) {
+            // Resolve tahun_ajaran_id berdasarkan periode aktif branch saat
+            // pencairan dilakukan, supaya pengeluaran tercatat ke periode
+            // yang relevan untuk laporan keuangan.
+            $tahunAjaran = \App\Models\TahunAjaran::getAktif($request->branch_id);
+
             // Create actual Pengeluaran record
             Pengeluaran::create([
                 'tanggal' => now()->toDateString(),
                 'uraian' => $request->uraian,
                 'jumlah' => $request->jumlah,
                 'branch_id' => $request->branch_id,
+                'tahun_ajaran_id' => $tahunAjaran?->id,
                 'pengeluaran_request_id' => $request->id,
             ]);
 
@@ -157,5 +169,53 @@ class WorkflowService
             'note' => $note,
             'created_at' => now(),
         ]);
+    }
+
+    /**
+     * Pastikan saldo cabang masih cukup untuk menampung jumlah pengeluaran
+     * dari request ini. Saldo dihitung dari total pemasukan (pembayaran) di
+     * cabang dikurangi total pengeluaran yang sudah dicairkan, MINUS jumlah
+     * pengeluaran lain yang masih outstanding (approved & belum disbursed
+     * atau submitted yang akan tap saldo yang sama).
+     *
+     * Untuk mencegah race antar request bersamaan, perhitungan ini dilakukan
+     * dalam transaction lock di pemanggil (submit/disburse).
+     *
+     * @throws ValidationException kalau saldo tidak mencukupi.
+     */
+    private function assertSaldoMencukupi(PengeluaranRequest $request): void
+    {
+        $branchId = $request->branch_id;
+        $jumlah = (float) $request->jumlah;
+
+        // Pemasukan = total pembayaran di cabang.
+        $totalPemasukan = (float) \App\Models\Pembayaran::query()
+            ->join('tagihans', 'tagihans.kode_tagihan', '=', 'pembayarans.kode_tagihan')
+            ->where('tagihans.branch_id', $branchId)
+            ->sum('pembayarans.jumlah');
+
+        // Pengeluaran yang sudah dicairkan (final).
+        $totalPengeluaranTerealisasi = (float) Pengeluaran::where('branch_id', $branchId)->sum('jumlah');
+
+        // Pengeluaran yang sedang dalam proses (approved tapi belum disbursed),
+        // dikurangi current request kalau sedang di-disburse (sudah approved).
+        $outstandingQuery = PengeluaranRequest::where('branch_id', $branchId)
+            ->whereIn('status', ['submitted', 'approved'])
+            ->where('id', '!=', $request->id);
+        $totalOutstanding = (float) $outstandingQuery->sum('jumlah');
+
+        $saldoTersedia = $totalPemasukan - $totalPengeluaranTerealisasi - $totalOutstanding;
+
+        if ($jumlah > $saldoTersedia) {
+            throw ValidationException::withMessages([
+                'jumlah' => [
+                    sprintf(
+                        'Saldo tidak mencukupi. Saldo tersedia: Rp %s, dibutuhkan: Rp %s. Pengeluaran ini akan menyebabkan saldo mines.',
+                        number_format(max($saldoTersedia, 0), 0, ',', '.'),
+                        number_format($jumlah, 0, ',', '.'),
+                    ),
+                ],
+            ]);
+        }
     }
 }

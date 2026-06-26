@@ -31,13 +31,35 @@ class KwitansiPembayaranNotification extends Notification implements ShouldQueue
 
     public function toMail($notifiable): MailMessage
     {
-        return (new MailMessage)
+        $message = (new MailMessage)
             ->subject('Kwitansi Pembayaran - ' . $this->siswa->nama)
             ->view('emails.notifications.kwitansi-pembayaran', [
                 'siswa' => $this->siswa,
                 'pembayaran' => $this->pembayaran,
                 'unsubscribeUrl' => '#unsubscribe',
             ]);
+
+        try {
+            $service = app(\App\Services\Notifications\KwitansiPdfService::class);
+            $pdfContent = $service->generate($this->pembayaran);
+            $filename = $service->filenameFor($this->pembayaran);
+
+            $message->attachData($pdfContent, $filename, [
+                'mime' => 'application/pdf',
+            ]);
+        } catch (\Throwable $e) {
+            // Kalau generate PDF gagal, tetap kirim email tanpa attachment
+            // (logging dilakukan di NotificationService level).
+            \Illuminate\Support\Facades\Log::warning(
+                'Gagal generate PDF kwitansi untuk attachment email',
+                [
+                    'kode_pembayaran' => $this->pembayaran->kode_pembayaran,
+                    'error' => $e->getMessage(),
+                ],
+            );
+        }
+
+        return $message;
     }
 
     /**

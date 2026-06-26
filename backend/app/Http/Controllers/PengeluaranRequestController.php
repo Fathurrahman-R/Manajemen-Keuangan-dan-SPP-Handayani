@@ -36,6 +36,21 @@ class PengeluaranRequestController extends Controller
             $query->where('status', $request->query('status'));
         }
 
+        // Filter periode ajaran berbasis tanggal_kebutuhan ke range tahun_ajarans.
+        // all_periods=1 atau tahun_ajaran_id=0 = semua periode.
+        $tahunAjaranId = $request->query('tahun_ajaran_id');
+        $allPeriods = $request->boolean('all_periods')
+            || ($tahunAjaranId !== null && $tahunAjaranId !== '' && (int) $tahunAjaranId === 0);
+
+        if (!$allPeriods && $tahunAjaranId !== null && $tahunAjaranId !== '') {
+            $ta = \App\Models\TahunAjaran::where('id', (int) $tahunAjaranId)
+                ->where('branch_id', $branchId)
+                ->first();
+            if ($ta) {
+                $query->whereBetween('tanggal_kebutuhan', [$ta->tanggal_mulai, $ta->tanggal_selesai]);
+            }
+        }
+
         $this->applySorting(
             $query,
             ['created_at', 'jumlah', 'tanggal_kebutuhan', 'status'],

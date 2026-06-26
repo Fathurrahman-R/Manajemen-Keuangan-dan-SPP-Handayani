@@ -94,6 +94,8 @@ class PembayaranCardView extends Component implements HasActions, HasSchemas
 
         if ($this->selectedTahunAjaranId) {
             $params['tahun_ajaran_id'] = $this->selectedTahunAjaranId;
+        } else {
+            $params['all_periods'] = 1;
         }
 
         try {

@@ -39,10 +39,17 @@ return [
     | Transaction Settings
     |--------------------------------------------------------------------------
     |
-    | fee_flat     : Biaya admin flat fallback (Rupiah).
-    | fee_channels : Biaya admin per kanal pembayaran. Dipakai saat siswa
-    |                memilih kanal di modal "Bayar Online". Override per kanal
-    |                lewat .env, mis. HANDAYANI_MIDTRANS_FEE_QRIS=1000.
+    | fee_flat     : Biaya admin flat fallback (Rupiah) saat channel tidak
+    |                dikenal.
+    | fee_channels : Biaya admin per kanal pembayaran. Mendukung dua tipe:
+    |                  type=flat   → ['type'=>'flat',  'amount'=>4000]
+    |                  type=percent→ ['type'=>'percent','percent'=>0.7,'flat'=>0]
+    |                Persentase dihitung dari `amount_paid`, optional
+    |                ditambah komponen flat (mis. credit card 2.9% + 2000).
+    |                Nilai default mengikuti tarif standar Midtrans:
+    |                  https://midtrans.com/id/pricing
+    |                Override per kanal lewat .env, mis.
+    |                HANDAYANI_MIDTRANS_FEE_QRIS_PERCENT=0.7
     | min_amount   : Minimum nominal pembayaran (Rp 10.000, asumsi A2).
     | expiry_hours : Kadaluarsa transaksi sejak inisiasi (24 jam, asumsi A3).
     |
@@ -52,27 +59,37 @@ return [
 
     'fee_channels' => [
         'qris' => [
-            'label' => 'QRIS',
-            'amount' => (int) env('HANDAYANI_MIDTRANS_FEE_QRIS', 1000),
+            'label'   => 'QRIS',
+            'type'    => 'percent',
+            'percent' => (float) env('HANDAYANI_MIDTRANS_FEE_QRIS_PERCENT', 0.7),
+            'flat'    => (int) env('HANDAYANI_MIDTRANS_FEE_QRIS_FLAT', 0),
         ],
         'bank_transfer' => [
-            'label' => 'Bank Transfer / Virtual Account',
+            'label'  => 'Bank Transfer / Virtual Account',
+            'type'   => 'flat',
             'amount' => (int) env('HANDAYANI_MIDTRANS_FEE_BANK_TRANSFER', 4000),
         ],
         'gopay' => [
-            'label' => 'GoPay',
-            'amount' => (int) env('HANDAYANI_MIDTRANS_FEE_GOPAY', 1500),
+            'label'   => 'GoPay',
+            'type'    => 'percent',
+            'percent' => (float) env('HANDAYANI_MIDTRANS_FEE_GOPAY_PERCENT', 2.0),
+            'flat'    => (int) env('HANDAYANI_MIDTRANS_FEE_GOPAY_FLAT', 0),
         ],
         'shopeepay' => [
-            'label' => 'ShopeePay',
-            'amount' => (int) env('HANDAYANI_MIDTRANS_FEE_SHOPEEPAY', 1500),
+            'label'   => 'ShopeePay',
+            'type'    => 'percent',
+            'percent' => (float) env('HANDAYANI_MIDTRANS_FEE_SHOPEEPAY_PERCENT', 2.0),
+            'flat'    => (int) env('HANDAYANI_MIDTRANS_FEE_SHOPEEPAY_FLAT', 0),
         ],
         'credit_card' => [
-            'label' => 'Kartu Kredit',
-            'amount' => (int) env('HANDAYANI_MIDTRANS_FEE_CREDIT_CARD', 5000),
+            'label'   => 'Kartu Kredit',
+            'type'    => 'percent',
+            'percent' => (float) env('HANDAYANI_MIDTRANS_FEE_CREDIT_CARD_PERCENT', 2.9),
+            'flat'    => (int) env('HANDAYANI_MIDTRANS_FEE_CREDIT_CARD_FLAT', 2000),
         ],
         'other' => [
-            'label' => 'Lainnya',
+            'label'  => 'Lainnya',
+            'type'   => 'flat',
             'amount' => (int) env('HANDAYANI_MIDTRANS_FEE_FLAT', 4000),
         ],
     ],

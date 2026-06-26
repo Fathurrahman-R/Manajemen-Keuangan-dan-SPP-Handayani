@@ -181,8 +181,8 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                 SelectFilter::make('jenis_kelamin')
                     ->label('Jenis Kelamin')
                     ->options([
-                        'L' => 'Laki-laki',
-                        'P' => 'Perempuan',
+                        'Laki-laki' => 'Laki-laki',
+                        'Perempuan' => 'Perempuan',
                     ]),
                 SelectFilter::make('agama')
                     ->label('Agama')

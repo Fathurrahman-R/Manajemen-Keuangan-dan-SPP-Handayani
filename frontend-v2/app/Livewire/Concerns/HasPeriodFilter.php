@@ -10,23 +10,65 @@ trait HasPeriodFilter
     public ?int $selectedTahunAjaranId = null;
     public array $tahunAjaranOptions = [];
 
-    public function mountHasPeriodFilter(): void
+    /**
+     * Whether the period filter exposes a "Semua Periode" pseudo-option
+     * that maps to `selectedTahunAjaranId = null` (no period filter).
+     *
+     * Default: true (semua halaman selain dashboard menggunakan ini).
+     * Override per page dengan menyetel property `$allowAllPeriodsOption`
+     * = false di kelas pemakai (mis. DashboardPage).
+     *
+     * Properti ini dideklarasi di sisi pemakai trait, bukan di trait,
+     * supaya kelas seperti DashboardPage bisa override default value
+     * (PHP melarang property override dengan default berbeda di trait).
+     */
+
+    public function mountHasPeriodFilter(?bool $allowAllPeriodsOption = null): void
     {
+        // Resolusi default: parameter > property pemakai > true.
+        if ($allowAllPeriodsOption !== null) {
+            $allow = $allowAllPeriodsOption;
+        } elseif (property_exists($this, 'allowAllPeriodsOption')) {
+            $allow = (bool) $this->allowAllPeriodsOption;
+        } else {
+            $allow = true;
+        }
+
+        // Persist hasil resolusi ke property pemakai jika ada (supaya
+        // updatedSelectedTahunAjaranId() bisa membacanya).
+        if (property_exists($this, 'allowAllPeriodsOption')) {
+            $this->allowAllPeriodsOption = $allow;
+        }
+
         $this->loadTahunAjaranOptions();
 
-        // Restore from session or default to Periode_Aktif
-        $this->selectedTahunAjaranId = session('selected_tahun_ajaran_id', $this->getAktifId());
+        $sessionValue = session('selected_tahun_ajaran_id', '__missing__');
+
+        if ($sessionValue === '__missing__') {
+            // Pertama kali halaman dibuka di session ini — default by mode.
+            $this->selectedTahunAjaranId = $allow
+                ? null
+                : $this->getAktifId();
+        } else {
+            $this->selectedTahunAjaranId = $sessionValue !== null ? (int) $sessionValue : null;
+        }
 
         // Validate session value still exists in available options
         if ($this->selectedTahunAjaranId && !$this->isValidOption($this->selectedTahunAjaranId)) {
-            $this->selectedTahunAjaranId = $this->getAktifId();
+            $this->selectedTahunAjaranId = $allow ? null : $this->getAktifId();
             session()->forget('selected_tahun_ajaran_id');
         }
     }
 
     public function updatedSelectedTahunAjaranId($value): void
     {
-        session(['selected_tahun_ajaran_id' => $value ? (int) $value : null]);
+        // Nilai 0 / '0' / '' diperlakukan sebagai "Semua Periode" (null).
+        $normalised = ($value === '' || $value === null || (int) $value === 0)
+            ? null
+            : (int) $value;
+
+        $this->selectedTahunAjaranId = $normalised;
+        session(['selected_tahun_ajaran_id' => $normalised]);
 
         // Refresh data — subclass should implement this
         if (method_exists($this, 'resetTable')) {

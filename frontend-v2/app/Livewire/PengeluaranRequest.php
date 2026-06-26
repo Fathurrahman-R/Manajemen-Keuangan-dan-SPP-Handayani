@@ -25,6 +25,12 @@ use Livewire\Component;
 class PengeluaranRequest extends Component implements HasActions, HasSchemas, HasTable
 {
     use InteractsWithActions, InteractsWithSchemas, InteractsWithTable, HandlesApiErrors;
+    use \App\Livewire\Concerns\HasPeriodFilter;
+
+    public function mount(): void
+    {
+        $this->mountHasPeriodFilter();
+    }
 
     public function table(Table $table): Table
     {
@@ -34,6 +40,12 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
 
                 if (!empty($filters['status']['value'] ?? null)) {
                     $params['status'] = $filters['status']['value'];
+                }
+
+                if ($this->selectedTahunAjaranId !== null) {
+                    $params['tahun_ajaran_id'] = $this->selectedTahunAjaranId;
+                } else {
+                    $params['all_periods'] = 1;
                 }
 
                 if (filled($sortColumn)) {

@@ -16,6 +16,7 @@ class Pengeluaran extends Model
         'uraian',
         'jumlah',
         'branch_id',
+        'tahun_ajaran_id',
         'pengeluaran_request_id',
     ];
     protected $primaryKey = 'id';
@@ -28,11 +29,17 @@ class Pengeluaran extends Model
         return [
             'jumlah' => 'float',
             'branch_id' => 'int',
+            'tahun_ajaran_id' => 'int',
         ];
     }
     public function branch()
     {
         return $this->BelongsTo(Branch::class, 'branch_id');
+    }
+
+    public function tahunAjaran()
+    {
+        return $this->belongsTo(TahunAjaran::class, 'tahun_ajaran_id');
     }
 
     public function pengeluaranRequest()

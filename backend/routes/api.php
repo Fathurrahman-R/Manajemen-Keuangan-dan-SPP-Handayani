@@ -93,6 +93,9 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/{id}', [UserController::class, 'destroy'])
                 ->middleware('permission:delete-user')
                 ->where('id', '[0-9]+');
+            Route::patch('/{id}/toggle-active', [UserController::class, 'toggleActive'])
+                ->middleware('permission:update-user')
+                ->where('id', '[0-9]+');
         });
 
         // Role management — permission-based

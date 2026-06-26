@@ -21,13 +21,15 @@ class DashboardController extends Controller
     {
         $request->validate([
             'tahun_ajaran_id' => 'nullable|integer|exists:tahun_ajarans,id',
+            'all_periods' => 'nullable|boolean',
         ]);
 
         $branchId = $request->user()->branch_id;
-        $tahunAjaranId = $request->input('tahun_ajaran_id');
+        $allPeriods = (bool) $request->boolean('all_periods');
+        $tahunAjaranId = $allPeriods ? null : $request->input('tahun_ajaran_id');
 
         return response()->json([
-            'data' => $this->dashboardService->getSummary($branchId, $tahunAjaranId),
+            'data' => $this->dashboardService->getSummary($branchId, $tahunAjaranId, $allPeriods),
         ]);
     }
 
@@ -39,11 +41,14 @@ class DashboardController extends Controller
         $request->validate([
             'tahun_ajaran_id' => 'nullable|integer|exists:tahun_ajarans,id',
             'all_time' => 'nullable|boolean',
+            'all_periods' => 'nullable|boolean',
         ]);
 
         $branchId = $request->user()->branch_id;
-        $allTime = (bool) $request->boolean('all_time');
-        $tahunAjaranId = $allTime ? null : $request->input('tahun_ajaran_id');
+        // Terima dua nama parameter (`all_time` legacy & `all_periods` baru)
+        // dengan semantik yang sama: skip filter periode.
+        $allPeriods = (bool) $request->boolean('all_time') || (bool) $request->boolean('all_periods');
+        $tahunAjaranId = $allPeriods ? null : $request->input('tahun_ajaran_id');
 
         return response()->json([
             'data' => $this->dashboardService->getKasSummary($branchId, $tahunAjaranId),
@@ -69,13 +74,15 @@ class DashboardController extends Controller
     {
         $request->validate([
             'tahun_ajaran_id' => 'nullable|integer|exists:tahun_ajarans,id',
+            'all_periods' => 'nullable|boolean',
         ]);
 
         $branchId = $request->user()->branch_id;
-        $tahunAjaranId = $request->input('tahun_ajaran_id');
+        $allPeriods = (bool) $request->boolean('all_periods');
+        $tahunAjaranId = $allPeriods ? null : $request->input('tahun_ajaran_id');
 
         return response()->json([
-            'data' => $this->dashboardService->getChartPembayaranBulanan($branchId, $tahunAjaranId),
+            'data' => $this->dashboardService->getChartPembayaranBulanan($branchId, $tahunAjaranId, $allPeriods),
         ]);
     }
 
@@ -86,13 +93,15 @@ class DashboardController extends Controller
     {
         $request->validate([
             'tahun_ajaran_id' => 'nullable|integer|exists:tahun_ajarans,id',
+            'all_periods' => 'nullable|boolean',
         ]);
 
         $branchId = $request->user()->branch_id;
-        $tahunAjaranId = $request->input('tahun_ajaran_id');
+        $allPeriods = (bool) $request->boolean('all_periods');
+        $tahunAjaranId = $allPeriods ? null : $request->input('tahun_ajaran_id');
 
         return response()->json([
-            'data' => $this->dashboardService->getChartTunggakanJenjang($branchId, $tahunAjaranId),
+            'data' => $this->dashboardService->getChartTunggakanJenjang($branchId, $tahunAjaranId, $allPeriods),
         ]);
     }
 
@@ -103,13 +112,15 @@ class DashboardController extends Controller
     {
         $request->validate([
             'tahun_ajaran_id' => 'nullable|integer|exists:tahun_ajarans,id',
+            'all_periods' => 'nullable|boolean',
         ]);
 
         $branchId = $request->user()->branch_id;
-        $tahunAjaranId = $request->input('tahun_ajaran_id');
+        $allPeriods = (bool) $request->boolean('all_periods');
+        $tahunAjaranId = $allPeriods ? null : $request->input('tahun_ajaran_id');
 
         return response()->json([
-            'data' => $this->dashboardService->getChartKasBulanan($branchId, $tahunAjaranId),
+            'data' => $this->dashboardService->getChartKasBulanan($branchId, $tahunAjaranId, $allPeriods),
         ]);
     }
 
@@ -120,13 +131,15 @@ class DashboardController extends Controller
     {
         $request->validate([
             'tahun_ajaran_id' => 'nullable|integer|exists:tahun_ajarans,id',
+            'all_periods' => 'nullable|boolean',
         ]);
 
         $branchId = $request->user()->branch_id;
-        $tahunAjaranId = $request->input('tahun_ajaran_id');
+        $allPeriods = (bool) $request->boolean('all_periods');
+        $tahunAjaranId = $allPeriods ? null : $request->input('tahun_ajaran_id');
 
         return response()->json([
-            'data' => $this->dashboardService->getChartStatusTagihan($branchId, $tahunAjaranId),
+            'data' => $this->dashboardService->getChartStatusTagihan($branchId, $tahunAjaranId, $allPeriods),
         ]);
     }
 
@@ -137,13 +150,15 @@ class DashboardController extends Controller
     {
         $request->validate([
             'tahun_ajaran_id' => 'nullable|integer|exists:tahun_ajarans,id',
+            'all_periods' => 'nullable|boolean',
         ]);
 
         $branchId = $request->user()->branch_id;
-        $tahunAjaranId = $request->input('tahun_ajaran_id');
+        $allPeriods = (bool) $request->boolean('all_periods');
+        $tahunAjaranId = $allPeriods ? null : $request->input('tahun_ajaran_id');
 
         return response()->json([
-            'data' => $this->dashboardService->getTopTunggakan($branchId, $tahunAjaranId),
+            'data' => $this->dashboardService->getTopTunggakan($branchId, $tahunAjaranId, $allPeriods),
         ]);
     }
 
@@ -154,13 +169,15 @@ class DashboardController extends Controller
     {
         $request->validate([
             'tahun_ajaran_id' => 'nullable|integer|exists:tahun_ajarans,id',
+            'all_periods' => 'nullable|boolean',
         ]);
 
         $branchId = $request->user()->branch_id;
-        $tahunAjaranId = $request->input('tahun_ajaran_id');
+        $allPeriods = (bool) $request->boolean('all_periods');
+        $tahunAjaranId = $allPeriods ? null : $request->input('tahun_ajaran_id');
 
         return response()->json([
-            'data' => $this->dashboardService->getTagihanJatuhTempo($branchId, $tahunAjaranId),
+            'data' => $this->dashboardService->getTagihanJatuhTempo($branchId, $tahunAjaranId, $allPeriods),
         ]);
     }
 
@@ -171,13 +188,15 @@ class DashboardController extends Controller
     {
         $request->validate([
             'tahun_ajaran_id' => 'nullable|integer|exists:tahun_ajarans,id',
+            'all_periods' => 'nullable|boolean',
         ]);
 
         $branchId = $request->user()->branch_id;
-        $tahunAjaranId = $request->input('tahun_ajaran_id');
+        $allPeriods = (bool) $request->boolean('all_periods');
+        $tahunAjaranId = $allPeriods ? null : $request->input('tahun_ajaran_id');
 
         return response()->json([
-            'data' => $this->dashboardService->getPembayaranTerbaru($branchId, $tahunAjaranId),
+            'data' => $this->dashboardService->getPembayaranTerbaru($branchId, $tahunAjaranId, $allPeriods),
         ]);
     }
 
@@ -188,12 +207,16 @@ class DashboardController extends Controller
     {
         $request->validate([
             'siswa_id' => 'nullable|integer|exists:siswas,id',
+            'tahun_ajaran_id' => 'nullable|integer|exists:tahun_ajarans,id',
+            'all_periods' => 'nullable|boolean',
         ]);
 
         /** @var User $user */
         $user = $request->user();
         $branchId = $user->branch_id;
         $siswaId = $request->input('siswa_id');
+        $tahunAjaranId = $request->input('tahun_ajaran_id');
+        $allPeriods = (bool) $request->boolean('all_periods');
 
         // Determine the siswa to show
         if ($siswaId) {
@@ -273,7 +296,7 @@ class DashboardController extends Controller
         }
 
         return response()->json([
-            'data' => $this->dashboardService->getSiswaDashboard($siswaId, $branchId),
+            'data' => $this->dashboardService->getSiswaDashboard($siswaId, $branchId, $tahunAjaranId, $allPeriods),
         ]);
     }
 }

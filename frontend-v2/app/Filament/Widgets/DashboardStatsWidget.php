@@ -16,7 +16,7 @@ class DashboardStatsWidget extends BaseWidget
     {
         $params = $this->selectedTahunAjaranId
             ? ['tahun_ajaran_id' => $this->selectedTahunAjaranId]
-            : [];
+            : ['all_periods' => true];
 
         try {
             $response = ApiService::client()->get('/dashboard/summary', $params);
@@ -46,10 +46,10 @@ class DashboardStatsWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-exclamation-triangle')
                 ->color('danger'),
 
-            Stat::make('Siswa Aktif', number_format($data['jumlah_siswa_aktif'] ?? 0))
-                ->description('Total siswa aktif')
-                ->descriptionIcon('heroicon-m-users')
-                ->color('info'),
+            Stat::make('Siswa Punya Tagihan', number_format($data['jumlah_siswa_punya_tagihan'] ?? 0))
+                ->description('Siswa dengan tagihan di periode ini')
+                ->descriptionIcon('heroicon-m-document-text')
+                ->color('primary'),
 
             Stat::make('Siswa Menunggak', number_format($data['jumlah_siswa_menunggak'] ?? 0))
                 ->description('Memiliki tunggakan')
@@ -81,10 +81,10 @@ class DashboardStatsWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-exclamation-triangle')
                 ->color('danger'),
 
-            Stat::make('Siswa Aktif', '0')
-                ->description('Total siswa aktif')
-                ->descriptionIcon('heroicon-m-users')
-                ->color('info'),
+            Stat::make('Siswa Punya Tagihan', '0')
+                ->description('Siswa dengan tagihan di periode ini')
+                ->descriptionIcon('heroicon-m-document-text')
+                ->color('primary'),
 
             Stat::make('Siswa Menunggak', '0')
                 ->description('Memiliki tunggakan')

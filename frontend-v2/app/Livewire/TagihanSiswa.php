@@ -147,14 +147,13 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
         $channels = $this->resolveFeeChannels();
         $defaultChannel = $this->resolveDefaultChannelKey($channels);
 
+        // Index channels by key untuk dipakai di closure helperText.
+        $channelByKey = collect($channels)->keyBy('key')->all();
+
         $channelOptions = collect($channels)
             ->mapWithKeys(fn (array $c): array => [
-                $c['key'] => $c['label'] . ' — Rp ' . number_format((int) $c['amount'], 0, ',', '.'),
+                $c['key'] => $c['label'] . ' — ' . ($c['description'] ?? ''),
             ])
-            ->all();
-
-        $feeMap = collect($channels)
-            ->mapWithKeys(fn (array $c): array => [$c['key'] => (int) $c['amount']])
             ->all();
 
         return Action::make('pay')
@@ -188,10 +187,10 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
                     ->native(false)
                     ->searchable(false)
                     ->live()
-                    ->helperText(function (Get $get) use ($feeMap): HtmlString {
+                    ->helperText(function (Get $get) use ($channelByKey): HtmlString {
                         $amountPaid = (int) ($get('amount_paid') ?? 0);
                         $channel = (string) ($get('payment_channel') ?? '');
-                        $fee = $feeMap[$channel] ?? 0;
+                        $fee = $this->computeFeeFromChannel($channelByKey[$channel] ?? null, $amountPaid);
                         $total = $amountPaid + $fee;
 
                         $feeLabel = __('midtrans.admin_fee', [], 'id');
@@ -291,6 +290,31 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
     private function resolveDefaultChannelKey(array $channels): string
     {
         return $channels[0]['key'] ?? 'qris';
+    }
+
+    /**
+     * Hitung admin fee untuk channel tertentu pada nominal $amountPaid.
+     * Mendukung dua tipe fee dari backend: flat (`amount`) dan percent
+     * (`percent` + optional `flat`).
+     *
+     * @param array<string, mixed>|null $channelData hasil dari /midtrans/fee-channels
+     */
+    private function computeFeeFromChannel(?array $channelData, int $amountPaid): int
+    {
+        if ($channelData === null) {
+            return 0;
+        }
+
+        $type = $channelData['type'] ?? 'flat';
+
+        if ($type === 'percent') {
+            $percent = (float) ($channelData['percent'] ?? 0);
+            $flat = (int) ($channelData['flat'] ?? 0);
+            return (int) round(($amountPaid * $percent / 100) + $flat);
+        }
+
+        // flat / legacy
+        return (int) ($channelData['amount'] ?? $channelData['flat'] ?? 0);
     }
 
     /**
@@ -405,15 +429,12 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
     {
         $channels = $this->resolveFeeChannels();
         $defaultChannel = $this->resolveDefaultChannelKey($channels);
+        $channelByKey = collect($channels)->keyBy('key')->all();
 
         $channelOptions = collect($channels)
             ->mapWithKeys(fn (array $c): array => [
-                $c['key'] => $c['label'] . ' — Rp ' . number_format((int) $c['amount'], 0, ',', '.'),
+                $c['key'] => $c['label'] . ' — ' . ($c['description'] ?? ''),
             ])
-            ->all();
-
-        $feeMap = collect($channels)
-            ->mapWithKeys(fn (array $c): array => [$c['key'] => (int) $c['amount']])
             ->all();
 
         return Action::make('payBatch')
@@ -433,9 +454,9 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
                     ->native(false)
                     ->searchable(false)
                     ->live()
-                    ->helperText(function (Get $get) use ($feeMap): HtmlString {
+                    ->helperText(function (Get $get) use ($channelByKey): HtmlString {
                         $channel = (string) ($get('payment_channel') ?? '');
-                        $fee = $feeMap[$channel] ?? 0;
+                        $fee = $this->computeFeeFromChannel($channelByKey[$channel] ?? null, $this->selectedTotal);
                         $total = $this->selectedTotal + $fee;
 
                         $sub = __('midtrans.payment_amount', [], 'id');

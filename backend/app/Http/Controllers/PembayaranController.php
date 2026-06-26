@@ -46,7 +46,12 @@ class PembayaranController extends Controller
         }
 
         $tahunAjaranId = request('tahun_ajaran_id');
-        if ($tahunAjaranId) {
+        $allPeriods = request()->boolean('all_periods')
+            || ($tahunAjaranId !== null && $tahunAjaranId !== '' && (int) $tahunAjaranId === 0);
+
+        if ($allPeriods) {
+            $tahunAjaranId = null;
+        } elseif ($tahunAjaranId) {
             // Hanya tampilkan siswa yang punya pembayaran (via tagihan) di periode terpilih.
             $query->whereHas('tagihan', function ($q) use ($tahunAjaranId) {
                 $q->where('tahun_ajaran_id', (int) $tahunAjaranId)
@@ -412,6 +417,7 @@ class PembayaranController extends Controller
     #[HeaderParameter('Authorization')]
     #[QueryParameter('search', description: 'Pencarian kode_pembayaran', required: false, example: 'PAY-2025')]
     #[QueryParameter('per_page', description: 'Jumlah data per halaman', required: false, example: 10)]
+    #[QueryParameter('include_pending', description: 'Sertakan transaksi Midtrans status pending sebagai item pseudo. Pembayaran final tetap diutamakan.', required: false, example: 'true')]
     public function siswaView(Request $request)
     {
         $user = Auth::user();
@@ -447,6 +453,42 @@ class PembayaranController extends Controller
 
         $perPage = min((int) $request->query('per_page', 10), 100);
         $pembayaran = $query->paginate($perPage);
+
+        // Sertakan transaksi Midtrans pending (belum jadi Pembayaran final)
+        // sebagai pseudo-row di awal list — hanya pada halaman pertama.
+        if ($request->boolean('include_pending') && $pembayaran->currentPage() === 1) {
+            $pendingTrx = \App\Models\MidtransTransaction::query()
+                ->where('nis', $siswa->nis)
+                ->whereIn('status', ['pending', 'authorize'])
+                ->with(['tagihan' => fn($q) => $q->with('jenis_tagihan')])
+                ->orderByDesc('created_at')
+                ->limit(20)
+                ->get()
+                ->map(fn($trx) => [
+                    'kode_pembayaran' => $trx->order_id,
+                    'kode_tagihan'    => $trx->kode_tagihan,
+                    'tanggal'         => $trx->created_at?->toDateString(),
+                    'metode'          => 'online_midtrans',
+                    'jumlah'          => (float) $trx->amount_paid,
+                    'pembayar'        => $siswa->nama,
+                    'status'          => 'pending',
+                    'is_pending'      => true,
+                    'order_id'        => $trx->order_id,
+                    'kode_tagihan_relation' => $trx->tagihan ? [
+                        'kode_tagihan' => $trx->tagihan->kode_tagihan,
+                        'jenis_tagihan' => [
+                            'nama' => $trx->tagihan->jenis_tagihan->nama ?? '-',
+                        ],
+                    ] : null,
+                ])
+                ->toArray();
+
+            $resource = PembayaranResource::collection($pembayaran);
+
+            return $resource->additional([
+                'pending' => $pendingTrx,
+            ]);
+        }
 
         return PembayaranResource::collection($pembayaran);
     }

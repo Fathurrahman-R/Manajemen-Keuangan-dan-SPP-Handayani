@@ -14,15 +14,23 @@ class PortalSiswaStatsWidget extends BaseWidget
     protected static ?int $sort = 1;
 
     public ?int $selectedSiswaId = null;
+    public ?int $selectedTahunAjaranId = null;
 
     protected function getStats(): array
     {
         // selectedSiswaId can be passed via URL query (?siswa=X) or property.
         $siswaId = $this->selectedSiswaId ?? (int) request()->query('siswa', 0) ?: null;
 
-        $params = $siswaId
-            ? ['siswa_id' => $siswaId]
-            : [];
+        $params = [];
+        if ($siswaId) {
+            $params['siswa_id'] = $siswaId;
+        }
+
+        if ($this->selectedTahunAjaranId !== null) {
+            $params['tahun_ajaran_id'] = $this->selectedTahunAjaranId;
+        } else {
+            $params['all_periods'] = true;
+        }
 
         try {
             $response = ApiService::client()->get('/dashboard/siswa', $params);

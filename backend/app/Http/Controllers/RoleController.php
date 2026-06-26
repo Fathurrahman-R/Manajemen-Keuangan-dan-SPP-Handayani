@@ -37,19 +37,38 @@ class RoleController extends Controller
             ],400));
         }
 
-        // buat role
-        $role = Role::create(['name'=>$data['name']]);
-
-        // asign permissions
-        foreach ($data['permissions'] as $permission) {
-            $role->givePermissionTo($permission);
+        // Validasi permission — pastikan semua permission ada di DB sebelum
+        // role di-create supaya tidak meninggalkan role tanpa permission
+        // ketika salah satu permission tidak valid.
+        $permissions = $data['permissions'] ?? [];
+        if (!empty($permissions)) {
+            $existingPermissions = \Spatie\Permission\Models\Permission::whereIn('name', $permissions)
+                ->pluck('name')
+                ->toArray();
+            $missing = array_diff($permissions, $existingPermissions);
+            if (!empty($missing)) {
+                throw new HttpResponseException(response([
+                    'errors' => [
+                        'message' => [
+                            'Permission tidak valid: ' . implode(', ', $missing),
+                        ],
+                    ],
+                ], 400));
+            }
         }
 
-        // load permissions
-        $role->refresh();
-        $role->load('permissions');
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($data, $permissions) {
+            $role = Role::create(['name' => $data['name']]);
 
-        return new RoleResource($role);
+            if (!empty($permissions)) {
+                $role->syncPermissions($permissions);
+            }
+
+            $role->refresh();
+            $role->load('permissions');
+
+            return new RoleResource($role);
+        });
     }
 
     public function show(int $id)
@@ -268,10 +287,120 @@ class RoleController extends Controller
 
     /**
      * Convert a kebab-case permission name into a human-readable label.
+     *
+     * Strategi:
+     *   1. Cek dictionary mapping eksplisit untuk kasus yang umum dipakai
+     *      (lihat `permissionLabelDictionary()`).
+     *   2. Kalau tidak ada, parse aksi+resource modular:
+     *      `view-tagihan`  → "Lihat Tagihan"
+     *      `create-siswa`  → "Tambah Siswa"
+     *      `manage-akun-siswa` → "Kelola Akun Siswa"
+     *   3. Fallback: title-case dengan space.
      */
     private function humanizePermission(string $name): string
     {
+        $dict = $this->permissionLabelDictionary();
+        if (isset($dict[$name])) {
+            return $dict[$name];
+        }
+
+        $actionMap = [
+            'view'     => 'Lihat',
+            'read'     => 'Detail',
+            'create'   => 'Tambah',
+            'update'   => 'Ubah',
+            'delete'   => 'Hapus',
+            'manage'   => 'Kelola',
+            'attach'   => 'Tetapkan',
+            'detach'   => 'Lepaskan',
+            'approve'  => 'Setujui',
+            'disburse' => 'Cairkan',
+            'sync'     => 'Sinkronkan',
+            'pay'      => 'Bayar',
+            'export'   => 'Ekspor',
+            'import'   => 'Impor',
+            'print'    => 'Cetak',
+        ];
+
+        $resourceMap = [
+            'user'                       => 'User',
+            'users'                      => 'User',
+            'siswa'                      => 'Siswa',
+            'kelas'                      => 'Kelas',
+            'kategori'                   => 'Kategori',
+            'tagihan'                    => 'Tagihan',
+            'jenis-tagihan'              => 'Jenis Tagihan',
+            'pembayaran'                 => 'Pembayaran',
+            'pengeluaran'                => 'Pengeluaran',
+            'pengeluaran-request'        => 'Permintaan Pengeluaran',
+            'kas-harian'                 => 'Kas Harian',
+            'rekap-bulanan'              => 'Rekap Bulanan',
+            'laporan'                    => 'Laporan',
+            'roles'                      => 'Role',
+            'role'                       => 'Role',
+            'permissions'                => 'Permission',
+            'tahun-ajaran'               => 'Tahun Ajaran',
+            'kenaikan-kelas'             => 'Kenaikan Kelas',
+            'akun-siswa'                 => 'Akun Siswa',
+            'data'                       => 'Data',
+            'dashboard'                  => 'Dashboard',
+            'own-billing'                => 'Tagihan Sendiri',
+            'tagihan-siswa'              => 'Tagihan Siswa',
+            'branch'                     => 'Cabang',
+            'midtrans-transactions'      => 'Transaksi Midtrans',
+            'midtrans-config'            => 'Konfigurasi Midtrans',
+            'tagihan-online'             => 'Tagihan Online',
+            'kwitansi'                   => 'Kwitansi',
+        ];
+
+        $parts = explode('-', $name);
+        if (count($parts) >= 2) {
+            $action = array_shift($parts);
+            $resourceKey = implode('-', $parts);
+
+            if (isset($actionMap[$action]) && isset($resourceMap[$resourceKey])) {
+                return $actionMap[$action] . ' ' . $resourceMap[$resourceKey];
+            }
+        }
+
+        // Fallback
         return ucwords(str_replace('-', ' ', $name));
+    }
+
+    /**
+     * Mapping eksplisit untuk label permission yang tidak mengikuti
+     * pattern aksi+resource biasa.
+     *
+     * @return array<string, string>
+     */
+    private function permissionLabelDictionary(): array
+    {
+        return [
+            'view-permissions'      => 'Lihat Daftar Permission',
+            'attach-permissions'    => 'Tetapkan Permission ke Role',
+            'detach-permissions'    => 'Lepaskan Permission dari Role',
+            'attach-role'           => 'Tetapkan Role ke User',
+            'detach-role'           => 'Lepaskan Role dari User',
+            'pay-tagihan-online'    => 'Bayar Tagihan Online',
+            'view-midtrans-transactions'  => 'Lihat Transaksi Midtrans',
+            'sync-midtrans-transactions'  => 'Sinkronkan Transaksi Midtrans',
+            'manage-midtrans-config'      => 'Kelola Konfigurasi Midtrans',
+            'view-own-billing'      => 'Lihat Tagihan Sendiri',
+            'view-tagihan-siswa'    => 'Lihat Halaman Tagihan Siswa',
+            'manage-akun-siswa'     => 'Kelola Akun Siswa',
+            'manage-tahun-ajaran'   => 'Kelola Tahun Ajaran',
+            'manage-kenaikan-kelas' => 'Kelola Kenaikan Kelas',
+            'create-pengeluaran-request' => 'Ajukan Pengeluaran',
+            'approve-pengeluaran'   => 'Setujui Pengeluaran',
+            'disburse-pengeluaran'  => 'Cairkan Pengeluaran',
+            'export-laporan'        => 'Ekspor Laporan',
+            'export-data'           => 'Ekspor Data',
+            'import-data'           => 'Impor Data',
+            'print-kwitansi'        => 'Cetak Kwitansi',
+            'view-dashboard'        => 'Lihat Dashboard',
+            'view-kas-harian'       => 'Lihat Kas Harian',
+            'view-rekap-bulanan'    => 'Lihat Rekap Bulanan',
+        ];
     }
 
     public function attach(RoleAttachDetachRequest $request)

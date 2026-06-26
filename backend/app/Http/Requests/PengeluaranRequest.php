@@ -39,6 +39,11 @@ class PengeluaranRequest extends FormRequest
                 'numeric',
                 'regex:/^\d{1,11}(\.\d{1,2})?$/'
             ],
+            'tahun_ajaran_id' => [
+                'nullable',
+                'integer',
+                'exists:tahun_ajarans,id',
+            ],
         ];
     }
 

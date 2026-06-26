@@ -11,7 +11,7 @@ class PembayaranBulananChart extends ChartWidget
 
     protected static ?int $sort = 2;
 
-    protected ?string $maxHeight = '300px';
+    protected ?string $maxHeight = '380px';
 
     public ?int $selectedTahunAjaranId = null;
 
@@ -24,7 +24,7 @@ class PembayaranBulananChart extends ChartWidget
     {
         $params = $this->selectedTahunAjaranId
             ? ['tahun_ajaran_id' => $this->selectedTahunAjaranId]
-            : [];
+            : ['all_periods' => true];
 
         try {
             $response = ApiService::client()->get('/dashboard/charts/pembayaran-bulanan', $params);
