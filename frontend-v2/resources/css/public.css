@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+@source "../views/layouts/public.blade.php";
+@source "../views/public/**/*.blade.php";
+@source "../views/components/public/**/*.blade.php";
+
+@theme {
+    /* Brand Colors — from portal-reference/styles.css oklch values */
+    --color-background: oklch(0.985 0.005 240);         /* #F7F9FC light gray-blue */
+    --color-foreground: oklch(0.22 0.04 260);            /* deep ink */
+    --color-surface: oklch(1 0 0);                       /* pure white */
+    --color-primary: oklch(0.47 0.18 263);               /* #1B4FBF deep blue */
+    --color-primary-foreground: oklch(0.985 0.005 240);  /* light */
+    --color-accent: oklch(0.55 0.12 175);                /* #0D8A6E teal */
+    --color-accent-foreground: oklch(0.985 0.005 240);   /* light */
+    --color-border: oklch(0.92 0.01 250);
+    --color-muted: oklch(0.95 0.01 240);
+    --color-muted-foreground: oklch(0.5 0.02 260);
+
+    /* Fonts */
+    --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
+    --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+    * {
+        border-color: var(--color-border);
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        background-color: var(--color-background);
+        color: var(--color-foreground);
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    h1, h2, h3, h4 {
+        font-family: var(--font-display);
+        letter-spacing: -0.02em;
+    }
+
+    section[id] {
+        scroll-margin-top: 5rem;
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+}
+
+/* Reveal animation utilities */
+@utility reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 700ms ease, transform 700ms ease;
+}
+
+@utility reveal-in {
+    opacity: 1;
+    transform: translateY(0);
+}

@@ -1,20 +1,20 @@
 <x-filament-panels::page>
     <x-filament::section>
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            @if(count($childOptions) > 1)
-                <div class="flex items-center gap-3">
-                    <label class="text-sm text-gray-600 dark:text-gray-400">Pilih Anak:</label>
-                    <x-filament::input.wrapper>
-                        <x-filament::input.select wire:model.live="selectedSiswaId">
-                            @foreach($childOptions as $child)
-                                <option value="{{ $child['id'] }}">{{ $child['nama'] }} ({{ $child['nis'] }})</option>
-                            @endforeach
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                </div>
-            @endif
+{{--            @if(count($childOptions) > 1)--}}
+{{--                <div class="flex items-center gap-3">--}}
+{{--                    <label class="text-sm text-gray-600 dark:text-gray-400">Pilih Anak:</label>--}}
+{{--                    <x-filament::input.wrapper>--}}
+{{--                        <x-filament::input.select wire:model.live="selectedSiswaId">--}}
+{{--                            @foreach($childOptions as $child)--}}
+{{--                                <option value="{{ $child['id'] }}">{{ $child['nama'] }} ({{ $child['nis'] }})</option>--}}
+{{--                            @endforeach--}}
+{{--                        </x-filament::input.select>--}}
+{{--                    </x-filament::input.wrapper>--}}
+{{--                </div>--}}
+{{--            @endif--}}
 
-            @if($this->hasTahunAjaranOptions())
+{{--            @if($this->hasTahunAjaranOptions())--}}
                 <div class="flex items-center gap-3">
                     <label class="text-sm text-gray-600 dark:text-gray-400">Periode:</label>
                     <x-filament::input.wrapper>
@@ -22,14 +22,13 @@
                             <option value="">Semua Periode</option>
                             @foreach($tahunAjaranOptions as $option)
                                 <option value="{{ $option['id'] }}">
-                                    {{ $option['nama'] }}
-                                    {{ $option['status'] === 'Aktif' ? '(Aktif)' : '(Historis)' }}
+                                    {{ $option['nama'] }}{{ $option['status'] === 'Aktif' ? '(Aktif)' : '(Historis)' }}
                                 </option>
                             @endforeach
                         </x-filament::input.select>
                     </x-filament::input.wrapper>
                 </div>
-            @endif
+{{--            @endif--}}
         </div>
     </x-filament::section>
 

@@ -17,7 +17,7 @@ class PortalBerandaPage extends Page
      * akumulasi sejak awal masuk sampai sekarang. Tetap bisa di-filter ke
      * periode tertentu via dropdown.
      */
-    public bool $allowAllPeriodsOption = true;
+    public bool $allowAllPeriodsOption = false;
 
     protected string $view = 'filament.portal.pages.beranda';
 
@@ -51,10 +51,10 @@ class PortalBerandaPage extends Page
             abort(403);
         }
 
-        $roles = session()->get('data.roles', []);
-        if (in_array('wali', $roles)) {
-            $this->childOptions = session()->get('data.children', []);
-        }
+//        $roles = session()->get('data.roles', []);
+//        if (in_array('wali', $roles)) {
+//            $this->childOptions = session()->get('data.children', []);
+//        }
 
         $this->mountHasPeriodFilter();
     }
@@ -64,12 +64,17 @@ class PortalBerandaPage extends Page
         // Trigger re-render so widget & tables receive new selectedSiswaId.
     }
 
-    protected function getHeaderWidgets(): array
+    public function updatedSelectedTahunAjaranId($value): void
     {
-        return [
-            PortalSiswaStatsWidget::class,
-        ];
+        session(['selected_tahun_ajaran_id' => $value ? (int) $value : null]);
     }
+
+//    protected function getHeaderWidgets(): array
+//    {
+//        return [
+//            PortalSiswaStatsWidget::class,
+//        ];
+//    }
 
     public function getHeaderWidgetsColumns(): int|array
     {
