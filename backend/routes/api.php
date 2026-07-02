@@ -76,6 +76,17 @@ Route::middleware('auth:sanctum')->group(function () {
             ->middleware('permission:view-own-billing');
     });
 
+    // Tahun Ajaran routes (needed by all roles for dropdown filters)
+    Route::prefix('/tahun-ajaran')->group(function () {
+        Route::get('/', [TahunAjaranController::class, 'index']);
+        Route::post('/', [TahunAjaranController::class, 'store'])->middleware('permission:manage-tahun-ajaran');
+        Route::get('/{id}', [TahunAjaranController::class, 'show']);
+        Route::put('/{id}', [TahunAjaranController::class, 'update'])->middleware('permission:manage-tahun-ajaran');
+        Route::delete('/{id}', [TahunAjaranController::class, 'destroy'])->middleware('permission:manage-tahun-ajaran');
+        Route::patch('/{id}/activate', [TahunAjaranController::class, 'activate'])->middleware('permission:manage-tahun-ajaran');
+        Route::patch('/{id}/deactivate', [TahunAjaranController::class, 'deactivate'])->middleware('permission:manage-tahun-ajaran');
+    });
+
     // Admin panel routes — deny access to users with only "siswa" role
     Route::middleware('deny_siswa')->group(function () {
         // User management routes
@@ -193,16 +204,6 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/{id}', [JenisTagihanController::class, 'delete'])->middleware('permission:delete-jenis-tagihan');
         });
 
-        // Tahun Ajaran routes
-        Route::prefix('/tahun-ajaran')->group(function () {
-            Route::get('/', [TahunAjaranController::class, 'index']);
-            Route::post('/', [TahunAjaranController::class, 'store'])->middleware('permission:manage-tahun-ajaran');
-            Route::get('/{id}', [TahunAjaranController::class, 'show']);
-            Route::put('/{id}', [TahunAjaranController::class, 'update'])->middleware('permission:manage-tahun-ajaran');
-            Route::delete('/{id}', [TahunAjaranController::class, 'destroy'])->middleware('permission:manage-tahun-ajaran');
-            Route::patch('/{id}/activate', [TahunAjaranController::class, 'activate'])->middleware('permission:manage-tahun-ajaran');
-            Route::patch('/{id}/deactivate', [TahunAjaranController::class, 'deactivate'])->middleware('permission:manage-tahun-ajaran');
-        });
 
         // Setting routes (accessible to authenticated admin users)
         Route::get('/setting', [AppSettingController::class, 'get']);
