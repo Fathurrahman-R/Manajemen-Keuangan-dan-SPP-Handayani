@@ -225,7 +225,7 @@ class NotificationService
             $this->logNotification([
                 'branch_id' => $branchId,
                 'recipient_email' => '',
-                'notification_type' => 'kwitansi_pembayaran',
+                'notification_type' => 'kwitansi',
                 'tagihan_kode' => $tagihanKode,
                 'status' => 'skipped',
                 'reason' => 'disabled',
@@ -240,7 +240,7 @@ class NotificationService
             $this->logNotification([
                 'branch_id' => $branchId,
                 'recipient_email' => '',
-                'notification_type' => 'kwitansi_pembayaran',
+                'notification_type' => 'kwitansi',
                 'tagihan_kode' => $tagihanKode,
                 'status' => 'skipped',
                 'reason' => 'no_email_available',
@@ -249,11 +249,11 @@ class NotificationService
         }
 
         // Check opt-out
-        if ($this->isOptedOut($email, 'kwitansi_pembayaran')) {
+        if ($this->isOptedOut($email, 'kwitansi')) {
             $this->logNotification([
                 'branch_id' => $branchId,
                 'recipient_email' => $email,
-                'notification_type' => 'kwitansi_pembayaran',
+                'notification_type' => 'kwitansi',
                 'tagihan_kode' => $tagihanKode,
                 'status' => 'skipped',
                 'reason' => 'opted_out',
@@ -266,7 +266,7 @@ class NotificationService
             $this->logNotification([
                 'branch_id' => $branchId,
                 'recipient_email' => $email,
-                'notification_type' => 'kwitansi_pembayaran',
+                'notification_type' => 'kwitansi',
                 'tagihan_kode' => $tagihanKode,
                 'status' => 'skipped',
                 'reason' => 'invalid_email',
@@ -279,7 +279,7 @@ class NotificationService
             $this->logNotification([
                 'branch_id' => $branchId,
                 'recipient_email' => $email,
-                'notification_type' => 'kwitansi_pembayaran',
+                'notification_type' => 'kwitansi',
                 'tagihan_kode' => $tagihanKode,
                 'status' => 'skipped',
                 'reason' => 'rate_limited',
@@ -295,7 +295,7 @@ class NotificationService
             $this->logNotification([
                 'branch_id' => $branchId,
                 'recipient_email' => $email,
-                'notification_type' => 'kwitansi_pembayaran',
+                'notification_type' => 'kwitansi',
                 'tagihan_kode' => $tagihanKode,
                 'status' => 'sent',
             ]);
@@ -309,7 +309,7 @@ class NotificationService
             $this->logNotification([
                 'branch_id' => $branchId,
                 'recipient_email' => $email,
-                'notification_type' => 'kwitansi_pembayaran',
+                'notification_type' => 'kwitansi',
                 'tagihan_kode' => $tagihanKode,
                 'status' => 'failed',
                 'error_message' => $e->getMessage(),
@@ -342,7 +342,7 @@ class NotificationService
                     ->get();
 
                 foreach ($tagihans as $tagihan) {
-                    $notificationType = "reminder_{$daysBefore}d";
+                    $notificationType = "reminder";
 
                     // Check if already sent today
                     if (NotificationSentRecord::alreadySent($tagihan->kode_tagihan, $notificationType)) {
@@ -360,7 +360,7 @@ class NotificationService
                         $this->logNotification([
                             'branch_id' => $branchId,
                             'recipient_email' => '',
-                            'notification_type' => 'reminder_jatuh_tempo',
+                            'notification_type' => 'reminder',
                             'tagihan_kode' => $tagihan->kode_tagihan,
                             'status' => 'skipped',
                             'reason' => 'no_email_available',
@@ -369,11 +369,11 @@ class NotificationService
                     }
 
                     // Check opt-out
-                    if ($this->isOptedOut($email, 'reminder_jatuh_tempo')) {
+                    if ($this->isOptedOut($email, 'reminder')) {
                         $this->logNotification([
                             'branch_id' => $branchId,
                             'recipient_email' => $email,
-                            'notification_type' => 'reminder_jatuh_tempo',
+                            'notification_type' => 'reminder',
                             'tagihan_kode' => $tagihan->kode_tagihan,
                             'status' => 'skipped',
                             'reason' => 'opted_out',
@@ -386,7 +386,7 @@ class NotificationService
                         $this->logNotification([
                             'branch_id' => $branchId,
                             'recipient_email' => $email,
-                            'notification_type' => 'reminder_jatuh_tempo',
+                            'notification_type' => 'reminder',
                             'tagihan_kode' => $tagihan->kode_tagihan,
                             'status' => 'skipped',
                             'reason' => 'invalid_email',
@@ -399,7 +399,7 @@ class NotificationService
                         $this->logNotification([
                             'branch_id' => $branchId,
                             'recipient_email' => $email,
-                            'notification_type' => 'reminder_jatuh_tempo',
+                            'notification_type' => 'reminder',
                             'tagihan_kode' => $tagihan->kode_tagihan,
                             'status' => 'skipped',
                             'reason' => 'rate_limited',
@@ -422,7 +422,7 @@ class NotificationService
                         $this->logNotification([
                             'branch_id' => $branchId,
                             'recipient_email' => $email,
-                            'notification_type' => 'reminder_jatuh_tempo',
+                            'notification_type' => 'reminder',
                             'tagihan_kode' => $tagihan->kode_tagihan,
                             'status' => 'sent',
                         ]);
@@ -436,7 +436,7 @@ class NotificationService
                         $this->logNotification([
                             'branch_id' => $branchId,
                             'recipient_email' => $email,
-                            'notification_type' => 'reminder_jatuh_tempo',
+                            'notification_type' => 'reminder',
                             'tagihan_kode' => $tagihan->kode_tagihan,
                             'status' => 'failed',
                             'error_message' => $e->getMessage(),
@@ -493,7 +493,7 @@ class NotificationService
                     $this->logNotification([
                         'branch_id' => $branchId,
                         'recipient_email' => '',
-                        'notification_type' => 'tagihan_overdue',
+                        'notification_type' => 'overdue',
                         'tagihan_kode' => $tagihan->kode_tagihan,
                         'status' => 'skipped',
                         'reason' => 'no_email_available',
@@ -502,11 +502,11 @@ class NotificationService
                 }
 
                 // Check opt-out
-                if ($this->isOptedOut($email, 'tagihan_overdue')) {
+                if ($this->isOptedOut($email, 'overdue')) {
                     $this->logNotification([
                         'branch_id' => $branchId,
                         'recipient_email' => $email,
-                        'notification_type' => 'tagihan_overdue',
+                        'notification_type' => 'overdue',
                         'tagihan_kode' => $tagihan->kode_tagihan,
                         'status' => 'skipped',
                         'reason' => 'opted_out',
@@ -519,7 +519,7 @@ class NotificationService
                     $this->logNotification([
                         'branch_id' => $branchId,
                         'recipient_email' => $email,
-                        'notification_type' => 'tagihan_overdue',
+                        'notification_type' => 'overdue',
                         'tagihan_kode' => $tagihan->kode_tagihan,
                         'status' => 'skipped',
                         'reason' => 'invalid_email',
@@ -532,7 +532,7 @@ class NotificationService
                     $this->logNotification([
                         'branch_id' => $branchId,
                         'recipient_email' => $email,
-                        'notification_type' => 'tagihan_overdue',
+                        'notification_type' => 'overdue',
                         'tagihan_kode' => $tagihan->kode_tagihan,
                         'status' => 'skipped',
                         'reason' => 'rate_limited',
@@ -559,7 +559,7 @@ class NotificationService
                     $this->logNotification([
                         'branch_id' => $branchId,
                         'recipient_email' => $email,
-                        'notification_type' => 'tagihan_overdue',
+                        'notification_type' => 'overdue',
                         'tagihan_kode' => $tagihan->kode_tagihan,
                         'status' => 'sent',
                     ]);
@@ -573,7 +573,7 @@ class NotificationService
                     $this->logNotification([
                         'branch_id' => $branchId,
                         'recipient_email' => $email,
-                        'notification_type' => 'tagihan_overdue',
+                        'notification_type' => 'overdue',
                         'tagihan_kode' => $tagihan->kode_tagihan,
                         'status' => 'failed',
                         'error_message' => $e->getMessage(),
@@ -631,7 +631,7 @@ class NotificationService
                         }
                         break;
 
-                    case 'reminder_jatuh_tempo':
+                    case 'reminder':
                         $tagihan = Tagihan::where('kode_tagihan', $log->tagihan_kode)
                             ->with(['siswa.wali', 'siswa.ibu', 'siswa.ayah', 'jenis_tagihan'])
                             ->first();
@@ -649,7 +649,7 @@ class NotificationService
                         }
                         break;
 
-                    case 'kwitansi_pembayaran':
+                    case 'kwitansi':
                         $pembayaran = Pembayaran::where('kode_tagihan', $log->tagihan_kode)
                             ->with(['tagihan.siswa.wali', 'tagihan.siswa.ibu', 'tagihan.siswa.ayah'])
                             ->latest()
@@ -664,7 +664,7 @@ class NotificationService
                         }
                         break;
 
-                    case 'tagihan_overdue':
+                    case 'overdue':
                         $tagihan = Tagihan::where('kode_tagihan', $log->tagihan_kode)
                             ->with(['siswa.wali', 'siswa.ibu', 'siswa.ayah', 'jenis_tagihan'])
                             ->first();
