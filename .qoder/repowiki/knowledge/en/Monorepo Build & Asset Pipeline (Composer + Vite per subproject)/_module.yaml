@@ -1,0 +1,16 @@
+schema_version: 1
+module_path: build_system
+title: Monorepo Build & Asset Pipeline (Composer + Vite per subproject)
+scope: []
+source_files:
+    - backend/composer.json
+    - backend/vite.config.js
+    - backend/phpunit.xml
+    - frontend/package.json
+    - frontend/vite.config.js
+    - frontend-v2/package.json
+    - frontend-v2/vite.config.js
+    - portal-reference/handayani-joyful-portal/package.json
+    - portal-reference/handayani-joyful-portal/vite.config.ts
+depends_on: []
+related_to: []

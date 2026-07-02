@@ -1,0 +1,1 @@
+Laravel + Filament v4 application providing the admin dashboard and student/parent portal, with Livewire tables, widgets, and pages backed by a remote API.

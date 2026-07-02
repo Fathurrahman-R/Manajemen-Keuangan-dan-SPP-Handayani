@@ -327,6 +327,14 @@
       <path value="$PROJECT_DIR$/frontend-v2/vendor/wire-elements/modal" />
       <path value="$PROJECT_DIR$/frontend-v2/vendor/wireui/phosphoricons" />
       <path value="$PROJECT_DIR$/backend/vendor/spatie/laravel-permission" />
+      <path value="$PROJECT_DIR$/backend/vendor/maatwebsite/excel" />
+      <path value="$PROJECT_DIR$/backend/vendor/phpoffice/phpspreadsheet" />
+      <path value="$PROJECT_DIR$/backend/vendor/markbaker/matrix" />
+      <path value="$PROJECT_DIR$/backend/vendor/markbaker/complex" />
+      <path value="$PROJECT_DIR$/backend/vendor/ezyang/htmlpurifier" />
+      <path value="$PROJECT_DIR$/backend/vendor/midtrans/midtrans-php" />
+      <path value="$PROJECT_DIR$/backend/vendor/maennchen/zipstream-php" />
+      <path value="$PROJECT_DIR$/frontend-v2/vendor/giorgiosironi/eris" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.4" />

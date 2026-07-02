@@ -307,6 +307,14 @@
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/phpstan/phpdoc-parser" />
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/spatie/laravel-package-tools" />
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/spatie/laravel-permission" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/ezyang/htmlpurifier" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/maatwebsite/excel" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/maennchen/zipstream-php" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/markbaker/complex" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/markbaker/matrix" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/midtrans/midtrans-php" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/phpoffice/phpspreadsheet" />
+      <excludeFolder url="file://$MODULE_DIR$/frontend-v2/vendor/giorgiosironi/eris" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

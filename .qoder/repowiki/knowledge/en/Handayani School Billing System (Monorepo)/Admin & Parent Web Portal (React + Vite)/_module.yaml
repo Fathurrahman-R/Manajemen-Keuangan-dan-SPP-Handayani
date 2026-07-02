@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: frontend_v1_admin
+title: Admin & Parent Web Portal (React + Vite)
+scope:
+    - frontend/
+source_files: []
+depends_on: []
+related_to: []

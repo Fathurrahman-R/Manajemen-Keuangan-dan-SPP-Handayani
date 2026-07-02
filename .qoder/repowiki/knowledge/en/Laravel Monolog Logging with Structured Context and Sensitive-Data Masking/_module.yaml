@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: logging_system
+title: Laravel Monolog Logging with Structured Context and Sensitive-Data Masking
+scope: []
+source_files:
+    - backend/config/logging.php
+    - frontend-v2/config/logging.php
+    - backend/app/Services/Midtrans/MidtransLogService.php
+    - backend/app/Services/Midtrans/MidtransNotificationService.php
+    - backend/app/Services/Notifications/NotificationService.php
+depends_on: []
+related_to: []
