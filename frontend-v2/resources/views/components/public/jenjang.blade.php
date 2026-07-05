@@ -5,37 +5,15 @@
         <x-public.reveal class="max-w-2xl">
             <span class="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Jenjang Pendidikan</span>
             <h2 class="mt-3 font-display text-3xl font-bold leading-tight md:text-4xl lg:text-5xl">
-                Tiga jenjang. Satu lingkungan pendidikan yang utuh.
+                {{ config('handayani-public.jenjang.title') }}
             </h2>
             <p class="mt-4 text-base leading-relaxed text-muted-foreground">
-                Setiap jenjang dirancang berkesinambungan — peserta didik tumbuh dalam ekosistem yang konsisten dari usia dini hingga akhir sekolah dasar.
+                {{ config('handayani-public.jenjang.description') }}
             </p>
         </x-public.reveal>
 
         @php
-            $levels = [
-                [
-                    'code' => 'KB/PAUD',
-                    'name' => 'Kelompok Bermain & PAUD',
-                    'age' => 'Usia 2 – 4 Tahun',
-                    'desc' => 'Tahap awal pengenalan dunia belajar melalui bermain, stimulasi motorik, dan pembiasaan adab harian.',
-                    'programs' => ['Sensory & motorik halus', 'Pengenalan huruf hijaiyah', 'Doa-doa pendek harian', 'Sosial-emosional'],
-                ],
-                [
-                    'code' => 'TK',
-                    'name' => 'Taman Kanak-Kanak',
-                    'age' => 'Usia 4 – 6 Tahun',
-                    'desc' => 'Penguatan kesiapan sekolah dasar dengan metode eksploratif berbasis Kurikulum Merdeka dan nilai Islam.',
-                    'programs' => ['Calistung ceria', 'Tahfidz Juz 30', 'Bahasa Inggris dasar', 'Outbound & manasik'],
-                ],
-                [
-                    'code' => 'MI',
-                    'name' => 'Madrasah Ibtidaiyah',
-                    'age' => 'Usia 6 – 12 Tahun',
-                    'desc' => 'Pendidikan dasar Islam terpadu yang mengintegrasikan kurikulum nasional, tahfidz, dan literasi digital.',
-                    'programs' => ['Kurikulum Nasional + IT', 'Tahfidz terstruktur', 'Sains bilingual', 'Ekstrakurikuler pilihan'],
-                ],
-            ];
+            $levels = config('handayani-public.jenjang.levels', []);
         @endphp
 
         {{-- Level cards --}}

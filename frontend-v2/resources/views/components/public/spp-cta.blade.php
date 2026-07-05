@@ -15,10 +15,10 @@
                         Layanan Orang Tua
                     </span>
                     <h2 class="mt-3 font-display text-3xl font-bold leading-tight md:text-4xl lg:text-5xl">
-                        Portal Pembayaran SPP
+                        {{ config('handayani-public.spp_cta.title') }}
                     </h2>
                     <p class="mt-4 max-w-xl text-base leading-relaxed text-primary-foreground/85">
-                        Lakukan pembayaran SPP kapan saja melalui portal resmi Yayasan Handayani. Riwayat transparan, konfirmasi otomatis, dan terlindungi enkripsi end-to-end.
+                        {{ config('handayani-public.spp_cta.description') }}
                     </p>
 
                     <div class="mt-8 flex flex-wrap items-center gap-3">
@@ -45,23 +45,7 @@
                 {{-- Trust badges --}}
                 <x-public.reveal delay="120ms" class="lg:col-span-5">
                     @php
-                        $badges = [
-                            [
-                                'label' => 'Terverifikasi',
-                                'desc' => 'Akun siswa diverifikasi langsung oleh admin yayasan.',
-                                'icon' => '<path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/>',
-                            ],
-                            [
-                                'label' => 'Real-time',
-                                'desc' => 'Status pembayaran tersinkron seketika.',
-                                'icon' => '<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>',
-                            ],
-                            [
-                                'label' => 'Aman SSL',
-                                'desc' => 'Enkripsi industri standar untuk setiap transaksi.',
-                                'icon' => '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
-                            ],
-                        ];
+                        $badges = config('handayani-public.spp_cta.badges', []);
                     @endphp
 
                     <ul class="grid gap-3">

@@ -6,17 +6,81 @@
         <div class="absolute inset-0 bg-gradient-to-b from-background/40 via-background/60 to-background"></div>
     </div>
 
-    <div class="relative mx-auto grid max-w-7xl items-center gap-12 px-5 py-20 lg:grid-cols-12 lg:gap-8 lg:px-8 lg:py-28">
-        {{-- Text content --}}
-        <div class="lg:col-span-7">
-            {{-- Badge --}}
-{{--            <span class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">--}}
-{{--                <span class="size-1.5 rounded-full bg-accent"></span>--}}
-{{--                Lembaga Pendidikan Anak--}}
-{{--            </span>--}}
+    {{-- Hero carousel (Visual ditampikan lebih dulu pada mobile) --}}
+    <div class="relative h-[40vh] min-h-[320px] lg:absolute lg:inset-y-0 lg:right-0 lg:h-full lg:w-1/2"
+         x-data='{
+            activeSlide: 0,
+            slides: @json(config("handayani-public.hero.images", [])),
+            autoSlideInterval: null,
+            startAutoSlide() {
+                this.autoSlideInterval = setInterval(() => {
+                    this.next();
+                }, 5000);
+            },
+            stopAutoSlide() {
+                clearInterval(this.autoSlideInterval);
+            },
+            next() {
+                this.activeSlide = this.activeSlide === this.slides.length - 1 ? 0 : this.activeSlide + 1;
+            },
+            prev() {
+                this.activeSlide = this.activeSlide === 0 ? this.slides.length - 1 : this.activeSlide - 1;
+            }
+         }'
+         x-init="startAutoSlide()"
+         @mouseenter="stopAutoSlide()"
+         @mouseleave="startAutoSlide()"
+    >
+        <div class="relative h-full w-full overflow-hidden group">
+            {{-- Soft gradient to blend with the left background on large screens --}}
+            <div class="hidden lg:block absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none"></div>
 
+            {{-- Images --}}
+            <template x-for="(slide, index) in slides" :key="index">
+                <img
+                    :src="slide"
+                    alt="Visual sekolah Handayani"
+                    class="absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ease-in-out"
+                    :class="activeSlide === index ? 'opacity-100 z-10' : 'opacity-0 z-0'"
+                    loading="lazy"
+                />
+            </template>
+
+            {{-- Arrows Navigation --}}
+            <button
+                @click="prev(); stopAutoSlide(); startAutoSlide()"
+                class="absolute left-4 lg:left-8 top-1/2 z-20 -translate-y-1/2 grid size-10 place-items-center rounded-full bg-background/80 text-foreground shadow-sm opacity-0 backdrop-blur-sm transition-all hover:bg-background group-hover:opacity-100 focus:opacity-100"
+                aria-label="Gambar sebelumnya"
+            >
+                <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            <button
+                @click="next(); stopAutoSlide(); startAutoSlide()"
+                class="absolute right-4 lg:right-8 top-1/2 z-20 -translate-y-1/2 grid size-10 place-items-center rounded-full bg-background/80 text-foreground shadow-sm opacity-0 backdrop-blur-sm transition-all hover:bg-background group-hover:opacity-100 focus:opacity-100"
+                aria-label="Gambar selanjutnya"
+            >
+                <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+            </button>
+
+            {{-- Dots Pagination --}}
+            <div class="absolute bottom-6 left-0 right-0 z-20 flex justify-center gap-2">
+                <template x-for="(slide, index) in slides" :key="index">
+                    <button
+                        @click="activeSlide = index; stopAutoSlide(); startAutoSlide()"
+                        :class="activeSlide === index ? 'bg-primary w-6' : 'bg-white/70 w-2 hover:bg-white'"
+                        class="h-2 rounded-full transition-all duration-300 shadow-sm"
+                        :aria-label="'Ke gambar ' + (index + 1)"
+                    ></button>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <div class="relative mx-auto max-w-7xl lg:grid lg:grid-cols-2 lg:px-8">
+        {{-- Text content --}}
+        <div class="px-5 py-12 lg:py-32 lg:pr-8 lg:pl-0 z-10 flex flex-col justify-center">
             {{-- H1 --}}
-            <h1 class="mt-5 font-display text-4xl font-bold leading-[1.05] text-foreground md:text-5xl lg:text-6xl">
+            <h1 class="font-display text-4xl font-bold leading-[1.05] text-foreground md:text-5xl lg:text-6xl">
                 {{ config('handayani-public.name') }}
             </h1>
 
@@ -53,11 +117,7 @@
 
             {{-- Stats --}}
             <dl class="mt-12 grid max-w-lg grid-cols-3 gap-6 border-t border-border pt-6">
-                @foreach([
-                    ['key' => '3', 'value' => 'Jenjang Terpadu'],
-                    ['key' => '20+', 'value' => 'Tahun Berdiri'],
-                    ['key' => '100%', 'value' => 'Kurikulum Nasional'],
-                ] as $stat)
+                @foreach(config('handayani-public.hero.stats', []) as $stat)
                     <div>
                         <dt class="font-display text-2xl font-bold text-foreground">{{ $stat['key'] }}</dt>
                         <dd class="mt-1 text-xs text-muted-foreground">{{ $stat['value'] }}</dd>
@@ -65,21 +125,6 @@
                 @endforeach
             </dl>
         </div>
-
-        {{-- Hero illustration --}}
-        <div class="lg:col-span-5">
-            <div class="relative">
-                <div aria-hidden="true" class="absolute -inset-4 rounded-3xl bg-gradient-to-br from-primary/10 to-accent/10 blur-2xl"></div>
-                <div class="relative overflow-hidden rounded-3xl border border-border bg-surface shadow-xl shadow-primary/5">
-                    <img
-                        src="{{ asset('images/hero-illustration.jpg') }}"
-                        alt="Ilustrasi gedung sekolah Handayani"
-                        width="1024"
-                        height="1024"
-                        class="h-full w-full object-cover"
-                    />
-                </div>
-            </div>
-        </div>
     </div>
+
 </section>

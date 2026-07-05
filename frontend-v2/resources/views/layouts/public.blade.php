@@ -15,6 +15,19 @@
 
     @vite(['resources/css/public.css', 'resources/js/public.js'])
 
+    @if(config('handayani-public.colors.primary') || config('handayani-public.colors.accent'))
+    <style>
+        :root {
+            @if(config('handayani-public.colors.primary'))
+            --color-primary: {{ config('handayani-public.colors.primary') }};
+            @endif
+            @if(config('handayani-public.colors.accent'))
+            --color-accent: {{ config('handayani-public.colors.accent') }};
+            @endif
+        }
+    </style>
+    @endif
+
     @stack('head')
 </head>
 <body class="min-h-screen bg-background text-foreground font-sans antialiased">

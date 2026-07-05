@@ -8,12 +8,16 @@
             {{-- Logo & tagline --}}
             <div>
                 <div class="flex items-center gap-2.5">
-                    <span aria-hidden="true" class="grid size-8 place-items-center rounded-md bg-primary text-primary-foreground">
-                        <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 2 L20 7 L20 17 L12 22 L4 17 L4 7 Z" />
-                            <path d="M12 7 L16 9.5 L16 14.5 L12 17 L8 14.5 L8 9.5 Z" />
-                        </svg>
-                    </span>
+                    @if(config('handayani-public.logo'))
+                        <img src="{{ asset(config('handayani-public.logo')) }}" alt="Logo {{ config('handayani-public.short_name') }}" class="size-8 rounded-md object-cover">
+                    @else
+                        <span aria-hidden="true" class="grid size-8 place-items-center rounded-md bg-primary text-primary-foreground">
+                            <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2 L20 7 L20 17 L12 22 L4 17 L4 7 Z" />
+                                <path d="M12 7 L16 9.5 L16 14.5 L12 17 L8 14.5 L8 9.5 Z" />
+                            </svg>
+                        </span>
+                    @endif
                     <span class="font-display text-base font-bold tracking-tight">{{ config('handayani-public.short_name') }}</span>
                 </div>
                 <p class="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
