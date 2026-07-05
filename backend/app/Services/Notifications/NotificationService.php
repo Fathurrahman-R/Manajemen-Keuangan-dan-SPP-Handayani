@@ -592,7 +592,7 @@ class NotificationService
     public function retryFailed(array $logIds): int
     {
         $logs = NotificationLog::whereIn('id', $logIds)
-            ->where('status', 'failed')
+            ->whereIn('status', ['failed', 'skipped'])
             ->get();
 
         $retriedCount = 0;
@@ -600,6 +600,26 @@ class NotificationService
         foreach ($logs as $log) {
             try {
                 $email = $log->recipient_email;
+
+                // For skipped logs with no email, try to re-resolve from current siswa data
+                if (empty($email) && $log->tagihan_kode) {
+                    $tagihan = Tagihan::where('kode_tagihan', $log->tagihan_kode)
+                        ->with(['siswa.user', 'siswa.wali', 'siswa.ibu', 'siswa.ayah'])
+                        ->first();
+
+                    if ($tagihan && $tagihan->siswa) {
+                        $email = $this->recipientResolver->resolve($tagihan->siswa);
+                    }
+
+                    if (empty($email)) {
+                        // Still no email available — keep skipped
+                        $log->update([
+                            'status' => 'skipped',
+                            'reason' => 'no_email_available',
+                        ]);
+                        continue;
+                    }
+                }
 
                 // Validate email before retrying
                 if (!$this->validateEmail($email)) {
@@ -690,7 +710,9 @@ class NotificationService
                 $log->update([
                     'status' => 'sent',
                     'sent_at' => now(),
+                    'recipient_email' => $email,
                     'error_message' => null,
+                    'reason' => null,
                 ]);
 
                 $retriedCount++;

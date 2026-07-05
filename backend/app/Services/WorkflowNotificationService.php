@@ -2,64 +2,102 @@
 
 namespace App\Services;
 
-use App\Models\Notification;
 use App\Models\PengeluaranRequest;
 use App\Models\User;
+use App\Notifications\PengeluaranWorkflowNotification;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 
 class WorkflowNotificationService
 {
     /**
-     * Notify all users with approve-pengeluaran permission in the same branch.
+     * Notify all users with approve-pengeluaran permission in the same branch via email.
      */
     public function notifyApprovers(PengeluaranRequest $request): void
     {
         $approvers = User::where('branch_id', $request->branch_id)
             ->where('is_active', true)
             ->permission('approve-pengeluaran')
-            ->where('id', '!=', $request->requester_id)
             ->get();
 
+        $requesterName = $request->requester->name ?? $request->requester->username ?? 'Tidak diketahui';
+
         foreach ($approvers as $approver) {
-            Notification::create([
-                'user_id' => $approver->id,
-                'type' => 'pengeluaran_submitted',
-                'title' => 'Request Pengeluaran Baru',
-                'message' => "Request pengeluaran \"{$request->uraian}\" senilai Rp " . number_format($request->jumlah, 0, ',', '.') . " menunggu persetujuan Anda.",
-                'data' => [
+            $email = $approver->email;
+
+            if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                Log::info('Skipped pengeluaran workflow email: no valid email', [
+                    'user_id' => $approver->id,
                     'pengeluaran_request_id' => $request->id,
-                    'requester_name' => $request->requester->name ?? $request->requester->username,
-                ],
-                'created_at' => now(),
-            ]);
+                ]);
+                continue;
+            }
+
+            try {
+                Notification::route('mail', $email)
+                    ->notify(new PengeluaranWorkflowNotification(
+                        $request,
+                        'submitted',
+                        null,
+                        $requesterName,
+                    ));
+            } catch (\Throwable $e) {
+                Log::error('Failed to send pengeluaran workflow email to approver', [
+                    'user_id' => $approver->id,
+                    'email' => $email,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
     }
 
     /**
-     * Notify the requester about status change.
+     * Notify the requester (and disburser) about status change via email.
      */
     public function notifyRequester(PengeluaranRequest $request, string $event, ?string $reason = null): void
     {
-        $titles = [
-            'approved' => 'Request Disetujui',
-            'rejected' => 'Request Ditolak',
-            'disbursed' => 'Pencairan Selesai',
-        ];
+        $requester = $request->requester;
+        $recipients = collect();
 
-        $messages = [
-            'approved' => "Request pengeluaran \"{$request->uraian}\" telah disetujui.",
-            'rejected' => "Request pengeluaran \"{$request->uraian}\" ditolak." . ($reason ? " Alasan: {$reason}" : ''),
-            'disbursed' => "Request pengeluaran \"{$request->uraian}\" telah dicairkan senilai Rp " . number_format($request->jumlah, 0, ',', '.') . ".",
-        ];
+        if ($requester && !empty($requester->email) && filter_var($requester->email, FILTER_VALIDATE_EMAIL)) {
+            $recipients->push($requester->email);
+        }
 
-        Notification::create([
-            'user_id' => $request->requester_id,
-            'type' => "pengeluaran_{$event}",
-            'title' => $titles[$event] ?? 'Update Request',
-            'message' => $messages[$event] ?? "Status request berubah menjadi {$event}.",
-            'data' => [
+        // Jika event pencairan, tambahkan juga pencair ke penerima email
+        if ($event === 'disbursed') {
+            $request->load('approvalLogs.user');
+            $disburserLog = $request->approvalLogs->where('new_status', 'disbursed')->last();
+            if ($disburserLog && $disburserLog->user) {
+                $disburserEmail = $disburserLog->user->email;
+                if (!empty($disburserEmail) && filter_var($disburserEmail, FILTER_VALIDATE_EMAIL)) {
+                    $recipients->push($disburserEmail);
+                }
+            }
+        }
+
+        $recipients = $recipients->unique();
+
+        if ($recipients->isEmpty()) {
+            Log::info("Skipped pengeluaran workflow email ({$event}): no valid email for requester/disburser", [
                 'pengeluaran_request_id' => $request->id,
-            ],
-            'created_at' => now(),
-        ]);
+            ]);
+            return;
+        }
+
+        foreach ($recipients as $email) {
+            try {
+                Notification::route('mail', $email)
+                    ->notify(new PengeluaranWorkflowNotification(
+                        $request,
+                        $event,
+                        $reason,
+                    ));
+            } catch (\Throwable $e) {
+                Log::error("Failed to send pengeluaran workflow email ({$event})", [
+                    'email' => $email,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
     }
 }

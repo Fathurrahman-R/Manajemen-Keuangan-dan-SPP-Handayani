@@ -192,7 +192,8 @@ class RoleController extends Controller
             'Midtrans (Admin)'   => [
                 'view-transactions' => \App\Enum\Permission::VIEW_MIDTRANS_TRX,
                 'sync-transactions' => \App\Enum\Permission::SYNC_MIDTRANS_TRX,
-                'manage-config'     => \App\Enum\Permission::MANAGE_MIDTRANS_CONFIG,
+                'view-config'       => \App\Enum\Permission::VIEW_MIDTRANS_CONFIG,
+                'update-config'     => \App\Enum\Permission::UPDATE_MIDTRANS_CONFIG,
             ],
         ];
 
@@ -384,7 +385,8 @@ class RoleController extends Controller
             'pay-tagihan-online'    => 'Bayar Tagihan Online',
             'view-midtrans-transactions'  => 'Lihat Transaksi Midtrans',
             'sync-midtrans-transactions'  => 'Sinkronkan Transaksi Midtrans',
-            'manage-midtrans-config'      => 'Kelola Konfigurasi Midtrans',
+            'view-midtrans-config'        => 'Lihat Konfigurasi Midtrans',
+            'update-midtrans-config'      => 'Ubah Konfigurasi Midtrans',
             'view-own-billing'      => 'Lihat Tagihan Sendiri',
             'view-tagihan-siswa'    => 'Lihat Halaman Tagihan Siswa',
             'manage-akun-siswa'     => 'Kelola Akun Siswa',
