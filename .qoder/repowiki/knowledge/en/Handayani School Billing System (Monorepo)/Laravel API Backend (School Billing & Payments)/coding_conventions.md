@@ -1,6 +1,0 @@
-- Each controller method accepts a typed Request class from `app/Http/Requests/*` and returns JSON via `Illuminate\Http\JsonResponse` or an Eloquent Resource wrapper, never raw arrays.
-- Business rules are extracted into single-responsibility classes under `app/Services/*` (one service per feature area such as `AkunSiswaService`, `WorkflowService`, `Midtrans*Service`) rather than being written inline in controllers.
-- External integrations are exposed through interfaces (e.g. `Services/Midtrans/MidtransClient`) with concrete implementations, enabling test doubles like `tests/Stubs/FakeMidtransClient`.
-- Feature-scoped exceptions are grouped under `app/Exceptions/<Feature>/` (especially `Midtrans/*`) instead of using generic Laravel exceptions, giving callers precise catch targets.
-- Route definitions in `routes/api.php` use nested `Route::middleware('auth:sanctum')->group(...)` blocks with per-endpoint `permission:<action>` middleware, keeping authorization declarative at the routing layer.
-- Import/export flows follow a two-phase pattern: upload creates an `ImportBatch`/`ExportJob` record, a background Job processes it, and status is polled via `/import-export/job/{jobId}/status`.

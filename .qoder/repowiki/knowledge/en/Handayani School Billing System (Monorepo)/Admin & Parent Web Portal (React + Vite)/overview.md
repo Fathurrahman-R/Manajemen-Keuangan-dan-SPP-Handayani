@@ -1,1 +1,0 @@
-Vite/React single-page application providing an admin dashboard and a parent portal for managing students, classes, payments, reports, and settings.

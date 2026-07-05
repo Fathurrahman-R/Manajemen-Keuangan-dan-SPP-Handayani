@@ -1,1 +1,0 @@
-Laravel 12 REST API backend for a school billing system handling students, invoices, payments, cash flow, role-based admin panels, and Midtrans online payment integration.

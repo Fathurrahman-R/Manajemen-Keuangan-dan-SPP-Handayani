@@ -1,1 +1,0 @@
-Monorepo hosting a Laravel API backend plus two frontend applications — a React Vite portal and a Filament-based admin/portal panel — that share the same domain model and Midtrans payment integration.

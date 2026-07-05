@@ -1,1 +1,0 @@
-Development: `npm run dev` (Vite dev server). Production build: `npm run build` then `npm run preview`. Linting: `npm run lint`.

@@ -1,5 +1,0 @@
-- Role-based access control is implemented via a local `RequireParentAuth` wrapper that reads `role` from `localStorage` and redirects to `/login` when unauthorized.
-- Navigation and sidebar highlighting are coordinated through a single `pathToId` helper plus a `setActive` switch in `AppLayout`, instead of each page computing its own active state.
-- Route definitions are declared centrally in `App.jsx` using JSX `<Route path=... element={<Component />} />` syntax grouped by feature area (master, transaksi, laporan, parent).
-- Page components are colocated under `src/pages/<role>/` matching their URL prefix (admin pages under `/master|transaksi|laporan|settings`, parent pages under `/parent`).
-- Styling is applied exclusively via Tailwind utility classes directly on JSX elements rather than separate CSS modules or styled-components.

@@ -3,11 +3,11 @@ schema_version: 1
 locale: en-US
 branch: v3-last-project
 nodes_managed: true
-exported_at: "2026-07-02T09:37:26Z"
+exported_at: "2026-07-05T06:54:02Z"
 modules:
     "":
-        dir_name: Handayani School Billing System (Monorepo)
-        title: Handayani School Billing System (Monorepo)
+        dir_name: Handayani School Billing Monorepo
+        title: Handayani School Billing Monorepo
         scope:
             - AGENTS.md
             - ISSUE_REPORT.md
@@ -1476,14 +1476,13 @@ modules:
         source_files: []
         children:
             - backend_api
-            - frontend_v1_admin
             - frontend_v2_admin_panel
             - portal_reference
         depends_on: []
         related_to: []
     backend_api:
-        dir_name: Laravel API Backend (School Billing & Payments)
-        title: Laravel API Backend (School Billing & Payments)
+        dir_name: School Billing REST API (Laravel Backend)
+        title: School Billing REST API (Laravel Backend)
         scope:
             - backend/
         source_files: []
@@ -1571,18 +1570,9 @@ modules:
         children: []
         depends_on: []
         related_to: []
-    frontend_v1_admin:
-        dir_name: Admin & Parent Web Portal (React + Vite)
-        title: Admin & Parent Web Portal (React + Vite)
-        scope:
-            - frontend/
-        source_files: []
-        children: []
-        depends_on: []
-        related_to: []
     frontend_v2_admin_panel:
-        dir_name: Handayani Admin & Portal Filament Panels
-        title: Handayani Admin & Portal Filament Panels
+        dir_name: Handayani Admin & Student Portal (Filament v4)
+        title: Handayani Admin & Student Portal (Filament v4)
         scope:
             - frontend-v2/
         source_files: []

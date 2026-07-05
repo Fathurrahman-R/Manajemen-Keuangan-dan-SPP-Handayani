@@ -1,6 +1,0 @@
-- Entry point `src/main.jsx` mounts the React tree into `#root`; `src/App.jsx` is the sole router root wrapping everything in `<BrowserRouter>`.
-- A shared `AppLayout` component composes `Header`, `Sidebar`, and `Footer` around a `<Routes>` block; both admin and parent screens reuse this layout.
-- Route groups are organized by role: `/` and `/master/*`, `/transaksi/*`, `/laporan/*`, `/settings` under the admin shell, and `/parent/*` under a `RequireParentAuth` guard that checks `localStorage.role === 'parent'`.
-- Sidebar active-state and navigation are driven by a single `pathToId` mapping plus a `setActive` switch inside `AppLayout`, keeping routing and UI state centralized rather than per-page.
-- Page components live under `src/pages/admin/` and `src/pages/parent/`; reusable chrome lives under `src/components/` (`Header`, `Sidebar`, `Footer`).
-- Styling uses Tailwind CSS v3 with PostCSS/Autoprefixer; no custom theme extensions beyond defaults. Build/dev tooling is Vite with the official React plugin.

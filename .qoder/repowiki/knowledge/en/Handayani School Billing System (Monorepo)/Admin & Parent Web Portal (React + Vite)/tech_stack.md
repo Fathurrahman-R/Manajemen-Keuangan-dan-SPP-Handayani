@@ -1,1 +1,0 @@
-React 18 + ReactDOM, react-router-dom v6 for client-side routing, Vite as dev server/bundler, Tailwind CSS v3 with PostCSS/Autoprefixer, ESLint v9 with React Hooks/Refresh plugins, react-icons for icons.

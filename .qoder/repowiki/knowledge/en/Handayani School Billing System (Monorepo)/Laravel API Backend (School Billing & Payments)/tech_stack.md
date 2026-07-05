@@ -1,1 +1,0 @@
-PHP 8.2 + Laravel 12 framework; Sanctum for token auth; spatie/laravel-permission v7 for RBAC; midtrans-php v2 for Snap/VTWeb payments; maatwebsite/excel v3 for XLSX import/export; barryvdh/laravel-dompdf for kwitansi PDFs; dedoc/scramble for auto-generated OpenAPI/Swagger; PHPUnit 11 for tests.

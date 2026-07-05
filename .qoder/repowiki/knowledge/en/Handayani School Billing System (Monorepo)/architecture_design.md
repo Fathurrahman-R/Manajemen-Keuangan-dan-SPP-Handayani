@@ -1,6 +1,0 @@
-The repository is organized as a multi-app monorepo with three runtime applications sharing one database schema:
-- `backend/` (Laravel 12) exposes a REST API consumed by both frontends; it owns all business logic, Eloquent models, migrations, seeders, events/listeners, queued jobs, and the Midtrans client.
-- `frontend-v2/` (Laravel + Filament v4 + Livewire) is the primary operational UI for admins and parents; it calls the backend via an `ApiService` and authenticates through Filament's Sanctum-based login flow.
-- `frontend/` (Vite + React) is a legacy/admin+parent SPA that also targets the same backend API endpoints.
-- `portal-reference/` is a standalone TanStack Start marketing site unrelated to the billing flow.
-Cross-cutting concerns are centralized in the backend: RBAC via spatie/laravel-permission, role constants in `app/Constant/*`, permission binding in `PermissionBinding`, and shared notification/export/import services. The two Laravel apps (`backend` and `frontend-v2`) each ship their own `.env`, `artisan`, `composer.json`, and `phpunit.xml`, but they coordinate through the single API contract defined in `backend/routes/api.php` and documented under `backend/docs/*.json`. Feature specs and steering docs live under `.kiro/specs` and `.kiro/steering` respectively, driving development across all three apps.

@@ -1,1 +1,0 @@
-Laravel 12 + Filament v4 (Panels, Tables, Actions, Schemas, Widgets, Notifications) with Livewire 3; UI theme compiled via Vite (`resources/css/filament/admin/theme.css`); charts rendered with Chart.js; payment integration via Midtrans Snap.js (feature-gated).
