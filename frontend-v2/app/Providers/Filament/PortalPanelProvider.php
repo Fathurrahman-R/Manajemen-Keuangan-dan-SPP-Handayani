@@ -55,6 +55,7 @@ class PortalPanelProvider extends PanelProvider
                 PortalRiwayatPembayaranPage::class,
                 PortalStatusPembayaranPage::class,
                 PortalProfilPage::class,
+                \App\Filament\Pages\ChangePassword::class,
             ])
             ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
                 return $builder

@@ -22,5 +22,6 @@ class PermissionBinding
         Permissions::APPROVAL_WORKFLOW_PERMISSIONS,
         Permissions::BRANCH_PERMISSIONS,
         Permissions::MIDTRANS_PERMISSIONS,
+        Permissions::SETTING_PERMISSIONS,
     ];
 }

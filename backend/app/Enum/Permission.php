@@ -41,6 +41,7 @@ enum Permission: string
 
     //pembayaran permissions
     case VIEW_PEMBAYARAN = 'view-pembayaran';
+    case CREATE_PEMBAYARAN = 'create-pembayaran';
     case DELETE_PEMBAYARAN = 'delete-pembayaran';
     case PRINT_KWITANSI = 'print-kwitansi';
 
@@ -75,14 +76,20 @@ enum Permission: string
     case DETACH_PERMISSIONS = 'detach-permissions';
 
     //tahun ajaran permission
-    case MANAGE_TAHUN_AJARAN = 'manage-tahun-ajaran';
+    case VIEW_TAHUN_AJARAN = 'view-tahun-ajaran';
+    case CREATE_TAHUN_AJARAN = 'create-tahun-ajaran';
+    case UPDATE_TAHUN_AJARAN = 'update-tahun-ajaran';
+    case DELETE_TAHUN_AJARAN = 'delete-tahun-ajaran';
 
     //kenaikan kelas permission
-    case MANAGE_KENAIKAN_KELAS = 'manage-kenaikan-kelas';
+    case VIEW_KENAIKAN_KELAS = 'view-kenaikan-kelas';
+    case PROCESS_KENAIKAN_KELAS = 'process-kenaikan-kelas';
+    case UNDO_KENAIKAN_KELAS = 'undo-kenaikan-kelas';
 
     //akun siswa permissions
     case VIEW_TAGIHAN_SISWA = 'view-tagihan-siswa';
-    case MANAGE_AKUN_SISWA = 'manage-akun-siswa';
+    case VIEW_AKUN_SISWA = 'view-akun-siswa';
+    case GENERATE_AKUN_SISWA = 'generate-akun-siswa';
 
     //import export permissions
     case IMPORT_DATA = 'import-data';
@@ -108,5 +115,13 @@ enum Permission: string
     case PAY_TAGIHAN_ONLINE = 'pay-tagihan-online';
     case VIEW_MIDTRANS_TRX = 'view-midtrans-transactions';
     case SYNC_MIDTRANS_TRX = 'sync-midtrans-transactions';
-    case MANAGE_MIDTRANS_CONFIG = 'manage-midtrans-config';
+    case VIEW_MIDTRANS_CONFIG = 'view-midtrans-config';
+    case UPDATE_MIDTRANS_CONFIG = 'update-midtrans-config';
+
+    //setting permissions
+    case VIEW_APP_SETTING = 'view-app-setting';
+    case UPDATE_APP_SETTING = 'update-app-setting';
+    case VIEW_NOTIFICATION_SETTING = 'view-notification-setting';
+    case UPDATE_NOTIFICATION_SETTING = 'update-notification-setting';
+    case VIEW_NOTIFICATION_LOGS = 'view-notification-logs';
 }

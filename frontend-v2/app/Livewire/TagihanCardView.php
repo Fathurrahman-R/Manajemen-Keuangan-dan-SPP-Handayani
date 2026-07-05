@@ -211,6 +211,11 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
         return in_array('create-tagihan', session()->get('data.permissions', []));
     }
 
+    public function canPay(): bool
+    {
+        return in_array('create-pembayaran', session()->get('data.permissions', []));
+    }
+
     public function canDelete(): bool
     {
         return in_array('delete-tagihan', session()->get('data.permissions', []));

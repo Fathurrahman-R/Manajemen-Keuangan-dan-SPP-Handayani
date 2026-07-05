@@ -37,11 +37,11 @@ class RoleAndPermissionSeeder extends Seeder
         );
 
         // Assign admin permissions from PermissionBinding
-        // Exclude manage-midtrans-config from admin — only superadmin should have it (Req 3.4)
+        // Exclude update-midtrans-config from admin — only superadmin should have it (Req 3.4)
         $adminPermissions = collect(PermissionBinding::ADMIN_PERMISSIONS)
             ->flatten()
             ->map(fn($p) => $p->value)
-            ->filter(fn($p) => $p !== Permission::MANAGE_MIDTRANS_CONFIG->value)
+            ->filter(fn($p) => $p !== Permission::UPDATE_MIDTRANS_CONFIG->value)
             ->values()
             ->toArray();
         $admin->syncPermissions($adminPermissions);

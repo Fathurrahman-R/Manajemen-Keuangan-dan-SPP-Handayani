@@ -287,15 +287,17 @@
                                         {{-- Row 3: Action buttons (full-width, tap-friendly) --}}
                                         @if($this->isAdmin())
                                             <div class="flex items-center gap-2 mt-2">
-                                                <button
-                                                    type="button"
-                                                    wire:click="cicilTagihan('{{ $tagihan['kode_tagihan'] }}')"
-                                                    wire:loading.attr="disabled"
-                                                    class="flex-1 inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 py-2 text-sm font-medium rounded-lg border border-green-300 dark:border-green-700 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 transition"
-                                                >
-                                                    <x-heroicon-o-banknotes class="w-4 h-4" />
-                                                    Bayar
-                                                </button>
+                                                @if($this->canPay())
+                                                    <button
+                                                        type="button"
+                                                        wire:click="cicilTagihan('{{ $tagihan['kode_tagihan'] }}')"
+                                                        wire:loading.attr="disabled"
+                                                        class="flex-1 inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 py-2 text-sm font-medium rounded-lg border border-green-300 dark:border-green-700 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 transition"
+                                                    >
+                                                        <x-heroicon-o-banknotes class="w-4 h-4" />
+                                                        Bayar
+                                                    </button>
+                                                @endif
                                                 @if($this->canDelete())
                                                     <button
                                                         type="button"
@@ -349,15 +351,17 @@
                                 <p class="text-xs text-gray-500 dark:text-gray-400">Bayar lunas yang dipilih</p>
                                 <p class="text-lg font-bold text-primary-600" x-text="formatRupiah(rekapTotal)"></p>
                             </div>
-                            <button
-                                x-on:click="openPayment()"
-                                x-bind:disabled="selectedTagihan.length === 0"
-                                type="button"
-                                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 text-sm font-semibold rounded-lg text-white bg-primary-600 hover:bg-primary-500 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-primary-500 dark:hover:bg-primary-400 transition"
-                            >
-                                <x-heroicon-o-banknotes class="w-4 h-4" />
-                                Bayar Lunas (<span x-text="selectedTagihan.length"></span>)
-                            </button>
+                            @if($this->canPay())
+                                <button
+                                    x-on:click="openPayment()"
+                                    x-bind:disabled="selectedTagihan.length === 0"
+                                    type="button"
+                                    class="w-full sm:w-auto inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 text-sm font-semibold rounded-lg text-white bg-primary-600 hover:bg-primary-500 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-primary-500 dark:hover:bg-primary-400 transition"
+                                >
+                                    <x-heroicon-o-banknotes class="w-4 h-4" />
+                                    Bayar Lunas (<span x-text="selectedTagihan.length"></span>)
+                                </button>
+                            @endif
                         </div>
                     </div>
                 @endif

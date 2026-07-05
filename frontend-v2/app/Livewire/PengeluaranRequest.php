@@ -197,7 +197,7 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                     ->icon('heroicon-o-banknotes')
                     ->color('success')
                     ->visible(fn($record) => $record['status'] === 'approved'
-                        && ($record['requester_id'] ?? null) == session()->get('data.id'))
+                        && in_array('disburse-pengeluaran', session()->get('data.permissions', [])))
                     ->requiresConfirmation()
                     ->modalHeading('Cairkan Dana')
                     ->modalDescription('Yakin ingin mencairkan pengeluaran ini? Pengeluaran akan dicatat di kas.')

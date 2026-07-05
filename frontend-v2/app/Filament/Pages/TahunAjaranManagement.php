@@ -17,18 +17,19 @@ class TahunAjaranManagement extends Page
 
     protected static ?int $navigationSort = 4;
 
-    public static function shouldRegisterNavigation(): bool
+    public static function canAccess(): bool
     {
         $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
         $role = session()->get('data.role', session()->get('data')['role'] ?? '');
-        return in_array('manage-tahun-ajaran', $permissions) || $role === 'admin';
+
+        return in_array('view-tahun-ajaran', $permissions) || $role === 'admin';
     }
 
     public function mount(): void
     {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        $role = session()->get('data.role', session()->get('data')['role'] ?? '');
-        if (!in_array('manage-tahun-ajaran', $permissions) && $role !== 'admin') {
+        $permissions = session()->get('data.permissions', []);
+        $role = session()->get('data.role', '');
+        if (!in_array('view-tahun-ajaran', $permissions) && $role !== 'admin') {
             abort(403);
         }
     }

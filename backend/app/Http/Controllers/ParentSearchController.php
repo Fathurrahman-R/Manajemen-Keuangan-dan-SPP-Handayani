@@ -63,4 +63,28 @@ class ParentSearchController extends Controller
     {
         return $this->index($request, 'ibu');
     }
+
+    /**
+     * Get single Ayah by ID
+     */
+    public function showAyah($id): JsonResponse
+    {
+        $ayah = Ayah::find($id);
+        if (!$ayah) {
+            return response()->json(['message' => 'Not found'], 404);
+        }
+        return response()->json(['data' => $ayah]);
+    }
+
+    /**
+     * Get single Ibu by ID
+     */
+    public function showIbu($id): JsonResponse
+    {
+        $ibu = Ibu::find($id);
+        if (!$ibu) {
+            return response()->json(['message' => 'Not found'], 404);
+        }
+        return response()->json(['data' => $ibu]);
+    }
 }

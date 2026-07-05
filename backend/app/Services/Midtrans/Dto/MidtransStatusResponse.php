@@ -12,7 +12,7 @@ final readonly class MidtransStatusResponse
         public string $statusCode,
         public ?string $paymentType,
         public ?string $settlementTime,
-        public string $signatureKey,
+        public ?string $signatureKey,
     ) {}
 
     /**
@@ -28,7 +28,7 @@ final readonly class MidtransStatusResponse
             statusCode: $data['status_code'],
             paymentType: $data['payment_type'] ?? null,
             settlementTime: $data['settlement_time'] ?? null,
-            signatureKey: $data['signature_key'],
+            signatureKey: $data['signature_key'] ?? null,
         );
     }
 }

@@ -128,6 +128,7 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                     ->icon('heroicon-s-pencil-square') // Optional icon
                     ->iconButton()
                     ->color('warning')
+                    ->visible(fn(): bool => in_array('update-siswa', session()->get('data.permissions', [])))
                     ->modalHeading('Ubah Wali')
                     ->modalSubmitActionLabel('Simpan')
                     ->modalCancelActionLabel('Batal')
@@ -204,6 +205,7 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                     ->icon('heroicon-s-trash') // Optional icon
                     ->iconButton()
                     ->color('danger') // Optional color
+                    ->visible(fn(): bool => in_array('delete-siswa', session()->get('data.permissions', [])))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Wali')
                     ->modalDescription('Apakah kamu yakin untuk menghapus wali ini?')
@@ -229,7 +231,7 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                     ->label('Hapus Terpilih')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
-                    ->visible(fn(): bool => in_array('delete-wali', session()->get('data.permissions', [])))
+                    ->visible(fn(): bool => in_array('delete-siswa', session()->get('data.permissions', [])))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Wali Terpilih')
                     ->modalDescription('Apakah kamu yakin ingin menghapus semua wali yang dipilih?')
@@ -255,6 +257,7 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                     ->label('Tambah') // Text displayed on the button
                     ->color('primary') // Optional color
                     ->button()
+                    ->visible(fn(): bool => in_array('create-siswa', session()->get('data.permissions', [])))
                     ->modalHeading('Tambah Kelas')
                     ->modalFooterActions(function (Action $action) {
                         return [

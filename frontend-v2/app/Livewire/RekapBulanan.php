@@ -158,7 +158,7 @@ class RekapBulanan extends Component implements HasActions, HasSchemas, HasTable
                     ->color('success')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->button()
-                    ->visible(fn(): bool => in_array('export-data', session()->get('data.permissions', [])))
+                    ->visible(fn(): bool => in_array('export-laporan', session()->get('data.permissions', [])))
                     ->modalHeading('Export Rekap Bulanan')
                     ->modalSubmitActionLabel('Export')
                     ->schema([

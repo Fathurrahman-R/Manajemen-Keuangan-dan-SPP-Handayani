@@ -28,26 +28,26 @@ class KwitansiPdfService
         $resource = PembayaranController::kwitansi($pembayaran->kode_pembayaran);
         $data = $resource->toArray(request());
 
-        $appSetting = AppSetting::query()->first();
-        if ($appSetting) {
-            $data['setting'] = array_merge($data['setting'] ?? [], [
-                'nama_sekolah' => $appSetting->nama_sekolah ?? ($data['setting']['nama_sekolah'] ?? null),
-                'lokasi' => $appSetting->lokasi ?? ($data['setting']['lokasi'] ?? null),
-                'logo' => $appSetting->logo ?? ($data['setting']['logo'] ?? null),
-            ]);
+        // Resolve logo absolute path from public disk; fallback to public favicon
+        $logoRelative = $data['setting']['logo'] ?? null;
+        $logo = null;
+        if ($logoRelative && \Illuminate\Support\Facades\Storage::disk('public')->exists($logoRelative)) {
+            // Absolute filesystem path DomPDF can read
+            $logo = \Illuminate\Support\Facades\Storage::disk('public')->path($logoRelative);
+        }
+        if (!$logo) {
+            $logo = public_path('favicon.ico');
         }
 
         $viewData = [
             'kode_pembayaran' => $data['kode_pembayaran'],
-            'kode_tagihan'    => $data['kode_tagihan'] ?? null,
-            'setting'         => $data['setting'] ?? [],
-            'tanggal'         => $data['tanggal'] ?? null,
-            'pembayar'        => $data['pembayar'] ?? null,
-            'siswa'           => $data['siswa'] ?? null,
-            'jenis_tagihan'   => $data['jenis_tagihan'] ?? null,
-            'jumlah'          => $data['jumlah'] ?? 0,
-            'metode'          => $data['metode'] ?? '-',
-            'sisa'            => $data['sisa'] ?? 0,
+            'setting'   => $data['setting'] ?? [],
+            'tanggal'   => $data['tanggal'] ?? null,
+            'pembayar'  => $data['pembayar'] ?? null,
+            'jumlah'    => $data['jumlah'] ?? 0,
+            'untuk'     => $data['untuk'] ?? '-',
+            'sejumlah'  => $data['sejumlah'] ?? '-',
+            'logo'      => $logo,
         ];
 
         $pdf = Pdf::loadView('kwitansi', $viewData)

@@ -138,7 +138,17 @@ class MidtransAdminController extends Controller
     {
         $trx = MidtransTransaction::where('order_id', $orderId)->firstOrFail();
 
-        $service->syncManual($trx);
+        try {
+            $service->syncManual($trx);
+        } catch (\App\Exceptions\Midtrans\TransactionAlreadyFinalException $e) {
+            // Ignore if it's already final, just return the current status
+        } catch (\App\Exceptions\Midtrans\TransactionNotYetProcessedException $e) {
+            // User hasn't opened Snap or picked a payment method yet.
+            // Midtrans returns 404, but we know it's still pending.
+        } catch (\App\Exceptions\Midtrans\MidtransStatusUnavailableException $e) {
+            // Midtrans API is unreachable.
+            return response()->json(['error_code' => 'API_UNAVAILABLE', 'message' => 'Layanan Midtrans sedang tidak tersedia'], 503);
+        }
 
         return response()->json(['status' => $trx->fresh()->status]);
     }

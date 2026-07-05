@@ -6,10 +6,22 @@
 - [NavigationConfig.php](file://frontend-v2/app/Config/NavigationConfig.php)
 - [handayani.php](file://frontend-v2/config/handayani.php)
 - [filament-api-login.php](file://frontend-v2/config/filament-api-login.php)
-- [manajemen-akun-siswa.blade.php](file://frontend-v2/resources/views/filament/pages/manajemen-akun-siswa.blade.php)
-- [user-management.blade.php](file://frontend-v2/resources/views/filament/pages/user-management.blade.php)
-- [riwayat-pembayaran.blade.php](file://frontend-v2/resources/views/filament/portal/pages/riwayat-pembayaran.blade.php)
+- [DashboardPage.php](file://frontend-v2/app/Filament/Pages/DashboardPage.php)
+- [HasPeriodFilter.php](file://frontend-v2/app/Livewire/Concerns/HasPeriodFilter.php)
+- [dashboard.blade.php](file://frontend-v2/resources/views/filament/pages/dashboard.blade.php)
+- [PortalBerandaPage.php](file://frontend-v2/app/Filament/Portal/Pages/PortalBerandaPage.php)
+- [beranda.blade.php](file://frontend-v2/resources/views/filament/portal/pages/beranda.blade.php)
+- [SiswaDashboard.php](file://frontend-v2/app/Livewire/SiswaDashboard.php)
+- [siswa-dashboard.blade.php](file://frontend-v2/resources/views/livewire/siswa-dashboard.blade.php)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated Dashboard page to disable 'all periods' option for better data accuracy
+- Enhanced academic year filter with session state management via updatedSelectedTahunAjaranId() method
+- Removed child selection dropdown for wali users in portal interface
+- Improved student portal interface with enhanced period filtering
+- Added comprehensive period filter trait with session persistence
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -24,10 +36,10 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document explains how Filament pages are structured, configured, and integrated within the project’s admin panel and portal. It covers page layout configuration, navigation integration with permission-based access control, routing conventions, Livewire component interactions, complex workflows (tabs, multi-step forms), breadcrumb navigation, responsive design considerations, page-specific actions, modal dialogs, and external resource loading patterns.
+This document explains how Filament pages are structured, configured, and integrated within the project's admin panel and portal. It covers page layout configuration, navigation integration with permission-based access control, routing conventions, Livewire component interactions, complex workflows (tabs, multi-step forms), breadcrumb navigation, responsive design considerations, page-specific actions, modal dialogs, and external resource loading patterns. Recent enhancements include improved dashboard functionality with disabled 'all periods' option, enhanced academic year filtering with session state management, and streamlined student portal interface.
 
 ## Project Structure
-The Filament application is organized around a central Panel Provider that configures authentication, SPA behavior, breadcrumbs, discovery of pages and widgets, custom navigation groups, branding, middleware, and render hooks. Pages are discovered automatically from the app/Filament/Pages directory and can be paired with Blade views for custom layouts. Portal pages follow a similar pattern under a dedicated namespace.
+The Filament application is organized around a central Panel Provider that configures authentication, SPA behavior, breadcrumbs, discovery of pages and widgets, custom navigation groups, branding, middleware, and render hooks. Pages are discovered automatically from the app/Filament/Pages directory and can be paired with Blade views for custom layouts. Portal pages follow a similar pattern under a dedicated namespace. The system now includes enhanced period filtering capabilities through the HasPeriodFilter trait.
 
 ```mermaid
 graph TB
@@ -39,12 +51,15 @@ AP --> MIDDLEWARE["Auth & HTTP Middleware"]
 NAV --> ITEMS["NavigationItem per feature<br/>with visibility & active checks"]
 PAGES --> VIEWS["Blade Views<br/>x-filament-panels::page"]
 PAGES --> LW["Livewire Components<br/>tables, cards, forms"]
+PAGES --> PERIOD["HasPeriodFilter Trait<br/>academic year filtering"]
+PERIOD --> SESSION["Session State Management<br/>selected_tahun_ajaran_id"]
 ```
 
 **Diagram sources**
 - [AdminPanelProvider.php:53-134](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L53-L134)
 - [AdminPanelProvider.php:141-191](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L141-L191)
 - [AdminPanelProvider.php:234-401](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L234-L401)
+- [HasPeriodFilter.php:1-166](file://frontend-v2/app/Livewire/Concerns/HasPeriodFilter.php#L1-166)
 
 **Section sources**
 - [AdminPanelProvider.php:53-134](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L53-L134)
@@ -54,23 +69,26 @@ PAGES --> LW["Livewire Components<br/>tables, cards, forms"]
 ## Core Components
 - Admin Panel Provider: Centralizes panel configuration including login/password reset pages, SPA mode, breadcrumbs, widget registration, theme, branding, middleware, and render hooks.
 - Navigation Configuration: A centralized class defines navigation groups, labels, icons, and which pages support jenjang-based sub-navigation.
+- Period Filter System: Enhanced academic year filtering with session state management and configurable 'all periods' options.
 - Feature Flags: Environment-driven toggles for SPA loading, custom navigation, profile migration, and Midtrans integration.
 - External API Login Config: Settings for external authentication URL, timeout, and failure logging.
 
 Key responsibilities:
-- Page discovery and routing via Filament’s auto-discovery mechanism.
+- Page discovery and routing via Filament's auto-discovery mechanism.
 - Permission-aware navigation grouping and item visibility.
 - Branding and theming injection into the panel.
 - Integration points for notifications and UI enhancements via render hooks.
+- Academic year period filtering with session persistence.
 
 **Section sources**
 - [AdminPanelProvider.php:53-134](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L53-L134)
 - [NavigationConfig.php:11-48](file://frontend-v2/app/Config/NavigationConfig.php#L11-L48)
 - [handayani.php:14-29](file://frontend-v2/config/handayani.php#L14-L29)
 - [filament-api-login.php:15-39](file://frontend-v2/config/filament-api-login.php#L15-L39)
+- [HasPeriodFilter.php:1-166](file://frontend-v2/app/Livewire/Concerns/HasPeriodFilter.php#L1-166)
 
 ## Architecture Overview
-The system uses a single default Filament panel at root path with SPA enabled and breadcrumbs turned on. Authentication is handled by custom login and password reset pages. The sidebar navigation is built dynamically based on permissions and configuration. Pages are discovered and can include custom Blade templates to host Livewire components for tables, card views, and forms.
+The system uses a single default Filament panel at root path with SPA enabled and breadcrumbs turned on. Authentication is handled by custom login and password reset pages. The sidebar navigation is built dynamically based on permissions and configuration. Pages are discovered and can include custom Blade templates to host Livewire components for tables, card views, and forms. The enhanced architecture now includes sophisticated period filtering with session state management.
 
 ```mermaid
 sequenceDiagram
@@ -78,6 +96,8 @@ participant Browser as "Browser"
 participant Panel as "AdminPanelProvider"
 participant Nav as "NavigationBuilder"
 participant Page as "Filament Page"
+participant Period as "HasPeriodFilter"
+participant Session as "Session Store"
 participant View as "Blade View"
 participant LW as "Livewire Component"
 Browser->>Panel : Request "/"
@@ -85,6 +105,9 @@ Panel->>Nav : Build navigation groups/items
 Nav-->>Panel : Groups with visible items
 Panel-->>Browser : HTML with SPA assets
 Browser->>Page : Navigate to page route
+Page->>Period : Initialize period filter
+Period->>Session : Load selected_tahun_ajaran_id
+Session-->>Period : Return stored value or null
 Page->>View : Render x-filament-panels : : page
 View->>LW : Mount table/form/card
 LW-->>View : Rendered content
@@ -94,57 +117,94 @@ View-->>Browser : Final page HTML
 **Diagram sources**
 - [AdminPanelProvider.php:53-134](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L53-L134)
 - [AdminPanelProvider.php:141-191](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L141-L191)
-- [user-management.blade.php:1-3](file://frontend-v2/resources/views/filament/pages/user-management.blade.php#L1-L3)
+- [HasPeriodFilter.php:26-61](file://frontend-v2/app/Livewire/Concerns/HasPeriodFilter.php#L26-61)
 
 ## Detailed Component Analysis
 
-### Admin Panel Provider
-Responsibilities:
-- Configure default panel, home URL, login/password reset pages, dark mode, SPA, breadcrumbs.
-- Discover resources, pages, and widgets.
-- Register user menu items (profile and logout).
-- Build dynamic navigation groups using PermissionHelper and NavigationConfig.
-- Apply branding (name, logo, favicon, colors) via BrandingService.
-- Attach middleware and render hooks for notifications and UI enhancements.
+### Enhanced Dashboard Page
+The dashboard page has been significantly enhanced with improved period filtering capabilities. The 'all periods' option is now disabled to ensure data accuracy for metrics like outstanding payments and billing status that don't make sense across multiple periods.
 
-Navigation highlights:
-- Groups: Akademik, Keuangan, Laporan, Pengaturan.
-- Items use isActiveWhen and visible checks tied to permissions and query parameters (e.g., jenjang).
-- Siswa/Wali users get portal links when they land on the admin panel.
+**Updated** Enhanced with disabled 'all periods' option and session state management
 
 ```mermaid
 classDiagram
-class AdminPanelProvider {
-+panel(panel) Panel
--buildNavigation(builder) NavigationBuilder
--buildAkademikItems() array
--buildKeuanganItems() array
--buildLaporanItems() array
--buildPengaturanItems() array
--getJenjangIcon(jenjang) string
--resolveBrandName() string
--resolveBrandLogo() ?string
--resolveFavicon() ?string
--resolvePanelColors() array
+class DashboardPage {
++bool allowAllPeriodsOption = false
++mount() void
++updatedSelectedTahunAjaranId(value) void
++getHeaderActions() array
 }
-class NavigationConfig {
-<<constant>>
-+GROUPS
-+JENJANG_PAGES
-+JENJANG_OPTIONS
+class HasPeriodFilter {
++?int selectedTahunAjaranId
++array tahunAjaranOptions
++mountHasPeriodFilter(allowAllPeriodsOption) void
++updatedSelectedTahunAjaranId(value) void
++loadTahunAjaranOptions() void
 }
-AdminPanelProvider --> NavigationConfig : "uses"
+DashboardPage --> HasPeriodFilter : "uses"
 ```
 
 **Diagram sources**
-- [AdminPanelProvider.php:141-191](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L141-L191)
-- [AdminPanelProvider.php:234-401](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L234-L401)
-- [NavigationConfig.php:11-48](file://frontend-v2/app/Config/NavigationConfig.php#L11-L48)
+- [DashboardPage.php:10-62](file://frontend-v2/app/Filament/Pages/DashboardPage.php#L10-62)
+- [HasPeriodFilter.php:8-166](file://frontend-v2/app/Livewire/Concerns/HasPeriodFilter.php#L8-166)
 
 **Section sources**
-- [AdminPanelProvider.php:53-134](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L53-L134)
-- [AdminPanelProvider.php:141-191](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L141-L191)
-- [AdminPanelProvider.php:234-401](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L234-L401)
+- [DashboardPage.php:10-62](file://frontend-v2/app/Filament/Pages/DashboardPage.php#L10-62)
+- [dashboard.blade.php:1-71](file://frontend-v2/resources/views/filament/pages/dashboard.blade.php#L1-71)
+
+### Period Filter System
+The new HasPeriodFilter trait provides comprehensive academic year filtering with session state management. It supports configurable 'all periods' options, automatic fallback to active periods, and seamless integration with existing Livewire components.
+
+**New** Comprehensive period filtering with session persistence
+
+```mermaid
+flowchart TD
+Start(["Component Mount"]) --> CheckAllow{"Check allowAllPeriodsOption"}
+CheckAllow --> |true| SetNull["Set selectedTahunAjaranId = null"]
+CheckAllow --> |false| SetAktif["Set selectedTahunAjaranId = getAktifId()"]
+SetNull --> LoadOptions["Load Tahun Ajaran Options"]
+SetAktif --> LoadOptions
+LoadOptions --> ValidateSession["Validate Session Value"]
+ValidateSession --> |Valid| UseSession["Use Stored Value"]
+ValidateSession --> |Invalid| Fallback["Fallback to Active Period"]
+UseSession --> End(["Ready"])
+Fallback --> End
+```
+
+**Diagram sources**
+- [HasPeriodFilter.php:26-61](file://frontend-v2/app/Livewire/Concerns/HasPeriodFilter.php#L26-61)
+
+**Section sources**
+- [HasPeriodFilter.php:1-166](file://frontend-v2/app/Livewire/Concerns/HasPeriodFilter.php#L1-166)
+
+### Enhanced Student Portal Interface
+The student portal has been streamlined by removing the child selection dropdown for wali users while maintaining period filtering capabilities. This simplifies the user interface while preserving essential functionality.
+
+**Updated** Removed child selection dropdown for wali users, enhanced period filtering
+
+```mermaid
+sequenceDiagram
+participant User as "User"
+participant Portal as "PortalBerandaPage"
+participant Filter as "HasPeriodFilter"
+participant API as "API Service"
+User->>Portal : Access portal beranda
+Portal->>Filter : mountHasPeriodFilter()
+Filter->>API : GET /tahun-ajaran
+API-->>Filter : Return period options
+Filter->>Portal : Initialize with selected period
+Portal->>User : Render simplified interface
+```
+
+**Diagram sources**
+- [PortalBerandaPage.php:11-84](file://frontend-v2/app/Filament/Portal/Pages/PortalBerandaPage.php#L11-84)
+- [beranda.blade.php:1-61](file://frontend-v2/resources/views/filament/portal/pages/beranda.blade.php#L1-61)
+
+**Section sources**
+- [PortalBerandaPage.php:11-84](file://frontend-v2/app/Filament/Portal/Pages/PortalBerandaPage.php#L11-84)
+- [beranda.blade.php:1-61](file://frontend-v2/resources/views/filament/portal/pages/beranda.blade.php#L1-61)
+- [SiswaDashboard.php:1-77](file://frontend-v2/app/Livewire/SiswaDashboard.php#L1-77)
+- [siswa-dashboard.blade.php:1-147](file://frontend-v2/resources/views/livewire/siswa-dashboard.blade.php#L1-147)
 
 ### Custom Tabbed Interface Example
 A tabbed interface is implemented in a Blade view that renders tabs and delegates content to a Livewire table. Tabs are stateful via Livewire and show a loading indicator during transitions. An event listener opens external URLs in new tabs.
@@ -160,9 +220,6 @@ Click --> |No| Idle["Keep current tab"]
 Render --> End(["Page Ready"])
 Idle --> End
 ```
-
-**Diagram sources**
-- [manajemen-akun-siswa.blade.php:1-36](file://frontend-v2/resources/views/filament/pages/manajemen-akun-siswa.blade.php#L1-L36)
 
 **Section sources**
 - [manajemen-akun-siswa.blade.php:1-36](file://frontend-v2/resources/views/filament/pages/manajemen-akun-siswa.blade.php#L1-L36)
@@ -183,9 +240,6 @@ LW-->>View : Render table
 View-->>Router : Return response
 ```
 
-**Diagram sources**
-- [user-management.blade.php:1-3](file://frontend-v2/resources/views/filament/pages/user-management.blade.php#L1-L3)
-
 **Section sources**
 - [user-management.blade.php:1-3](file://frontend-v2/resources/views/filament/pages/user-management.blade.php#L1-L3)
 
@@ -205,9 +259,6 @@ LW-->>View : Render rows
 View-->>Portal : Return response
 ```
 
-**Diagram sources**
-- [riwayat-pembayaran.blade.php:1-3](file://frontend-v2/resources/views/filament/portal/pages/riwayat-pembayaran.blade.php#L1-L3)
-
 **Section sources**
 - [riwayat-pembayaran.blade.php:1-3](file://frontend-v2/resources/views/filament/portal/pages/riwayat-pembayaran.blade.php#L1-L3)
 
@@ -225,11 +276,6 @@ AddItems --> IsActive["Set isActiveWhen(route/query)"]
 IsActive --> End(["Groups & Items Ready"])
 SkipGroup --> End
 ```
-
-**Diagram sources**
-- [AdminPanelProvider.php:141-191](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L141-L191)
-- [AdminPanelProvider.php:234-401](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L234-L401)
-- [NavigationConfig.php:11-48](file://frontend-v2/app/Config/NavigationConfig.php#L11-L48)
 
 **Section sources**
 - [AdminPanelProvider.php:141-191](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L141-L191)
@@ -249,9 +295,6 @@ Breadcrumbs --> Discover["Discover pages in App\\Filament\\Pages"]
 Discover --> Routes["Routes resolved by Filament"]
 ```
 
-**Diagram sources**
-- [AdminPanelProvider.php:53-68](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L53-L68)
-
 **Section sources**
 - [AdminPanelProvider.php:53-68](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L53-L68)
 
@@ -270,18 +313,15 @@ class AdminPanelProvider {
 }
 ```
 
-**Diagram sources**
-- [AdminPanelProvider.php:102-106](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L102-L106)
-- [AdminPanelProvider.php:425-477](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L425-L477)
-
 **Section sources**
-- [AdminPanelProvider.php:102-106](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L102-L106)
-- [AdminPanelProvider.php:425-477](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L425-L477)
+- [AdminPanelProvider.php:102-106](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L102-106)
+- [AdminPanelProvider.php:425-477](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L425-477)
 
 ### Interaction with Livewire Components
 - Pages embed Livewire components directly in Blade views.
 - Tabbed interfaces manage state via Livewire methods and events.
 - Tables and card views are mounted within the page shell.
+- Period filtering integrates seamlessly with Livewire state management.
 
 ```mermaid
 sequenceDiagram
@@ -294,10 +334,6 @@ LW-->>View : Rendered markup
 View-->>Page : Complete page
 ```
 
-**Diagram sources**
-- [user-management.blade.php:1-3](file://frontend-v2/resources/views/filament/pages/user-management.blade.php#L1-L3)
-- [manajemen-akun-siswa.blade.php:1-36](file://frontend-v2/resources/views/filament/pages/manajemen-akun-siswa.blade.php#L1-L3)
-
 **Section sources**
 - [user-management.blade.php:1-3](file://frontend-v2/resources/views/filament/pages/user-management.blade.php#L1-L3)
 - [manajemen-akun-siswa.blade.php:1-36](file://frontend-v2/resources/views/filament/pages/manajemen-akun-siswa.blade.php#L1-L3)
@@ -309,15 +345,11 @@ While not shown explicitly in the referenced files, multi-step forms can be impl
 - Validating inputs per step and advancing state accordingly.
 - Persisting intermediate data in session or database as needed.
 
-[No sources needed since this section provides general guidance]
-
 ### Modal Dialogs
 Modal dialogs can be integrated using Wire Elements Modal or Filament Actions. Typical patterns:
 - Trigger modals from table actions or form buttons.
 - Use wire:click to open modals and wire:model to bind data.
 - Close modals after successful operations and show notifications.
-
-[No sources needed since this section provides general guidance]
 
 ### External Resource Loading Patterns
 - External API login settings define endpoint URL, timeout, and failure logging.
@@ -337,16 +369,12 @@ Panel->>Session : Clear & invalidate
 Panel-->>User : Redirect to login
 ```
 
-**Diagram sources**
-- [AdminPanelProvider.php:74-89](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L74-L89)
-- [filament-api-login.php:15-39](file://frontend-v2/config/filament-api-login.php#L15-L39)
-
 **Section sources**
-- [AdminPanelProvider.php:74-89](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L74-L89)
-- [filament-api-login.php:15-39](file://frontend-v2/config/filament-api-login.php#L15-L39)
+- [AdminPanelProvider.php:74-89](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L74-89)
+- [filament-api-login.php:15-39](file://frontend-v2/config/filament-api-login.php#L15-39)
 
 ## Dependency Analysis
-The following diagram shows key dependencies between the panel provider, navigation configuration, and feature flags.
+The following diagram shows key dependencies between the panel provider, navigation configuration, period filter system, and feature flags.
 
 ```mermaid
 graph TB
@@ -356,19 +384,23 @@ PANEL --> CFG["handayani.php"]
 PANEL --> LOGINCFG["filament-api-login.php"]
 PANEL --> VIEWS["Blade Views"]
 VIEWS --> LW["Livewire Components"]
+LW --> PERIOD["HasPeriodFilter Trait"]
+PERIOD --> SESSION["Session State"]
+PERIOD --> API["ApiService"]
 ```
 
 **Diagram sources**
 - [AdminPanelProvider.php:53-134](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L53-L134)
 - [NavigationConfig.php:11-48](file://frontend-v2/app/Config/NavigationConfig.php#L11-L48)
 - [handayani.php:14-29](file://frontend-v2/config/handayani.php#L14-L29)
-- [filament-api-login.php:15-39](file://frontend-v2/config/filament-api-login.php#L15-L39)
+- [filament-api-login.php:15-39](file://frontend-v2/config/filament-api-login.php#L15-39)
+- [HasPeriodFilter.php:1-166](file://frontend-v2/app/Livewire/Concerns/HasPeriodFilter.php#L1-166)
 
 **Section sources**
 - [AdminPanelProvider.php:53-134](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L53-L134)
 - [NavigationConfig.php:11-48](file://frontend-v2/app/Config/NavigationConfig.php#L11-L48)
 - [handayani.php:14-29](file://frontend-v2/config/handayani.php#L14-L29)
-- [filament-api-login.php:15-39](file://frontend-v2/config/filament-api-login.php#L15-L39)
+- [filament-api-login.php:15-39](file://frontend-v2/config/filament-api-login.php#L15-39)
 
 ## Performance Considerations
 - Enable SPA mode for smoother navigation and reduced full reloads.
@@ -376,8 +408,8 @@ VIEWS --> LW["Livewire Components"]
 - Defer heavy computations to background jobs where applicable.
 - Cache expensive queries and avoid N+1 problems in Livewire components.
 - Keep navigation visibility checks lightweight; rely on precomputed permissions.
-
-[No sources needed since this section provides general guidance]
+- Leverage session state for period filters to reduce API calls.
+- Implement proper caching strategies for academic year options.
 
 ## Troubleshooting Guide
 Common issues and resolutions:
@@ -386,14 +418,19 @@ Common issues and resolutions:
 - Breadcrumbs missing: Ensure breadcrumbs are enabled in panel configuration.
 - External logout failing: Check API URL and timeout settings; errors are ignored but session is cleared regardless.
 - Tab switching not working: Ensure Livewire method exists and targets match wire:target attributes.
+- Period filter not persisting: Check session configuration and ensure updatedSelectedTahunAjaranId method is properly implemented.
+- All periods option still showing: Verify allowAllPeriodsOption property is set to false in the page class.
+- Child dropdown not appearing: Check if wali user has multiple children in session data.
 
 **Section sources**
 - [AdminPanelProvider.php:141-191](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L141-L191)
 - [AdminPanelProvider.php:74-89](file://frontend-v2/app/Providers/Filament/AdminPanelProvider.php#L74-L89)
 - [manajemen-akun-siswa.blade.php:1-36](file://frontend-v2/resources/views/filament/pages/manajemen-akun-siswa.blade.php#L1-L36)
+- [DashboardPage.php:46-49](file://frontend-v2/app/Filament/Pages/DashboardPage.php#L46-L49)
+- [HasPeriodFilter.php:63-79](file://frontend-v2/app/Livewire/Concerns/HasPeriodFilter.php#L63-L79)
 
 ## Conclusion
-The Filament pages in this project are configured centrally via the Admin Panel Provider, with dynamic, permission-aware navigation and robust integration with Livewire components. Custom Blade views enable advanced layouts such as tabbed interfaces, while feature flags and external API configurations provide flexibility for authentication and UI enhancements. Following the patterns outlined here will help maintain consistency, scalability, and performance across admin and portal experiences.
+The Filament pages in this project are configured centrally via the Admin Panel Provider, with dynamic, permission-aware navigation and robust integration with Livewire components. Recent enhancements include sophisticated period filtering with session state management, disabled 'all periods' option for dashboard accuracy, and streamlined student portal interface. Custom Blade views enable advanced layouts such as tabbed interfaces, while feature flags and external API configurations provide flexibility for authentication and UI enhancements. Following the patterns outlined here will help maintain consistency, scalability, and performance across admin and portal experiences.
 
 ## Appendices
 
@@ -401,5 +438,17 @@ The Filament pages in this project are configured centrally via the Admin Panel 
 - Use Tailwind utility classes for responsive layouts in Blade views.
 - Ensure tables and forms adapt gracefully to mobile screens.
 - Test navigation collapse and accessibility on small devices.
+- Period filter dropdowns should be responsive and accessible.
 
-[No sources needed since this section provides general guidance]
+### Period Filter Implementation Guide
+For implementing period filtering in new pages:
+1. Use the HasPeriodFilter trait in your Livewire component or page class.
+2. Set allowAllPeriodsOption property to control 'all periods' behavior.
+3. Implement updatedSelectedTahunAjaranId method for session persistence.
+4. Pass selectedTahunAjaranId to API calls and child components.
+5. Use getTahunAjaranSelectComponent() for consistent UI.
+
+**Section sources**
+- [HasPeriodFilter.php:1-166](file://frontend-v2/app/Livewire/Concerns/HasPeriodFilter.php#L1-166)
+- [DashboardPage.php:10-62](file://frontend-v2/app/Filament/Pages/DashboardPage.php#L10-62)
+- [PortalBerandaPage.php:11-84](file://frontend-v2/app/Filament/Portal/Pages/PortalBerandaPage.php#L11-84)

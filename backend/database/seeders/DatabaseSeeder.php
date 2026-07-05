@@ -21,6 +21,7 @@ use App\Models\User;
 use App\Models\Wali;
 use App\Services\GenerateKodePembayaran;
 use App\Services\GenerateKodeTagihan;
+use App\Services\AkunSiswaService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -152,29 +153,37 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        // 9. Siswa for main branch
-        $this->seedSiswaForBranch($mainBranch, $kelasMap[$mainBranch->id], $tahunAjaranMap[$mainBranch->id]);
+        // Seed data for ALL branches
+        foreach ($branches as $branch) {
+            $adminForBranch = User::where('branch_id', $branch->id)->whereHas('roles', function($q) {
+                $q->where('name', 'admin')->orWhere('name', 'superadmin');
+            })->first() ?? $admin;
 
-        // 10. Jenis Tagihan & Tagihan for main branch
-        $this->seedTagihanForBranch($mainBranch, $tahunAjaranMap[$mainBranch->id]);
+            // 9. Siswa for branch
+            $this->seedSiswaForBranch($branch, $kelasMap[$branch->id], $tahunAjaranMap[$branch->id]);
 
-        // 11. Pengeluaran for main branch
-        $this->seedPengeluaranForBranch($mainBranch);
+            // 10. Jenis Tagihan & Tagihan for branch
+            $totalPemasukan = $this->seedTagihanForBranch($branch, $tahunAjaranMap[$branch->id]);
 
-        // 12. PengeluaranRequest for main branch
-        $this->seedPengeluaranRequestsForBranch($mainBranch, $admin);
+            // 11. Pengeluaran for branch (ensure saldo not negative)
+            $this->seedPengeluaranForBranch($branch, $totalPemasukan);
+
+            // 12. PengeluaranRequest for branch
+            $this->seedPengeluaranRequestsForBranch($branch, $adminForBranch);
+        }
     }
+
+    private int $nisCounter = 1;
 
     private function seedSiswaForBranch(Branch $branch, array $kelasPerJenjang, array $tahunAjarans): void
     {
         $aktiveTahunAjaran = collect($tahunAjarans)->firstWhere('status', 'Aktif');
-        $nisCounter = 1;
 
         // MI students (60 total, spread across 6 classes)
         foreach ($kelasPerJenjang['MI'] as $kelas) {
             $count = rand(8, 12);
             for ($i = 0; $i < $count; $i++) {
-                $nis = str_pad($nisCounter++, 6, '0', STR_PAD_LEFT);
+                $nis = str_pad($this->nisCounter++, 6, '0', STR_PAD_LEFT);
                 $ayah = Ayah::create([
                     'nama' => fake()->name('male'),
                     'pendidikan_terakhir' => fake()->randomElement(['SD', 'SMP', 'SMA', 'D3', 'S1', 'S2']),
@@ -217,6 +226,9 @@ class DatabaseSeeder extends Seeder
                     'kelas_id' => $kelas->id,
                     'tahun_ajaran_id' => $aktiveTahunAjaran->id,
                 ]);
+                
+                // Generate User account
+                app(AkunSiswaService::class)->createAccount($siswa);
             }
         }
 
@@ -224,7 +236,7 @@ class DatabaseSeeder extends Seeder
         foreach ($kelasPerJenjang['TK'] as $kelas) {
             $count = rand(8, 12);
             for ($i = 0; $i < $count; $i++) {
-                $nis = str_pad($nisCounter++, 6, '0', STR_PAD_LEFT);
+                $nis = str_pad($this->nisCounter++, 6, '0', STR_PAD_LEFT);
                 $wali = Wali::create([
                     'nama' => fake()->name(),
                     'pekerjaan' => fake()->jobTitle(),
@@ -262,13 +274,16 @@ class DatabaseSeeder extends Seeder
                     'kelas_id' => $kelas->id,
                     'tahun_ajaran_id' => $aktiveTahunAjaran->id,
                 ]);
+                
+                // Generate User account
+                app(AkunSiswaService::class)->createAccount($siswa);
             }
         }
 
         // KB students (6 total)
         foreach ($kelasPerJenjang['KB'] as $kelas) {
             for ($i = 0; $i < 6; $i++) {
-                $nis = str_pad($nisCounter++, 6, '0', STR_PAD_LEFT);
+                $nis = str_pad($this->nisCounter++, 6, '0', STR_PAD_LEFT);
                 $wali = Wali::create([
                     'nama' => fake()->name(),
                     'pekerjaan' => fake()->jobTitle(),
@@ -306,12 +321,19 @@ class DatabaseSeeder extends Seeder
                     'kelas_id' => $kelas->id,
                     'tahun_ajaran_id' => $aktiveTahunAjaran->id,
                 ]);
+                
+                // Generate User account
+                app(AkunSiswaService::class)->createAccount($siswa);
             }
         }
     }
 
-    private function seedTagihanForBranch(Branch $branch, array $tahunAjarans): void
+    private int $tagihanCounter = 1;
+    private int $pembayaranCounter = 1;
+
+    private function seedTagihanForBranch(Branch $branch, array $tahunAjarans): int
     {
+        $totalPemasukan = 0;
         $aktiveTahunAjaran = collect($tahunAjarans)->firstWhere('status', 'Aktif');
 
         // Jenis Tagihan — jatuh_tempo dihitung relatif terhadap hari ini agar
@@ -347,15 +369,12 @@ class DatabaseSeeder extends Seeder
             ->limit(20)
             ->get();
 
-        $tagihanCounter = 1;
-        $pembayaranCounter = 1;
-
         foreach ($students as $siswa) {
             // Give each student 2-4 random jenis tagihan
             $selectedJenis = fake()->randomElements($jenisTagihans, rand(2, 4));
 
             foreach ($selectedJenis as $jenis) {
-                $kodeTagihan = 'TAG-' . now()->format('ym') . '-' . str_pad($tagihanCounter++, 4, '0', STR_PAD_LEFT);
+                $kodeTagihan = 'TAG-' . now()->format('ym') . '-' . str_pad($this->tagihanCounter++, 4, '0', STR_PAD_LEFT);
 
                 $status = fake()->randomElement(['Lunas', 'Belum Lunas', 'Belum Dibayar', 'Belum Dibayar']);
                 $tmp = 0;
@@ -378,7 +397,7 @@ class DatabaseSeeder extends Seeder
 
                 // Create pembayaran for paid tagihan
                 if ($tmp > 0) {
-                    $kodePembayaran = 'PAY-' . now()->format('ym') . '-' . str_pad($pembayaranCounter++, 4, '0', STR_PAD_LEFT);
+                    $kodePembayaran = 'PAY-' . now()->format('ym') . '-' . str_pad($this->pembayaranCounter++, 4, '0', STR_PAD_LEFT);
                     Pembayaran::create([
                         'kode_pembayaran' => $kodePembayaran,
                         'kode_tagihan' => $kodeTagihan,
@@ -388,12 +407,15 @@ class DatabaseSeeder extends Seeder
                         'pembayar' => fake()->name(),
                         'branch_id' => $branch->id,
                     ]);
+                    $totalPemasukan += $tmp;
                 }
             }
         }
+
+        return $totalPemasukan;
     }
 
-    private function seedPengeluaranForBranch(Branch $branch): void
+    private function seedPengeluaranForBranch(Branch $branch, int $maxTotalPengeluaran = 50000000): void
     {
         $pengeluaranData = [
             ['uraian' => 'Pembelian ATK', 'jumlah' => 250000],
@@ -408,7 +430,11 @@ class DatabaseSeeder extends Seeder
             ['uraian' => 'Pembelian bahan praktek', 'jumlah' => 680000],
         ];
 
+        $totalPengeluaran = 0;
         foreach ($pengeluaranData as $data) {
+            if ($totalPengeluaran + $data['jumlah'] > ($maxTotalPengeluaran * 0.7)) {
+                break; // Stop if we reach 70% of max allowed to leave positive balance
+            }
             Pengeluaran::create([
                 'tanggal' => fake()->dateTimeBetween('-3 months', 'now')->format('Y-m-d'),
                 'uraian' => $data['uraian'],
@@ -416,6 +442,7 @@ class DatabaseSeeder extends Seeder
                 'tahun_ajaran_id' => 1,
                 'branch_id' => $branch->id,
             ]);
+            $totalPengeluaran += $data['jumlah'];
         }
     }
 

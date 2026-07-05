@@ -893,6 +893,10 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 return [$item['id'] => $label];
                                             })->toArray();
                                         })
+                                        ->getOptionLabelUsing(function ($value) {
+                                            $response = ApiService::client()->get('/ayah/' . $value);
+                                            return $response->ok() ? $response->json('data.nama') : 'Terpilih';
+                                        })
                                         ->live()
                                         ->afterStateUpdated(function ($state, $set) {
                                             if ($state) {
@@ -938,6 +942,10 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 }
                                                 return [$item['id'] => $label];
                                             })->toArray();
+                                        })
+                                        ->getOptionLabelUsing(function ($value) {
+                                            $response = ApiService::client()->get('/ibu/' . $value);
+                                            return $response->ok() ? $response->json('data.nama') : 'Terpilih';
                                         })
                                         ->live()
                                         ->afterStateUpdated(function ($state, $set) {
@@ -1179,6 +1187,10 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 }
                                                 return [$item['id'] => $label];
                                             })->toArray();
+                                        })
+                                        ->getOptionLabelUsing(function ($value) {
+                                            $response = ApiService::client()->get('/wali/' . $value);
+                                            return $response->ok() ? $response->json('data.nama') : 'Terpilih';
                                         })
                                         ->live()
                                         ->afterStateUpdated(function ($state, $set) {

@@ -313,4 +313,88 @@ class UserController extends Controller
             'data' => ['email' => $user->email],
         ]);
     }
+
+    /**
+     * Get the authenticated user's email notification preferences.
+     */
+    public function getNotificationPreferences(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+        
+        if (!$user->email) {
+            return response()->json([
+                'data' => [
+                    'tagihan_baru' => false,
+                    'reminder' => false,
+                    'kwitansi' => false,
+                    'overdue' => false,
+                ]
+            ]);
+        }
+
+        $optOuts = \App\Models\EmailOptOut::where('email', $user->email)
+            ->pluck('notification_type')
+            ->toArray();
+
+        // If 'all' is present in optOuts, all are false.
+        // Otherwise, they are true unless explicitly present in optOuts.
+        $isAllOptedOut = in_array('all', $optOuts);
+
+        return response()->json([
+            'data' => [
+                'tagihan_baru' => $isAllOptedOut ? false : !in_array('tagihan_baru', $optOuts),
+                'reminder' => $isAllOptedOut ? false : !in_array('reminder', $optOuts),
+                'kwitansi' => $isAllOptedOut ? false : !in_array('kwitansi', $optOuts),
+                'overdue' => $isAllOptedOut ? false : !in_array('overdue', $optOuts),
+            ]
+        ]);
+    }
+
+    /**
+     * Update the authenticated user's email notification preferences.
+     */
+    public function updateNotificationPreferences(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+        
+        if (!$user->email) {
+            throw new HttpResponseException(response()->json([
+                'errors' => [
+                    'message' => ['User belum mengatur email.']
+                ]
+            ], 422));
+        }
+
+        $data = $request->validate([
+            'tagihan_baru' => 'required|boolean',
+            'reminder' => 'required|boolean',
+            'kwitansi' => 'required|boolean',
+            'overdue' => 'required|boolean',
+        ]);
+
+        $types = ['tagihan_baru', 'reminder', 'kwitansi', 'overdue'];
+        
+        // Remove 'all' just in case it exists to normalize
+        \App\Models\EmailOptOut::where('email', $user->email)->where('notification_type', 'all')->delete();
+
+        foreach ($types as $type) {
+            if ($data[$type] === false) {
+                // User wants to opt-out
+                \App\Models\EmailOptOut::firstOrCreate(
+                    ['email' => $user->email, 'notification_type' => $type],
+                    ['token' => \Illuminate\Support\Str::random(32)]
+                );
+            } else {
+                // User wants to opt-in
+                \App\Models\EmailOptOut::where('email', $user->email)
+                    ->where('notification_type', $type)
+                    ->delete();
+            }
+        }
+
+        return response()->json([
+            'message' => 'Preferensi notifikasi berhasil diperbarui.',
+            'data' => $data,
+        ]);
+    }
 }

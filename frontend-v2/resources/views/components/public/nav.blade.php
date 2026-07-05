@@ -13,7 +13,7 @@
 >
     <nav aria-label="Navigasi utama" class="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 lg:px-8">
         {{-- Logo --}}
-        <a href="#beranda" class="flex items-center gap-2.5">
+        <a href="#beranda" @click.prevent="document.querySelector('#beranda').scrollIntoView({ behavior: 'smooth' })" class="flex items-center gap-2.5">
             <span aria-hidden="true" class="grid size-8 place-items-center rounded-md text-primary-foreground">
                 <img src="{{ asset('images/logo.jpg') }}">
 {{--                <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2">--}}
@@ -34,7 +34,11 @@
                 ['href' => '#kontak', 'label' => 'Kontak'],
             ] as $link)
                 <li>
-                    <a href="{{ $link['href'] }}" class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+                    <a 
+                        href="{{ $link['href'] }}" 
+                        @click.prevent="document.querySelector('{{ $link['href'] }}').scrollIntoView({ behavior: 'smooth' })"
+                        class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    >
                         {{ $link['label'] }}
                     </a>
                 </li>
@@ -104,7 +108,7 @@
                 <li>
                     <a
                         href="{{ $link['href'] }}"
-                        @click="closeMenu()"
+                        @click.prevent="document.querySelector('{{ $link['href'] }}').scrollIntoView({ behavior: 'smooth' }); closeMenu()"
                         class="block rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
                     >
                         {{ $link['label'] }}

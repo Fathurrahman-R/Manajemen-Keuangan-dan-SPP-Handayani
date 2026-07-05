@@ -13,6 +13,7 @@ use Filament\Support\Enums\Alignment;
 use App\Services\ApiService;
 use Filament\Notifications\Notification;
 use App\Livewire\Concerns\HandlesApiErrors;
+use App\Helpers\PermissionHelper;
 use Illuminate\Http\Client\ConnectionException;
 
 class Settings extends Page
@@ -29,6 +30,8 @@ class Settings extends Page
 
     public function mount()
     {
+        abort_if(!PermissionHelper::has('view-dashboard'), 403);
+
         try {
             $response = ApiService::client()->get('/setting');
 
@@ -55,6 +58,7 @@ class Settings extends Page
                 ->icon('heroicon-o-pencil-square')
                 ->label('Ubah')
                 ->color('primary')
+                ->visible(fn(): bool => PermissionHelper::has('update-app-setting'))
                 ->modal()
                 ->fillForm(fn(): array => $this->setting === null ? [] : [
                     'id' => $this->setting['id'],

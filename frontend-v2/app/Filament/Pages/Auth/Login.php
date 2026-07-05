@@ -99,7 +99,11 @@ class Login extends PagesLogin
 
                 // Redirect to change password page if must_change_password is true
                 if (!empty($responseData['must_change_password'])) {
-                    $this->redirect(filament()->getUrl() . '/change-password');
+                    if (in_array('siswa', $responseData['roles'])) {
+                        $this->redirect('/' . config('handayani.portal.path', 'portal') . '/change-password');
+                    } else {
+                        $this->redirect(filament()->getUrl() . '/change-password');
+                    }
                     return null;
                 }
 

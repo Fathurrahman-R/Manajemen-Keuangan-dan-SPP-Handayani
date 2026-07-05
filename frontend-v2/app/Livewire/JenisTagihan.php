@@ -80,6 +80,54 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
             ->emptyStateDescription('Silahkan menambahkan jenis tagihan')
             ->emptyStateIcon('heroicon-o-document-text')
             ->recordActions([
+                Action::make('update')
+                    ->tooltip('Ubah Jenis Tagihan')
+                    ->icon('heroicon-s-pencil-square')
+                    ->iconButton()
+                    ->color('warning')
+                    ->visible(fn(): bool => in_array('update-jenis-tagihan', session()->get('data.permissions', [])))
+                    ->modalHeading('Ubah Jenis Tagihan')
+                    ->modalSubmitActionLabel('Simpan')
+                    ->modalCancelActionLabel('Batal')
+                    ->modalFooterActionsAlignment(Alignment::End)
+                    ->fillForm(fn(array $record): array => [
+                        'nama' => $record['nama'],
+                        'jatuh_tempo' => $record['jatuh_tempo'],
+                        'jumlah' => $record['jumlah'],
+                    ])
+                    ->schema([
+                        TextInput::make('nama')
+                            ->label('Nama Tagihan')
+                            ->required(),
+                        DatePicker::make('jatuh_tempo')
+                            ->label('Jatuh Tempo')
+                            ->native(false)
+                            ->timezone('Asia/Jakarta')
+                            ->format('Y-m-d')
+                            ->displayFormat('d-m-Y')
+                            ->required(),
+                        TextInput::make('jumlah')
+                            ->label('Jumlah')
+                            ->numeric()
+                            ->required(),
+                    ])
+                    ->action(function (array $data, $record): void {
+                        $response = ApiService::client()
+                            ->put('/jenis-tagihan/' . $record['id'], $data);
+
+                        if (!$response->ok()) {
+                            Notification::make()
+                                ->title('Jenis Tagihan Gagal Diubah')
+                                ->danger()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Jenis Tagihan Berhasil Diubah')
+                                ->success()
+                                ->send();
+                            $this->resetTable();
+                        }
+                    }),
                 Action::make('delete')
                     ->tooltip('Hapus Jenis Tagihan')
                     ->icon('heroicon-s-trash') // Optional icon

@@ -13,8 +13,8 @@ class PermissionHelper
             'view-siswa',
             'view-kategori',
             'view-kelas',
-            'manage-tahun-ajaran',
-            'manage-kenaikan-kelas',
+            'view-tahun-ajaran',
+            'view-kenaikan-kelas',
         ],
         'keuangan' => [
             'view-jenis-tagihan',
@@ -34,8 +34,9 @@ class PermissionHelper
         'pengaturan' => [
             'view-roles',
             'view-user',
-            'manage-akun-siswa',
+            'view-akun-siswa',
             'view-branch',
+            'view-app-setting',
         ],
     ];
 

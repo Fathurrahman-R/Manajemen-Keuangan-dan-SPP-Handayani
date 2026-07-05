@@ -68,7 +68,10 @@ class TransaksiMidtrans extends Component implements HasActions, HasSchemas, Has
                             );
                         }
 
-                        return $data->toArray();
+                        return $data->mapWithKeys(function ($item) {
+                            $key = $item['order_id'] ?? uniqid();
+                            return [$key => $item];
+                        })->toArray();
                     } catch (MidtransApiException $e) {
                         $this->notifyUnexpectedError();
                         return [];
@@ -120,6 +123,7 @@ class TransaksiMidtrans extends Component implements HasActions, HasSchemas, Has
                     ->label('Diperbarui')
                     ->formatStateUsing(fn($state) => $state ? \Carbon\Carbon::parse($state)->format('d/m/Y H:i') : '-'),
             ])
+            ->poll('5s')
             ->deferLoading()
             ->striped()
             ->searchable()

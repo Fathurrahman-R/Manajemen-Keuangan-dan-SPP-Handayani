@@ -77,9 +77,14 @@ class PortalRiwayatPembayaranPage extends Page implements HasTable, HasActions, 
                             $items = array_merge($json['pending'], $items);
                         }
 
+                        $items = collect($items)->mapWithKeys(function ($item) {
+                            $key = $item['order_id'] ?? $item['kode_pembayaran'] ?? uniqid();
+                            return [$key => $item];
+                        });
+
                         return new LengthAwarePaginator(
                             items: $items,
-                            total: $json['meta']['total'] ?? count($items),
+                            total: $json['meta']['total'] ?? $items->count(),
                             perPage: $recordsPerPage,
                             currentPage: $page,
                         );
@@ -141,6 +146,7 @@ class PortalRiwayatPembayaranPage extends Page implements HasTable, HasActions, 
                         return $this->downloadKwitansi($record['kode_pembayaran']);
                     }),
             ])
+            ->poll('5s')
             ->deferLoading()
             ->striped()
             ->paginated([5, 10, 25])

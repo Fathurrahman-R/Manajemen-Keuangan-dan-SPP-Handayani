@@ -54,6 +54,12 @@ class PortalProfilPage extends Page implements HasForms, HasSchemas
     public string $new_password = '';
     public string $new_password_confirmation = '';
 
+    // Notification form
+    public bool $notif_tagihan_baru = false;
+    public bool $notif_reminder = false;
+    public bool $notif_kwitansi = false;
+    public bool $notif_overdue = false;
+
     public function mount(): void
     {
         $roles = session()->get('data.roles', []);
@@ -75,6 +81,18 @@ class PortalProfilPage extends Page implements HasForms, HasSchemas
             $this->username = $userData['username'] ?? null;
             $this->roles = $userData['roles'] ?? [];
             $this->branchLocation = $userData['branch']['location'] ?? null;
+            
+            // Fetch notification preferences if email is set
+            if ($this->currentEmail) {
+                $notifResponse = ApiService::client()->get('/users/current/notification-preferences');
+                if ($notifResponse->ok()) {
+                    $notifData = $notifResponse->json('data') ?? [];
+                    $this->notif_tagihan_baru = $notifData['tagihan_baru'] ?? false;
+                    $this->notif_reminder = $notifData['reminder'] ?? false;
+                    $this->notif_kwitansi = $notifData['kwitansi'] ?? false;
+                    $this->notif_overdue = $notifData['overdue'] ?? false;
+                }
+            }
         } catch (ConnectionException $e) {
             $this->notifyConnectionError();
         } catch (\Throwable $e) {
@@ -125,6 +143,25 @@ class PortalProfilPage extends Page implements HasForms, HasSchemas
             ]);
     }
 
+    public function notificationFormSchema(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                \Filament\Forms\Components\Toggle::make('notif_tagihan_baru')
+                    ->label('Tagihan Baru')
+                    ->helperText('Notifikasi saat tagihan baru diterbitkan'),
+                \Filament\Forms\Components\Toggle::make('notif_reminder')
+                    ->label('Reminder Jatuh Tempo')
+                    ->helperText('Pengingat beberapa hari sebelum tanggal jatuh tempo'),
+                \Filament\Forms\Components\Toggle::make('notif_kwitansi')
+                    ->label('Kwitansi Pembayaran')
+                    ->helperText('Bukti pembayaran setiap kali transaksi berhasil'),
+                \Filament\Forms\Components\Toggle::make('notif_overdue')
+                    ->label('Tagihan Menunggak')
+                    ->helperText('Pemberitahuan ketika tagihan melewati tanggal jatuh tempo'),
+            ]);
+    }
+
     public function updateEmail(): void
     {
         $this->validate([
@@ -141,6 +178,17 @@ class PortalProfilPage extends Page implements HasForms, HasSchemas
             if ($response->ok()) {
                 $this->currentEmail = $this->email;
                 $this->current_password_for_email = '';
+                
+                // Fetch default preferences on email set if it was previously unset
+                $notifResponse = ApiService::client()->get('/users/current/notification-preferences');
+                if ($notifResponse->ok()) {
+                    $notifData = $notifResponse->json('data') ?? [];
+                    $this->notif_tagihan_baru = $notifData['tagihan_baru'] ?? false;
+                    $this->notif_reminder = $notifData['reminder'] ?? false;
+                    $this->notif_kwitansi = $notifData['kwitansi'] ?? false;
+                    $this->notif_overdue = $notifData['overdue'] ?? false;
+                }
+
                 Notification::make()->title('Email berhasil diperbarui')->success()->send();
             } else {
                 $this->handleApiError($response);
@@ -172,6 +220,33 @@ class PortalProfilPage extends Page implements HasForms, HasSchemas
                 $this->new_password = '';
                 $this->new_password_confirmation = '';
                 Notification::make()->title('Password berhasil diubah')->success()->send();
+            } else {
+                $this->handleApiError($response);
+            }
+        } catch (ConnectionException $e) {
+            $this->notifyConnectionError();
+        } catch (\Throwable $e) {
+            $this->notifyUnexpectedError();
+        }
+    }
+
+    public function updateNotificationPreferences(): void
+    {
+        if (!$this->currentEmail) {
+            Notification::make()->title('Email belum diatur')->danger()->send();
+            return;
+        }
+
+        try {
+            $response = ApiService::client()->put('/users/current/notification-preferences', [
+                'tagihan_baru' => $this->notif_tagihan_baru,
+                'reminder' => $this->notif_reminder,
+                'kwitansi' => $this->notif_kwitansi,
+                'overdue' => $this->notif_overdue,
+            ]);
+
+            if ($response->ok()) {
+                Notification::make()->title('Preferensi notifikasi berhasil disimpan')->success()->send();
             } else {
                 $this->handleApiError($response);
             }

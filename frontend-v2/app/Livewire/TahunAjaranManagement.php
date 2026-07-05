@@ -103,6 +103,7 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
                         ->tooltip('Aktifkan Tahun Ajaran')
                         ->color('success')
                         ->hidden(fn(array $record): bool => $record['status'] === 'Aktif')
+                        ->visible(fn(): bool => in_array('update-tahun-ajaran', session()->get('data.permissions', [])))
                         ->requiresConfirmation()
                         ->modalHeading('Aktifkan Tahun Ajaran')
                         ->modalDescription('Apakah kamu yakin ingin mengaktifkan tahun ajaran ini? Tahun ajaran lain akan dinonaktifkan.')
@@ -126,6 +127,7 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
                         ->label('Edit')
                         ->tooltip('Edit Tahun Ajaran')
                         ->color('warning')
+                        ->visible(fn(): bool => in_array('update-tahun-ajaran', session()->get('data.permissions', [])))
                         ->modalHeading('Edit Tahun Ajaran')
                         ->modalFooterActions(function (Action $action) {
                             return [
@@ -179,6 +181,7 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
                         ->label('Hapus')
                         ->tooltip('Hapus Tahun Ajaran')
                         ->color('danger')
+                        ->visible(fn(): bool => in_array('delete-tahun-ajaran', session()->get('data.permissions', [])))
                         ->requiresConfirmation()
                         ->modalHeading('Hapus Tahun Ajaran')
                         ->modalDescription('Apakah kamu yakin untuk menghapus tahun ajaran ini?')
@@ -206,6 +209,7 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
                     ->label('Hapus Terpilih')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
+                    ->visible(fn(): bool => in_array('delete-tahun-ajaran', session()->get('data.permissions', [])))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Tahun Ajaran Terpilih')
                     ->modalDescription('Apakah kamu yakin ingin menghapus semua tahun ajaran yang dipilih?')
@@ -231,6 +235,7 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
                     ->label('Tambah')
                     ->color('primary')
                     ->button()
+                    ->visible(fn(): bool => in_array('create-tahun-ajaran', session()->get('data.permissions', [])))
                     ->modalHeading('Tambah Tahun Ajaran')
                     ->modalFooterActions(function (Action $action) {
                         return [

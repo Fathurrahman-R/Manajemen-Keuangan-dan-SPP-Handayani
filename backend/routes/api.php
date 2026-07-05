@@ -49,11 +49,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get("/users/current", [UserController::class, "get"]);
     Route::patch('/users/current', [UserController::class, "updateCurrent"]);
     Route::patch('/users/current/email', [UserController::class, 'updateEmail']);
+    Route::get('/users/current/notification-preferences', [UserController::class, 'getNotificationPreferences']);
+    Route::put('/users/current/notification-preferences', [UserController::class, 'updateNotificationPreferences']);
     Route::post('/users/change-password', [UserController::class, 'changePassword']);
 
-    // Siswa-accessible route (role:siswa middleware)
-    Route::get('/tagihan/siswa', [TagihanController::class, 'siswaView'])->middleware('role:siswa');
-    Route::get('/pembayaran/siswa', [PembayaranController::class, 'siswaView'])->middleware('role:siswa');
+    // Siswa-accessible route (permission:view-tagihan-siswa middleware)
+    Route::get('/tagihan/siswa', [TagihanController::class, 'siswaView'])->middleware('permission:view-tagihan-siswa');
+    Route::get('/pembayaran/siswa', [PembayaranController::class, 'siswaView'])->middleware('permission:view-tagihan-siswa');
+    
+    // Shared Pembayaran routes (accessible by students or admin with permission)
+    Route::get('/pembayaran/kwitansi/{kode_pembayaran}', [PdfGeneratorController::class, 'get'])->middleware('permission:print-kwitansi');
 
     // Dashboard routes
     Route::prefix('/dashboard')->group(function () {
@@ -79,35 +84,34 @@ Route::middleware('auth:sanctum')->group(function () {
     // Tahun Ajaran routes (needed by all roles for dropdown filters)
     Route::prefix('/tahun-ajaran')->group(function () {
         Route::get('/', [TahunAjaranController::class, 'index']);
-        Route::post('/', [TahunAjaranController::class, 'store'])->middleware('permission:manage-tahun-ajaran');
+        Route::post('/', [TahunAjaranController::class, 'store'])->middleware('permission:create-tahun-ajaran');
         Route::get('/{id}', [TahunAjaranController::class, 'show']);
-        Route::put('/{id}', [TahunAjaranController::class, 'update'])->middleware('permission:manage-tahun-ajaran');
-        Route::delete('/{id}', [TahunAjaranController::class, 'destroy'])->middleware('permission:manage-tahun-ajaran');
-        Route::patch('/{id}/activate', [TahunAjaranController::class, 'activate'])->middleware('permission:manage-tahun-ajaran');
-        Route::patch('/{id}/deactivate', [TahunAjaranController::class, 'deactivate'])->middleware('permission:manage-tahun-ajaran');
+        Route::put('/{id}', [TahunAjaranController::class, 'update'])->middleware('permission:update-tahun-ajaran');
+        Route::delete('/{id}', [TahunAjaranController::class, 'destroy'])->middleware('permission:delete-tahun-ajaran');
+        Route::patch('/{id}/activate', [TahunAjaranController::class, 'activate'])->middleware('permission:update-tahun-ajaran');
+        Route::patch('/{id}/deactivate', [TahunAjaranController::class, 'deactivate'])->middleware('permission:update-tahun-ajaran');
     });
 
-    // Admin panel routes — deny access to users with only "siswa" role
-    Route::middleware('deny_siswa')->group(function () {
-        // User management routes
-        Route::prefix('/users')->group(function () {
-            Route::get('/', [UserController::class, 'index'])
-                ->middleware('permission:view-user');
-            Route::post('/', [UserController::class, 'store'])
-                ->middleware('permission:create-user');
-            Route::get('/{id}', [UserController::class, 'show'])
-                ->middleware('permission:read-user')
-                ->where('id', '[0-9]+');
-            Route::put('/{id}', [UserController::class, 'update'])
-                ->middleware('permission:update-user')
-                ->where('id', '[0-9]+');
-            Route::delete('/{id}', [UserController::class, 'destroy'])
-                ->middleware('permission:delete-user')
-                ->where('id', '[0-9]+');
-            Route::patch('/{id}/toggle-active', [UserController::class, 'toggleActive'])
-                ->middleware('permission:update-user')
-                ->where('id', '[0-9]+');
-        });
+    // Admin panel routes — completely driven by specific permissions
+    // User management routes
+    Route::prefix('/users')->group(function () {
+        Route::get('/', [UserController::class, 'index'])
+            ->middleware('permission:view-user');
+        Route::post('/', [UserController::class, 'store'])
+            ->middleware('permission:create-user');
+        Route::get('/{id}', [UserController::class, 'show'])
+            ->middleware('permission:read-user')
+            ->where('id', '[0-9]+');
+        Route::put('/{id}', [UserController::class, 'update'])
+            ->middleware('permission:update-user')
+            ->where('id', '[0-9]+');
+        Route::delete('/{id}', [UserController::class, 'destroy'])
+            ->middleware('permission:delete-user')
+            ->where('id', '[0-9]+');
+        Route::patch('/{id}/toggle-active', [UserController::class, 'toggleActive'])
+            ->middleware('permission:update-user')
+            ->where('id', '[0-9]+');
+    });
 
         // Role management — permission-based
         Route::prefix('/roles')->group(function () {
@@ -160,9 +164,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Ayah routes (parent search for siswa creation)
         Route::get('/ayah', [ParentSearchController::class, 'ayah'])->middleware('permission:create-siswa');
+        Route::get('/ayah/{id}', [ParentSearchController::class, 'showAyah'])->middleware('permission:create-siswa');
 
         // Ibu routes (parent search for siswa creation)
         Route::get('/ibu', [ParentSearchController::class, 'ibu'])->middleware('permission:create-siswa');
+        Route::get('/ibu/{id}', [ParentSearchController::class, 'showIbu'])->middleware('permission:create-siswa');
 
         // Tagihan routes (admin)
         Route::get('/tagihan/grouped', [TagihanController::class, 'grouped'])->middleware('permission:view-tagihan');
@@ -179,10 +185,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::prefix('/pembayaran')->group(function () {
             Route::get('/grouped', [PembayaranController::class, 'grouped'])->middleware('permission:view-pembayaran');
             Route::get('/', [PembayaranController::class, 'index'])->middleware('permission:view-pembayaran');
-            Route::post('/batch', [PembayaranController::class, 'batchLunas'])->middleware('permission:view-pembayaran');
-            Route::post('/bayar/{kode_tagihan}', [PembayaranController::class, 'bayar'])->middleware('permission:view-pembayaran');
-            Route::post('/lunas/{kode_tagihan}', [PembayaranController::class, 'lunas'])->middleware('permission:view-pembayaran');
-            Route::get('/kwitansi/{kode_pembayaran}', [PdfGeneratorController::class, 'get'])->middleware('permission:print-kwitansi');
+            Route::post('/batch', [PembayaranController::class, 'batchLunas'])->middleware('permission:create-pembayaran');
+            Route::post('/bayar/{kode_tagihan}', [PembayaranController::class, 'bayar'])->middleware('permission:create-pembayaran');
+            Route::post('/lunas/{kode_tagihan}', [PembayaranController::class, 'lunas'])->middleware('permission:create-pembayaran');
             Route::delete('/{kode_pembayaran}', [PembayaranController::class, 'delete'])->middleware('permission:delete-pembayaran');
         });
 
@@ -206,16 +211,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
         // Setting routes (accessible to authenticated admin users)
-        Route::get('/setting', [AppSettingController::class, 'get']);
-        Route::post('/setting/{id}', [AppSettingController::class, 'update']);
+        Route::get('/setting', [AppSettingController::class, 'get'])->middleware('permission:view-app-setting');
+        Route::post('/setting/{id}', [AppSettingController::class, 'update'])->middleware('permission:update-app-setting');
 
         // Notification settings routes
-        Route::get('/notification-settings', [NotificationSettingController::class, 'show']);
-        Route::put('/notification-settings', [NotificationSettingController::class, 'update']);
+        Route::get('/notification-settings', [NotificationSettingController::class, 'show'])->middleware('permission:view-notification-setting');
+        Route::put('/notification-settings', [NotificationSettingController::class, 'update'])->middleware('permission:update-notification-setting');
 
         // Notification log routes
-        Route::get('/notification-logs', [NotificationLogController::class, 'index']);
-        Route::post('/notification-logs/retry', [NotificationLogController::class, 'retry']);
+        Route::get('/notification-logs', [NotificationLogController::class, 'index'])->middleware('permission:view-notification-logs');
+        Route::post('/notification-logs/retry', [NotificationLogController::class, 'retry'])->middleware('permission:view-notification-logs');
 
         // Laporan routes
         Route::prefix('/laporan')->group(function () {
@@ -230,28 +235,28 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         // Kenaikan Kelas routes
-        Route::prefix('/kenaikan-kelas')->middleware('permission:manage-kenaikan-kelas')->group(function () {
-            Route::post('/bulk-promotion', [KenaikanKelasController::class, 'bulkPromotion']);
-            Route::post('/individual-promotion', [KenaikanKelasController::class, 'individualPromotion']);
-            Route::post('/graduation', [KenaikanKelasController::class, 'graduation']);
-            Route::post('/retention', [KenaikanKelasController::class, 'retention']);
-            Route::post('/cross-level-transfer', [KenaikanKelasController::class, 'crossLevelTransfer']);
-            Route::post('/{batchId}/undo', [KenaikanKelasController::class, 'undo']);
-            Route::get('/batches', [KenaikanKelasController::class, 'listBatches']);
-            Route::get('/batches/{id}', [KenaikanKelasController::class, 'showBatch']);
-            Route::get('/eligible-students', [KenaikanKelasController::class, 'eligibleStudents']);
-            Route::get('/class-hierarchy', [KenaikanKelasController::class, 'classHierarchy']);
+        Route::prefix('/kenaikan-kelas')->group(function () {
+            Route::post('/bulk-promotion', [KenaikanKelasController::class, 'bulkPromotion'])->middleware('permission:process-kenaikan-kelas');
+            Route::post('/individual-promotion', [KenaikanKelasController::class, 'individualPromotion'])->middleware('permission:process-kenaikan-kelas');
+            Route::post('/graduation', [KenaikanKelasController::class, 'graduation'])->middleware('permission:process-kenaikan-kelas');
+            Route::post('/retention', [KenaikanKelasController::class, 'retention'])->middleware('permission:process-kenaikan-kelas');
+            Route::post('/cross-level-transfer', [KenaikanKelasController::class, 'crossLevelTransfer'])->middleware('permission:process-kenaikan-kelas');
+            Route::post('/{batchId}/undo', [KenaikanKelasController::class, 'undo'])->middleware('permission:undo-kenaikan-kelas');
+            Route::get('/batches', [KenaikanKelasController::class, 'listBatches'])->middleware('permission:view-kenaikan-kelas');
+            Route::get('/batches/{id}', [KenaikanKelasController::class, 'showBatch'])->middleware('permission:view-kenaikan-kelas');
+            Route::get('/eligible-students', [KenaikanKelasController::class, 'eligibleStudents'])->middleware('permission:view-kenaikan-kelas');
+            Route::get('/class-hierarchy', [KenaikanKelasController::class, 'classHierarchy'])->middleware('permission:view-kenaikan-kelas');
         });
 
         // Akun Siswa management routes
-        Route::prefix('/akun-siswa')->middleware('permission:manage-akun-siswa')->group(function () {
-            Route::get('/', [AkunSiswaController::class, 'index']);
-            Route::get('/unregistered', [AkunSiswaController::class, 'unregistered']);
-            Route::post('/bulk', [AkunSiswaController::class, 'bulkCreate']);
-            Route::post('/{id}/reset-password', [AkunSiswaController::class, 'resetPassword']);
-            Route::patch('/{id}/toggle-active', [AkunSiswaController::class, 'toggleActive']);
-            Route::get('/credentials', [AkunSiswaController::class, 'credentials']);
-            Route::get('/credentials-pdf', [AkunSiswaController::class, 'credentialsPdf']);
+        Route::prefix('/akun-siswa')->group(function () {
+            Route::get('/', [AkunSiswaController::class, 'index'])->middleware('permission:view-akun-siswa');
+            Route::get('/unregistered', [AkunSiswaController::class, 'unregistered'])->middleware('permission:view-akun-siswa');
+            Route::post('/bulk', [AkunSiswaController::class, 'bulkCreate'])->middleware('permission:generate-akun-siswa');
+            Route::post('/{id}/reset-password', [AkunSiswaController::class, 'resetPassword'])->middleware('permission:generate-akun-siswa');
+            Route::patch('/{id}/toggle-active', [AkunSiswaController::class, 'toggleActive'])->middleware('permission:generate-akun-siswa');
+            Route::get('/credentials', [AkunSiswaController::class, 'credentials'])->middleware('permission:view-akun-siswa');
+            Route::get('/credentials-pdf', [AkunSiswaController::class, 'credentialsPdf'])->middleware('permission:view-akun-siswa');
         });
 
         // Notification routes
@@ -277,8 +282,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Branch Approval Settings
         Route::prefix('/branch-approval-settings')->group(function () {
-            Route::get('/', [BranchApprovalSettingController::class, 'show']);
-            Route::put('/', [BranchApprovalSettingController::class, 'update']);
+            Route::get('/', [BranchApprovalSettingController::class, 'show'])->middleware('permission:view-app-setting');
+            Route::put('/', [BranchApprovalSettingController::class, 'update'])->middleware('permission:update-app-setting');
         });
 
         // Branch routes
@@ -314,9 +319,8 @@ Route::middleware('auth:sanctum')->group(function () {
             });
 
             // Job status - accessible with either permission
-            Route::get('/job/{jobId}/status', [ImportExportController::class, 'jobStatus']);
+            Route::get('/job/{jobId}/status', [ImportExportController::class, 'jobStatus'])->middleware('permission:import-data|export-data');
         });
-    });
 });
 
 // ──────────────────────────────────────────────────────────────

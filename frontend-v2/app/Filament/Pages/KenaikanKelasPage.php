@@ -22,13 +22,13 @@ class KenaikanKelasPage extends Page
     public static function shouldRegisterNavigation(): bool
     {
         $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        return in_array('manage-kenaikan-kelas', $permissions);
+        return in_array('view-kenaikan-kelas', $permissions);
     }
 
     public function mount(): void
     {
         $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        if (!in_array('manage-kenaikan-kelas', $permissions)) {
+        if (!in_array('view-kenaikan-kelas', $permissions)) {
             abort(403);
         }
     }

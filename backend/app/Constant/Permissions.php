@@ -43,6 +43,7 @@ class Permissions
     ];
     public const PEMBAYARAN_PERMISSIONS = [
         'view' => Permission::VIEW_PEMBAYARAN,
+        'create' => Permission::CREATE_PEMBAYARAN,
         'delete' => Permission::DELETE_PEMBAYARAN,
         'print' => Permission::PRINT_KWITANSI
     ];
@@ -69,15 +70,21 @@ class Permissions
     ];
 
     public const TAHUN_AJARAN_PERMISSIONS = [
-        'manage' => Permission::MANAGE_TAHUN_AJARAN,
+        'view' => Permission::VIEW_TAHUN_AJARAN,
+        'create' => Permission::CREATE_TAHUN_AJARAN,
+        'update' => Permission::UPDATE_TAHUN_AJARAN,
+        'delete' => Permission::DELETE_TAHUN_AJARAN,
     ];
 
     public const KENAIKAN_KELAS_PERMISSIONS = [
-        'manage' => Permission::MANAGE_KENAIKAN_KELAS,
+        'view' => Permission::VIEW_KENAIKAN_KELAS,
+        'process' => Permission::PROCESS_KENAIKAN_KELAS,
+        'undo' => Permission::UNDO_KENAIKAN_KELAS,
     ];
 
     public const AKUN_SISWA_PERMISSIONS = [
-        'manage' => Permission::MANAGE_AKUN_SISWA,
+        'view' => Permission::VIEW_AKUN_SISWA,
+        'generate' => Permission::GENERATE_AKUN_SISWA,
     ];
 
     public const IMPORT_EXPORT_PERMISSIONS = [
@@ -108,6 +115,15 @@ class Permissions
         'pay-online' => Permission::PAY_TAGIHAN_ONLINE,
         'view-transactions' => Permission::VIEW_MIDTRANS_TRX,
         'sync-transactions' => Permission::SYNC_MIDTRANS_TRX,
-        'manage-config' => Permission::MANAGE_MIDTRANS_CONFIG,
+        'view-config' => Permission::VIEW_MIDTRANS_CONFIG,
+        'update-config' => Permission::UPDATE_MIDTRANS_CONFIG,
+    ];
+
+    public const SETTING_PERMISSIONS = [
+        'view-app' => Permission::VIEW_APP_SETTING,
+        'update-app' => Permission::UPDATE_APP_SETTING,
+        'view-notification' => Permission::VIEW_NOTIFICATION_SETTING,
+        'update-notification' => Permission::UPDATE_NOTIFICATION_SETTING,
+        'view-notification-logs' => Permission::VIEW_NOTIFICATION_LOGS,
     ];
 }

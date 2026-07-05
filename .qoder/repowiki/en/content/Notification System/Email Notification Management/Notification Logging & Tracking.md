@@ -9,11 +9,21 @@
 - [NotificationHelper.php](file://backend/app/Helpers/NotificationHelper.php)
 - [NotificationLogController.php](file://backend/app/Http/Controllers/NotificationLogController.php)
 - [EmailOptOutController.php](file://backend/app/Http/Controllers/EmailOptOutController.php)
+- [KwitansiPembayaranNotification.php](file://backend/app/Notifications/KwitansiPembayaranNotification.php)
+- [ReminderJatuhTempoNotification.php](file://backend/app/Notifications/ReminderJatuhTempoNotification.php)
+- [TagihanOverdueNotification.php](file://backend/app/Notifications/TagihanOverdueNotification.php)
 - [2026_05_27_100200_create_notification_logs_table.php](file://backend/database/migrations/2026_05_27_100200_create_notification_logs_table.php)
 - [2026_05_27_100300_create_email_opt_outs_table.php](file://backend/database/migrations/2026_05_27_100300_create_email_opt_outs_table.php)
 - [2026_05_27_100400_create_notification_sent_records_table.php](file://backend/database/migrations/2026_05_27_100400_create_notification_sent_records_table.php)
 - [api.php](file://backend/routes/api.php)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated notification type identifiers from verbose names to standardized forms throughout the documentation
+- Corrected reminder processing logic documentation to reflect unified 'reminder' type usage
+- Updated all references to notification types in examples and diagrams
+- Fixed inconsistencies between service layer and notification class implementations
 
 ## Table of Contents
 1. Introduction
@@ -33,6 +43,8 @@ This document explains the notification logging and tracking system used to reco
 - The EmailOptOut model for managing unsubscribe requests and preference checks
 - Examples of querying history, building analytics, generating reports, and debugging failures via the controller interface
 - Log retention considerations, performance guidance for high-volume scenarios, and operational best practices
+
+**Updated** Standardized notification type identifiers have been implemented across the system, changing from verbose names ('kwitansi_pembayaran', 'reminder_jatuh_tempo', 'tagihan_overdue') to simplified forms ('kwitansi', 'reminder', 'overdue').
 
 ## Project Structure
 The notification subsystem spans models, services, helpers, controllers, migrations, and API routes:
@@ -114,6 +126,8 @@ EO --> T3
 - NotificationLogController: Exposes endpoints to list logs (with filters) and retry failed notifications.
 - EmailOptOutController: Handles unsubscribe link display and confirmation updates.
 
+**Updated** All notification types now use standardized identifiers: 'tagihan_baru', 'reminder', 'kwitansi', 'overdue', and 'all'.
+
 **Section sources**
 - [NotificationLog.php:1-32](file://backend/app/Models/NotificationLog.php#L1-L32)
 - [NotificationSentRecord.php:1-36](file://backend/app/Models/NotificationSentRecord.php#L1-L36)
@@ -178,6 +192,8 @@ Operational usage:
 - Write on success/failure/skip during all send paths.
 - Read via controller for admin dashboards and reporting.
 
+**Updated** Notification types are now standardized: 'tagihan_baru', 'reminder', 'kwitansi', 'overdue'.
+
 **Section sources**
 - [NotificationLog.php:1-32](file://backend/app/Models/NotificationLog.php#L1-L32)
 - [2026_05_27_100200_create_notification_logs_table.php:1-38](file://backend/database/migrations/2026_05_27_100200_create_notification_logs_table.php#L1-L38)
@@ -188,8 +204,10 @@ Operational usage:
 - Helper: alreadySent(tagihanKode, notificationType, date?) returns boolean.
 
 Usage patterns:
-- Reminders: Check before sending; create record after successful send.
-- Overdue: Check last sent date vs configured interval; create record when sending.
+- Reminders: Check before sending; create record after successful send using unified 'reminder' type.
+- Overdue: Check last sent date vs configured interval; create record when sending using 'overdue' type.
+
+**Updated** Reminder processing now uses a single 'reminder' type instead of dynamic day-based types like 'reminder_{$daysBefore}d'.
 
 **Section sources**
 - [NotificationSentRecord.php:1-36](file://backend/app/Models/NotificationSentRecord.php#L1-L36)
@@ -224,6 +242,8 @@ Model-->>Ctl : Updated record
 Ctl-->>User : Confirmation view
 ```
 
+**Updated** Valid notification types for opt-out are now: 'tagihan_baru', 'reminder', 'kwitansi', 'overdue', 'all'.
+
 **Diagram sources**
 - [EmailOptOut.php:1-42](file://backend/app/Models/EmailOptOut.php#L1-L42)
 - [EmailOptOutController.php:1-48](file://backend/app/Http/Controllers/EmailOptOutController.php#L1-L48)
@@ -251,6 +271,8 @@ Key flows:
 - processReminders()
 - processOverdue()
 - retryFailed(array $logIds)
+
+**Updated** All notification type references now use standardized identifiers throughout the service methods.
 
 ```mermaid
 flowchart TD
@@ -290,6 +312,8 @@ Endpoints:
 Security and scope:
 - Requires authentication (Sanctum).
 - Filters logs by Auth::user()->branch_id to ensure branch isolation.
+
+**Updated** Filter parameters now support standardized notification types: 'tagihan_baru', 'reminder', 'kwitansi', 'overdue'.
 
 **Section sources**
 - [NotificationLogController.php:1-50](file://backend/app/Http/Controllers/NotificationLogController.php#L1-L50)
@@ -336,6 +360,8 @@ NotificationLogController --> NotificationService : "uses"
 EmailOptOutController --> EmailOptOut : "uses"
 ```
 
+**Updated** Class diagram reflects standardized notification type usage throughout the system.
+
 **Diagram sources**
 - [NotificationService.php:1-713](file://backend/app/Services/Notifications/NotificationService.php#L1-L713)
 - [NotificationLog.php:1-32](file://backend/app/Models/NotificationLog.php#L1-L32)
@@ -362,7 +388,7 @@ EmailOptOutController --> EmailOptOut : "uses"
 - Pagination:
   - Logs endpoint uses pagination to keep responses small and responsive.
 
-[No sources needed since this section provides general guidance]
+**Updated** Standardized notification types improve query performance by reducing type variations and improving index efficiency.
 
 ## Troubleshooting Guide
 Common issues and how to investigate:
@@ -376,6 +402,8 @@ Common issues and how to investigate:
   - Confirm that EmailOptOut contains entries for the affected email/type; use EmailOptOut.isOptedOut(email, type) logic to verify.
 - Duplicate prevention:
   - For reminders and overdue, check NotificationSentRecord to ensure no existing record exists for the same tagihan_kode + type + date or within interval.
+
+**Updated** When troubleshooting, use standardized notification types: 'tagihan_baru', 'reminder', 'kwitansi', 'overdue'.
 
 Operational tips:
 - Ensure queue workers are running so mail dispatch proceeds asynchronously.
@@ -396,4 +424,4 @@ The notification logging and tracking system provides robust observability and c
 - Admin interfaces allow inspection and remediation of failures.
 Adhering to the performance and retention recommendations will help maintain reliability under high volume.
 
-[No sources needed since this section summarizes without analyzing specific files]
+**Updated** The recent standardization of notification type identifiers improves system consistency, query performance, and maintainability while preserving all existing functionality.

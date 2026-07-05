@@ -62,7 +62,7 @@ class SyncPermissionsCommand extends Command
         $adminPermissions = collect(PermissionBinding::ADMIN_PERMISSIONS)
             ->flatten()
             ->map(fn($p) => $p->value)
-            ->filter(fn($p) => $p !== Permission::MANAGE_MIDTRANS_CONFIG->value)
+            ->filter(fn($p) => $p !== Permission::UPDATE_MIDTRANS_CONFIG->value)
             ->values()
             ->all();
         $admin->syncPermissions($adminPermissions);

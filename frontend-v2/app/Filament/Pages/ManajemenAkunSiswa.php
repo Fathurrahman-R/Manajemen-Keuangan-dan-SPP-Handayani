@@ -53,13 +53,13 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
     public static function shouldRegisterNavigation(): bool
     {
         $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        return in_array('manage-akun-siswa', $permissions);
+        return in_array('view-akun-siswa', $permissions);
     }
 
     public function mount(): void
     {
         $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        if (!in_array('manage-akun-siswa', $permissions)) {
+        if (!in_array('view-akun-siswa', $permissions)) {
             abort(403);
         }
 

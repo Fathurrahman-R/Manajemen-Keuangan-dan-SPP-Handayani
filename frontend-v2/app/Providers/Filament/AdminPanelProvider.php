@@ -270,14 +270,14 @@ class AdminPanelProvider extends PanelProvider
             ->label('Tahun Ajaran')
             ->icon('heroicon-o-calendar')
             ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.tahun-ajaran-management'))
-            ->visible(fn(): bool => PermissionHelper::has('manage-tahun-ajaran') || session()->get('data.role') === 'admin')
+            ->visible(fn(): bool => PermissionHelper::has('view-tahun-ajaran') || session()->get('data.role') === 'admin')
             ->url(fn(): string => TahunAjaranPage::getUrl());
 
         $items[] = NavigationItem::make()
             ->label('Kenaikan Kelas')
             ->icon('heroicon-o-arrow-up-circle')
             ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.kenaikan-kelas-page'))
-            ->visible(fn(): bool => PermissionHelper::has('manage-kenaikan-kelas'))
+            ->visible(fn(): bool => PermissionHelper::has('view-kenaikan-kelas'))
             ->url(fn(): string => KenaikanKelasPage::getUrl());
 
         return $items;
@@ -384,7 +384,7 @@ class AdminPanelProvider extends PanelProvider
                 ->label('Manajemen Akun Siswa')
                 ->icon('heroicon-o-user-circle')
                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.manajemen-akun-siswa'))
-                ->visible(fn(): bool => PermissionHelper::has('manage-akun-siswa'))
+                ->visible(fn(): bool => PermissionHelper::has('view-akun-siswa'))
                 ->url(fn(): string => ManajemenAkunSiswa::getUrl()),
             NavigationItem::make()
                 ->label('Pengaturan Aplikasi')

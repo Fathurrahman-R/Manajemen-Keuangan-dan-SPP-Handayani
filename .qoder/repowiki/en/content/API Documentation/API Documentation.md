@@ -11,13 +11,22 @@
 - [MidtransTransactionController.php](file://backend/app/Http/Controllers/MidtransTransactionController.php)
 - [MidtransAdminController.php](file://backend/app/Http/Controllers/MidtransAdminController.php)
 - [MidtransNotificationController.php](file://backend/app/Http/Controllers/MidtransNotificationController.php)
+- [TahunAjaranController.php](file://backend/app/Http/Controllers/TahunAjaranController.php)
 - [UserLoginRequest.php](file://backend/app/Http/Requests/UserLoginRequest.php)
 - [UserResource.php](file://backend/app/Http/Resources/UserResource.php)
 - [SiswaResource.php](file://backend/app/Http/Resources/SiswaResource.php)
 - [PembayaranResource.php](file://backend/app/Http/Resources/PembayaranResource.php)
+- [TahunAjaranResource.php](file://backend/app/Http/Resources/TahunAjaranResource.php)
 - [DenySiswaRole.php](file://backend/app/Http/Middleware/DenySiswaRole.php)
 - [permission.php](file://backend/config/permission.php)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Added comprehensive documentation for Tahun Ajaran (Academic Year) API endpoints
+- Updated route structure to reflect the new accessible location for academic year operations
+- Enhanced authentication and authorization details for academic year management
+- Added new section covering academic year filtering and dropdown functionality
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -32,10 +41,10 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document provides comprehensive API documentation for the Handayani RESTful endpoints exposed by the backend application. It covers authentication via Laravel Sanctum, user management, student data operations, financial transactions (offline and online via Midtrans), error handling strategies, pagination patterns, and client integration guidelines. The API is organized under a single base path with no explicit version prefix; backward compatibility considerations are addressed where applicable.
+This document provides comprehensive API documentation for the Handayani RESTful endpoints exposed by the backend application. It covers authentication via Laravel Sanctum, user management, student data operations, financial transactions (offline and online via Midtrans), academic year management, error handling strategies, pagination patterns, and client integration guidelines. The API is organized under a single base path with no explicit version prefix; backward compatibility considerations are addressed where applicable.
 
 ## Project Structure
-The API routes are centralized in the routes file and grouped by feature domains. Controllers implement request validation using FormRequest classes and return structured JSON responses via Resource classes. Authentication and authorization are enforced through Sanctum middleware and Spatie Permission middleware.
+The API routes are centralized in the routes file and grouped by feature domains. Controllers implement request validation using FormRequest classes and return structured JSON responses via Resource classes. Authentication and authorization are enforced through Sanctum middleware and Spatie Permission middleware. Academic year routes have been restructured to be accessible to all authenticated roles for dropdown filters while maintaining proper permission controls for administrative operations.
 
 ```mermaid
 graph TB
@@ -44,6 +53,7 @@ Routes --> AuthCtrl["AuthController"]
 Routes --> UserCtrl["UserController"]
 Routes --> SiswaCtrl["SiswaController"]
 Routes --> PembayaranCtrl["PembayaranController"]
+Routes --> TahunAjaranCtrl["TahunAjaranController"]
 Routes --> MidtransTx["MidtransTransactionController"]
 Routes --> MidtransAdmin["MidtransAdminController"]
 Routes --> MidtransNotif["MidtransNotificationController"]
@@ -51,32 +61,35 @@ AuthCtrl --> Sanctum["Sanctum Config<br/>config/sanctum.php"]
 UserCtrl --> PermCfg["Permission Config<br/>config/permission.php"]
 SiswaCtrl --> PermCfg
 PembayaranCtrl --> PermCfg
+TahunAjaranCtrl --> PermCfg
 MidtransTx --> PermCfg
 MidtransAdmin --> PermCfg
 ```
 
 **Diagram sources**
-- [api.php:1-345](file://backend/routes/api.php#L1-L345)
+- [api.php:1-350](file://backend/routes/api.php#L1-L350)
 - [sanctum.php:1-85](file://backend/config/sanctum.php#L1-L85)
 - [permission.php:1-220](file://backend/config/permission.php#L1-L220)
 
 **Section sources**
-- [api.php:1-345](file://backend/routes/api.php#L1-L345)
+- [api.php:1-350](file://backend/routes/api.php#L1-L350)
 - [sanctum.php:1-85](file://backend/config/sanctum.php#L1-L85)
 - [permission.php:1-220](file://backend/config/permission.php#L1-L220)
 
 ## Core Components
 - Authentication: Login, logout, password reset, unsubscribe flows.
 - Authorization: Sanctum bearer tokens with abilities; role-based permissions via Spatie Permission.
-- Resources: Standardized JSON structures for users, students, payments.
+- Resources: Standardized JSON structures for users, students, payments, and academic years.
 - Validation: Request classes enforce input rules and produce consistent error payloads.
 - Middleware: Sanctum auth, permission checks, and denial of siswa-only access to admin routes.
+- Academic Year Management: Accessible academic year operations for dropdown filters and administrative controls.
 
 Key implementation references:
 - Authentication controller and login flow
 - User profile and management endpoints
 - Student CRUD and filtering
 - Payment recording and listing
+- Academic year management for dropdown filters and administration
 - Midtrans transaction initiation and status polling
 - Webhook handler for payment notifications
 
@@ -89,6 +102,8 @@ Key implementation references:
 - [SiswaResource.php:1-42](file://backend/app/Http/Resources/SiswaResource.php#L1-L42)
 - [PembayaranController.php:1-496](file://backend/app/Http/Controllers/PembayaranController.php#L1-L496)
 - [PembayaranResource.php:1-28](file://backend/app/Http/Resources/PembayaranResource.php#L1-L28)
+- [TahunAjaranController.php:1-215](file://backend/app/Http/Controllers/TahunAjaranController.php#L1-L215)
+- [TahunAjaranResource.php:1-27](file://backend/app/Http/Resources/TahunAjaranResource.php#L1-L27)
 - [MidtransTransactionController.php:1-127](file://backend/app/Http/Controllers/MidtransTransactionController.php#L1-L127)
 - [MidtransAdminController.php:1-176](file://backend/app/Http/Controllers/MidtransAdminController.php#L1-L176)
 - [MidtransNotificationController.php:1-35](file://backend/app/Http/Controllers/MidtransNotificationController.php#L1-L35)
@@ -108,6 +123,7 @@ participant R as "Routes"
 participant A as "AuthController"
 participant S as "Sanctum"
 participant U as "UserController"
+participant T as "TahunAjaranController"
 participant P as "Permission"
 C->>R : POST /api/login {identifier|username, password}
 R->>A : login()
@@ -115,17 +131,22 @@ A->>A : validate(UserLoginRequest)
 A->>S : createToken(abilities, expires_at)
 S-->>A : token + metadata
 A-->>C : {data : {id, username, email, token, expires_at, permissions, roles}}
-C->>R : GET /api/users/current (Bearer token)
-R->>U : get()
-U-->>C : UserResource
+C->>R : GET /api/tahun-ajaran (Bearer token)
+R->>T : index()
+T-->>C : TahunAjaranResource collection
+C->>R : POST /api/tahun-ajaran (Bearer token + manage-tahun-ajaran)
+R->>T : store()
+T-->>C : TahunAjaranResource
 ```
 
 **Diagram sources**
 - [api.php:36-52](file://backend/routes/api.php#L36-L52)
+- [api.php:84-93](file://backend/routes/api.php#L84-L93)
 - [AuthController.php:41-94](file://backend/app/Http/Controllers/AuthController.php#L41-L94)
 - [UserLoginRequest.php:24-31](file://backend/app/Http/Requests/UserLoginRequest.php#L24-L31)
 - [sanctum.php:49-50](file://backend/config/sanctum.php#L49-L50)
 - [UserController.php:23-35](file://backend/app/Http/Controllers/UserController.php#L23-L35)
+- [TahunAjaranController.php:19-27](file://backend/app/Http/Controllers/TahunAjaranController.php#L19-L27)
 
 ## Detailed Component Analysis
 
@@ -160,6 +181,65 @@ Authentication method:
 - [AuthController.php:21-101](file://backend/app/Http/Controllers/AuthController.php#L21-L101)
 - [UserLoginRequest.php:24-49](file://backend/app/Http/Requests/UserLoginRequest.php#L24-L49)
 - [sanctum.php:49-50](file://backend/config/sanctum.php#L49-L50)
+
+### Academic Year Management APIs
+**Updated** Academic year routes have been moved from admin-only middleware to a more accessible location within the authenticated routes group, making them available to all authenticated roles for dropdown filters while maintaining proper permission controls for administrative operations.
+
+- GET /api/tahun-ajaran
+  - Purpose: List all academic years for the authenticated user's branch.
+  - Requires: Bearer token (accessible to all authenticated roles).
+  - Response: Collection of TahunAjaranResource objects filtered by user's branch_id.
+  - Use case: Dropdown filters for academic year selection across the application.
+
+- POST /api/tahun-ajaran
+  - Purpose: Create a new academic year.
+  - Requires: Bearer token + manage-tahun-ajaran permission.
+  - Request schema: nama (YYYY/YYYY format), tanggal_mulai, tanggal_selesai.
+  - Response: Created TahunAjaranResource with 201 status code.
+  - Business rules: Validates name format (second year = first year + 1), uniqueness per branch.
+
+- GET /api/tahun-ajaran/{id}
+  - Purpose: Get specific academic year details.
+  - Requires: Bearer token (accessible to all authenticated roles).
+  - Response: Single TahunAjaranResource object.
+  - Security: Verifies academic year belongs to user's branch.
+
+- PUT /api/tahun-ajaran/{id}
+  - Purpose: Update academic year details.
+  - Requires: Bearer token + manage-tahun-ajaran permission.
+  - Request schema: nama, tanggal_mulai, tanggal_selesai.
+  - Response: Updated TahunAjaranResource.
+  - Business rules: Same validation as creation, excludes self from uniqueness check.
+
+- DELETE /api/tahun-ajaran/{id}
+  - Purpose: Delete academic year.
+  - Requires: Bearer token + manage-tahun-ajaran permission.
+  - Response: Success boolean.
+  - Business rules: Prevents deletion if associated records exist (tagihan, jenis_tagihan, siswa_kelas).
+
+- PATCH /api/tahun-ajaran/{id}/activate
+  - Purpose: Activate academic year (deactivates others in same branch).
+  - Requires: Bearer token + manage-tahun-ajaran permission.
+  - Response: Activated TahunAjaranResource.
+  - Business rules: Ensures only one active academic year per branch.
+
+- PATCH /api/tahun-ajaran/{id}/deactivate
+  - Purpose: Deactivate academic year.
+  - Requires: Bearer token + manage-tahun-ajaran permission.
+  - Response: Deactivated TahunAjaranResource.
+
+Response schema:
+- TahunAjaranResource includes id, nama, tanggal_mulai, tanggal_selesai, status, branch_id.
+
+Authorization:
+- Read operations (GET): Available to all authenticated users for dropdown filters.
+- Write operations (POST, PUT, DELETE, PATCH): Require manage-tahun-ajaran permission.
+- Branch isolation: All operations restricted to user's branch_id.
+
+**Section sources**
+- [api.php:84-93](file://backend/routes/api.php#L84-L93)
+- [TahunAjaranController.php:19-215](file://backend/app/Http/Controllers/TahunAjaranController.php#L19-L215)
+- [TahunAjaranResource.php:15-26](file://backend/app/Http/Resources/TahunAjaranResource.php#L15-L26)
 
 ### User Management APIs
 - GET /api/users/current
@@ -301,6 +381,7 @@ Security:
 - Backward compatibility:
   - Login accepts either identifier or username for flexibility.
   - Student creation and updates maintain legacy kelas_id while syncing current period enrollment.
+  - Academic year routes provide read access to all authenticated users while maintaining write permissions for administrators.
 - Deprecation policy:
   - Not explicitly defined in code; recommended practice is to introduce new versions with prefixes and deprecate old endpoints gradually.
 
@@ -313,6 +394,7 @@ Security:
   - Controllers throw HttpResponseException with structured error objects and appropriate HTTP codes (400, 401, 403, 404, 422, 500).
 - Permission denials:
   - deny_siswa middleware blocks siswa-only users from admin routes with 403.
+  - Permission middleware blocks unauthorized access to protected endpoints.
 - Midtrans exceptions:
   - Custom exception hierarchy defines errorCode and httpStatus for consistent error mapping.
 
@@ -323,6 +405,7 @@ Example error shape:
 - [UserLoginRequest.php:44-49](file://backend/app/Http/Requests/UserLoginRequest.php#L44-L49)
 - [DenySiswaRole.php:26-33](file://backend/app/Http/Middleware/DenySiswaRole.php#L26-L33)
 - [PembayaranController.php:236-240](file://backend/app/Http/Controllers/PembayaranController.php#L236-L240)
+- [TahunAjaranController.php:47-50](file://backend/app/Http/Controllers/TahunAjaranController.php#L47-L50)
 
 ### Rate Limiting Considerations
 - No explicit rate limiting configuration found in referenced files.
@@ -358,6 +441,9 @@ Example error shape:
 - Requests:
   - Follow validation rules; handle 400/422 responses gracefully.
   - Use query parameters for filtering and sorting; respect per_page limits.
+- Academic Year Filtering:
+  - Use GET /api/tahun-ajaran to populate dropdown filters for all authenticated users.
+  - Only users with manage-tahun-ajaran permission can create/update/delete academic years.
 - Errors:
   - Parse structured error payloads; display user-friendly messages.
 - Midtrans:
@@ -409,6 +495,15 @@ class SiswaController {
 +get(jenjang,id) SiswaResource
 +delete(jenjang,id) JsonResponse
 }
+class TahunAjaranController {
++index() TahunAjaranResource
++store(request) TahunAjaranResource
++show(id) TahunAjaranResource
++update(request,id) TahunAjaranResource
++destroy(id) JsonResponse
++activate(id) TahunAjaranResource
++deactivate(id) TahunAjaranResource
+}
 class PembayaranController {
 +grouped() mixed
 +index() mixed
@@ -445,6 +540,7 @@ class PermissionConfig {
 AuthController --> SanctumConfig : "uses"
 UserController --> PermissionConfig : "uses"
 SiswaController --> PermissionConfig : "uses"
+TahunAjaranController --> PermissionConfig : "uses"
 PembayaranController --> PermissionConfig : "uses"
 MidtransTransactionController --> PermissionConfig : "uses"
 MidtransAdminController --> PermissionConfig : "uses"
@@ -454,6 +550,7 @@ MidtransAdminController --> PermissionConfig : "uses"
 - [AuthController.php:1-103](file://backend/app/Http/Controllers/AuthController.php#L1-L103)
 - [UserController.php:1-317](file://backend/app/Http/Controllers/UserController.php#L1-L317)
 - [SiswaController.php:1-321](file://backend/app/Http/Controllers/SiswaController.php#L1-L321)
+- [TahunAjaranController.php:1-215](file://backend/app/Http/Controllers/TahunAjaranController.php#L1-L215)
 - [PembayaranController.php:1-496](file://backend/app/Http/Controllers/PembayaranController.php#L1-L496)
 - [MidtransTransactionController.php:1-127](file://backend/app/Http/Controllers/MidtransTransactionController.php#L1-L127)
 - [MidtransAdminController.php:1-176](file://backend/app/Http/Controllers/MidtransAdminController.php#L1-L176)
@@ -462,7 +559,7 @@ MidtransAdminController --> PermissionConfig : "uses"
 - [permission.php:1-220](file://backend/config/permission.php#L1-L220)
 
 **Section sources**
-- [api.php:1-345](file://backend/routes/api.php#L1-L345)
+- [api.php:1-350](file://backend/routes/api.php#L1-L350)
 - [sanctum.php:1-85](file://backend/config/sanctum.php#L1-L85)
 - [permission.php:1-220](file://backend/config/permission.php#L1-L220)
 
@@ -472,6 +569,7 @@ MidtransAdminController --> PermissionConfig : "uses"
 - Cache permission checks where appropriate; Spatie Permission config allows caching.
 - Avoid N+1 queries by eager loading necessary relations.
 - For large exports/imports, consider background jobs and job queues.
+- Academic year queries are optimized with branch_id filtering and ordering by start date.
 
 [No sources needed since this section provides general guidance]
 
@@ -481,8 +579,12 @@ Common issues:
   - Ensure Bearer token is present and valid; check expiration and permissions.
 - Permission denied:
   - Verify user has required roles/permissions; siswa-only users cannot access admin routes.
+  - Check manage-tahun-ajaran permission for academic year administrative operations.
 - Validation errors:
   - Inspect error payloads for field-specific messages; adjust request body accordingly.
+- Academic year validation:
+  - Ensure nama follows YYYY/YYYY format where second year equals first year + 1.
+  - Check for duplicate names within the same branch.
 - Payment inconsistencies:
   - Check accumulation logic and status transitions; ensure correct methods and amounts.
 - Midtrans webhooks:
@@ -492,10 +594,11 @@ Common issues:
 - [DenySiswaRole.php:26-33](file://backend/app/Http/Middleware/DenySiswaRole.php#L26-L33)
 - [UserLoginRequest.php:44-49](file://backend/app/Http/Requests/UserLoginRequest.php#L44-L49)
 - [PembayaranController.php:236-240](file://backend/app/Http/Controllers/PembayaranController.php#L236-L240)
+- [TahunAjaranController.php:196-213](file://backend/app/Http/Controllers/TahunAjaranController.php#L196-L213)
 - [MidtransAdminController.php:149-174](file://backend/app/Http/Controllers/MidtransAdminController.php#L149-L174)
 
 ## Conclusion
-The Handayani API provides a robust set of endpoints for authentication, user management, student operations, and financial transactions, secured by Sanctum and Spatie Permission. Responses are consistently shaped via resources, and error handling follows predictable patterns. Clients should adhere to validation rules, handle pagination and sorting, and implement proper error and token lifecycle management. For online payments, integrate Midtrans Snap flows and handle webhooks securely.
+The Handayani API provides a robust set of endpoints for authentication, user management, student operations, academic year management, and financial transactions, secured by Sanctum and Spatie Permission. Responses are consistently shaped via resources, and error handling follows predictable patterns. The recent restructuring of academic year routes makes them accessible to all authenticated users for dropdown filtering while maintaining proper administrative controls. Clients should adhere to validation rules, handle pagination and sorting, and implement proper error and token lifecycle management. For online payments, integrate Midtrans Snap flows and handle webhooks securely.
 
 [No sources needed since this section summarizes without analyzing specific files]
 
@@ -506,6 +609,14 @@ The Handayani API provides a robust set of endpoints for authentication, user ma
   - POST /api/login
   - DELETE /api/logout
   - Password reset and unsubscribe public routes
+- Academic Year Management:
+  - GET /api/tahun-ajaran (all authenticated users)
+  - POST /api/tahun-ajaran (manage-tahun-ajaran permission)
+  - GET /api/tahun-ajaran/{id} (all authenticated users)
+  - PUT /api/tahun-ajaran/{id} (manage-tahun-ajaran permission)
+  - DELETE /api/tahun-ajaran/{id} (manage-tahun-ajaran permission)
+  - PATCH /api/tahun-ajaran/{id}/activate (manage-tahun-ajaran permission)
+  - PATCH /api/tahun-ajaran/{id}/deactivate (manage-tahun-ajaran permission)
 - User Management:
   - Profile endpoints and admin CRUD with permissions
 - Students:
@@ -515,4 +626,4 @@ The Handayani API provides a robust set of endpoints for authentication, user ma
   - Online Midtrans initiation, status polling, admin oversight, webhook handling
 
 **Section sources**
-- [api.php:36-344](file://backend/routes/api.php#L36-L344)
+- [api.php:36-350](file://backend/routes/api.php#L36-L350)

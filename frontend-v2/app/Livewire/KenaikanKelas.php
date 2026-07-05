@@ -39,7 +39,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
     public function mount(): void
     {
         $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        if (!in_array('manage-kenaikan-kelas', $permissions)) {
+        if (!in_array('view-kenaikan-kelas', $permissions)) {
             abort(403);
         }
 
@@ -59,6 +59,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
             ->label('Proses Kenaikan Kelas')
             ->icon('heroicon-o-check-circle')
             ->color('primary')
+            ->visible(fn(): bool => in_array('process-kenaikan-kelas', session()->get('data.permissions', [])))
             ->disabled(fn() => $this->processing || count($this->students) === 0 || !$this->selectedTargetPeriodId)
             ->requiresConfirmation()
             ->modalHeading('Konfirmasi Proses Kenaikan Kelas')
@@ -144,7 +145,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
                     ->iconButton()
                     ->tooltip('Batalkan')
                     ->color('danger')
-                    ->visible(fn(array $record): bool => ($record['status'] ?? '') === 'completed')
+                    ->visible(fn(array $record): bool => ($record['status'] ?? '') === 'completed' && in_array('undo-kenaikan-kelas', session()->get('data.permissions', [])))
                     ->requiresConfirmation()
                     ->modalHeading('Batalkan Batch')
                     ->modalDescription('Apakah Anda yakin ingin membatalkan batch ini? Semua perubahan yang dilakukan akan dikembalikan.')
