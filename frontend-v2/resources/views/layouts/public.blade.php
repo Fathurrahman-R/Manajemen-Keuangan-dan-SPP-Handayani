@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', config('handayani-public.short_name', 'Handayani') . ' — Pendidikan Islam Terpadu')</title>
+    <title>@yield('title', config('handayani-public.short_name', 'Handayani') . ' — Lembaga Pendidikan Anak')</title>
     <meta name="description" content="@yield('description', config('handayani-public.name', 'Yayasan Lembaga Pendidikan Anak Handayani') . '. KB/PAUD, TK, dan MI Islam terpadu. Portal pembayaran SPP online yang aman.')">
+    <link rel="icon" type="image/jpeg" href="{{ asset('images/logo.jpg') }}">
 
     {{-- Google Fonts: Manrope (display) + Inter (sans) --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">

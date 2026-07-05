@@ -4,19 +4,19 @@ return [
     'name' => env('HANDAYANI_PUBLIC_NAME', 'Lembaga Pendidikan Anak Handayani'),
     'short_name' => env('HANDAYANI_PUBLIC_SHORT_NAME', 'Handayani'),
     'tagline' => env('HANDAYANI_PUBLIC_TAGLINE', 'Membentuk Generasi Berilmu dan Berakhlak'),
-    'address' => env('HANDAYANI_PUBLIC_ADDRESS', 'Jl. Pendidikan Islam No. 45, Jakarta Selatan, DKI Jakarta 12345'),
+    'address' => env('HANDAYANI_PUBLIC_ADDRESS', 'Jl. Selat Panjang No.357, Siantan Hulu, Kec. Pontianak Utara, Kota Pontianak, Kalimantan Barat 78243'),
     'phone' => env('HANDAYANI_PUBLIC_PHONE', '(021) 1234-5678'),
     'email' => env('HANDAYANI_PUBLIC_EMAIL', 'info@handayani.sch.id'),
     'whatsapp_number' => env('HANDAYANI_PUBLIC_WHATSAPP', '6281234567890'),
     'spp_portal_url' => env('HANDAYANI_PUBLIC_SPP_PORTAL_URL', '/login'),
-    
+
     'logo' => env('HANDAYANI_PUBLIC_LOGO', 'images/logo.jpg'), // Default menggunakan asset lokal
-    
+
     'colors' => [
         'primary' => env('HANDAYANI_PUBLIC_COLOR_PRIMARY', '#1B4FBF'), // Biru Handayani
         'accent'  => env('HANDAYANI_PUBLIC_COLOR_ACCENT', '#0D8A6E'),  // Hijau Teal Handayani
     ],
-    
+
     // --- CONTENT HERO ---
     'hero' => [
         'stats' => [
@@ -94,26 +94,26 @@ return [
             ],
         ],
     ],
-    
+
     // --- KONTAK MAP ---
     'branches' => [
         [
-            'name' => 'Kampus Pusat Handayani',
-            'address' => 'Jl. Pendidikan Islam No. 45, Jakarta Selatan',
-            'lat' => -6.230000,
-            'lng' => 106.820000,
+            'name' => 'Handayani Selat Panjang',
+            'address' => 'Jl. Selat Panjang No.357, Siantan Hulu, Kec. Pontianak Utara, Kota Pontianak, Kalimantan Barat 78243',
+            'lat' => -0.014364764835697236,
+            'lng' => 109.37711186637458,
         ],
         [
-            'name' => 'Cabang Handayani',
-            'address' => 'Jl. Pendidikan Raya No. 10, Jakarta Timur',
-            'lat' => -6.250000,
-            'lng' => 106.870000,
+            'name' => 'Handayani Dharma Putra',
+            'address' => 'Siantan Hilir, Kec. Pontianak Utara, Kota Pontianak, Kalimantan Barat 78243',
+            'lat' => -0.004116262359607635,
+            'lng' => 109.3426550308674,
         ],
     ],
 
     'map_settings' => [
-        'default_zoom' => 13,
-        'max_zoom' => 19,
+        'default_zoom' => 8,
+        'max_zoom' => 17,
         'tile_url' => 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
         'attribution' => '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         'zoom_control' => true,

@@ -92,12 +92,12 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var mapSettings = @json(config('handayani-public.map_settings', []));
-            
+
             var map = L.map('leaflet-map', {
                 zoomControl: mapSettings.zoom_control ?? true,
                 scrollWheelZoom: mapSettings.scroll_wheel_zoom ?? false
             });
-            
+
             L.tileLayer(mapSettings.tile_url || 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: mapSettings.max_zoom || 19,
                 attribution: mapSettings.attribution || '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -105,19 +105,69 @@
 
             var branches = @json(config('handayani-public.branches', []));
             var padding = mapSettings.padding_fitbounds || 50;
-            var defaultZoom = mapSettings.default_zoom || 13;
-            
+            var defaultZoom = mapSettings.default_zoom;
+
             if (branches.length > 0) {
                 var bounds = [];
                 branches.forEach(function(branch) {
                     if (branch.lat && branch.lng) {
                         var marker = L.marker([branch.lat, branch.lng]).addTo(map);
-                        marker.bindPopup("<b>" + branch.name + "</b><br>" + branch.address);
+                        // Buat URL Google Maps
+                        var gmapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + branch.lat + ',' + branch.lng;
+                        var tooltipContent = "<div class='text-center'><b>" + branch.name + "</b><br><span class='text-muted-foreground text-xs'>" + branch.address + "</span><br><a href='" + gmapsUrl + "' target='_blank' class='text-primary hover:underline font-semibold text-xs mt-1.5 inline-block'>📍 Buka di Google Maps &rarr;</a></div>";
+
+                        // Gunakan tooltip permanent agar informasi tampil tanpa harus di-klik
+                        marker.bindTooltip(tooltipContent, {
+                            permanent: true,
+                            interactive: true, // Memungkinkan link di dalam tooltip bisa di-klik
+                            direction: 'top',
+                            offset: [0, -35],
+                            className: 'bg-background border border-border shadow-sm rounded-md p-2'
+                        }).openTooltip();
+                        
+                        // Otomatis zoom in ketika penanda diklik
+                        marker.on('click', function(e) {
+                            map.flyTo(e.latlng, 17, {
+                                duration: 1.5 // Durasi animasi dalam detik
+                            });
+                        });
+                        
                         bounds.push([branch.lat, branch.lng]);
                     }
                 });
                 if (bounds.length > 0) {
                     map.fitBounds(bounds, { padding: [padding, padding] });
+                    
+                    // Tambahkan Custom Control Button (Recenter ke Cabang)
+                    L.Control.Recenter = L.Control.extend({
+                        onAdd: function(map) {
+                            var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                            var button = L.DomUtil.create('a', '', container);
+                            
+                            // Gunakan icon target/home sederhana
+                            button.innerHTML = '&#8982;'; 
+                            button.href = '#';
+                            button.title = 'Kembali ke lokasi cabang';
+                            button.style.fontSize = '18px';
+                            button.style.lineHeight = '30px';
+                            button.style.textAlign = 'center';
+                            button.style.textDecoration = 'none';
+                            
+                            // Cegah map bergeser/zoom ketika tombol diklik
+                            L.DomEvent.disableClickPropagation(button);
+                            
+                            L.DomEvent.on(button, 'click', function(e) {
+                                L.DomEvent.preventDefault(e);
+                                map.fitBounds(bounds, { padding: [padding, padding] });
+                            });
+                            
+                            return container;
+                        }
+                    });
+                    
+                    // Letakkan di bawah tombol zoom
+                    new L.Control.Recenter({ position: 'topleft' }).addTo(map);
+
                 } else {
                     map.setView([-6.200000, 106.816666], defaultZoom);
                 }

@@ -37,6 +37,7 @@ class PermissionHelper
             'view-akun-siswa',
             'view-branch',
             'view-app-setting',
+            'view-notification-logs',
         ],
     ];
 

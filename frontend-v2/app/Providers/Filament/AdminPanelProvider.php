@@ -14,6 +14,7 @@ use App\Filament\Pages\KenaikanKelasPage;
 use App\Filament\Pages\LaporanKasHarian;
 use App\Filament\Pages\LaporanRekapBulanan;
 use App\Filament\Pages\ManajemenAkunSiswa;
+use App\Filament\Pages\NotificationLogPage;
 use App\Filament\Pages\PengeluaranRequestPage;
 use App\Filament\Pages\RoleManagement;
 use App\Filament\Pages\Settings;
@@ -397,6 +398,12 @@ class AdminPanelProvider extends PanelProvider
                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.branch-management'))
                 ->visible(fn(): bool => PermissionHelper::has('view-branch'))
                 ->url(fn(): string => \App\Filament\Pages\BranchManagement::getUrl()),
+            NavigationItem::make()
+                ->label('Log Notifikasi')
+                ->icon('heroicon-o-envelope')
+                ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.notification-log'))
+                ->visible(fn(): bool => PermissionHelper::has('view-notification-logs'))
+                ->url(fn(): string => NotificationLogPage::getUrl()),
         ];
     }
 
@@ -456,7 +463,7 @@ class AdminPanelProvider extends PanelProvider
             return $branding->faviconUrl;
         }
 
-        return null;
+        return asset('images/logo.jpg');
     }
 
     /**
@@ -473,6 +480,8 @@ class AdminPanelProvider extends PanelProvider
             ];
         }
 
-        return [];
+        return [
+            'primary' => Color::hex('#1B4FBF'),
+        ];
     }
 }

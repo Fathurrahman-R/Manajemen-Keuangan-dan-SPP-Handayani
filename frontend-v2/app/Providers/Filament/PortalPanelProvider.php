@@ -42,7 +42,6 @@ class PortalPanelProvider extends PanelProvider
             ->id('portal')
             ->path($path)
             ->homeUrl($path . '/beranda')
-            ->login(Login::class)
             ->darkMode(true)
             ->spa($spa)
             ->breadcrumbs($breadcrumbs)
@@ -146,7 +145,7 @@ class PortalPanelProvider extends PanelProvider
         if ($branding->hasBranding() && $branding->faviconUrl) {
             return $branding->faviconUrl;
         }
-        return null;
+        return asset('images/logo.jpg');
     }
 
     protected function resolvePanelColors(): array
@@ -157,6 +156,8 @@ class PortalPanelProvider extends PanelProvider
                 'primary' => Color::hex($branding->primaryColor),
             ];
         }
-        return [];
+        return [
+            'primary' => Color::hex('#1B4FBF'),
+        ];
     }
 }
