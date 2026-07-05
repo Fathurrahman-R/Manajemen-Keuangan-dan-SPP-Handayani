@@ -75,16 +75,55 @@
 
             {{-- Map --}}
             <x-public.reveal delay="120ms" class="lg:col-span-7">
-                <div class="aspect-[4/3] w-full overflow-hidden rounded-2xl border border-border bg-background">
-                    <iframe
-                        title="Peta Lokasi Handayani"
-                        src="https://www.openstreetmap.org/export/embed.html?bbox=106.7%2C-6.27%2C106.85%2C-6.2&layer=mapnik"
-                        class="h-full w-full"
-                        loading="lazy"
-                        referrerpolicy="no-referrer-when-downgrade"
-                    ></iframe>
+                {{-- Gunakan isolate class agar z-index Leaflet terkurung di elemen ini dan tidak menutupi navbar --}}
+                <div id="leaflet-map" class="aspect-[4/3] w-full overflow-hidden rounded-2xl border border-border bg-background isolate relative z-0">
                 </div>
             </x-public.reveal>
         </div>
     </div>
 </section>
+
+@push('head')
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+@endpush
+
+@push('scripts')
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var mapSettings = @json(config('handayani-public.map_settings', []));
+            
+            var map = L.map('leaflet-map', {
+                zoomControl: mapSettings.zoom_control ?? true,
+                scrollWheelZoom: mapSettings.scroll_wheel_zoom ?? false
+            });
+            
+            L.tileLayer(mapSettings.tile_url || 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: mapSettings.max_zoom || 19,
+                attribution: mapSettings.attribution || '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+
+            var branches = @json(config('handayani-public.branches', []));
+            var padding = mapSettings.padding_fitbounds || 50;
+            var defaultZoom = mapSettings.default_zoom || 13;
+            
+            if (branches.length > 0) {
+                var bounds = [];
+                branches.forEach(function(branch) {
+                    if (branch.lat && branch.lng) {
+                        var marker = L.marker([branch.lat, branch.lng]).addTo(map);
+                        marker.bindPopup("<b>" + branch.name + "</b><br>" + branch.address);
+                        bounds.push([branch.lat, branch.lng]);
+                    }
+                });
+                if (bounds.length > 0) {
+                    map.fitBounds(bounds, { padding: [padding, padding] });
+                } else {
+                    map.setView([-6.200000, 106.816666], defaultZoom);
+                }
+            } else {
+                map.setView([-6.200000, 106.816666], defaultZoom);
+            }
+        });
+    </script>
+@endpush
