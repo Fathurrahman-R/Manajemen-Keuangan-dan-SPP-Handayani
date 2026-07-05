@@ -1,0 +1,1 @@
+Laravel 12 (API + Filament v4), Livewire 3, Spatie Permission, Sanctum, Laravel Excel, Midtrans PHP SDK, React + Vite (legacy frontend), TanStack Start (marketing reference).
