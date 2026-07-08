@@ -155,10 +155,10 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                                     ->label('Agama')
                                     ->options([
                                         'Islam' => 'Islam',
-                                        'Protestan' => 'Protestan',
+                                        'Kristen' => 'Kristen',
                                         'Katolik' => 'Katolik',
                                         'Hindu' => 'Hindu',
-                                        'Budha' => 'Budha',
+                                        'Buddha' => 'Buddha',
                                         'Konghucu' => 'Konghucu',
                                     ])
                                     ->required(),
@@ -281,10 +281,10 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                                     ->label('Agama')
                                     ->options([
                                         'Islam' => 'Islam',
-                                        'Protestan' => 'Protestan',
+                                        'Kristen' => 'Kristen',
                                         'Katolik' => 'Katolik',
                                         'Hindu' => 'Hindu',
-                                        'Budha' => 'Budha',
+                                        'Buddha' => 'Buddha',
                                         'Konghucu' => 'Konghucu',
                                     ])
                                     ->required(),

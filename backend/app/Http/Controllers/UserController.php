@@ -31,6 +31,8 @@ class UserController extends Controller
             ], 401));
         }
 
+        $user->load(['branch', 'roles', 'siswa.ayah', 'siswa.ibu', 'siswa.wali']);
+
         return new UserResource($user);
     }
 
@@ -67,7 +69,7 @@ class UserController extends Controller
     {
         $perPage = min((int) $request->query('per_page', 10), 100);
 
-        $query = User::with(['branch', 'roles']);
+        $query = User::with(['branch', 'roles'])->whereNull('siswa_id');
 
         if ($request->has('branch_id')) {
             $query->where('branch_id', $request->query('branch_id'));
@@ -83,7 +85,10 @@ class UserController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('username', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('name', 'like', "%{$search}%");
+                  ->orWhere('name', 'like', "%{$search}%")
+                  ->orWhereHas('branch', function ($bq) use ($search) {
+                      $bq->where('location', 'like', "%{$search}%");
+                  });
             });
         }
 
@@ -105,13 +110,23 @@ class UserController extends Controller
     {
         $data = $request->validated();
 
+        // Block creation with superadmin role
+        if (isset($data['roles']) && in_array('superadmin', $data['roles'])) {
+            throw new HttpResponseException(response()->json([
+                'errors' => ['roles' => ['Tidak dapat membuat user dengan role superadmin.']]
+            ], 403));
+        }
+
+        $defaultPassword = $data['password'] ?? 'handayani123!';
+
         $user = User::create([
             'username' => $data['username'],
             'name' => $data['name'] ?? null,
             'email' => $data['email'] ?? null,
-            'password' => Hash::make($data['password']),
+            'password' => Hash::make($defaultPassword),
             'branch_id' => $data['branch_id'],
             'is_active' => $data['is_active'] ?? true,
+            'must_change_password' => true,
         ]);
 
         $user->syncRoles($data['roles']);
@@ -189,14 +204,66 @@ class UserController extends Controller
     }
 
     /**
-     * Change the authenticated user's password.
+     * Send email verification OTP.
+     */
+    public function sendVerificationOtp(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => 'required|email|max:255',
+        ]);
+
+        $user = Auth::user();
+        $email = strtolower(trim($request->email));
+
+        // Rate-limit: max 3 OTP requests per 10 minutes per user
+        $rateLimitKey = 'otp_rate_' . $user->id;
+        $attempts = (int) \Illuminate\Support\Facades\Cache::get($rateLimitKey, 0);
+        if ($attempts >= 3) {
+            throw new HttpResponseException(response()->json([
+                'errors' => [
+                    'email' => ['Terlalu banyak permintaan OTP. Silakan coba lagi dalam beberapa menit.']
+                ]
+            ], 429));
+        }
+        \Illuminate\Support\Facades\Cache::put($rateLimitKey, $attempts + 1, now()->addMinutes(10));
+
+        $emailService = app(EmailValidationService::class);
+        if (!$emailService->isUniqueInBranch($email, $user->branch_id, $user->id)) {
+            throw new HttpResponseException(response()->json([
+                'errors' => [
+                    'email' => ['Email sudah digunakan oleh user lain di cabang ini.']
+                ]
+            ], 422));
+        }
+
+        $otp = (string) random_int(100000, 999999);
+        \Illuminate\Support\Facades\Cache::put('email_otp_' . $user->id . '_' . $email, $otp, now()->addMinutes(10));
+
+        \Illuminate\Support\Facades\Mail::send(
+            'emails.verification-otp',
+            ['otp' => $otp],
+            function ($message) use ($email) {
+                $message->to($email)
+                    ->subject('Verifikasi Email - ' . config('app.name'));
+            }
+        );
+
+        return response()->json([
+            'message' => 'Kode OTP telah dikirim ke email Anda.',
+        ]);
+    }
+
+    /**
+     * Change the authenticated user's password (and optionally verify email).
      */
     public function changePassword(Request $request): JsonResponse
     {
-        $request->validate([
+        $rules = [
             'current_password' => 'required|string',
             'new_password' => 'required|string|min:8|confirmed',
-        ]);
+        ];
+
+        $request->validate($rules);
 
         $user = Auth::user();
 
@@ -215,6 +282,172 @@ class UserController extends Controller
         return response()->json([
             'data' => true,
             'message' => 'Password berhasil diubah.'
+        ]);
+    }
+
+    public function verifyEmailOtp(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+        if (!$user->must_change_password) {
+            throw new HttpResponseException(response()->json([
+                'errors' => ['message' => ['Invalid action.']]
+            ], 403));
+        }
+
+        $request->validate([
+            'email' => 'required|email|max:255',
+            'otp' => 'required|string|size:6',
+        ]);
+
+        $email = strtolower(trim($request->email));
+        $cachedOtp = \Illuminate\Support\Facades\Cache::get('email_otp_' . $user->id . '_' . $email);
+        
+        if (!$cachedOtp || (string)$cachedOtp !== (string)$request->otp) {
+            throw new HttpResponseException(response()->json([
+                'errors' => [
+                    'otp' => ['Kode OTP tidak valid atau sudah kadaluarsa.']
+                ]
+            ], 422));
+        }
+        
+        $user->email = $email;
+        $user->email_verified_at = now();
+        $user->save();
+
+        \Illuminate\Support\Facades\Cache::forget('email_otp_' . $user->id . '_' . $email);
+
+        return response()->json([
+            'data' => true,
+            'message' => 'Email berhasil diverifikasi.'
+        ]);
+    }
+
+    /**
+     * Send OTP to a parent's (ayah/ibu/wali) email for verification.
+     */
+    public function sendWaliOtp(Request $request): JsonResponse
+    {
+        $request->validate([
+            'type' => 'required|string|in:ayah,ibu,wali',
+        ]);
+
+        $user = Auth::user();
+        $siswa = $user->siswa;
+
+        if (!$siswa) {
+            throw new HttpResponseException(response()->json([
+                'errors' => ['message' => ['Data siswa tidak ditemukan.']]
+            ], 404));
+        }
+
+        $type = $request->type;
+        $parent = match ($type) {
+            'ayah' => $siswa->ayah,
+            'ibu' => $siswa->ibu,
+            'wali' => $siswa->wali,
+        };
+
+        if (!$parent || empty($parent->email)) {
+            throw new HttpResponseException(response()->json([
+                'errors' => ['email' => ['Data ' . $type . ' tidak memiliki email.']]
+            ], 422));
+        }
+
+        $email = strtolower(trim($parent->email));
+
+        // Rate limit: max 3 per 10 minutes
+        $rateLimitKey = 'wali_otp_rate_' . $parent->id . '_' . $type;
+        $attempts = \Illuminate\Support\Facades\Cache::get($rateLimitKey, 0);
+        if ($attempts >= 3) {
+            throw new HttpResponseException(response()->json([
+                'errors' => [
+                    'email' => ['Terlalu banyak permintaan OTP. Silakan coba lagi dalam beberapa menit.']
+                ]
+            ], 429));
+        }
+        \Illuminate\Support\Facades\Cache::put($rateLimitKey, $attempts + 1, now()->addMinutes(10));
+
+        $otp = (string) random_int(100000, 999999);
+        $cacheKey = 'wali_otp_' . $parent->id . '_' . $type . '_' . $email;
+        \Illuminate\Support\Facades\Cache::put($cacheKey, $otp, now()->addMinutes(10));
+
+        \Illuminate\Support\Facades\Mail::send(
+            'emails.verification-otp',
+            ['otp' => $otp],
+            function ($message) use ($email, $type) {
+                $label = match ($type) {
+                    'ayah' => 'Ayah',
+                    'ibu' => 'Ibu',
+                    'wali' => 'Wali',
+                };
+                $message->to($email)
+                    ->subject('Verifikasi Email ' . $label . ' - ' . config('app.name'));
+            }
+        );
+
+        return response()->json([
+            'message' => 'Kode OTP telah dikirim ke email ' . $type . '.',
+        ]);
+    }
+
+    /**
+     * Verify OTP for a parent's (ayah/ibu/wali) email.
+     */
+    public function verifyWaliOtp(Request $request): JsonResponse
+    {
+        $request->validate([
+            'type' => 'required|string|in:ayah,ibu,wali',
+            'otp' => 'required|string|size:6',
+        ]);
+
+        $user = Auth::user();
+        $siswa = $user->siswa;
+
+        if (!$siswa) {
+            throw new HttpResponseException(response()->json([
+                'errors' => ['message' => ['Data siswa tidak ditemukan.']]
+            ], 404));
+        }
+
+        $type = $request->type;
+        $parent = match ($type) {
+            'ayah' => $siswa->ayah,
+            'ibu' => $siswa->ibu,
+            'wali' => $siswa->wali,
+        };
+
+        if (!$parent || empty($parent->email)) {
+            throw new HttpResponseException(response()->json([
+                'errors' => ['email' => ['Data ' . $type . ' tidak memiliki email.']]
+            ], 422));
+        }
+
+        $email = strtolower(trim($parent->email));
+        $cacheKey = 'wali_otp_' . $parent->id . '_' . $type . '_' . $email;
+        $cachedOtp = \Illuminate\Support\Facades\Cache::get($cacheKey);
+
+        if (!$cachedOtp || (string)$cachedOtp !== (string)$request->otp) {
+            throw new HttpResponseException(response()->json([
+                'errors' => [
+                    'otp' => ['Kode OTP tidak valid atau sudah kadaluarsa.']
+                ]
+            ], 422));
+        }
+
+        $parent->email_verified_at = now();
+        $parent->save();
+
+        \Illuminate\Support\Facades\Cache::forget($cacheKey);
+
+        $label = match ($type) {
+            'ayah' => 'Ayah',
+            'ibu' => 'Ibu',
+            'wali' => 'Wali',
+        };
+
+        return response()->json([
+            'data' => true,
+            'message' => 'Email ' . $label . ' berhasil diverifikasi.'
         ]);
     }
 
@@ -258,6 +491,13 @@ class UserController extends Controller
             throw new HttpResponseException(response()->json([
                 'errors' => ['message' => ['User tidak ditemukan.']]
             ], 404));
+        }
+
+        // Block deletion of superadmin users
+        if ($user->hasRole('superadmin')) {
+            throw new HttpResponseException(response()->json([
+                'errors' => ['message' => ['Akun superadmin tidak dapat dihapus.']]
+            ], 403));
         }
 
         // Revoke all Sanctum tokens

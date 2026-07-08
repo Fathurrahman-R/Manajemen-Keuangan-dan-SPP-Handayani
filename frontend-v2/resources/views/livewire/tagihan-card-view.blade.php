@@ -51,8 +51,8 @@
             </x-filament::input.wrapper>
         </div>
 
-        {{-- Baris 3: Filter dropdown (Periode, Kelas, Status) dengan label di atas --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+        {{-- Baris 3: Filter dropdown (Periode, Kelas, Kategori, Status) dengan label di atas --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
             @if($this->hasTahunAjaranOptions())
                 <div>
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Periode Ajaran</label>
@@ -77,6 +77,20 @@
                         <x-filament::input.select wire:model.live="filterKelas">
                             <option value="">Semua Kelas</option>
                             @foreach($kelasOptions as $id => $nama)
+                                <option value="{{ $id }}">{{ $nama }}</option>
+                            @endforeach
+                        </x-filament::input.select>
+                    </x-filament::input.wrapper>
+                </div>
+            @endif
+
+            @if(count($kategoriOptions) > 0)
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Kategori</label>
+                    <x-filament::input.wrapper>
+                        <x-filament::input.select wire:model.live="filterKategori">
+                            <option value="">Semua Kategori</option>
+                            @foreach($kategoriOptions as $id => $nama)
                                 <option value="{{ $id }}">{{ $nama }}</option>
                             @endforeach
                         </x-filament::input.select>

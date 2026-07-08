@@ -19,6 +19,7 @@ class ApiService
 
         return Http::withHeaders([
             'Authorization' => 'Bearer ' . $token,
+            'Accept' => 'application/json',
         ])->baseUrl(env('API_URL'));
     }
 }

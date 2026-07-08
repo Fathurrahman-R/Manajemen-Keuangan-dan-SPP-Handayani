@@ -391,6 +391,7 @@ class AdminPanelProvider extends PanelProvider
                 ->label('Pengaturan Aplikasi')
                 ->icon('heroicon-o-cog-6-tooth')
                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.settings'))
+                ->visible(fn(): bool => PermissionHelper::has('view-app-setting'))
                 ->url(fn(): string => Settings::getUrl()),
             NavigationItem::make()
                 ->label('Manajemen Cabang')
@@ -404,6 +405,18 @@ class AdminPanelProvider extends PanelProvider
                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.notification-log'))
                 ->visible(fn(): bool => PermissionHelper::has('view-notification-logs'))
                 ->url(fn(): string => NotificationLogPage::getUrl()),
+            NavigationItem::make()
+                ->label('Pengaturan Notifikasi')
+                ->icon('heroicon-o-bell')
+                ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.notification-settings'))
+                ->visible(fn(): bool => PermissionHelper::has('view-notification-setting'))
+                ->url(fn(): string => \App\Filament\Pages\NotificationSettingsPage::getUrl()),
+            NavigationItem::make()
+                ->label('Pengaturan Approval')
+                ->icon('heroicon-o-check-badge')
+                ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.branch-approval-settings'))
+                ->visible(fn(): bool => PermissionHelper::has('view-app-setting'))
+                ->url(fn(): string => \App\Filament\Pages\BranchApprovalSettingsPage::getUrl()),
         ];
     }
 

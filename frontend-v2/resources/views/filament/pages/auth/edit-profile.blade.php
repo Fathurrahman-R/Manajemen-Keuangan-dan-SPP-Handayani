@@ -22,9 +22,22 @@
                 </div>
 
                 @if($currentEmail)
-                    <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                        <x-heroicon-o-envelope class="h-4 w-4" />
-                        <span>{{ $currentEmail }}</span>
+                    <div class="flex items-center justify-between gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <div class="flex items-center gap-2">
+                            <x-heroicon-o-envelope class="h-4 w-4" />
+                            <span>{{ $currentEmail }}</span>
+                            @if($emailVerified)
+                                <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/30 dark:text-green-400 dark:ring-green-400/20">Terverifikasi</span>
+                            @else
+                                <span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10 dark:bg-red-900/30 dark:text-red-400 dark:ring-red-400/20">Belum Diverifikasi</span>
+                            @endif
+                        </div>
+                        @if(!$emailVerified)
+                            <button type="button" wire:click="sendOtp" wire:loading.attr="disabled" class="text-xs font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">
+                                <span wire:loading.remove wire:target="sendOtp">Verifikasi</span>
+                                <span wire:loading wire:target="sendOtp">Mengirim...</span>
+                            </button>
+                        @endif
                     </div>
                 @else
                     <div class="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
@@ -78,5 +91,50 @@
                 </div>
             </form>
         </x-filament::section>
+
+        {{-- OTP Verification Modal --}}
+        @if($showOtpModal)
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" wire:click.self="cancelOtp">
+                <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800">
+                    <h3 class="text-lg font-semibold text-gray-950 dark:text-white">
+                        Verifikasi Email
+                    </h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Kode OTP telah dikirim ke email {{ $currentEmail }}. Masukkan kode 6 digit untuk memverifikasi.
+                    </p>
+
+                    <form wire:submit="verifyOtp" class="mt-4 space-y-4">
+                        <div>
+                            <label for="otp" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kode OTP</label>
+                            <input
+                                type="text"
+                                id="otp"
+                                wire:model="otp"
+                                inputmode="numeric"
+                                maxlength="6"
+                                placeholder="000000"
+                                class="mt-1 block w-full rounded-lg border-gray-300 text-center text-2xl font-mono tracking-[0.5em] shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                            />
+                            @error('otp')
+                                <p class="mt-1 text-sm text-danger-600 dark:text-danger-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div class="flex justify-end gap-3">
+                            <x-filament::button color="gray" type="button" wire:click="cancelOtp">
+                                Batal
+                            </x-filament::button>
+                            <x-filament::button type="submit" wire:loading.attr="disabled">
+                                <span wire:loading.remove wire:target="verifyOtp">Verifikasi</span>
+                                <span wire:loading wire:target="verifyOtp">
+                                    <x-filament::loading-indicator class="h-4 w-4" />
+                                    Memverifikasi...
+                                </span>
+                            </x-filament::button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        @endif
     </div>
 </x-filament-panels::page>

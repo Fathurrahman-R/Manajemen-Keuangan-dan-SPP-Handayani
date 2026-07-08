@@ -35,21 +35,34 @@ class SiswaImportTemplate implements FromArray, WithHeadings, WithStyles
             'jenjang',
             'kelas',
             'kategori',
+            'asal_sekolah',
+            'kelas_diterima',
             'status',
             'tahun_diterima',
+            'keterangan_siswa',
             'nama_ayah',
+            'pendidikan_terakhir_ayah',
             'pekerjaan_ayah',
+            'email_ayah',
             'nama_ibu',
+            'pendidikan_terakhir_ibu',
             'pekerjaan_ibu',
+            'email_ibu',
             'nama_wali',
             'pekerjaan_wali',
             'no_hp_wali',
             'alamat_wali',
+            'keterangan_wali',
+            'email_wali',
         ];
     }
 
     public function array(): array
     {
+        $kelas = Kelas::where('branch_id', $this->branchId)->first();
+        $jenjang = $kelas ? $kelas->jenjang : 'MI';
+        $namaKelas = $kelas ? $kelas->nama : 'Kelas 1A';
+
         return [
             [
                 '12345',
@@ -60,15 +73,24 @@ class SiswaImportTemplate implements FromArray, WithHeadings, WithStyles
                 '2015-05-15',
                 'Islam',
                 'Jl. Merdeka No. 1',
-                'MI',
-                $this->kelasNames[0] ?? 'Kelas 1A',
+                $jenjang,
+                $namaKelas,
                 'Reguler',
+                'TK Melati',
+                '1',
                 'Aktif',
                 '2023',
+                'Siswa pindahan',
                 'Budi Santoso',
+                'S1',
                 'Wiraswasta',
+                'budi@example.com',
                 'Siti Aminah',
+                'S1',
                 'Guru',
+                'siti@example.com',
+                '',
+                '',
                 '',
                 '',
                 '',
@@ -96,8 +118,8 @@ class SiswaImportTemplate implements FromArray, WithHeadings, WithStyles
             $this->addDropdownValidation($sheet, 'J', 2, $lastRow, $this->kelasNames);
         }
 
-        // Status (column L)
-        $this->addDropdownValidation($sheet, 'L', 2, $lastRow, ['Aktif', 'Non-Aktif', 'Lulus', 'Pindah']);
+        // Status (column N)
+        $this->addDropdownValidation($sheet, 'N', 2, $lastRow, ['Aktif', 'Non-Aktif', 'Lulus', 'Pindah']);
 
         // Style the header row
         return [

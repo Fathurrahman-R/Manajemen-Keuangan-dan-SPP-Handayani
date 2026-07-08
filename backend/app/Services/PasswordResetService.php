@@ -24,11 +24,6 @@ class PasswordResetService
             return;
         }
 
-        // Don't allow siswa to reset password
-        if ($user->hasRole('siswa')) {
-            return;
-        }
-
         $token = Str::random(64);
 
         PasswordResetToken::create([
@@ -39,10 +34,12 @@ class PasswordResetService
         ]);
 
         // Send email with reset link
-        $resetUrl = config('app.frontend_url', config('app.url')) . '/reset-password?token=' . $token;
+        $frontendUrl = config('app.frontend_url', env('FRONTEND_URL', 'http://127.0.0.1:8000'));
+        $resetUrl = $frontendUrl . '/reset-password?token=' . $token;
 
-        Mail::raw(
-            "Klik link berikut untuk reset password Anda:\n\n{$resetUrl}\n\nLink ini berlaku selama 60 menit.",
+        Mail::send(
+            'emails.reset-password',
+            ['resetUrl' => $resetUrl],
             function ($message) use ($email) {
                 $message->to($email)
                     ->subject('Reset Password - ' . config('app.name'));

@@ -21,6 +21,7 @@ class User extends Authenticatable
         'username',
         'name',
         'email',
+        'email_verified_at',
         'password',
         'branch_id',
         'siswa_id',
@@ -38,6 +39,7 @@ class User extends Authenticatable
             'siswa_id' => 'int',
             'is_active' => 'boolean',
             'must_change_password' => 'boolean',
+            'email_verified_at' => 'datetime',
         ];
     }
 

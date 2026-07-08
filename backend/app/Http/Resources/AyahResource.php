@@ -18,7 +18,9 @@ class AyahResource extends JsonResource
             'id'=>$this->id,
             'nama'=>$this->nama,
             'pendidikan_terakhir'=>$this->pendidikan_terakhir,
-            'pekerjaan'=>$this->pekerjaan
+            'pekerjaan'=>$this->pekerjaan,
+            'email'=>$this->email,
+            'email_verified_at'=>$this->email_verified_at,
         ];
     }
 }

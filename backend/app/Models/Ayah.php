@@ -20,6 +20,7 @@ class Ayah extends Model
         'pendidikan_terakhir',
         'pekerjaan',
         'email',
+        'email_verified_at',
     ];
     protected $casts = [
         'id' => 'integer'

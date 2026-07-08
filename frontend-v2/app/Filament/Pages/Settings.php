@@ -30,7 +30,7 @@ class Settings extends Page
 
     public function mount()
     {
-        abort_if(!PermissionHelper::has('view-dashboard'), 403);
+        abort_if(!PermissionHelper::has('view-app-setting'), 403);
 
         try {
             $response = ApiService::client()->get('/setting');

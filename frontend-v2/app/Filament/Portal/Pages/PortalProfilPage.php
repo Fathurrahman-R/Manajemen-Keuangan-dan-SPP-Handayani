@@ -45,6 +45,19 @@ class PortalProfilPage extends Page implements HasForms, HasSchemas
     public ?array $roles = [];
     public ?string $branchLocation = null;
 
+    public ?string $ayahEmail = null;
+    public ?string $ibuEmail = null;
+    public ?string $waliEmail = null;
+    public bool $emailVerified = false;
+    public bool $ayahEmailVerified = false;
+    public bool $ibuEmailVerified = false;
+    public bool $waliEmailVerified = false;
+
+    // Parent OTP modal state
+    public ?string $parentOtpType = null;
+    public string $parentOtp = '';
+    public bool $showParentOtpModal = false;
+
     // Email form
     public ?string $email = '';
     public string $current_password_for_email = '';
@@ -81,6 +94,16 @@ class PortalProfilPage extends Page implements HasForms, HasSchemas
             $this->username = $userData['username'] ?? null;
             $this->roles = $userData['roles'] ?? [];
             $this->branchLocation = $userData['branch']['location'] ?? null;
+            $this->emailVerified = !empty($userData['email_verified_at']);
+
+            if (isset($userData['siswa'])) {
+                $this->ayahEmail = $userData['siswa']['ayah']['email'] ?? null;
+                $this->ibuEmail = $userData['siswa']['ibu']['email'] ?? null;
+                $this->waliEmail = $userData['siswa']['wali']['email'] ?? null;
+                $this->ayahEmailVerified = !empty($userData['siswa']['ayah']['email_verified_at']);
+                $this->ibuEmailVerified = !empty($userData['siswa']['ibu']['email_verified_at']);
+                $this->waliEmailVerified = !empty($userData['siswa']['wali']['email_verified_at']);
+            }
             
             // Fetch notification preferences if email is set
             if ($this->currentEmail) {
@@ -255,5 +278,107 @@ class PortalProfilPage extends Page implements HasForms, HasSchemas
         } catch (\Throwable $e) {
             $this->notifyUnexpectedError();
         }
+    }
+
+    public function sendParentOtp(string $type): void
+    {
+        try {
+            $response = ApiService::client()->post('/users/send-wali-otp', [
+                'type' => $type,
+            ]);
+
+            if ($response->successful()) {
+                $this->parentOtpType = $type;
+                $this->parentOtp = '';
+                $this->showParentOtpModal = true;
+
+                $label = match ($type) {
+                    'ayah' => 'Ayah',
+                    'ibu' => 'Ibu',
+                    'wali' => 'Wali',
+                };
+                Notification::make()
+                    ->title('OTP berhasil dikirim ke email ' . $label)
+                    ->success()
+                    ->send();
+            } else {
+                $errors = $response->json('errors', []);
+                $message = $response->json('message', 'Gagal mengirim OTP.');
+                if (count($errors) > 0) {
+                    $firstError = reset($errors);
+                    $message = is_array($firstError) ? $firstError[0] : (string) $firstError;
+                }
+                Notification::make()
+                    ->title('Gagal')
+                    ->danger()
+                    ->body($message)
+                    ->send();
+            }
+        } catch (ConnectionException $e) {
+            $this->notifyConnectionError();
+        } catch (\Throwable $e) {
+            $this->notifyUnexpectedError();
+        }
+    }
+
+    public function verifyParentOtp(): void
+    {
+        $this->validate([
+            'parentOtp' => 'required|string|size:6',
+        ]);
+
+        try {
+            $response = ApiService::client()->post('/users/verify-wali-otp', [
+                'type' => $this->parentOtpType,
+                'otp' => $this->parentOtp,
+            ]);
+
+            if ($response->successful()) {
+                $this->showParentOtpModal = false;
+                $this->parentOtp = '';
+
+                // Update local verified state
+                match ($this->parentOtpType) {
+                    'ayah' => $this->ayahEmailVerified = true,
+                    'ibu' => $this->ibuEmailVerified = true,
+                    'wali' => $this->waliEmailVerified = true,
+                };
+
+                $label = match ($this->parentOtpType) {
+                    'ayah' => 'Ayah',
+                    'ibu' => 'Ibu',
+                    'wali' => 'Wali',
+                };
+                Notification::make()
+                    ->title('Email ' . $label . ' berhasil diverifikasi!')
+                    ->success()
+                    ->send();
+
+                $this->parentOtpType = null;
+            } else {
+                $errors = $response->json('errors', []);
+                $message = $response->json('message', 'Gagal verifikasi OTP.');
+                if (count($errors) > 0) {
+                    $firstError = reset($errors);
+                    $message = is_array($firstError) ? $firstError[0] : (string) $firstError;
+                }
+                Notification::make()
+                    ->title('Gagal')
+                    ->danger()
+                    ->body($message)
+                    ->send();
+            }
+        } catch (ConnectionException $e) {
+            $this->notifyConnectionError();
+        } catch (\Throwable $e) {
+            $this->notifyUnexpectedError();
+        }
+    }
+
+    public function cancelParentOtp(): void
+    {
+        $this->showParentOtpModal = false;
+        $this->parentOtp = '';
+        $this->parentOtpType = null;
     }
 }

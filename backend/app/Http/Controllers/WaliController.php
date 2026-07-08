@@ -26,12 +26,12 @@ class WaliController extends Controller
         $perPage = (int) request('per_page', 30);
 
         $query = Wali::query()
-            ->select(['id', 'nama', 'jenis_kelamin', 'agama', 'pendidikan_terakhir', 'pekerjaan', 'alamat', 'no_hp', 'keterangan'])
+            ->select(['id', 'nama', 'pekerjaan', 'alamat', 'no_hp', 'email', 'keterangan'])
             ->when($search, function ($q) use ($search) {
                 $q->where('nama', 'like', "%$search%");
             });
 
-        $this->applySorting($query, ['nama', 'jenis_kelamin', 'agama', 'pendidikan_terakhir', 'pekerjaan'], 'nama', 'asc');
+        $this->applySorting($query, ['nama', 'pekerjaan'], 'nama', 'asc');
 
         $paginated = $query->paginate($perPage);
 

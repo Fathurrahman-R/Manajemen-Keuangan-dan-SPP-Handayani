@@ -23,7 +23,9 @@ class WaliResource extends JsonResource
             'pekerjaan'=>$this->pekerjaan,
             'alamat'=>$this->alamat,
             'no_hp'=>$this->no_hp,
-            'keterangan'=>$this->keterangan
+            'keterangan'=>$this->keterangan,
+            'email'=>$this->email,
+            'email_verified_at'=>$this->email_verified_at,
         ];
     }
 }

@@ -195,6 +195,7 @@ class RoleController extends Controller
                 'view-config'       => \App\Enum\Permission::VIEW_MIDTRANS_CONFIG,
                 'update-config'     => \App\Enum\Permission::UPDATE_MIDTRANS_CONFIG,
             ],
+            'Pengaturan'         => \App\Constant\Permissions::SETTING_PERMISSIONS,
         ];
 
         $rolesGroup = [

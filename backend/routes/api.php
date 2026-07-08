@@ -51,6 +51,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/users/current/email', [UserController::class, 'updateEmail']);
     Route::get('/users/current/notification-preferences', [UserController::class, 'getNotificationPreferences']);
     Route::put('/users/current/notification-preferences', [UserController::class, 'updateNotificationPreferences']);
+    Route::post('/users/send-verification-otp', [UserController::class, 'sendVerificationOtp']);
+    Route::post('/users/verify-email-otp', [UserController::class, 'verifyEmailOtp']);
+    Route::post('/users/send-wali-otp', [UserController::class, 'sendWaliOtp']);
+    Route::post('/users/verify-wali-otp', [UserController::class, 'verifyWaliOtp']);
     Route::post('/users/change-password', [UserController::class, 'changePassword']);
 
     // Siswa-accessible route (permission:view-tagihan-siswa middleware)

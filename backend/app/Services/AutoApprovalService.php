@@ -19,7 +19,7 @@ class AutoApprovalService
 
         return $settings->auto_approval_enabled
             && $settings->auto_approval_threshold > 0
-            && $request->jumlah < $settings->auto_approval_threshold;
+            && $request->jumlah <= $settings->auto_approval_threshold;
     }
 
     public function processAutoApproval(PengeluaranRequest $request): void

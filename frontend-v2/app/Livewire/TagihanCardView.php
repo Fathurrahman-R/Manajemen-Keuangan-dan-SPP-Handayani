@@ -27,6 +27,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
     public string $search = '';
     public string $jenjang = '';     // set from parent page (KB/TK/MI)
     public string $filterKelas = ''; // replaces filterJenjang
+    public string $filterKategori = '';
     public string $filterStatus = '';
     public ?string $filterJatuhTempoFrom = null;
     public ?string $filterJatuhTempoTo = null;
@@ -37,6 +38,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
     public array $siswaData = [];
     public array $meta = [];
     public array $kelasOptions = [];
+    public array $kategoriOptions = [];
 
     public array $selectedTagihanForPayment = [];
 
@@ -44,6 +46,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
     {
         $this->jenjang = $jenjang;
         $this->loadKelasOptions();
+        $this->loadKategoriOptions();
         $this->loadData();
     }
 
@@ -62,6 +65,20 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
             }
         } catch (\Throwable $e) {
             $this->kelasOptions = [];
+        }
+    }
+
+    public function loadKategoriOptions(): void
+    {
+        try {
+            $response = ApiService::client()->get('/kategori');
+            if ($response->ok()) {
+                $this->kategoriOptions = collect($response->json('data') ?? [])
+                    ->mapWithKeys(fn($k) => [$k['id'] => $k['nama']])
+                    ->toArray();
+            }
+        } catch (\Throwable $e) {
+            $this->kategoriOptions = [];
         }
     }
 
@@ -92,6 +109,11 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
         // Kelas filter
         if (filled($this->filterKelas)) {
             $params['kelas_id'] = $this->filterKelas;
+        }
+
+        // Kategori filter
+        if (filled($this->filterKategori)) {
+            $params['kategori_id'] = $this->filterKategori;
         }
 
         if (filled($this->filterStatus)) {
@@ -146,6 +168,12 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
     }
 
     public function updatedFilterKelas(): void
+    {
+        $this->page = 1;
+        $this->loadData();
+    }
+
+    public function updatedFilterKategori(): void
     {
         $this->page = 1;
         $this->loadData();
@@ -503,6 +531,12 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                     ->bulkToggleable()
                     ->required()
                     ->helperText('Pilih minimal satu status untuk diikutsertakan dalam laporan.'),
+                Select::make('kategori_id')
+                    ->label('Kategori')
+                    ->options(function () {
+                        return $this->kategoriOptions;
+                    })
+                    ->placeholder('Semua Kategori'),
                 DatePicker::make('jatuh_tempo_from')
                     ->label('Jatuh Tempo Dari')
                     ->native(false),
@@ -526,6 +560,11 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                 }
                 if (filled($this->search)) {
                     $params['search'] = $this->search;
+                }
+                if (!empty($data['kategori_id'])) {
+                    $params['kategori_id'] = $data['kategori_id'];
+                } else if (filled($this->filterKategori)) {
+                    $params['kategori_id'] = $this->filterKategori;
                 }
                 if (!empty($data['status'])) {
                     $params['status'] = $data['status'];

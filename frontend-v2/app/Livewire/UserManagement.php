@@ -23,6 +23,7 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Contracts\View\View;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -62,7 +63,7 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
 
     protected function getUserFormSchema(bool $isEdit = false): array
     {
-        return [
+        $schema = [
             TextInput::make('username')
                 ->label('Username')
                 ->required()
@@ -74,16 +75,9 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
             TextInput::make('email')
                 ->label('Email')
                 ->email()
+                ->required()
                 ->maxLength(255)
-                ->helperText('Wajib diisi untuk admin/operator agar bisa menerima notifikasi & reset password.'),
-            TextInput::make('password')
-                ->label('Password')
-                ->password()
-                ->revealable()
-                ->required(!$isEdit)
-                ->minLength(8)
-                ->maxLength(100)
-                ->helperText($isEdit ? 'Kosongkan jika tidak ingin mengubah password' : null),
+                ->helperText('Wajib diisi. User akan diminta verifikasi email saat login pertama kali.'),
             Select::make('branch_id')
                 ->label('Cabang')
                 ->options(fn(): array => $this->getBranchOptions())
@@ -91,48 +85,70 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                 ->searchable(),
             CheckboxList::make('roles')
                 ->label('Role')
-                ->options(fn(): array => $this->getRoleOptions())
+                ->options(fn(): array => collect($this->getRoleOptions())
+                    ->reject(fn($label, $key) => $key === 'superadmin')
+                    ->toArray())
                 ->required()
                 ->columns(2),
         ];
+
+        if ($isEdit) {
+            // Insert password field after email for edit mode
+            array_splice($schema, 3, 0, [
+                TextInput::make('password')
+                    ->label('Password')
+                    ->password()
+                    ->revealable()
+                    ->minLength(8)
+                    ->maxLength(100)
+                    ->helperText('Kosongkan jika tidak ingin mengubah password'),
+            ]);
+        }
+
+        return $schema;
     }
 
     public function table(Table $table): Table
     {
         return $table
             ->records(
-                function (?string $search, array $filters = [], ?string $sortColumn = null, ?string $sortDirection = null): array {
+                function (?string $search, int $page, int $recordsPerPage, array $filters = [], ?string $sortColumn = null, ?string $sortDirection = null): LengthAwarePaginator {
                     try {
-                        $response = ApiService::client()->get('/users');
+                        $params = [
+                            'page' => $page,
+                            'per_page' => $recordsPerPage,
+                        ];
+
+                        if (filled($search)) {
+                            $params['search'] = $search;
+                        }
+
+                        if (!empty($filters['role']['value'])) {
+                            $params['role'] = $filters['role']['value'];
+                        }
+
+                        if (filled($sortColumn)) {
+                            $params['sort'] = $sortColumn;
+                            $params['direction'] = $sortDirection ?? 'asc';
+                        }
+
+                        $response = ApiService::client()->get('/users', $params);
 
                         if (!$response->ok()) {
                             $this->handleApiError($response);
-                            return [];
+                            return new LengthAwarePaginator([], 0, $recordsPerPage, $page);
                         }
 
-                        return $response->collect('data')
-                            ->when(filled($search), fn(Collection $data): Collection => $data->filter(
-                                fn(array $record): bool => str_contains(Str::lower($record['username'] ?? ''), Str::lower($search))
-                                    || str_contains(Str::lower($record['branch']['location'] ?? ''), Str::lower($search))
-                            ))
-                            ->when(!empty($filters['role']['value'] ?? null), fn(Collection $data) => $data->filter(
-                                fn(array $record): bool => in_array($filters['role']['value'], $record['roles'] ?? [])
-                            ))
-                            ->when(
-                                filled($sortColumn),
-                                fn(Collection $data): Collection => $data->sortBy(
-                                    fn(array $record) => data_get($record, $sortColumn),
-                                    SORT_REGULAR,
-                                    ($sortDirection ?? 'asc') === 'desc'
-                                )->values()
-                            )
-                            ->toArray();
+                        $data = $response->json('data') ?? [];
+                        $total = $response->json('meta.total') ?? count($data);
+
+                        return new LengthAwarePaginator($data, $total, $recordsPerPage, $page);
                     } catch (ConnectionException $e) {
                         $this->notifyConnectionError();
-                        return [];
+                        return new LengthAwarePaginator([], 0, $recordsPerPage, $page);
                     } catch (\Throwable $e) {
                         $this->notifyUnexpectedError();
-                        return [];
+                        return new LengthAwarePaginator([], 0, $recordsPerPage, $page);
                     }
                 },
             )
@@ -316,7 +332,8 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                     ->icon('heroicon-s-trash')
                     ->iconButton()
                     ->color('danger')
-                    ->visible(fn(): bool => $this->hasPermission('delete-user'))
+                    ->visible(fn($record): bool => $this->hasPermission('delete-user')
+                        && !in_array('superadmin', $record['roles'] ?? []))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus User')
                     ->modalDescription('Apakah Anda yakin ingin menghapus user ini?')
@@ -404,7 +421,6 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                             'username' => $data['username'],
                             'name' => $data['name'] ?? null,
                             'email' => $data['email'] ?: null,
-                            'password' => $data['password'],
                             'branch_id' => (int) $data['branch_id'],
                             'roles' => $data['roles'],
                         ];

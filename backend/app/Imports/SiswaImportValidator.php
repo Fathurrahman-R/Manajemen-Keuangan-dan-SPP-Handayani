@@ -55,6 +55,16 @@ class SiswaImportValidator implements ToCollection, WithHeadingRow
         $normalized = [];
         foreach ($row as $key => $value) {
             $normalizedKey = $this->normalizeKey($key);
+            
+            // Handle Excel dates
+            if ($normalizedKey === 'tanggal_lahir' && is_numeric($value)) {
+                try {
+                    $value = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)->format('Y-m-d');
+                } catch (\Exception $e) {
+                    // fallback to the original value if it can't be parsed
+                }
+            }
+            
             $normalized[$normalizedKey] = is_string($value) ? trim($value) : $value;
         }
 
@@ -64,6 +74,26 @@ class SiswaImportValidator implements ToCollection, WithHeadingRow
         }
         if (isset($normalized['nisn'])) {
             $normalized['nisn'] = (string) $normalized['nisn'];
+        }
+
+        // Normalize Jenis Kelamin
+        if (!empty($normalized['jenis_kelamin'])) {
+            $jk = strtolower(str_replace(' ', '', $normalized['jenis_kelamin']));
+            if (in_array($jk, ['l', 'laki', 'laki-laki', 'lakilaki'])) {
+                $normalized['jenis_kelamin'] = 'Laki-laki';
+            } elseif (in_array($jk, ['p', 'perempuan', 'wanita'])) {
+                $normalized['jenis_kelamin'] = 'Perempuan';
+            }
+        }
+
+        // Normalize Agama
+        if (!empty($normalized['agama'])) {
+            $agama = strtolower(trim($normalized['agama']));
+            if ($agama === 'protestan') {
+                $normalized['agama'] = 'Kristen';
+            } else {
+                $normalized['agama'] = ucfirst($agama);
+            }
         }
 
         return $normalized;

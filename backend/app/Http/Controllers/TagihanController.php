@@ -87,6 +87,12 @@ class TagihanController extends Controller
             $query->where('kelas_id', (int) $kelasId);
         }
 
+        // Kategori filter: exact match on kategori_id
+        $kategoriId = request('kategori_id');
+        if ($kategoriId) {
+            $query->where('kategori_id', (int) $kategoriId);
+        }
+
         // Status filter: only include siswa that have at least one tagihan with matching status
         $status = request('status');
         if ($status) {
@@ -472,6 +478,10 @@ class TagihanController extends Controller
             $query->whereHas('siswa', fn($q) => $q->where('kelas_id', (int) $kelasId));
         }
 
+        if ($kategoriId = $request->input('kategori_id')) {
+            $query->whereHas('siswa', fn($q) => $q->where('kategori_id', (int) $kategoriId));
+        }
+
         if ($search = $request->input('search')) {
             $query->whereHas('siswa', fn($q) =>
                 $q->where('nama', 'like', "%{$search}%")
@@ -491,22 +501,49 @@ class TagihanController extends Controller
             $query->whereHas('jenis_tagihan', fn($q) => $q->whereDate('jatuh_tempo', '<=', $to));
         }
 
-        $tagihans = $query->orderBy('kode_tagihan', 'asc')->get();
+        $tagihans = $query->get()->sortBy(function($t) {
+            return ($t->siswa->nama ?? 'ZZZ') . '-' . $t->kode_tagihan;
+        });
 
-        $rows = $tagihans->map(fn(Tagihan $t) => [
-            'kode_tagihan'   => $t->kode_tagihan,
-            'nama'           => $t->siswa->nama ?? '-',
-            'nis'            => $t->siswa->nis ?? '-',
-            'jenjang'        => $t->siswa->jenjang ?? '-',
-            'kelas'          => $t->siswa->kelas->nama ?? '-',
-            'jenis_tagihan'  => $t->jenis_tagihan->nama ?? '-',
-            'jatuh_tempo'    => $t->jenis_tagihan->jatuh_tempo
-                ? \Carbon\Carbon::parse($t->jenis_tagihan->jatuh_tempo)->format('d/m/Y')
-                : '-',
-            'status'         => $t->status,
-            'jumlah'         => $t->jenis_tagihan->jumlah ?? 0,
-            'tmp'            => $t->tmp,
-        ])->toArray();
+        $groupedRows = [];
+        foreach ($tagihans as $t) {
+            $nis = $t->siswa->nis ?? '-';
+            // Use a unique key combining nis and nama to handle duplicate NIS or empty NIS
+            $key = $nis . '-' . ($t->siswa->nama ?? '-');
+            
+            if (!isset($groupedRows[$key])) {
+                $groupedRows[$key] = [
+                    'nama'           => $t->siswa->nama ?? '-',
+                    'nis'            => $nis,
+                    'jenjang'        => $t->siswa->jenjang ?? '-',
+                    'kelas'          => $t->siswa->kelas->nama ?? '-',
+                    'tagihans'       => [],
+                    'total_jumlah'   => 0,
+                    'total_terbayar' => 0,
+                    'total_sisa'     => 0,
+                ];
+            }
+
+            $jumlah = $t->jenis_tagihan->jumlah ?? 0;
+            $tmp = $t->tmp;
+            $sisa = max($jumlah - $tmp, 0);
+
+            $groupedRows[$key]['tagihans'][] = [
+                'kode_tagihan'   => $t->kode_tagihan,
+                'jenis_tagihan'  => $t->jenis_tagihan->nama ?? '-',
+                'jatuh_tempo'    => $t->jenis_tagihan->jatuh_tempo
+                    ? \Carbon\Carbon::parse($t->jenis_tagihan->jatuh_tempo)->format('d/m/Y')
+                    : '-',
+                'status'         => $t->status,
+                'jumlah'         => $jumlah,
+                'tmp'            => $tmp,
+                'sisa'           => $sisa,
+            ];
+
+            $groupedRows[$key]['total_jumlah'] += $jumlah;
+            $groupedRows[$key]['total_terbayar'] += $tmp;
+            $groupedRows[$key]['total_sisa'] += $sisa;
+        }
 
         $branchName = $user->branch?->nama ?? config('app.name');
         $periode = $allPeriods
@@ -516,7 +553,7 @@ class TagihanController extends Controller
                 : 'Semua Periode');
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('Laporan.tagihan-pdf', [
-            'rows'         => $rows,
+            'groupedRows'  => array_values($groupedRows),
             'branchName'   => $branchName,
             'periode'      => $periode,
             'jenjang'      => $request->input('jenjang'),

@@ -37,6 +37,9 @@ class EditProfile extends Page implements HasForms, HasActions, HasSchemas
     public ?string $email = '';
     public string $current_password_for_email = '';
     public ?string $currentEmail = null;
+    public bool $emailVerified = false;
+    public string $otp = '';
+    public bool $showOtpModal = false;
 
     // Password form state
     public string $current_password = '';
@@ -55,6 +58,7 @@ class EditProfile extends Page implements HasForms, HasActions, HasSchemas
             if ($response->ok()) {
                 $userData = $response->json('data') ?? [];
                 $this->currentEmail = $userData['email'] ?? null;
+                $this->emailVerified = !empty($userData['email_verified_at']);
                 $this->email = $this->currentEmail ?? '';
                 $this->username = $userData['username'] ?? null;
                 $this->roles = $userData['roles'] ?? [];
@@ -134,6 +138,7 @@ class EditProfile extends Page implements HasForms, HasActions, HasSchemas
             if ($response->ok()) {
                 $this->currentEmail = $this->email;
                 $this->current_password_for_email = '';
+                $this->emailVerified = false;
 
                 Notification::make()
                     ->title('Email berhasil diperbarui')
@@ -216,5 +221,95 @@ class EditProfile extends Page implements HasForms, HasActions, HasSchemas
                 ->persistent()
                 ->send();
         }
+    }
+
+    public function sendOtp(): void
+    {
+        if (!$this->currentEmail) {
+            Notification::make()->title('Email belum diatur')->danger()->send();
+            return;
+        }
+
+        try {
+            $response = ApiService::client()->post('/users/send-verification-otp', [
+                'email' => $this->currentEmail,
+            ]);
+
+            if ($response->successful()) {
+                $this->otp = '';
+                $this->showOtpModal = true;
+                Notification::make()
+                    ->title('OTP berhasil dikirim ke email ' . $this->currentEmail)
+                    ->success()
+                    ->send();
+            } else {
+                $errors = $response->json('errors', []);
+                $message = $response->json('message', 'Gagal mengirim OTP.');
+                if (count($errors) > 0) {
+                    $firstError = reset($errors);
+                    $message = is_array($firstError) ? $firstError[0] : (string) $firstError;
+                }
+                Notification::make()
+                    ->title('Gagal')
+                    ->danger()
+                    ->body($message)
+                    ->send();
+            }
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            Notification::make()
+                ->title('Server tidak dapat dihubungi')
+                ->danger()
+                ->persistent()
+                ->send();
+        }
+    }
+
+    public function verifyOtp(): void
+    {
+        $this->validate([
+            'otp' => 'required|string|size:6',
+        ]);
+
+        try {
+            $response = ApiService::client()->post('/users/verify-email-otp', [
+                'email' => $this->currentEmail,
+                'otp' => $this->otp,
+            ]);
+
+            if ($response->successful()) {
+                $this->showOtpModal = false;
+                $this->otp = '';
+                $this->emailVerified = true;
+
+                Notification::make()
+                    ->title('Email berhasil diverifikasi!')
+                    ->success()
+                    ->send();
+            } else {
+                $errors = $response->json('errors', []);
+                $message = $response->json('message', 'Gagal verifikasi OTP.');
+                if (count($errors) > 0) {
+                    $firstError = reset($errors);
+                    $message = is_array($firstError) ? $firstError[0] : (string) $firstError;
+                }
+                Notification::make()
+                    ->title('Gagal')
+                    ->danger()
+                    ->body($message)
+                    ->send();
+            }
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            Notification::make()
+                ->title('Server tidak dapat dihubungi')
+                ->danger()
+                ->persistent()
+                ->send();
+        }
+    }
+
+    public function cancelOtp(): void
+    {
+        $this->showOtpModal = false;
+        $this->otp = '';
     }
 }

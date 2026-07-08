@@ -36,6 +36,10 @@ trait HasImportExport
             ->modalSubmitActionLabel('Export')
             ->schema($schema)
             ->action(function (array $data) use ($exportType) {
+                if ($exportType === 'siswa' && property_exists($this, 'activeTab')) {
+                    $data['jenjang'] = strtoupper($this->activeTab);
+                }
+                
                 return $this->doExportAction($exportType, $data);
             });
     }
@@ -62,6 +66,7 @@ trait HasImportExport
                         'text/csv',
                     ])
                     ->maxSize(5120)
+                    ->storeFiles(false)
                     ->required(),
             ])
             ->action(function (array $data) use ($importType): void {
@@ -246,10 +251,18 @@ trait HasImportExport
         }
 
         try {
-            $filePath = storage_path('app/livewire-tmp/' . $data['import_file']);
+            $file = $data['import_file'];
+            if (!$file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                // Fallback in case it's an array of files (e.g. multiple=true was somehow used)
+                $file = is_array($file) ? collect($file)->first() : $file;
+            }
+
+            if (!$file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                throw new \Exception('File upload tidak valid.');
+            }
 
             $response = ApiService::client()
-                ->attach('file', file_get_contents($filePath), basename($filePath))
+                ->attach('file', file_get_contents($file->getRealPath()), $file->getClientOriginalName())
                 ->post("/import-export/import/{$importType}/upload");
 
             if ($response->successful()) {

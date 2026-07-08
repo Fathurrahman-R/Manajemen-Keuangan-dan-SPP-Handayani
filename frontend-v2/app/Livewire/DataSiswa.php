@@ -238,6 +238,8 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                         'ibu_nama' => $record['ibu']['nama'] ?? null,
                         'ibu_pendidikan_terakhir' => $record['ibu']['pendidikan_terakhir'] ?? null,
                         'ibu_pekerjaan' => $record['ibu']['pekerjaan'] ?? null,
+                        'ayah_email' => $record['ayah']['email'] ?? null,
+                        'ibu_email' => $record['ibu']['email'] ?? null,
                     ])
                     ->schema([
                         Wizard::make([
@@ -272,10 +274,10 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->label('Agama')
                                                 ->options([
                                                     'Islam' => 'Islam',
-                                                    'Protestan' => 'Protestan',
+                                                    'Kristen' => 'Kristen',
                                                     'Katolik' => 'Katolik',
                                                     'Hindu' => 'Hindu',
-                                                    'Budha' => 'Budha',
+                                                    'Buddha' => 'Buddha',
                                                     'Konghucu' => 'Konghucu',
                                                 ])
                                                 ->required(),
@@ -374,6 +376,9 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                 ->schema([
                                     TextInput::make('ayah_nama')
                                         ->label('Nama Ayah'),
+                                    TextInput::make('ayah_email')
+                                        ->label('Email Ayah')
+                                        ->email(),
                                     TextInput::make('ayah_pendidikan_terakhir')
                                         ->label('Pendidikan Terakhir'),
                                     TextInput::make('ayah_pekerjaan')
@@ -384,6 +389,9 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                 ->schema([
                                     TextInput::make('ibu_nama')
                                         ->label('Nama Ibu'),
+                                    TextInput::make('ibu_email')
+                                        ->label('Email Ibu')
+                                        ->email(),
                                     TextInput::make('ibu_pendidikan_terakhir')
                                         ->label('Pendidikan Terakhir'),
                                     TextInput::make('ibu_pekerjaan')
@@ -456,6 +464,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                         'wali_no_hp' => $record['wali']['no_hp'] ?? '',
                         'wali_alamat' => $record['wali']['alamat'] ?? '',
                         'wali_keterangan' => $record['wali']['keterangan'] ?? '',
+                        'wali_email' => $record['wali']['email'] ?? null,
                     ])
                     ->schema([
                         Wizard::make([
@@ -487,10 +496,10 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->label('Agama')
                                                 ->options([
                                                     'Islam' => 'Islam',
-                                                    'Protestan' => 'Protestan',
+                                                    'Kristen' => 'Kristen',
                                                     'Katolik' => 'Katolik',
                                                     'Hindu' => 'Hindu',
-                                                    'Budha' => 'Budha',
+                                                    'Buddha' => 'Buddha',
                                                     'Konghucu' => 'Konghucu',
                                                 ])
                                                 ->required(),
@@ -568,6 +577,9 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                     TextInput::make('wali_nama')
                                         ->label('Nama Lengkap')
                                         ->required(),
+                                    TextInput::make('wali_email')
+                                        ->label('Email Wali')
+                                        ->email(),
                                     TextInput::make('wali_pekerjaan')
                                         ->label('Pekerjaan')
                                         ->required(),
@@ -680,9 +692,6 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
             ->headerActions([
                 // Import/Export Siswa
                 ...$this->makeImportExportActions('siswa', [
-                    Select::make('jenjang')
-                        ->label('Jenjang')
-                        ->options(['TK' => 'TK', 'MI' => 'MI', 'KB' => 'KB']),
                     Select::make('status')
                         ->label('Status')
                         ->options(['Aktif' => 'Aktif', 'Lulus' => 'Lulus', 'Pindah' => 'Pindah', 'Keluar' => 'Keluar']),
@@ -744,10 +753,10 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->label('Agama')
                                                 ->options([
                                                     'Islam' => 'Islam',
-                                                    'Protestan' => 'Protestan',
+                                                    'Kristen' => 'Kristen',
                                                     'Katolik' => 'Katolik',
                                                     'Hindu' => 'Hindu',
-                                                    'Budha' => 'Budha',
+                                                    'Buddha' => 'Buddha',
                                                     'Konghucu' => 'Konghucu',
                                                 ])
                                                 ->required()
@@ -904,6 +913,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 $set('ayah_nama', null);
                                                 $set('ayah_pendidikan_terakhir', null);
                                                 $set('ayah_pekerjaan', null);
+                                                $set('ayah_email', null);
                                             }
                                         })
                                         ->helperText('Pilih ayah yang sudah ada di sistem, atau kosongkan untuk input manual di bawah.')
@@ -916,6 +926,9 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                         ->hidden(fn ($get) => filled($get('ayah_id'))),
                                     TextInput::make('ayah_pekerjaan')
                                         ->label('Pekerjaan')
+                                        ->hidden(fn ($get) => filled($get('ayah_id'))),
+                                    TextInput::make('ayah_email')
+                                        ->label('Email Ayah')
                                         ->hidden(fn ($get) => filled($get('ayah_id'))),
                                 ]),
                             Step::make('Data Ibu')
@@ -954,6 +967,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 $set('ibu_nama', null);
                                                 $set('ibu_pendidikan_terakhir', null);
                                                 $set('ibu_pekerjaan', null);
+                                                $set('ibu_email', null);
                                             }
                                         })
                                         ->helperText('Pilih ibu yang sudah ada di sistem, atau kosongkan untuk input manual di bawah.')
@@ -966,6 +980,9 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                         ->hidden(fn ($get) => filled($get('ibu_id'))),
                                     TextInput::make('ibu_pekerjaan')
                                         ->label('Pekerjaan')
+                                        ->hidden(fn ($get) => filled($get('ibu_id'))),
+                                    TextInput::make('ibu_email')
+                                        ->label('Email Ibu')
                                         ->hidden(fn ($get) => filled($get('ibu_id'))),
                                 ]),
                         ])
@@ -1070,10 +1087,10 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->label('Agama')
                                                 ->options([
                                                     'Islam' => 'Islam',
-                                                    'Protestan' => 'Protestan',
+                                                    'Kristen' => 'Kristen',
                                                     'Katolik' => 'Katolik',
                                                     'Hindu' => 'Hindu',
-                                                    'Budha' => 'Budha',
+                                                    'Buddha' => 'Buddha',
                                                     'Konghucu' => 'Konghucu',
                                                 ])
                                                 ->required()
@@ -1201,6 +1218,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 $set('wali_no_hp', null);
                                                 $set('wali_alamat', null);
                                                 $set('wali_keterangan', null);
+                                                $set('wali_email', null);
                                             }
                                         })
                                         ->helperText('Pilih wali yang sudah ada di sistem, atau kosongkan untuk input manual di bawah.')
@@ -1235,6 +1253,9 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                         ]),
                                     Textarea::make('wali_keterangan')
                                         ->label('Keterangan')
+                                        ->hidden(fn ($get) => filled($get('wali_id'))),
+                                    TextInput::make('wali_email')
+                                        ->label('Email Wali')
                                         ->hidden(fn ($get) => filled($get('wali_id'))),
                                 ]),
                         ])

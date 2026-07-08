@@ -213,7 +213,9 @@ class SiswaImportService
                 if (!empty($row['nama_ayah'])) {
                     $ayah = Ayah::create([
                         'nama' => $row['nama_ayah'],
+                        'pendidikan_terakhir' => $row['pendidikan_terakhir_ayah'] ?? null,
                         'pekerjaan' => $row['pekerjaan_ayah'] ?? null,
+                        'email' => $row['email_ayah'] ?? null,
                     ]);
                     $ayahId = $ayah->id;
                 }
@@ -223,7 +225,9 @@ class SiswaImportService
                 if (!empty($row['nama_ibu'])) {
                     $ibu = Ibu::create([
                         'nama' => $row['nama_ibu'],
+                        'pendidikan_terakhir' => $row['pendidikan_terakhir_ibu'] ?? null,
                         'pekerjaan' => $row['pekerjaan_ibu'] ?? null,
+                        'email' => $row['email_ibu'] ?? null,
                     ]);
                     $ibuId = $ibu->id;
                 }
@@ -236,6 +240,8 @@ class SiswaImportService
                         'pekerjaan' => $row['pekerjaan_wali'] ?? null,
                         'no_hp' => $row['no_hp_wali'] ?? null,
                         'alamat' => $row['alamat_wali'] ?? null,
+                        'keterangan' => $row['keterangan_wali'] ?? null,
+                        'email' => $row['email_wali'] ?? null,
                     ]);
                     $waliId = $wali->id;
                 }
@@ -271,8 +277,11 @@ class SiswaImportService
                     'jenjang' => $row['jenjang'],
                     'kelas_id' => $kelasId,
                     'kategori_id' => $kategoriId,
+                    'asal_sekolah' => $row['asal_sekolah'] ?? null,
+                    'kelas_diterima' => $row['kelas_diterima'] ?? null,
                     'tahun_diterima' => $row['tahun_diterima'] ?? null,
                     'status' => $row['status'] ?? 'Aktif',
+                    'keterangan' => $row['keterangan_siswa'] ?? null,
                     'ayah_id' => $ayahId,
                     'ibu_id' => $ibuId,
                     'wali_id' => $waliId,
@@ -353,8 +362,8 @@ class SiswaImportService
         }
 
         // Jenis kelamin validation
-        if (!empty($row['jenis_kelamin']) && !in_array($row['jenis_kelamin'], ['L', 'P'])) {
-            $errors[] = ['row' => $rowNumber, 'column' => 'jenis_kelamin', 'message' => 'Jenis kelamin harus L atau P'];
+        if (!empty($row['jenis_kelamin']) && !in_array($row['jenis_kelamin'], ['Laki-laki', 'Perempuan'])) {
+            $errors[] = ['row' => $rowNumber, 'column' => 'jenis_kelamin', 'message' => 'Jenis kelamin harus Laki-laki atau Perempuan'];
         }
 
         // Jenjang validation

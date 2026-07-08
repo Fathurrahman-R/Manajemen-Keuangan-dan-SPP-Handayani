@@ -4,7 +4,7 @@
             {{ $this->form }}
             <div class="pt-4">
                 <x-filament::button type="submit" class="w-full">
-                    Ubah Password
+                    {{ $isEmailVerified ? 'Ubah Password' : 'Verifikasi Email' }}
                 </x-filament::button>
             </div>
         </form>

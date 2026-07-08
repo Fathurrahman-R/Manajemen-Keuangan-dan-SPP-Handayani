@@ -20,16 +20,16 @@ class UserRequest extends FormRequest
             return [
                 'username' => 'required|string|max:100|unique:users,username',
                 'email' => [
-                    'nullable', 'email', 'max:255',
+                    'required', 'email', 'max:255',
                     Rule::unique('users', 'email')
                         ->where(fn($q) => $q->where('branch_id', $this->input('branch_id'))),
                 ],
                 'name' => 'nullable|string|max:255',
-                'password' => 'required|string|min:8|max:100',
+                'password' => 'sometimes|string|min:8|max:100',
                 'branch_id' => 'required|integer|exists:branches,id',
                 'is_active' => 'sometimes|boolean',
                 'roles' => 'required|array|min:1',
-                'roles.*' => 'required|string|exists:roles,name',
+                'roles.*' => ['required', 'string', 'exists:roles,name', Rule::notIn(['superadmin'])],
             ];
         }
 
