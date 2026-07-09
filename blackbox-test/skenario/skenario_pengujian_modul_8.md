@@ -161,12 +161,16 @@
 | PRF-014 | Info email wali + status verifikasi | Equivalence Partitioning | UI/UX | Email wali terisi & terverifikasi | 1. Scroll ke section Wali | N/A | Email ayah/ibu/wali tampil. Badge "Terverifikasi" (hijau) / "Belum Verifikasi" (kuning). | High |
 | PRF-015 | Reveal/hide toggle password | Exploratory | UI/UX | - | 1. Klik ikon mata di field password | N/A | Password berubah antara visible / hidden. | Low |
 | PRF-016 | Loading state saat fetch data profil | Exploratory | UI/UX | Koneksi lambat | 1. Buka halaman | N/A | Loading indicator saat fetch data `/users/current`. | Low |
+| PRF-017 | Data Siswa — semua field tampil read-only | Equivalence Partitioning | Functional, UI/UX | Login sebagai siswa MI | 1. Buka `/portal/profil`<br>2. Scroll ke section "Data Siswa" | N/A | Section "Data Siswa" muncul. Field: NIS, NISN, Nama, JK, Tempat Lahir, Tanggal Lahir, Agama, Alamat, Jenjang, Kelas, Asal Sekolah, Tahun Diterima, Status. Semua berupa teks (bukan input). | High |
+| PRF-018 | Data Orang Tua — MI menampilkan Ayah & Ibu | Equivalence Partitioning | Functional | Login sebagai siswa MI, data Ayah & Ibu terisi | 1. Buka `/portal/profil`<br>2. Scroll ke section "Data Orang Tua" | N/A | Section "Data Orang Tua" muncul. Ada sub-section Ayah (Nama, Pendidikan, Pekerjaan, Email) dan Ibu (Nama, Pendidikan, Pekerjaan, Email). Semua read-only. | High |
+| PRF-019 | Data Wali — TK/KB menampilkan Wali | Equivalence Partitioning | Functional | Login sebagai siswa TK/KB, data Wali terisi | 1. Buka `/portal/profil`<br>2. Scroll ke section "Data Wali" | N/A | Section "Data Wali" muncul. Field: Nama, JK, Agama, Pendidikan, Pekerjaan, Alamat, No HP, Email. Semua read-only. | High |
+| PRF-020 | Data Orang Tua/Wali — tidak muncul untuk jenjang yang salah | Equivalence Partitioning | Security | Login MI (seharusnya tidak ada Wali) | 1. Login sebagai MI<br>2. Buka profil | N/A | Section "Data Wali" tidak muncul. Hanya "Data Orang Tua" (Ayah/Ibu). Tidak ada data orang tua dari jenjang lain yang bocor. | Medium |
 
 ---
 
 ## Ringkasan
 
-- **Total test case:** 72
+- **Total test case:** 76
 - **Cakupan per Sub-Modul:**
 
 | Sub-Modul | Jumlah TC | Prioritas Tinggi |
@@ -175,8 +179,8 @@
 | Portal Tagihan & Bayar (TGH) | 20 | 14 |
 | Portal Riwayat (RIW) | 8 | 5 |
 | Status Pembayaran (STP) | 10 | 9 |
-| Portal Profil (PRF) | 16 | 12 |
-| **Total** | **72** | **50** |
+| Portal Profil (PRF) | 20 | 15 |
+| **Total** | **76** | **53** |
 
 ---
 

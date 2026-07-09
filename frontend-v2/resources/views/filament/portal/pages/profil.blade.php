@@ -40,10 +40,10 @@
 
                 @if(in_array('siswa', $roles ?? []))
                     @if($ayahEmail)
-                        <div class="flex items-center justify-between gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <div class="flex items-center gap-2">
-                                <x-heroicon-o-envelope class="h-4 w-4" />
-                                <span>Email Ayah: {{ $ayahEmail }}</span>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <x-heroicon-o-envelope class="h-4 w-4 shrink-0" />
+                                <span class="truncate max-w-[160px] sm:max-w-none">Email Ayah: {{ $ayahEmail }}</span>
                                 @if($ayahEmailVerified)
                                     <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/30 dark:text-green-400 dark:ring-green-400/20">Terverifikasi</span>
                                 @else
@@ -51,18 +51,20 @@
                                 @endif
                             </div>
                             @if(!$ayahEmailVerified)
-                                <button type="button" wire:click="sendParentOtp('ayah')" wire:loading.attr="disabled" class="text-xs font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">
-                                    <span wire:loading.remove wire:target="sendParentOtp('ayah')">Verifikasi</span>
-                                    <span wire:loading wire:target="sendParentOtp('ayah')">Mengirim...</span>
-                                </button>
+                                <div class="mt-1">
+                                    <button type="button" wire:click="sendParentOtp('ayah')" wire:loading.attr="disabled" class="text-xs font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">
+                                        <span wire:loading.remove wire:target="sendParentOtp('ayah')">Verifikasi</span>
+                                        <span wire:loading wire:target="sendParentOtp('ayah')">Mengirim...</span>
+                                    </button>
+                                </div>
                             @endif
                         </div>
                     @endif
                     @if($ibuEmail)
-                        <div class="flex items-center justify-between gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <div class="flex items-center gap-2">
-                                <x-heroicon-o-envelope class="h-4 w-4" />
-                                <span>Email Ibu: {{ $ibuEmail }}</span>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <x-heroicon-o-envelope class="h-4 w-4 shrink-0" />
+                                <span class="truncate max-w-[160px] sm:max-w-none">Email Ibu: {{ $ibuEmail }}</span>
                                 @if($ibuEmailVerified)
                                     <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/30 dark:text-green-400 dark:ring-green-400/20">Terverifikasi</span>
                                 @else
@@ -70,18 +72,20 @@
                                 @endif
                             </div>
                             @if(!$ibuEmailVerified)
-                                <button type="button" wire:click="sendParentOtp('ibu')" wire:loading.attr="disabled" class="text-xs font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">
-                                    <span wire:loading.remove wire:target="sendParentOtp('ibu')">Verifikasi</span>
-                                    <span wire:loading wire:target="sendParentOtp('ibu')">Mengirim...</span>
-                                </button>
+                                <div class="mt-1">
+                                    <button type="button" wire:click="sendParentOtp('ibu')" wire:loading.attr="disabled" class="text-xs font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">
+                                        <span wire:loading.remove wire:target="sendParentOtp('ibu')">Verifikasi</span>
+                                        <span wire:loading wire:target="sendParentOtp('ibu')">Mengirim...</span>
+                                    </button>
+                                </div>
                             @endif
                         </div>
                     @endif
                     @if($waliEmail)
-                        <div class="flex items-center justify-between gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <div class="flex items-center gap-2">
-                                <x-heroicon-o-envelope class="h-4 w-4" />
-                                <span>Email Wali: {{ $waliEmail }}</span>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <x-heroicon-o-envelope class="h-4 w-4 shrink-0" />
+                                <span class="truncate max-w-[160px] sm:max-w-none">Email Wali: {{ $waliEmail }}</span>
                                 @if($waliEmailVerified)
                                     <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/30 dark:text-green-400 dark:ring-green-400/20">Terverifikasi</span>
                                 @else
@@ -89,16 +93,106 @@
                                 @endif
                             </div>
                             @if(!$waliEmailVerified)
-                                <button type="button" wire:click="sendParentOtp('wali')" wire:loading.attr="disabled" class="text-xs font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">
-                                    <span wire:loading.remove wire:target="sendParentOtp('wali')">Verifikasi</span>
-                                    <span wire:loading wire:target="sendParentOtp('wali')">Mengirim...</span>
-                                </button>
+                                <div class="mt-1">
+                                    <button type="button" wire:click="sendParentOtp('wali')" wire:loading.attr="disabled" class="text-xs font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">
+                                        <span wire:loading.remove wire:target="sendParentOtp('wali')">Verifikasi</span>
+                                        <span wire:loading wire:target="sendParentOtp('wali')">Mengirim...</span>
+                                    </button>
+                                </div>
                             @endif
                         </div>
                     @endif
                 @endif
             </div>
         </x-filament::section>
+
+        {{-- Data Siswa Section --}}
+        @if(!empty($siswaDetail) && !empty($siswaDetail['siswa']))
+            @php $s = $siswaDetail['siswa']; @endphp
+            <x-filament::section>
+                <x-slot name="heading">Data Siswa</x-slot>
+                <x-slot name="description">Informasi lengkap data diri siswa.</x-slot>
+
+                <div class="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+                    <x-info-field label="NIS" :value="$s['nis'] ?? '-'"/>
+                    <x-info-field label="NISN" :value="$s['nisn'] ?? '-'"/>
+                    <x-info-field label="Nama Lengkap" :value="$s['nama'] ?? '-'"/>
+                    <x-info-field label="Jenis Kelamin" :value="$s['jenis_kelamin'] ?? '-'"/>
+                    <x-info-field label="Tempat Lahir" :value="$s['tempat_lahir'] ?? '-'"/>
+                    <x-info-field label="Tanggal Lahir" :value="$s['tanggal_lahir'] ?? '-'"/>
+                    <x-info-field label="Agama" :value="$s['agama'] ?? '-'"/>
+                    <x-info-field label="Alamat" :value="$s['alamat'] ?? '-'"/>
+                    <x-info-field label="Jenjang" :value="$s['jenjang'] ?? '-'"/>
+                    <x-info-field label="Kelas" :value="$s['kelas']['nama'] ?? '-'"/>
+                    <x-info-field label="Asal Sekolah" :value="$s['asal_sekolah'] ?? '-'"/>
+                    <x-info-field label="Tahun Diterima" :value="$s['tahun_diterima'] ?? '-'"/>
+                    <x-info-field label="Kelas Diterima" :value="$s['kelas_diterima'] ?? '-'"/>
+                    <x-info-field label="Status" :value="$s['status'] ?? '-'"/>
+                    @if(!empty($s['keterangan']))
+                        <x-info-field label="Keterangan" :value="$s['keterangan']" class="sm:col-span-2"/>
+                    @endif
+                </div>
+            </x-filament::section>
+        @endif
+
+        {{-- Data Orang Tua Section (conditional per jenjang) --}}
+        @if(!empty($siswaDetail))
+            @php $j = $siswaDetail['siswa']['jenjang'] ?? null; @endphp
+
+            @if($j === 'MI' && (!empty($siswaDetail['ayah']) || !empty($siswaDetail['ibu'])))
+            <x-filament::section>
+                <x-slot name="heading">Data Orang Tua</x-slot>
+                <x-slot name="description">Informasi Ayah dan Ibu siswa.</x-slot>
+
+                <div class="space-y-6">
+                    @if(!empty($siswaDetail['ayah']))
+                        @php $a = $siswaDetail['ayah']; @endphp
+                        <div>
+                            <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Ayah</h4>
+                            <div class="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+                                <x-info-field label="Nama" :value="$a['nama'] ?? '-'"/>
+                                <x-info-field label="Pendidikan" :value="$a['pendidikan_terakhir'] ?? '-'"/>
+                                <x-info-field label="Pekerjaan" :value="$a['pekerjaan'] ?? '-'"/>
+                                <x-info-field label="Email" :value="$a['email'] ?? '-'"/>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if(!empty($siswaDetail['ibu']))
+                        @php $i = $siswaDetail['ibu']; @endphp
+                        <div>
+                            <h4 class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Ibu</h4>
+                            <div class="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+                                <x-info-field label="Nama" :value="$i['nama'] ?? '-'"/>
+                                <x-info-field label="Pendidikan" :value="$i['pendidikan_terakhir'] ?? '-'"/>
+                                <x-info-field label="Pekerjaan" :value="$i['pekerjaan'] ?? '-'"/>
+                                <x-info-field label="Email" :value="$i['email'] ?? '-'"/>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </x-filament::section>
+            @endif
+
+            @if(in_array($j, ['TK', 'KB']) && !empty($siswaDetail['wali']))
+            <x-filament::section>
+                <x-slot name="heading">Data Wali</x-slot>
+                <x-slot name="description">Informasi wali siswa.</x-slot>
+
+                @php $w = $siswaDetail['wali']; @endphp
+                <div class="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+                    <x-info-field label="Nama" :value="$w['nama'] ?? '-'"/>
+                    <x-info-field label="Jenis Kelamin" :value="$w['jenis_kelamin'] ?? '-'"/>
+                    <x-info-field label="Agama" :value="$w['agama'] ?? '-'"/>
+                    <x-info-field label="Pendidikan" :value="$w['pendidikan_terakhir'] ?? '-'"/>
+                    <x-info-field label="Pekerjaan" :value="$w['pekerjaan'] ?? '-'"/>
+                    <x-info-field label="Alamat" :value="$w['alamat'] ?? '-'"/>
+                    <x-info-field label="No. HP" :value="$w['no_hp'] ?? '-'"/>
+                    <x-info-field label="Email" :value="$w['email'] ?? '-'"/>
+                </div>
+            </x-filament::section>
+            @endif
+        @endif
 
         {{-- Email Section --}}
         <x-filament::section>

@@ -4,7 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UserRequest;
 use App\Http\Requests\UserUpdateRequest;
+use App\Http\Resources\AyahResource;
+use App\Http\Resources\IbuResource;
+use App\Http\Resources\SiswaDetailResource;
 use App\Http\Resources\UserResource;
+use App\Http\Resources\WaliResource;
 use App\Models\User;
 use App\Services\EmailValidationService;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -34,6 +38,28 @@ class UserController extends Controller
         $user->load(['branch', 'roles', 'siswa.ayah', 'siswa.ibu', 'siswa.wali']);
 
         return new UserResource($user);
+    }
+
+    /**
+     * Get full siswa biodata + parent/guardian details for the authenticated user.
+     * Ayah/Ibu returned only for MI jenjang; Wali returned only for TK/KB.
+     */
+    public function siswaDetail(): SiswaDetailResource
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        if (!$user || !$user->siswa) {
+            throw new HttpResponseException(response()->json([
+                'errors' => ['message' => ['Data siswa tidak ditemukan.']]
+            ], 404));
+        }
+
+        $siswa = $user->siswa()->with([
+            'kelas', 'kategori', 'ayah', 'ibu', 'wali', 'branch'
+        ])->firstOrFail();
+
+        return new SiswaDetailResource($siswa);
     }
 
     /**

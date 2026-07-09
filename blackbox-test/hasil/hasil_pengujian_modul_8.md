@@ -105,13 +105,17 @@
 | **PRF-014** | Info email wali + status verifikasi | Equivalence Partitioning | UI/UX | Email terisi & terverifikasi | 1. Scroll ke section Wali | N/A | Email tampil. Badge "Terverifikasi" (hijau) / "Belum Verifikasi" (kuning). | High | | | | | |
 | **PRF-015** | Reveal/hide password | Exploratory | UI/UX | - | 1. Klik ikon mata | N/A | Password visible/hidden toggle. | Low | | | | | |
 | **PRF-016** | Loading state profil | Exploratory | UI/UX | Koneksi lambat | 1. Buka halaman | N/A | Loading indicator. | Low | | | | | |
+| **PRF-017** | Data Siswa — semua field tampil read-only | Equivalence Partitioning | Functional, UI/UX | Login siswa MI | 1. Buka `/portal/profil`<br>2. Scroll ke "Data Siswa" | N/A | Section "Data Siswa" muncul: NIS, NISN, Nama, JK, Tempat Lahir, Tanggal Lahir, Agama, Alamat, Jenjang, Kelas, Asal Sekolah, Tahun Diterima, Status. Semua teks (bukan input). | High | | | | | |
+| **PRF-018** | Data Orang Tua — MI tampil Ayah & Ibu | Equivalence Partitioning | Functional | Login MI, data Ayah & Ibu terisi | 1. Buka profil<br>2. Scroll ke "Data Orang Tua" | N/A | Section "Data Orang Tua" muncul. Sub-section Ayah (Nama, Pendidikan, Pekerjaan, Email) & Ibu (Nama, Pendidikan, Pekerjaan, Email). Read-only. | High | | | | | |
+| **PRF-019** | Data Wali — TK/KB tampil Wali | Equivalence Partitioning | Functional | Login TK/KB, data Wali terisi | 1. Buka profil<br>2. Scroll ke "Data Wali" | N/A | Section "Data Wali" muncul: Nama, JK, Agama, Pendidikan, Pekerjaan, Alamat, No HP, Email. Read-only. | High | | | | | |
+| **PRF-020** | Data Ortu/Wali tidak bocor antar jenjang | Equivalence Partitioning | Security | Login MI (seharusnya tidak ada Wali) | 1. Login MI<br>2. Buka profil | N/A | Section "Data Wali" tidak muncul. Hanya "Data Orang Tua" (Ayah/Ibu). | Medium | | | | | |
 
 ---
 
 ## Ringkasan Pengujian
 
-- **Total test case:** 72
-- **Pass:** 0 | **Fail:** 0 | **Blocked:** 0 | **Untested:** 72
+- **Total test case:** 76
+- **Pass:** 0 | **Fail:** 0 | **Blocked:** 0 | **Untested:** 76
 - **Tanggal pengujian:** 8 Juli 2026
 - **Penguji:** (Manual — diisi setelah eksekusi)
 
@@ -123,8 +127,8 @@
 | Portal Tagihan & Bayar (TGH) | 20 | 14 |
 | Portal Riwayat (RIW) | 8 | 5 |
 | Status Pembayaran (STP) | 10 | 9 |
-| Portal Profil (PRF) | 16 | 12 |
-| **Total** | **72** | **50** |
+| Portal Profil (PRF) | 20 | 15 |
+| **Total** | **76** | **53** |
 
 ### Daftar Bug Ditemukan
 

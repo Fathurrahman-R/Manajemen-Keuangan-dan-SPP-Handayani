@@ -73,6 +73,10 @@ class PortalProfilPage extends Page implements HasForms, HasSchemas
     public bool $notif_kwitansi = false;
     public bool $notif_overdue = false;
 
+    // Siswa detail (read-only)
+    public ?array $siswaDetail = [];
+    public ?string $siswaJenjang = null;
+
     public function mount(): void
     {
         $roles = session()->get('data.roles', []);
@@ -120,6 +124,17 @@ class PortalProfilPage extends Page implements HasForms, HasSchemas
             $this->notifyConnectionError();
         } catch (\Throwable $e) {
             $this->notifyUnexpectedError();
+        }
+
+        // Fetch siswa detail (read-only)
+        try {
+            $detailResponse = ApiService::client()->get('/users/current/siswa-detail');
+            if ($detailResponse->ok()) {
+                $this->siswaDetail = $detailResponse->json('data') ?? [];
+                $this->siswaJenjang = $this->siswaDetail['siswa']['jenjang'] ?? null;
+            }
+        } catch (ConnectionException $e) {
+            // Silently skip — siswa detail is supplementary
         }
     }
 
