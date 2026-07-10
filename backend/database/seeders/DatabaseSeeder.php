@@ -32,6 +32,9 @@ class DatabaseSeeder extends Seeder
         // 1. Roles & Permissions
         $this->call(RoleAndPermissionSeeder::class);
 
+        // 1.b. Seed PermissionResource registry (dynamic resource-to-permission mapping)
+        $this->call(PermissionResourceSeeder::class);
+
         // 2. Branches
         $branches = collect([
             Branch::create(['location' => 'Selat Panjang']),
@@ -43,8 +46,9 @@ class DatabaseSeeder extends Seeder
 
         // 3. Users
         $admin = User::create([
-            'username' => 'admin123',
-            'name' => 'Admin',
+            'username' => 'superadmin',
+            'email' => 'superadmin@handayani.com',
+            'name' => 'Superadmin',
             'password' => Hash::make('admin123'),
             'branch_id' => $mainBranch->id,
         ]);
@@ -226,7 +230,7 @@ class DatabaseSeeder extends Seeder
                     'kelas_id' => $kelas->id,
                     'tahun_ajaran_id' => $aktiveTahunAjaran->id,
                 ]);
-                
+
                 // Generate User account
                 app(AkunSiswaService::class)->createAccount($siswa);
             }
@@ -274,7 +278,7 @@ class DatabaseSeeder extends Seeder
                     'kelas_id' => $kelas->id,
                     'tahun_ajaran_id' => $aktiveTahunAjaran->id,
                 ]);
-                
+
                 // Generate User account
                 app(AkunSiswaService::class)->createAccount($siswa);
             }
@@ -321,7 +325,7 @@ class DatabaseSeeder extends Seeder
                     'kelas_id' => $kelas->id,
                     'tahun_ajaran_id' => $aktiveTahunAjaran->id,
                 ]);
-                
+
                 // Generate User account
                 app(AkunSiswaService::class)->createAccount($siswa);
             }

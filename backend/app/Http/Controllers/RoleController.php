@@ -170,6 +170,7 @@ class RoleController extends Controller
      */
     public function permissions(): JsonResponse
     {
+        // ── Hardcoded group definitions ──
         $adminGroups = [
             'Users'              => \App\Constant\Permissions::USERS_PERMISSIONS,
             'Siswa'              => \App\Constant\Permissions::SISWA_PERMISSIONS,
@@ -198,7 +199,7 @@ class RoleController extends Controller
             'Pengaturan'         => \App\Constant\Permissions::SETTING_PERMISSIONS,
         ];
 
-        $rolesGroup = [
+        $rbacGroup = [
             \App\Enum\Permission::VIEW_ROLES,
             \App\Enum\Permission::CREATE_ROLE,
             \App\Enum\Permission::UPDATE_ROLE,
@@ -208,21 +209,27 @@ class RoleController extends Controller
             \App\Enum\Permission::VIEW_PERMISSIONS,
             \App\Enum\Permission::ATTACH_PERMISSIONS,
             \App\Enum\Permission::DETACH_PERMISSIONS,
+            \App\Enum\Permission::VIEW_PERMISSION,
+            \App\Enum\Permission::CREATE_PERMISSION,
+            \App\Enum\Permission::EDIT_PERMISSION,
+            \App\Enum\Permission::DELETE_PERMISSION,
+            \App\Enum\Permission::ASSIGN_PERMISSION,
         ];
 
-        $admin = [];
+        // ── Build the default section (audience = null) ──
+        $defaultGroups = [];
         foreach ($adminGroups as $label => $constant) {
-            $admin[$label] = $this->flattenPermissionGroup($constant);
+            $defaultGroups[$label] = $this->flattenPermissionGroup($constant);
         }
-        $admin['Roles & Permissions'] = array_map(
+        $defaultGroups['Roles & Permissions'] = array_map(
             fn(\App\Enum\Permission $p) => [
                 'name'  => $p->value,
                 'label' => $this->humanizePermission($p->value),
             ],
-            $rolesGroup,
+            $rbacGroup,
         );
 
-        $siswa = [
+        $siswaHardcoded = [
             'Tagihan & Pembayaran' => array_map(
                 fn(\App\Enum\Permission $p) => [
                     'name'  => $p->value,
@@ -236,23 +243,104 @@ class RoleController extends Controller
             ),
         ];
 
+        // ── Collect all hardcoded names so we don't double-add ──
+        $allHardcodedNames = collect($defaultGroups)
+            ->flatten(1)
+            ->pluck('name')
+            ->merge(collect($siswaHardcoded)->flatten(1)->pluck('name'))
+            ->unique()
+            ->toArray();
+
+        // ── Group DB permissions by audience ──
+        $dbPerms = \Spatie\Permission\Models\Permission::orderBy('name')->get();
+        $byAudience = [];
+
+        foreach ($dbPerms as $perm) {
+            // Skip already hardcoded permissions.
+            if (in_array($perm->name, $allHardcodedNames)) {
+                continue;
+            }
+
+            $audienceKey = $perm->audience ?? '__default__';
+            $groupName = $perm->group ?? 'Lainnya';
+            $byAudience[$audienceKey][$groupName][] = [
+                'name'  => $perm->name,
+                'label' => $perm->label ?? $this->humanizePermission($perm->name),
+            ];
+        }
+
+        // ── Build the response audiences ──
+        // Default section (audience null) → "Admin / Karyawan"
+        $audiences = [
+            'default' => [
+                'label'  => 'Admin / Karyawan',
+                'groups' => $defaultGroups,
+            ],
+        ];
+
+        // Custom sections from DB (audience not null).
+        foreach ($byAudience as $audienceKey => $groups) {
+            if ($audienceKey === '__default__') {
+                // Merge into default section.
+                foreach ($groups as $groupName => $entries) {
+                    if (isset($audiences['default']['groups'][$groupName])) {
+                        $audiences['default']['groups'][$groupName] = array_merge(
+                            $audiences['default']['groups'][$groupName], $entries,
+                        );
+                    } else {
+                        $audiences['default']['groups'][$groupName] = $entries;
+                    }
+                }
+            } else {
+                // New section named after the audience value.
+                $sectionGroups = $siswaHardcoded; // Include hardcoded siswa perms in custom sections too
+                if ($audienceKey === 'siswa') {
+                    // The existing "Siswa / Wali" section: merge hardcoded & dynamic.
+                    foreach ($groups as $groupName => $entries) {
+                        if (isset($sectionGroups[$groupName])) {
+                            $sectionGroups[$groupName] = array_merge($sectionGroups[$groupName], $entries);
+                        } else {
+                            $sectionGroups[$groupName] = $entries;
+                        }
+                    }
+                    $audiences['siswa'] = [
+                        'label'  => 'Siswa / Wali',
+                        'groups' => $sectionGroups,
+                    ];
+                } else {
+                    // Any other custom audience label.
+                    $audiences[$audienceKey] = [
+                        'label'  => ucwords(str_replace(['-', '_'], ' ', $audienceKey)),
+                        'groups' => $groups,
+                    ];
+                }
+            }
+        }
+
         return response()->json([
             'data' => [
-                'audiences' => [
-                    'admin' => [
-                        'label'  => 'Admin / Karyawan',
-                        'groups' => $admin,
-                    ],
-                    'siswa' => [
-                        'label'  => 'Siswa / Wali',
-                        'groups' => $siswa,
-                    ],
-                ],
-                // Backward-compatible flat shape (existing FE may still consume this).
-                ...$admin,
-                'Siswa Portal' => $siswa['Tagihan & Pembayaran'],
+                'audiences' => $audiences,
+                ...$defaultGroups,
+                'Siswa Portal' => $siswaHardcoded['Tagihan & Pembayaran'],
             ],
         ]);
+    }
+
+    /**
+     * Recursively pluck permission name strings from a group definition
+     * (which may contain nested arrays of Permission enum cases).
+     */
+    private function collectPermissionNames(array $group): array
+    {
+        $names = [];
+        foreach ($group as $value) {
+            if ($value instanceof \App\Enum\Permission) {
+                $names[] = $value->value;
+            } elseif (is_array($value)) {
+                $names = array_merge($names, $this->collectPermissionNames($value));
+            }
+        }
+        return $names;
     }
 
     /**

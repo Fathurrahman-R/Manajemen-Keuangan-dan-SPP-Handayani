@@ -40,11 +40,11 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessPanel(Panel $panel): bool
     {
         if ($panel->getId() === 'portal') {
-            return \App\Helpers\PermissionHelper::has('view-own-billing');
+            return \App\Helpers\PermissionHelper::hasResource('portal.billing');
         }
 
         // Default admin panel (empty ID)
-        return \App\Helpers\PermissionHelper::has('view-dashboard');
+        return \App\Helpers\PermissionHelper::hasResource('dashboard');
     }
 
     public function getFilamentName(): string

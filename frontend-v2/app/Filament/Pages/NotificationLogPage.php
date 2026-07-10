@@ -22,11 +22,11 @@ class NotificationLogPage extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return PermissionHelper::has('view-notification-logs');
+        return PermissionHelper::hasResource('notification-logs');
     }
 
     public function mount(): void
     {
-        abort_if(!PermissionHelper::has('view-notification-logs'), 403);
+        abort_if(!PermissionHelper::hasResource('notification-logs'), 403);
     }
 }

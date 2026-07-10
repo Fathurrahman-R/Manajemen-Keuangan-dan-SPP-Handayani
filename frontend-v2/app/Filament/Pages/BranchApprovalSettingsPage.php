@@ -22,11 +22,11 @@ class BranchApprovalSettingsPage extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return PermissionHelper::has('view-app-setting');
+        return PermissionHelper::hasResource('branch-approval-setting');
     }
 
     public function mount(): void
     {
-        abort_if(!PermissionHelper::has('view-app-setting'), 403);
+        abort_if(!PermissionHelper::hasResource('branch-approval-setting'), 403);
     }
 }

@@ -30,7 +30,7 @@ class Settings extends Page
 
     public function mount()
     {
-        abort_if(!PermissionHelper::has('view-app-setting'), 403);
+        abort_if(!PermissionHelper::hasResource('app-setting'), 403);
 
         try {
             $response = ApiService::client()->get('/setting');
@@ -58,7 +58,7 @@ class Settings extends Page
                 ->icon('heroicon-o-pencil-square')
                 ->label('Ubah')
                 ->color('primary')
-                ->visible(fn(): bool => PermissionHelper::has('update-app-setting'))
+                ->visible(fn(): bool => PermissionHelper::hasResource('app-setting.update'))
                 ->modal()
                 ->fillForm(fn(): array => $this->setting === null ? [] : [
                     'id' => $this->setting['id'],

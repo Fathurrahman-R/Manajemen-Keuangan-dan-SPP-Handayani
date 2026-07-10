@@ -54,9 +54,9 @@ class SyncPermissionsCommand extends Command
         }
 
         // Refresh role assignments to keep them aligned with code.
-        $superadmin = Role::firstOrCreate(['name' => DefaultRoles::SUPERADMIN->value]);
-        $superadmin->syncPermissions($enumNames->all());
-        $this->info("Role superadmin: {$enumNames->count()} permission.");
+        // Role superadmin: tidak perlu sync permission — Gate::before bypass handle semuanya.
+        Role::firstOrCreate(['name' => DefaultRoles::SUPERADMIN->value]);
+        $this->info('Role superadmin: bypass via Gate::before (tanpa explicit permission).');
 
         $admin = Role::firstOrCreate(['name' => DefaultRoles::ADMIN->value]);
         $adminPermissions = collect(PermissionBinding::ADMIN_PERMISSIONS)

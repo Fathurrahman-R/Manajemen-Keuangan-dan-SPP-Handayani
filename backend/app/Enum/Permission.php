@@ -124,4 +124,11 @@ enum Permission: string
     case VIEW_NOTIFICATION_SETTING = 'view-notification-setting';
     case UPDATE_NOTIFICATION_SETTING = 'update-notification-setting';
     case VIEW_NOTIFICATION_LOGS = 'view-notification-logs';
+
+    //rbac management permissions
+    case VIEW_PERMISSION = 'view-permission';
+    case CREATE_PERMISSION = 'create-permission';
+    case EDIT_PERMISSION = 'edit-permission';
+    case DELETE_PERMISSION = 'delete-permission';
+    case ASSIGN_PERMISSION = 'assign-permission';
 }

@@ -16,7 +16,7 @@ use App\Filament\Pages\LaporanRekapBulanan;
 use App\Filament\Pages\ManajemenAkunSiswa;
 use App\Filament\Pages\NotificationLogPage;
 use App\Filament\Pages\PengeluaranRequestPage;
-use App\Filament\Pages\RoleManagement;
+use App\Filament\Pages\RbacDashboard;
 use App\Filament\Pages\Settings;
 use App\Filament\Pages\TahunAjaranManagement as TahunAjaranPage;
 use App\Filament\Pages\UserManagement;
@@ -32,20 +32,20 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationBuilder;
+use Filament\Navigation\NavigationGroup;
+use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 use Filament\PanelProvider;
+use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
-use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Filament\Navigation\NavigationGroup;
-use Filament\Navigation\NavigationItem;
-use Filament\Support\Colors\Color;
-use Filament\View\PanelsRenderHook;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 use function Filament\Support\original_request;
 
@@ -64,8 +64,8 @@ class AdminPanelProvider extends PanelProvider
             ->darkMode(true)
             ->spa(config('handayani.features.spa_loading_enabled', true))
             ->breadcrumbs(true)
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
+            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
+            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([])
             ->userMenuItems([
                 'profile' => fn(Action $action) => $action
@@ -96,7 +96,7 @@ class AdminPanelProvider extends PanelProvider
                 return null;
             })
             ->userMenu(true)
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
+            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 AccountWidget::class,
             ])
@@ -136,14 +136,13 @@ class AdminPanelProvider extends PanelProvider
     }
 
     /**
-     * Build navigation with 4 reorganized groups per NavigationConfig.
-     * Groups are hidden entirely when user has no permission to any item within.
+     * Build navigation with groups driven by dynamic Resource Registry + fallback static items.
      */
     protected function buildNavigation(NavigationBuilder $builder): NavigationBuilder
     {
         $groups = [];
 
-        // Siswa/Wali-specific items (shown only for siswa role without admin dashboard access)
+        // Siswa/Wali-specific items
         $siswaItems = $this->buildSiswaNavigationItems();
         if (!empty($siswaItems)) {
             $groups[] = NavigationGroup::make('siswa_portal')
@@ -151,8 +150,8 @@ class AdminPanelProvider extends PanelProvider
                 ->items($siswaItems);
         }
 
-        // Dashboard sebagai item teratas (flat) — admin landing setelah login.
-        if (PermissionHelper::has('view-dashboard')) {
+        // Dashboard (always shown for admin users)
+        if (PermissionHelper::hasResource('dashboard')) {
             $groups[] = NavigationGroup::make('dashboard')
                 ->label('')
                 ->items([
@@ -164,39 +163,34 @@ class AdminPanelProvider extends PanelProvider
                 ]);
         }
 
-        if (PermissionHelper::hasAnyInGroup('akademik')) {
-            $groups[] = NavigationGroup::make('akademik')
-                ->label(NavigationConfig::GROUPS['akademik']['label'])
-                ->items($this->buildAkademikItems());
-        }
+        // Dynamic groups from Resource Registry — build standard items per group
+        $groups[] = $this->buildDynamicGroup('akademik', 'Akademik', $this->buildAkademikItems());
+        $groups[] = $this->buildDynamicGroup('keuangan', 'Keuangan', $this->buildKeuanganItems());
+        $groups[] = $this->buildDynamicGroup('laporan', 'Laporan', $this->buildLaporanItems());
+        $groups[] = $this->buildDynamicGroup('pengaturan', 'Pengaturan', $this->buildPengaturanItems());
 
-        if (PermissionHelper::hasAnyInGroup('keuangan')) {
-            $groups[] = NavigationGroup::make('keuangan')
-                ->label(NavigationConfig::GROUPS['keuangan']['label'])
-                ->items($this->buildKeuanganItems());
-        }
-
-        if (PermissionHelper::hasAnyInGroup('laporan')) {
-            $groups[] = NavigationGroup::make('laporan')
-                ->label(NavigationConfig::GROUPS['laporan']['label'])
-                ->items($this->buildLaporanItems());
-        }
-
-        if (PermissionHelper::hasAnyInGroup('pengaturan')) {
-            $groups[] = NavigationGroup::make('pengaturan')
-                ->label(NavigationConfig::GROUPS['pengaturan']['label'])
-                ->items($this->buildPengaturanItems());
-        }
+        // Filter out empty groups
+        $groups = array_values(array_filter($groups));
 
         return $builder->groups($groups);
     }
 
     /**
+     * Build a NavigationGroup only if the user has access via Resource Registry.
+     */
+    protected function buildDynamicGroup(string $groupKey, string $label, array $items): ?NavigationGroup
+    {
+        if (!PermissionHelper::hasAnyInGroup($groupKey)) {
+            return null;
+        }
+
+        return NavigationGroup::make($groupKey)
+            ->label($label)
+            ->items($items);
+    }
+
+    /**
      * Siswa/Wali navigation items.
-     *
-     * Siswa/wali users live in the dedicated Portal panel (`/portal`).
-     * If a siswa/wali somehow lands on the Admin panel, the sidebar links
-     * back into the portal instead of duplicating the pages here.
      */
     protected function buildSiswaNavigationItems(): array
     {
@@ -230,14 +224,14 @@ class AdminPanelProvider extends PanelProvider
     }
 
     /**
-     * Akademik group items: Siswa (flat per jenjang), Kategori, Kelas (flat per jenjang), Tahun Ajaran, Kenaikan Kelas.
+     * Akademik group items — visibility driven by PermissionHelper::hasResource().
      */
     protected function buildAkademikItems(): array
     {
         $items = [];
 
-        // Siswa — flat jenjang sub-items in sidebar
-        if (PermissionHelper::has('view-siswa')) {
+        // Siswa — flat jenjang sub-items
+        if (PermissionHelper::hasResource('siswa')) {
             foreach (NavigationConfig::JENJANG_OPTIONS as $jenjang) {
                 $items[] = NavigationItem::make()
                     ->label("Siswa - {$jenjang}")
@@ -248,15 +242,16 @@ class AdminPanelProvider extends PanelProvider
             }
         }
 
+        // Kategori
         $items[] = NavigationItem::make()
             ->label('Kategori')
             ->icon('heroicon-o-tag')
             ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.data-master-category'))
-            ->visible(fn(): bool => PermissionHelper::has('view-kategori'))
+            ->visible(fn(): bool => PermissionHelper::hasResource('kategori'))
             ->url(fn(): string => DataMasterCategory::getUrl());
 
-        // Kelas — flat jenjang sub-items in sidebar
-        if (PermissionHelper::has('view-kelas')) {
+        // Kelas — flat jenjang sub-items
+        if (PermissionHelper::hasResource('kelas')) {
             foreach (NavigationConfig::JENJANG_OPTIONS as $jenjang) {
                 $items[] = NavigationItem::make()
                     ->label("Kelas - {$jenjang}")
@@ -267,39 +262,42 @@ class AdminPanelProvider extends PanelProvider
             }
         }
 
+        // Tahun Ajaran
         $items[] = NavigationItem::make()
             ->label('Tahun Ajaran')
             ->icon('heroicon-o-calendar')
             ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.tahun-ajaran-management'))
-            ->visible(fn(): bool => PermissionHelper::has('view-tahun-ajaran') || session()->get('data.role') === 'admin')
+            ->visible(fn(): bool => PermissionHelper::hasResource('tahun-ajaran'))
             ->url(fn(): string => TahunAjaranPage::getUrl());
 
+        // Kenaikan Kelas
         $items[] = NavigationItem::make()
             ->label('Kenaikan Kelas')
             ->icon('heroicon-o-arrow-up-circle')
             ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.kenaikan-kelas-page'))
-            ->visible(fn(): bool => PermissionHelper::has('view-kenaikan-kelas'))
+            ->visible(fn(): bool => PermissionHelper::hasResource('kenaikan-kelas'))
             ->url(fn(): string => KenaikanKelasPage::getUrl());
 
         return $items;
     }
 
     /**
-     * Keuangan group items: Jenis Tagihan, Tagihan (flat per jenjang), Pembayaran (flat per jenjang), Pengeluaran (workflow only).
+     * Keuangan group items — visibility driven by PermissionHelper::hasResource().
      */
     protected function buildKeuanganItems(): array
     {
         $items = [];
 
+        // Jenis Tagihan
         $items[] = NavigationItem::make()
             ->label('Jenis Tagihan')
             ->icon('heroicon-o-document-text')
             ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.transaksi-jenis-tagihan'))
-            ->visible(fn(): bool => PermissionHelper::has('view-jenis-tagihan'))
+            ->visible(fn(): bool => PermissionHelper::hasResource('jenis-tagihan'))
             ->url(fn(): string => TransaksiJenisTagihan::getUrl());
 
         // Tagihan — flat jenjang sub-items
-        if (PermissionHelper::has('view-tagihan')) {
+        if (PermissionHelper::hasResource('tagihan')) {
             foreach (NavigationConfig::JENJANG_OPTIONS as $jenjang) {
                 $items[] = NavigationItem::make()
                     ->label("Tagihan - {$jenjang}")
@@ -310,27 +308,24 @@ class AdminPanelProvider extends PanelProvider
             }
         }
 
-        // Pembayaran — single page with built-in card view filters
+        // Pembayaran
         $items[] = NavigationItem::make()
             ->label('Pembayaran')
             ->icon('heroicon-o-banknotes')
             ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.transaksi-pembayaran'))
-            ->visible(fn(): bool => PermissionHelper::has('view-pembayaran'))
+            ->visible(fn(): bool => PermissionHelper::hasResource('pembayaran'))
             ->url(fn(): string => TransaksiPembayaran::getUrl());
 
-        // Pengeluaran — single page (workflow only, no separate CRUD)
+        // Pengeluaran
         $items[] = NavigationItem::make()
             ->label('Pengeluaran')
             ->icon('heroicon-o-document-check')
             ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.pengeluaran-request-page'))
-            ->visible(fn(): bool => PermissionHelper::has('view-pengeluaran')
-                || PermissionHelper::has('create-pengeluaran-request')
-                || PermissionHelper::has('approve-pengeluaran')
-                || PermissionHelper::has('disburse-pengeluaran'))
+            ->visible(fn(): bool => PermissionHelper::hasResource('pengeluaran'))
             ->url(fn(): string => PengeluaranRequestPage::getUrl());
 
-        // Transaksi Midtrans — only visible when feature is enabled
-        if (config('handayani.features.midtrans_enabled') && PermissionHelper::has('view-midtrans-transactions')) {
+        // Transaksi Midtrans (feature flag + resource check)
+        if (config('handayani.features.midtrans_enabled') && PermissionHelper::hasResource('midtrans')) {
             $items[] = NavigationItem::make()
                 ->label('Transaksi Midtrans')
                 ->icon('heroicon-o-credit-card')
@@ -342,8 +337,7 @@ class AdminPanelProvider extends PanelProvider
     }
 
     /**
-     * Laporan group items: Kas Harian, Rekap Bulanan.
-     * (Dashboard moved out as a flat top-level item.)
+     * Laporan group items — visibility driven by PermissionHelper::hasResource().
      */
     protected function buildLaporanItems(): array
     {
@@ -352,19 +346,19 @@ class AdminPanelProvider extends PanelProvider
                 ->label('Kas Harian')
                 ->icon('heroicon-o-document-currency-dollar')
                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.laporan-kas-harian'))
-                ->visible(fn(): bool => PermissionHelper::has('view-kas-harian'))
+                ->visible(fn(): bool => PermissionHelper::hasResource('kas-harian'))
                 ->url(fn(): string => LaporanKasHarian::getUrl()),
             NavigationItem::make()
                 ->label('Rekap Bulanan')
                 ->icon('heroicon-o-calendar-days')
                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.laporan-rekap-bulanan'))
-                ->visible(fn(): bool => PermissionHelper::has('view-rekap-bulanan'))
+                ->visible(fn(): bool => PermissionHelper::hasResource('rekap-bulanan'))
                 ->url(fn(): string => LaporanRekapBulanan::getUrl()),
         ];
     }
 
     /**
-     * Pengaturan group items: User Management, Role Management, Akun Siswa, App Settings.
+     * Pengaturan group items — visibility driven by PermissionHelper::hasResource().
      */
     protected function buildPengaturanItems(): array
     {
@@ -373,56 +367,53 @@ class AdminPanelProvider extends PanelProvider
                 ->label('Manajemen User')
                 ->icon('heroicon-o-users')
                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.user-management'))
-                ->visible(fn(): bool => PermissionHelper::has('view-user'))
+                ->visible(fn(): bool => PermissionHelper::hasResource('user-management'))
                 ->url(fn(): string => UserManagement::getUrl()),
-            NavigationItem::make()
-                ->label('Manajemen Role')
-                ->icon('heroicon-o-shield-check')
-                ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.role-management'))
-                ->visible(fn(): bool => PermissionHelper::has('view-roles'))
-                ->url(fn(): string => RoleManagement::getUrl()),
             NavigationItem::make()
                 ->label('Manajemen Akun Siswa')
                 ->icon('heroicon-o-user-circle')
                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.manajemen-akun-siswa'))
-                ->visible(fn(): bool => PermissionHelper::has('view-akun-siswa'))
+                ->visible(fn(): bool => PermissionHelper::hasResource('akun-siswa'))
                 ->url(fn(): string => ManajemenAkunSiswa::getUrl()),
             NavigationItem::make()
                 ->label('Pengaturan Aplikasi')
                 ->icon('heroicon-o-cog-6-tooth')
                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.settings'))
-                ->visible(fn(): bool => PermissionHelper::has('view-app-setting'))
+                ->visible(fn(): bool => PermissionHelper::hasResource('app-setting'))
                 ->url(fn(): string => Settings::getUrl()),
             NavigationItem::make()
                 ->label('Manajemen Cabang')
                 ->icon('heroicon-o-building-office-2')
                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.branch-management'))
-                ->visible(fn(): bool => PermissionHelper::has('view-branch'))
+                ->visible(fn(): bool => PermissionHelper::hasResource('branch'))
                 ->url(fn(): string => \App\Filament\Pages\BranchManagement::getUrl()),
             NavigationItem::make()
                 ->label('Log Notifikasi')
                 ->icon('heroicon-o-envelope')
                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.notification-log'))
-                ->visible(fn(): bool => PermissionHelper::has('view-notification-logs'))
+                ->visible(fn(): bool => PermissionHelper::hasResource('notification-logs'))
                 ->url(fn(): string => NotificationLogPage::getUrl()),
             NavigationItem::make()
                 ->label('Pengaturan Notifikasi')
                 ->icon('heroicon-o-bell')
                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.notification-settings'))
-                ->visible(fn(): bool => PermissionHelper::has('view-notification-setting'))
+                ->visible(fn(): bool => PermissionHelper::hasResource('notification-setting'))
                 ->url(fn(): string => \App\Filament\Pages\NotificationSettingsPage::getUrl()),
             NavigationItem::make()
                 ->label('Pengaturan Approval')
                 ->icon('heroicon-o-check-badge')
                 ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.branch-approval-settings'))
-                ->visible(fn(): bool => PermissionHelper::has('view-app-setting'))
+                ->visible(fn(): bool => PermissionHelper::hasResource('branch-approval-setting'))
                 ->url(fn(): string => \App\Filament\Pages\BranchApprovalSettingsPage::getUrl()),
+            NavigationItem::make()
+                ->label('Manajemen RBAC')
+                ->icon('heroicon-o-shield-check')
+                ->isActiveWhen(fn(): bool => original_request()->routeIs('filament..pages.rbac-dashboard'))
+                ->visible(fn(): bool => PermissionHelper::hasResource('rbac'))
+                ->url(fn(): string => RbacDashboard::getUrl()),
         ];
     }
 
-    /**
-     * Get an icon for a jenjang option.
-     */
     protected function getJenjangIcon(string $jenjang): string
     {
         return match ($jenjang) {
@@ -433,15 +424,6 @@ class AdminPanelProvider extends PanelProvider
         };
     }
 
-    /**
-     * Apply branch branding (logo, primary color, favicon) to the Filament panel.
-     * Only applies custom branding when BrandingService reports branding is configured.
-     */
-
-    /**
-     * Resolve the brand name from branding config.
-     * Falls back to APP_NAME env if no custom branding.
-     */
     protected function resolveBrandName(): string
     {
         $branding = BrandingService::get();
@@ -449,10 +431,6 @@ class AdminPanelProvider extends PanelProvider
         return $branding->branchName ?: env('APP_NAME', 'Handayani');
     }
 
-    /**
-     * Resolve the brand logo URL from branding config.
-     * Returns null if no custom logo is configured (Filament will show brand name text).
-     */
     protected function resolveBrandLogo(): ?string
     {
         $branding = BrandingService::get();
@@ -464,10 +442,6 @@ class AdminPanelProvider extends PanelProvider
         return null;
     }
 
-    /**
-     * Resolve the favicon URL from branding config.
-     * Returns null if no custom favicon is configured.
-     */
     protected function resolveFavicon(): ?string
     {
         $branding = BrandingService::get();
@@ -479,10 +453,6 @@ class AdminPanelProvider extends PanelProvider
         return asset('images/logo.jpg');
     }
 
-    /**
-     * Resolve panel colors from branding config.
-     * Applies custom primary color when configured, otherwise returns empty array (Filament defaults).
-     */
     protected function resolvePanelColors(): array
     {
         $branding = BrandingService::get();

@@ -23,5 +23,13 @@ class PermissionBinding
         Permissions::BRANCH_PERMISSIONS,
         Permissions::MIDTRANS_PERMISSIONS,
         Permissions::SETTING_PERMISSIONS,
+        // RBAC management permissions
+        [
+            Permission::VIEW_PERMISSION,
+            Permission::CREATE_PERMISSION,
+            Permission::EDIT_PERMISSION,
+            Permission::DELETE_PERMISSION,
+            Permission::ASSIGN_PERMISSION,
+        ],
     ];
 }
