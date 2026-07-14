@@ -8,37 +8,25 @@ class PermissionHelper
 {
     // ── Cached data ──
     protected static ?array $userResources = null;
+
     protected static ?array $userGroups = null;
 
     // Icon mapping untuk setiap grup navigasi
     protected static array $groupIcons = [
-        'dashboard'   => 'heroicon-o-home',
-        'akademik'    => 'heroicon-o-academic-cap',
-        'keuangan'    => 'heroicon-o-banknotes',
-        'laporan'     => 'heroicon-o-chart-bar',
-        'pengaturan'  => 'heroicon-o-cog-6-tooth',
+        'dashboard' => 'heroicon-o-home',
+        'akademik' => 'heroicon-o-academic-cap',
+        'keuangan' => 'heroicon-o-banknotes',
+        'laporan' => 'heroicon-o-chart-bar',
+        'pengaturan' => 'heroicon-o-cog-6-tooth',
     ];
 
     protected static array $groupLabels = [
-        'dashboard'   => 'Dashboard',
-        'akademik'    => 'Akademik',
-        'keuangan'    => 'Keuangan',
-        'laporan'     => 'Laporan',
-        'pengaturan'  => 'Pengaturan',
+        'dashboard' => 'Dashboard',
+        'akademik' => 'Akademik',
+        'keuangan' => 'Keuangan',
+        'laporan' => 'Laporan',
+        'pengaturan' => 'Pengaturan',
     ];
-
-    /**
-     * Check if the current user has the given permission.
-     * Superadmin bypass: always returns true.
-     */
-    public static function has(string $permission): bool
-    {
-        if (self::isSuperadmin()) {
-            return true;
-        }
-
-        return in_array($permission, self::getUserPermissions());
-    }
 
     /**
      * Check if the user has any permission in a navigation group.
@@ -54,7 +42,7 @@ class PermissionHelper
         $groups = self::getUserGroups();
 
         foreach ($groups as $g) {
-            if ($g['group'] === $group && !empty($g['resources'])) {
+            if ($g['group'] === $group && ! empty($g['resources'])) {
                 return true;
             }
         }
@@ -65,7 +53,9 @@ class PermissionHelper
     /**
      * Check if user has access to a registered resource (resource_key).
      * Superadmin bypass: always returns true.
-     * Falls back to permission check if resources not yet loaded.
+     *
+     * Jika resource registry belum terisi (misal API error), fallback
+     * ke pengecekan permission name langsung dari session.
      */
     public static function hasResource(string $resourceKey): bool
     {
@@ -75,9 +65,9 @@ class PermissionHelper
 
         $resources = self::getUserResources();
 
-        // Fallback: if resource registry is empty, check via permission name
+        // Fallback: jika resource registry kosong, cek langsung dari session
         if (empty($resources)) {
-            return self::has($resourceKey);
+            return in_array($resourceKey, session()->get('data.permissions', []));
         }
 
         return in_array($resourceKey, $resources);
@@ -89,11 +79,6 @@ class PermissionHelper
     public static function getUserResources(): array
     {
         if (self::$userResources !== null) {
-            return self::$userResources;
-        }
-
-        if (self::isSuperadmin()) {
-            self::$userResources = [];
             return self::$userResources;
         }
 
@@ -160,15 +145,7 @@ class PermissionHelper
     }
 
     /**
-     * Get the current user's permissions from session.
-     */
-    protected static function getUserPermissions(): array
-    {
-        return session()->get('data.permissions', []);
-    }
-
-    /**
-     * Permission mappings for jenjang visibility.
+     * Permission mappings for jenjang visibility via resource_key.
      */
     protected static array $jenjangPermissions = [
         'KB' => 'view-jenjang-kb',
@@ -178,6 +155,8 @@ class PermissionHelper
 
     /**
      * Check if the user can view a specific jenjang.
+     * Superadmin bypass: always returns true.
+     * Menggunakan hasResource() untuk konsistensi RBAC dinamis.
      */
     public static function canViewJenjang(string $jenjang): bool
     {
@@ -185,23 +164,23 @@ class PermissionHelper
             return true;
         }
 
-        $permissions = self::getUserPermissions();
-
+        // Jika user tidak punya satupun permission jenjang,
+        // maka TIDAK ada jenjang yang bisa diakses (strict mode)
         $hasAnyJenjangPerm = false;
         foreach (self::$jenjangPermissions as $perm) {
-            if (in_array($perm, $permissions)) {
+            if (self::hasResource($perm)) {
                 $hasAnyJenjangPerm = true;
                 break;
             }
         }
 
-        if (!$hasAnyJenjangPerm) {
-            return true;
+        if (! $hasAnyJenjangPerm) {
+            return false;
         }
 
         $requiredPerm = self::$jenjangPermissions[$jenjang] ?? null;
 
-        return $requiredPerm && in_array($requiredPerm, $permissions);
+        return $requiredPerm && self::hasResource($requiredPerm);
     }
 
     /**
@@ -211,7 +190,7 @@ class PermissionHelper
     {
         return array_values(array_filter(
             array_keys(self::$jenjangPermissions),
-            fn(string $jenjang) => self::canViewJenjang($jenjang)
+            fn (string $jenjang) => self::canViewJenjang($jenjang)
         ));
     }
 }

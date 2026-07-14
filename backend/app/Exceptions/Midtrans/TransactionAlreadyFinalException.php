@@ -5,6 +5,7 @@ namespace App\Exceptions\Midtrans;
 class TransactionAlreadyFinalException extends MidtransException
 {
     public string $errorCode = 'TRANSACTION_ALREADY_FINAL';
+
     public int $httpStatus = 409;
 
     public function __construct(string $orderId, string $currentStatus)

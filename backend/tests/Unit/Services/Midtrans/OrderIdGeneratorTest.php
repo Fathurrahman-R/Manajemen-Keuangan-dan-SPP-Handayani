@@ -13,7 +13,7 @@ class OrderIdGeneratorTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->generator = new OrderIdGenerator();
+        $this->generator = new OrderIdGenerator;
     }
 
     public function test_generate_produces_correctly_formatted_order_id(): void
@@ -26,7 +26,7 @@ class OrderIdGeneratorTest extends TestCase
     public function test_generated_order_id_matches_valid_charset(): void
     {
         // Use reflection to test validate method
-        $generator = new OrderIdGenerator();
+        $generator = new OrderIdGenerator;
         $reflection = new \ReflectionClass($generator);
         $method = $reflection->getMethod('validate');
         $method->setAccessible(true);
@@ -39,7 +39,7 @@ class OrderIdGeneratorTest extends TestCase
 
     public function test_validate_rejects_order_id_exceeding_50_chars(): void
     {
-        $generator = new OrderIdGenerator();
+        $generator = new OrderIdGenerator;
         $reflection = new \ReflectionClass($generator);
         $method = $reflection->getMethod('validate');
         $method->setAccessible(true);
@@ -54,7 +54,7 @@ class OrderIdGeneratorTest extends TestCase
 
     public function test_validate_rejects_order_id_with_invalid_characters(): void
     {
-        $generator = new OrderIdGenerator();
+        $generator = new OrderIdGenerator;
         $reflection = new \ReflectionClass($generator);
         $method = $reflection->getMethod('validate');
         $method->setAccessible(true);
@@ -67,7 +67,7 @@ class OrderIdGeneratorTest extends TestCase
 
     public function test_validate_accepts_exactly_50_chars(): void
     {
-        $generator = new OrderIdGenerator();
+        $generator = new OrderIdGenerator;
         $reflection = new \ReflectionClass($generator);
         $method = $reflection->getMethod('validate');
         $method->setAccessible(true);

@@ -12,7 +12,7 @@ class KategoriFactory extends Factory
     public function definition(): array
     {
         return [
-            'nama'=>$this->faker->randomElement(['Bersaudara','Yatim','Piatu','Yatim Piatu']),
+            'nama' => $this->faker->randomElement(['Bersaudara', 'Yatim', 'Piatu', 'Yatim Piatu']),
         ];
     }
 }

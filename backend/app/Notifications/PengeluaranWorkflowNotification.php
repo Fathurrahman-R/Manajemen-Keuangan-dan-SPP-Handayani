@@ -13,6 +13,7 @@ class PengeluaranWorkflowNotification extends Notification implements ShouldQueu
     use Queueable;
 
     public $tries = 3;
+
     public $backoff = [10, 30, 60];
 
     public function __construct(
@@ -33,11 +34,11 @@ class PengeluaranWorkflowNotification extends Notification implements ShouldQueu
     {
         $this->pengeluaranRequest->loadMissing(['requester', 'approvalLogs.user']);
         $logs = $this->pengeluaranRequest->approvalLogs;
-        
+
         $history = [
             'submitted' => $logs->where('new_status', 'submitted')->last(),
-            'approved'  => $logs->where('new_status', 'approved')->last(),
-            'rejected'  => $logs->where('new_status', 'rejected')->last(),
+            'approved' => $logs->where('new_status', 'approved')->last(),
+            'rejected' => $logs->where('new_status', 'rejected')->last(),
             'disbursed' => $logs->where('new_status', 'disbursed')->last(),
         ];
 
@@ -58,10 +59,10 @@ class PengeluaranWorkflowNotification extends Notification implements ShouldQueu
     {
         return match ($this->event) {
             'submitted' => 'Request Pengeluaran Baru Menunggu Persetujuan',
-            'approved'  => 'Request Pengeluaran Disetujui',
-            'rejected'  => 'Request Pengeluaran Ditolak',
+            'approved' => 'Request Pengeluaran Disetujui',
+            'rejected' => 'Request Pengeluaran Ditolak',
             'disbursed' => 'Pencairan Pengeluaran Selesai',
-            default     => 'Update Request Pengeluaran',
+            default => 'Update Request Pengeluaran',
         };
     }
 
@@ -69,10 +70,10 @@ class PengeluaranWorkflowNotification extends Notification implements ShouldQueu
     {
         return match ($this->event) {
             'submitted' => 'Request Pengeluaran Baru',
-            'approved'  => 'Request Disetujui',
-            'rejected'  => 'Request Ditolak',
+            'approved' => 'Request Disetujui',
+            'rejected' => 'Request Ditolak',
             'disbursed' => 'Pencairan Selesai',
-            default     => 'Update Request',
+            default => 'Update Request',
         };
     }
 
@@ -83,10 +84,10 @@ class PengeluaranWorkflowNotification extends Notification implements ShouldQueu
 
         return match ($this->event) {
             'submitted' => "Request pengeluaran \"{$uraian}\" senilai Rp {$jumlah} dari {$this->requesterName} menunggu persetujuan Anda.",
-            'approved'  => "Request pengeluaran \"{$uraian}\" senilai Rp {$jumlah} telah disetujui. Silakan lakukan pencairan.",
-            'rejected'  => "Request pengeluaran \"{$uraian}\" senilai Rp {$jumlah} ditolak." . ($this->reason ? " Alasan: {$this->reason}" : ''),
+            'approved' => "Request pengeluaran \"{$uraian}\" senilai Rp {$jumlah} telah disetujui. Silakan lakukan pencairan.",
+            'rejected' => "Request pengeluaran \"{$uraian}\" senilai Rp {$jumlah} ditolak.".($this->reason ? " Alasan: {$this->reason}" : ''),
             'disbursed' => "Request pengeluaran \"{$uraian}\" telah dicairkan senilai Rp {$jumlah}.",
-            default     => "Status request pengeluaran \"{$uraian}\" telah diperbarui.",
+            default => "Status request pengeluaran \"{$uraian}\" telah diperbarui.",
         };
     }
 }

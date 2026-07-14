@@ -10,7 +10,7 @@ class NotificationSettingsPage extends Page
 {
     protected string $view = 'filament.pages.notification-settings';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Pengaturan';
+    protected static string|UnitEnum|null $navigationGroup = 'Pengaturan';
 
     protected static ?string $navigationLabel = 'Pengaturan Notifikasi';
 
@@ -27,6 +27,6 @@ class NotificationSettingsPage extends Page
 
     public function mount(): void
     {
-        abort_if(!PermissionHelper::hasResource('notification-setting'), 403);
+        abort_if(! PermissionHelper::hasResource('notification-setting'), 403);
     }
 }

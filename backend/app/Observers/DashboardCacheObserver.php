@@ -27,7 +27,7 @@ class DashboardCacheObserver
     {
         $branchId = $model->branch_id;
 
-        if (!$branchId) {
+        if (! $branchId) {
             return;
         }
 

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Helpers\PermissionHelper;
 use App\Services\ApiService;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -27,15 +28,15 @@ class DashboardAllTimeStatsWidget extends BaseWidget
         $totalPengeluaran = (int) ($data['total_pengeluaran'] ?? 0);
 
         return [
-            Stat::make('Total Tagihan (Semua Periode)', 'Rp ' . number_format($totalTagihan, 0, ',', '.'))
+            Stat::make('Total Tagihan (Semua Periode)', 'Rp '.number_format($totalTagihan, 0, ',', '.'))
                 ->description('Akumulasi tagihan dari semua periode')
                 ->descriptionIcon('heroicon-m-document-text')
                 ->color('primary'),
-            Stat::make('Total Pemasukan (Semua Periode)', 'Rp ' . number_format($totalPemasukan, 0, ',', '.'))
+            Stat::make('Total Pemasukan (Semua Periode)', 'Rp '.number_format($totalPemasukan, 0, ',', '.'))
                 ->description('Akumulasi pemasukan dari semua periode')
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
                 ->color('success'),
-            Stat::make('Total Pengeluaran (Semua Periode)', 'Rp ' . number_format($totalPengeluaran, 0, ',', '.'))
+            Stat::make('Total Pengeluaran (Semua Periode)', 'Rp '.number_format($totalPengeluaran, 0, ',', '.'))
                 ->description('Akumulasi pengeluaran dari semua periode')
                 ->descriptionIcon('heroicon-m-arrow-trending-down')
                 ->color('danger'),
@@ -44,6 +45,6 @@ class DashboardAllTimeStatsWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return in_array('view-dashboard', session()->get('data.permissions', []));
+        return PermissionHelper::hasResource('dashboard');
     }
 }

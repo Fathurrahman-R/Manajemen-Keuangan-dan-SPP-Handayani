@@ -15,6 +15,7 @@ class TagihanBaruNotification extends Notification implements ShouldQueue
     use Queueable;
 
     public $tries = 3;
+
     public $backoff = [10, 30, 60];
 
     public function __construct(
@@ -32,7 +33,7 @@ class TagihanBaruNotification extends Notification implements ShouldQueue
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Tagihan Baru - ' . $this->siswa->nama)
+            ->subject('Tagihan Baru - '.$this->siswa->nama)
             ->view('emails.notifications.tagihan-baru', [
                 'siswa' => $this->siswa,
                 'tagihans' => $this->tagihans,

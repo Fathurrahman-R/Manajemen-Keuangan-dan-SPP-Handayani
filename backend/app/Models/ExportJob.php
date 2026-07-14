@@ -44,7 +44,7 @@ class ExportJob extends Model
      */
     public function getSignedUrl(): ?string
     {
-        if (!$this->file_path || $this->status !== 'completed') {
+        if (! $this->file_path || $this->status !== 'completed') {
             return null;
         }
 

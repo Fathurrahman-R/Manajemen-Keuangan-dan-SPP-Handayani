@@ -171,6 +171,7 @@ class KenaikanKelasController extends Controller
             $batchArray['processed_by_user'] = $batchArray['processed_by'] ?? null;
             // Restore the original FK integer value
             $batchArray['processed_by'] = $batch->getAttributes()['processed_by'];
+
             return $batchArray;
         });
 
@@ -188,9 +189,9 @@ class KenaikanKelasController extends Controller
             ->where('branch_id', $branchId)
             ->first();
 
-        if (!$batch) {
+        if (! $batch) {
             throw new HttpResponseException(response()->json([
-                'errors' => ['message' => ['Batch tidak ditemukan.']]
+                'errors' => ['message' => ['Batch tidak ditemukan.']],
             ], 404));
         }
 
@@ -215,9 +216,9 @@ class KenaikanKelasController extends Controller
         $kelasId = $request->query('kelas_id');
         $tahunAjaranId = $request->query('tahun_ajaran_id');
 
-        if (!$kelasId || !$tahunAjaranId) {
+        if (! $kelasId || ! $tahunAjaranId) {
             throw new HttpResponseException(response()->json([
-                'errors' => ['message' => ['Parameter kelas_id dan tahun_ajaran_id wajib diisi.']]
+                'errors' => ['message' => ['Parameter kelas_id dan tahun_ajaran_id wajib diisi.']],
             ], 422));
         }
 

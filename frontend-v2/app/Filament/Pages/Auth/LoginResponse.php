@@ -2,9 +2,10 @@
 
 namespace App\Filament\Pages\Auth;
 
+use App\Helpers\PermissionHelper;
+use Filament\Auth\Http\Responses\Contracts\LoginResponse as LoginResponseContract;
 use Illuminate\Http\RedirectResponse;
 use Livewire\Features\SupportRedirects\Redirector;
-use Filament\Auth\Http\Responses\Contracts\LoginResponse as LoginResponseContract;
 
 class LoginResponse implements LoginResponseContract
 {
@@ -12,40 +13,22 @@ class LoginResponse implements LoginResponseContract
     {
         if (session()->has('intended_url')) {
             $intendedUrl = session()->pull('intended_url');
+
             return redirect()->to($intendedUrl);
         }
 
-        // Siswa role langsung ke portal panel
-        $roles = session()->get('data.roles', []);
-        if (in_array('siswa', $roles)) {
-            return redirect()->to('/' . config('handayani.portal.path', 'portal'));
+        // Superadmin: selalu redirect ke dashboard
+        if (in_array('superadmin', session()->get('data.roles', []))) {
+            return redirect()->to(filament()->getUrl().'/dashboard-page');
         }
 
-        $permissions = session()->get('data.permissions', []);
-
-        // Map permission ke halaman, urut berdasarkan prioritas
-        $permissionRoutes = [
-            'view-dashboard' => '/dashboard-page',
-            'view-siswa' => '/data-master-siswa',
-            'view-pembayaran' => '/transaksi-pembayaran',
-            'view-tagihan' => '/transaksi-tagihan',
-            'view-jenis-tagihan' => '/transaksi-jenis-tagihan',
-            'view-kategori' => '/data-master-category',
-            'view-kelas' => '/data-master-kelas',
-            'view-pengeluaran' => '/pengeluaran-request-page',
-            'view-kas-harian' => '/laporan-kas-harian',
-            'view-rekap-bulanan' => '/laporan-rekap-bulanan',
-            'view-roles' => '/role-management',
-            'view-user' => '/user-management',
-        ];
-
-        foreach ($permissionRoutes as $permission => $route) {
-            if (in_array($permission, $permissions)) {
-                return redirect()->to(filament()->getUrl() . $route);
-            }
+        // Siswa/Wali role langsung ke portal panel (resource key abstraction)
+        if (PermissionHelper::hasResource('portal-access')) {
+            return redirect()->to('/'.config('handayani.portal.path', 'portal'));
         }
 
-        // Fallback: jika tidak ada permission yang cocok, arahkan ke setting
-        return redirect()->to(filament()->getUrl() . '/setting');
+        // Non-siswa: redirect ke dashboard.
+        // mount() gate di tiap halaman akan handle redirect jika user tidak punya akses.
+        return redirect()->to(filament()->getUrl().'/dashboard-page');
     }
 }

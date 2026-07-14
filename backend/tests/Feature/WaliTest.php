@@ -2,40 +2,36 @@
 
 namespace Tests\Feature;
 
-use App\Models\Kategori;
-use App\Models\Kelas;
-use App\Models\Siswa;
 use App\Models\User;
-use App\Models\Wali;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class WaliTest extends TestCase
 {
     // SUCCESS CASES
-    public function testIndexSuccess()
+    public function test_index_success()
     {
         $scenario = $this->createWaliIndexScenario(3);
         $user = $scenario['user'];
         $this->get(uri: 'api/wali', headers: [
-            'Authorization' => 'sa'
+            'Authorization' => 'sa',
         ])->assertStatus(200)
             ->assertJson([
-                'errors' => []
+                'errors' => [],
             ]);
     }
-    public function testSearchByNamaSuccess()
+
+    public function test_search_by_nama_success()
     {
         $scenario = $this->createWaliSearchScenario();
         $user = $scenario['user'];
         $this->get(uri: 'api/wali?search=budi doremi', headers: ['Authorization' => $user->token])
             ->assertStatus(200)
             ->assertJson([
-                'errors' => []
+                'errors' => [],
             ]);
     }
-    public function testCreateSuccess()
+
+    public function test_create_success()
     {
         $payload = $this->buildWaliValidPayload();
 
@@ -47,111 +43,114 @@ class WaliTest extends TestCase
         )
             ->assertStatus(201) // intentionally 200 to show body for docs
             ->assertJson([
-                'errors' => []
+                'errors' => [],
             ]);
     }
-    public function testGetSuccess()
+
+    public function test_get_success()
     {
         $scenario = $this->createWaliForCrud();
         $user = $scenario['user'];
         $wali = $scenario['wali'];
         $this->get(
-            uri: 'api/wali/1' . $wali->id,
+            uri: 'api/wali/1'.$wali->id,
             headers: ['Authorization' => $user->token]
         )
             ->assertStatus(200)
             ->assertJson([
-                'errors' => []
+                'errors' => [],
             ]);
     }
-    public function testUpdateSuccess()
+
+    public function test_update_success()
     {
         $payload = $this->buildWaliValidPayload();
         $scenario = $this->createWaliForCrud();
         $user = $scenario['user'];
         $wali = $scenario['wali'];
         $this->put(
-            uri: 'api/wali/1' . $wali->id,
+            uri: 'api/wali/1'.$wali->id,
             data: $payload,
             headers: ['Authorization' => $user->token]
         )
             ->assertStatus(200)
             ->assertJson([
-                'errors' => []
+                'errors' => [],
             ]);
     }
-    public function testDeleteSuccess()
+
+    public function test_delete_success()
     {
         $scenario = $this->createWaliForCrud();
         $user = $scenario['user'];
         $wali = $scenario['wali'];
         $this->delete(
-            uri: 'api/wali/' . $wali->id,
+            uri: 'api/wali/'.$wali->id,
             headers: ['Authorization' => $user->token]
         )
             ->assertStatus(200)
             ->assertJson([
-                'errors' => []
+                'errors' => [],
             ]);
     }
 
     // VALIDATION CASES (always assert 200 to expose response for docs)
-    public function testCreateValidationRequired()
+    public function test_create_validation_required()
     {
         $user = User::factory()->create();
         $payload = $this->buildWaliInvalidRequiredPayload();
         $this->post(uri: 'api/wali', data: $payload, headers: ['Authorization' => $user->token])
             ->assertStatus(200)
             ->assertJson([
-                'errors' => []
+                'errors' => [],
             ]);
     }
 
-    public function testCreateValidationInvalidJenisKelamin()
+    public function test_create_validation_invalid_jenis_kelamin()
     {
         $user = User::factory()->create();
         $payload = $this->buildWaliInvalidJenisKelaminPayload();
         $this->post(uri: 'api/wali', data: $payload, headers: ['Authorization' => $user->token])
             ->assertStatus(200)
             ->assertJson([
-                'errors' => []
+                'errors' => [],
             ]);
     }
 
-    public function testCreateValidationInvalidNoHp()
+    public function test_create_validation_invalid_no_hp()
     {
         $user = User::factory()->create();
         $payload = $this->buildWaliInvalidNoHpPayload();
         $this->post(uri: 'api/wali', data: $payload, headers: ['Authorization' => $user->token])
             ->assertStatus(200)
             ->assertJson([
-                'errors' => []
+                'errors' => [],
             ]);
     }
 
-    public function testUpdateValidationInvalidJenisKelamin()
+    public function test_update_validation_invalid_jenis_kelamin()
     {
         $scenario = $this->createWaliForCrud();
         $user = $scenario['user'];
         $wali = $scenario['wali'];
         $payload = ['jenis_kelamin' => 'Unknown'];
-        $this->put(uri: 'api/wali/' . $wali->id, data: $payload, headers: ['Authorization' => $user->token])
+        $this->put(uri: 'api/wali/'.$wali->id, data: $payload, headers: ['Authorization' => $user->token])
             ->assertStatus(200)
             ->assertJson([
-                'errors' => []
+                'errors' => [],
             ]);
     }
 
-    public function testUpdateValidationInvalidNoHp()
+    public function test_update_validation_invalid_no_hp()
     {
         $scenario = $this->createWaliForCrud();
         $user = $scenario['user'];
         $wali = $scenario['wali'];
         $payload = ['no_hp' => 'abc#'];
-        $this->put(uri: 'api/wali/' . $wali->id, data: $payload, headers: ['Authorization' => $user->token])
+        $this->put(uri: 'api/wali/'.$wali->id, data: $payload, headers: ['Authorization' => $user->token])
             ->assertStatus(200)
             ->assertJson([
-                'errors' => []
+                'errors' => [],
             ]);
     }
 }

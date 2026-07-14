@@ -2,11 +2,10 @@
 
 namespace App\Livewire;
 
+use App\Helpers\PermissionHelper;
 use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
 use Exception;
-use Illuminate\Http\Client\ConnectionException;
-use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -22,12 +21,13 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
+use Livewire\Component;
 
 class DataWali extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable, HandlesApiErrors;
+    use HandlesApiErrors, InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     public $perPage = 5;
 
@@ -39,7 +39,7 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                     try {
                         $params = [
                             'per_page' => $this->perPage,
-                            'page' => $page
+                            'page' => $page,
                         ];
 
                         if (filled($search)) {
@@ -53,8 +53,9 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
 
                         $response = ApiService::client()->get('/wali', $params);
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             $this->handleApiError($response);
+
                             return new LengthAwarePaginator(
                                 items: [],
                                 total: 0,
@@ -73,6 +74,7 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                         );
                     } catch (ConnectionException $e) {
                         $this->notifyConnectionError();
+
                         return new LengthAwarePaginator(
                             items: [],
                             total: 0,
@@ -81,6 +83,7 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                         );
                     } catch (\Throwable $e) {
                         $this->notifyUnexpectedError();
+
                         return new LengthAwarePaginator(
                             items: [],
                             total: 0,
@@ -121,20 +124,21 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                         'alamat' => $record['alamat'],
                         'keterangan' => $record['keterangan'],
                     ])
-                    ->url(fn (array $record): string => 'detail-wali/' . $record['id'])
+                    ->url(fn (array $record): string => 'detail-wali/'.$record['id'])
+                    ->visible(fn () => PermissionHelper::hasResource('siswa.view'))
                     ->color('gray'),
                 Action::make('update') // Unique name for your action
                     ->tooltip('Ubah Wali')
                     ->icon('heroicon-s-pencil-square') // Optional icon
                     ->iconButton()
                     ->color('warning')
-                    ->visible(fn(): bool => in_array('update-siswa', session()->get('data.permissions', [])))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('siswa.update'))
                     ->modalHeading('Ubah Wali')
                     ->modalSubmitActionLabel('Simpan')
                     ->modalCancelActionLabel('Batal')
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->modalSubmitAction()
-                    ->fillForm(fn(array $record): array => [
+                    ->fillForm(fn (array $record): array => [
                         'id' => $record['id'],
                         'nama' => $record['nama'],
                         'jenis_kelamin' => $record['jenis_kelamin'],
@@ -166,7 +170,7 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                                     ->label('Jenis Kelamin')
                                     ->options([
                                         'Laki-laki' => 'Laki-laki',
-                                        'Perempuan' => 'Perempuan'
+                                        'Perempuan' => 'Perempuan',
                                     ])
                                     ->required(),
                             ]),
@@ -190,9 +194,9 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                     ])
                     ->action(function (array $data, $record): void {
                         $response = ApiService::client()
-                            ->put('/wali/' . $record['id'], $data);
+                            ->put('/wali/'.$record['id'], $data);
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             throw new Exception($response->json()['errors']['message'][0]);
                         }
                     })
@@ -205,7 +209,7 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                     ->icon('heroicon-s-trash') // Optional icon
                     ->iconButton()
                     ->color('danger') // Optional color
-                    ->visible(fn(): bool => in_array('delete-siswa', session()->get('data.permissions', [])))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('siswa.delete'))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Wali')
                     ->modalDescription('Apakah kamu yakin untuk menghapus wali ini?')
@@ -214,9 +218,9 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->action(function (array $data, $record): void {
                         $response = ApiService::client()
-                            ->delete('/wali/' . $record['id']);
+                            ->delete('/wali/'.$record['id']);
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             throw new Exception($response->json()['errors']['message'][0]);
                         }
                     })
@@ -231,7 +235,7 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                     ->label('Hapus Terpilih')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
-                    ->visible(fn(): bool => in_array('delete-siswa', session()->get('data.permissions', [])))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('siswa.delete'))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Wali Terpilih')
                     ->modalDescription('Apakah kamu yakin ingin menghapus semua wali yang dipilih?')
@@ -240,7 +244,7 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                         $success = 0;
                         $failed = 0;
                         foreach ($records as $record) {
-                            $response = ApiService::client()->delete('/wali/' . $record['id']);
+                            $response = ApiService::client()->delete('/wali/'.$record['id']);
                             $response->ok() ? $success++ : $failed++;
                         }
                         if ($failed > 0) {
@@ -257,7 +261,7 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                     ->label('Tambah') // Text displayed on the button
                     ->color('primary') // Optional color
                     ->button()
-                    ->visible(fn(): bool => in_array('create-siswa', session()->get('data.permissions', [])))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('siswa.create'))
                     ->modalHeading('Tambah Kelas')
                     ->modalFooterActions(function (Action $action) {
                         return [
@@ -265,7 +269,7 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                                 ->label('Simpan')
                                 ->color('primary')
                                 ->extraAttributes([
-                                    'class' => 'text-white font-semibold'
+                                    'class' => 'text-white font-semibold',
                                 ]),
                             $action->getModalCancelAction()->label('Batal'),
                         ];
@@ -292,7 +296,7 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                                     ->label('Jenis Kelamin')
                                     ->options([
                                         'Laki-laki' => 'Laki-laki',
-                                        'Perempuan' => 'Perempuan'
+                                        'Perempuan' => 'Perempuan',
                                     ])
                                     ->required(),
                             ]),
@@ -324,7 +328,7 @@ class DataWali extends Component implements HasActions, HasSchemas, HasTable
                     })
                     ->successNotificationTitle('Wali Berhasil Ditambah')
                     ->extraAttributes([
-                        'class' => 'text-white font-semibold'
+                        'class' => 'text-white font-semibold',
                     ]),
             ]);
     }

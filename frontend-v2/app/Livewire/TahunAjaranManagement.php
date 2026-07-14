@@ -2,10 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Helpers\PermissionHelper;
 use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
-use Illuminate\Http\Client\ConnectionException;
-use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
@@ -22,13 +21,15 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Livewire\Component;
 
 class TahunAjaranManagement extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
     use HandlesApiErrors;
+    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     public function table(Table $table): Table
     {
@@ -38,22 +39,23 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
                     try {
                         $response = ApiService::client()->get('/tahun-ajaran');
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             $this->handleApiError($response);
+
                             return [];
                         }
 
                         return $response->collect('data')
-                            ->when(filled($search), fn(Collection $data): Collection => $data->filter(
-                                fn(array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))
+                            ->when(filled($search), fn (Collection $data): Collection => $data->filter(
+                                fn (array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))
                             ))
-                            ->when(!empty($filters['status']['value'] ?? null), fn(Collection $data) => $data->filter(
-                                fn(array $record): bool => ($record['status'] ?? '') === $filters['status']['value']
+                            ->when(! empty($filters['status']['value'] ?? null), fn (Collection $data) => $data->filter(
+                                fn (array $record): bool => ($record['status'] ?? '') === $filters['status']['value']
                             ))
                             ->when(
                                 filled($sortColumn),
-                                fn(Collection $data): Collection => $data->sortBy(
-                                    fn(array $record) => data_get($record, $sortColumn),
+                                fn (Collection $data): Collection => $data->sortBy(
+                                    fn (array $record) => data_get($record, $sortColumn),
                                     SORT_REGULAR,
                                     ($sortDirection ?? 'asc') === 'desc'
                                 )->values()
@@ -61,9 +63,11 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
                             ->toArray();
                     } catch (ConnectionException $e) {
                         $this->notifyConnectionError();
+
                         return [];
                     } catch (\Throwable $e) {
                         $this->notifyUnexpectedError();
+
                         return [];
                     }
                 }
@@ -76,7 +80,7 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
                     ->label('Status')
                     ->sortable()
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'Aktif' => 'success',
                         'Non-Aktif' => 'gray',
                         default => 'gray',
@@ -102,8 +106,8 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
                         ->label('Aktifkan')
                         ->tooltip('Aktifkan Tahun Ajaran')
                         ->color('success')
-                        ->hidden(fn(array $record): bool => $record['status'] === 'Aktif')
-                        ->visible(fn(): bool => in_array('update-tahun-ajaran', session()->get('data.permissions', [])))
+                        ->hidden(fn (array $record): bool => $record['status'] === 'Aktif')
+                        ->visible(fn (): bool => PermissionHelper::hasResource('tahun-ajaran.update'))
                         ->requiresConfirmation()
                         ->modalHeading('Aktifkan Tahun Ajaran')
                         ->modalDescription('Apakah kamu yakin ingin mengaktifkan tahun ajaran ini? Tahun ajaran lain akan dinonaktifkan.')
@@ -111,9 +115,9 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
                         ->modalCancelActionLabel('Batal')
                         ->action(function (array $data, $record): void {
                             $response = ApiService::client()
-                                ->patch('/tahun-ajaran/' . $record['id'] . '/activate');
+                                ->patch('/tahun-ajaran/'.$record['id'].'/activate');
 
-                            if (!$response->ok()) {
+                            if (! $response->ok()) {
                                 $this->showApiError($response);
                             } else {
                                 Notification::make()
@@ -122,12 +126,12 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
                                     ->send();
                             }
                         })
-                        ->after(fn() => $this->resetTable()),
+                        ->after(fn () => $this->resetTable()),
                     Action::make('edit')
                         ->label('Edit')
                         ->tooltip('Edit Tahun Ajaran')
                         ->color('warning')
-                        ->visible(fn(): bool => in_array('update-tahun-ajaran', session()->get('data.permissions', [])))
+                        ->visible(fn (): bool => PermissionHelper::hasResource('tahun-ajaran.update'))
                         ->modalHeading('Edit Tahun Ajaran')
                         ->modalFooterActions(function (Action $action) {
                             return [
@@ -139,7 +143,7 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
                             ];
                         })
                         ->modalFooterActionsAlignment(Alignment::End)
-                        ->fillForm(fn(array $record): array => [
+                        ->fillForm(fn (array $record): array => [
                             'nama' => $record['nama'],
                             'tanggal_mulai' => $record['tanggal_mulai'],
                             'tanggal_selesai' => $record['tanggal_selesai'],
@@ -165,9 +169,9 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
                         ])
                         ->action(function (array $data, $record): void {
                             $response = ApiService::client()
-                                ->put('/tahun-ajaran/' . $record['id'], $data);
+                                ->put('/tahun-ajaran/'.$record['id'], $data);
 
-                            if (!$response->ok()) {
+                            if (! $response->ok()) {
                                 $this->showApiError($response);
                             } else {
                                 Notification::make()
@@ -176,12 +180,12 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
                                     ->send();
                             }
                         })
-                        ->after(fn() => $this->resetTable()),
+                        ->after(fn () => $this->resetTable()),
                     Action::make('delete')
                         ->label('Hapus')
                         ->tooltip('Hapus Tahun Ajaran')
                         ->color('danger')
-                        ->visible(fn(): bool => in_array('delete-tahun-ajaran', session()->get('data.permissions', [])))
+                        ->visible(fn (): bool => PermissionHelper::hasResource('tahun-ajaran.delete'))
                         ->requiresConfirmation()
                         ->modalHeading('Hapus Tahun Ajaran')
                         ->modalDescription('Apakah kamu yakin untuk menghapus tahun ajaran ini?')
@@ -190,9 +194,9 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
                         ->modalFooterActionsAlignment(Alignment::End)
                         ->action(function (array $data, $record): void {
                             $response = ApiService::client()
-                                ->delete('/tahun-ajaran/' . $record['id']);
+                                ->delete('/tahun-ajaran/'.$record['id']);
 
-                            if (!$response->ok()) {
+                            if (! $response->ok()) {
                                 $this->showApiError($response);
                             } else {
                                 Notification::make()
@@ -201,15 +205,15 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
                                     ->send();
                             }
                         })
-                        ->after(fn() => $this->resetTable()),
-                ])
+                        ->after(fn () => $this->resetTable()),
+                ]),
             ])
             ->bulkActions([
                 BulkAction::make('bulkDelete')
                     ->label('Hapus Terpilih')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
-                    ->visible(fn(): bool => in_array('delete-tahun-ajaran', session()->get('data.permissions', [])))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('tahun-ajaran.delete'))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Tahun Ajaran Terpilih')
                     ->modalDescription('Apakah kamu yakin ingin menghapus semua tahun ajaran yang dipilih?')
@@ -218,7 +222,7 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
                         $success = 0;
                         $failed = 0;
                         foreach ($records as $record) {
-                            $response = ApiService::client()->delete('/tahun-ajaran/' . $record['id']);
+                            $response = ApiService::client()->delete('/tahun-ajaran/'.$record['id']);
                             $response->ok() ? $success++ : $failed++;
                         }
                         if ($failed > 0) {
@@ -235,7 +239,7 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
                     ->label('Tambah')
                     ->color('primary')
                     ->button()
-                    ->visible(fn(): bool => in_array('create-tahun-ajaran', session()->get('data.permissions', [])))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('tahun-ajaran.create'))
                     ->modalHeading('Tambah Tahun Ajaran')
                     ->modalFooterActions(function (Action $action) {
                         return [
@@ -279,7 +283,7 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
                                 ->send();
                         }
                     })
-                    ->after(fn() => $this->resetTable())
+                    ->after(fn () => $this->resetTable())
                     ->extraAttributes([
                         'class' => 'text-white font-semibold',
                     ]),

@@ -9,7 +9,7 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Events\AfterSheet;
 
-class KasHarianRingkasanSheet implements FromCollection, WithHeadings, WithTitle, WithEvents
+class KasHarianRingkasanSheet implements FromCollection, WithEvents, WithHeadings, WithTitle
 {
     public function __construct(
         private Builder $pemasukanQuery,
@@ -113,7 +113,7 @@ class KasHarianRingkasanSheet implements FromCollection, WithHeadings, WithTitle
             AfterSheet::class => function (AfterSheet $event): void {
                 $sheet = $event->sheet->getDelegate();
                 $highest = $sheet->getHighestRow();
-                $sheet->getStyle('E1:E' . $highest)
+                $sheet->getStyle('E1:E'.$highest)
                     ->getAlignment()
                     ->setWrapText(true)
                     ->setVertical('top');

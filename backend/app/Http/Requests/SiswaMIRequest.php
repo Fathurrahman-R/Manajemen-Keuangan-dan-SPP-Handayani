@@ -24,40 +24,40 @@ class SiswaMIRequest extends FormRequest
     public function rules(): array
     {
         // Parent fields are only required if the corresponding parent ID is not provided
-        $ayahFieldRequired = !$this->filled('ayah_id') ? 'required' : 'nullable';
-        $ibuFieldRequired = !$this->filled('ibu_id') ? 'required' : 'nullable';
+        $ayahFieldRequired = ! $this->filled('ayah_id') ? 'required' : 'nullable';
+        $ibuFieldRequired = ! $this->filled('ibu_id') ? 'required' : 'nullable';
 
         return [
             'nis' => [
                 'required',
                 'max:20',
                 'regex:/^[0-9]+$/',
-                'min:4'
+                'min:4',
             ],
             'nisn' => [
                 'required',
                 'max:20',
                 'regex:/^[0-9]+$/',
-                'min:4'
+                'min:4',
             ],
             'nama' => [
                 'required',
                 'max:100',
-                'regex:/^[A-Za-zÀ-ÿ\'\s]+$/u'
+                'regex:/^[A-Za-zÀ-ÿ\'\s]+$/u',
             ],
             'jenis_kelamin' => [
                 'required',
-                'in:Laki-laki,Perempuan'
+                'in:Laki-laki,Perempuan',
             ],
             'tempat_lahir' => [
                 'required',
-                'max:100'
+                'max:100',
             ],
             'tanggal_lahir' => [
                 'required',
                 'date',
                 'before:today',
-                'after:1989-12-30'
+                'after:1989-12-30',
             ],
             'agama' => [
                 'required',
@@ -65,31 +65,31 @@ class SiswaMIRequest extends FormRequest
 
             ],
             'alamat' => [
-                'required'
+                'required',
             ],
             // optional parent linking IDs
             'ayah_id' => [
                 'nullable',
                 'integer',
-                'exists:ayah,id'
+                'exists:ayah,id',
             ],
             'ibu_id' => [
                 'nullable',
                 'integer',
-                'exists:ibu,id'
+                'exists:ibu,id',
             ],
             // nested ayah
             'ayah_nama' => [
                 $ayahFieldRequired,
-                'max:100'
+                'max:100',
             ],
             'ayah_pendidikan' => [
                 'nullable',
-                'max:50'
+                'max:50',
             ],
             'ayah_pekerjaan' => [
                 'nullable',
-                'max:100'
+                'max:100',
             ],
             'ayah_email' => [
                 'nullable',
@@ -98,15 +98,15 @@ class SiswaMIRequest extends FormRequest
             // nested ibu
             'ibu_nama' => [
                 $ibuFieldRequired,
-                'max:100'
+                'max:100',
             ],
             'ibu_pendidikan' => [
                 'nullable',
-                'max:50'
+                'max:50',
             ],
             'ibu_pekerjaan' => [
                 'nullable',
-                'max:100'
+                'max:100',
             ],
             'ibu_email' => [
                 'nullable',
@@ -114,31 +114,31 @@ class SiswaMIRequest extends FormRequest
             ],
             'kelas_id' => [
                 'required',
-                'exists:kelas,id'
+                'exists:kelas,id',
             ],
             'kategori_id' => [
                 'required',
-                'exists:kategoris,id'
+                'exists:kategoris,id',
             ],
             'asal_sekolah' => [
                 'nullable',
-                'max:150'
+                'max:150',
             ],
             'kelas_diterima' => [
                 'nullable',
-                'max:10'
+                'max:10',
             ],
             'tahun_diterima' => [
                 'nullable',
                 'date_format:Y',
-                'before_or_equal:' . date('Y')
+                'before_or_equal:'.date('Y'),
             ],
             'status' => [
                 'nullable',
-                'in:Aktif,Lulus,Pindah,Keluar'
+                'in:Aktif,Lulus,Pindah,Keluar',
             ],
             'keterangan' => [
-                'nullable'
+                'nullable',
             ],
         ];
     }
@@ -151,61 +151,61 @@ class SiswaMIRequest extends FormRequest
         ];
     }
 
-//    public function messages(): array
-//    {
-//        return [
-//            'nis.required' => 'NIS wajib diisi.',
-//            'nis.max' => 'NIS maksimal 20 karakter.',
-//            'nis.min' => 'NIS minimal 4 karakter.',
-//            'nis.regex' => 'NIS hanya boleh berisi angka.',
-//            'nisn.required' => 'NISN wajib diisi.',
-//            'nisn.max' => 'NISN maksimal 20 karakter.',
-//            'nisn.min' => 'NISN minimal 4 karakter.',
-//            'nisn.regex' => 'NISN hanya boleh berisi angka.',
-//            'nama.required' => 'Nama wajib diisi.',
-//            'nama.max' => 'Nama maksimal 100 karakter.',
-//            'nama.regex' => 'Nama hanya boleh berisi huruf dan spasi.',
-//            'jenis_kelamin.required' => 'Jenis kelamin wajib diisi.',
-//            'jenis_kelamin.in' => 'Jenis kelamin harus Laki-laki atau Perempuan.',
-//            'tempat_lahir.required' => 'Tempat lahir wajib diisi.',
-//            'tempat_lahir.max' => 'Tempat lahir maksimal 100 karakter.',
-//            'tanggal_lahir.required' => 'Tanggal lahir wajib diisi.',
-//            'tanggal_lahir.date' => 'Format tanggal lahir tidak valid.',
-//            'tanggal_lahir.before' => 'Tanggal lahir harus sebelum hari ini.',
-//            'tanggal_lahir.after' => 'Tanggal lahir terlalu lama.',
-//            'agama.required' => 'Agama wajib diisi.',
-//            'agama.max' => 'Agama maksimal 50 karakter.',
-//            'alamat.required' => 'Alamat wajib diisi.',
-//            'ayah_nama.required' => 'Nama ayah wajib diisi.',
-//            'ayah_nama.max' => 'Nama ayah maksimal 100 karakter.',
-//            'ayah_pendidikan.max' => 'Pendidikan ayah maksimal 50 karakter.',
-//            'ayah_pekerjaan.max' => 'Pekerjaan ayah maksimal 100 karakter.',
-//            'ibu_nama.required' => 'Nama ibu wajib diisi.',
-//            'ibu_nama.max' => 'Nama ibu maksimal 100 karakter.',
-//            'ibu_pendidikan.max' => 'Pendidikan ibu maksimal 50 karakter.',
-//            'ibu_pekerjaan.max' => 'Pekerjaan ibu maksimal 100 karakter.',
-//            'wali_nama.required' => 'Nama wali wajib diisi.',
-//            'wali_nama.max' => 'Nama wali maksimal 100 karakter.',
-//            'wali_pekerjaan.max' => 'Pekerjaan wali maksimal 100 karakter.',
-//            'wali_alamat.required' => 'Alamat wali wajib diisi.',
-//            'wali_no_hp.required' => 'Nomor HP wali wajib diisi.',
-//            'wali_no_hp.max' => 'Nomor HP wali maksimal 100 karakter.',
-//            'kelas_id.required' => 'Kelas wajib diisi.',
-//            'kelas_id.exists' => 'Kelas tidak ditemukan.',
-//            'kategori_id.required' => 'Kategori wajib diisi.',
-//            'kategori_id.exists' => 'Kategori tidak ditemukan.',
-//            'asal_sekolah.max' => 'Asal sekolah maksimal 150 karakter.',
-//            'kelas_diterima.max' => 'Kelas diterima maksimal 10 karakter.',
-//            'tahun_diterima.date_format' => 'Format tahun diterima harus YYYY.',
-//            'tahun_diterima.before_or_equal' => 'Tahun diterima tidak boleh melebihi tahun sekarang.',
-//            'status.in' => 'Status harus salah satu: Aktif, Lulus, Pindah, Keluar.'
-//        ];
-//    }
+    //    public function messages(): array
+    //    {
+    //        return [
+    //            'nis.required' => 'NIS wajib diisi.',
+    //            'nis.max' => 'NIS maksimal 20 karakter.',
+    //            'nis.min' => 'NIS minimal 4 karakter.',
+    //            'nis.regex' => 'NIS hanya boleh berisi angka.',
+    //            'nisn.required' => 'NISN wajib diisi.',
+    //            'nisn.max' => 'NISN maksimal 20 karakter.',
+    //            'nisn.min' => 'NISN minimal 4 karakter.',
+    //            'nisn.regex' => 'NISN hanya boleh berisi angka.',
+    //            'nama.required' => 'Nama wajib diisi.',
+    //            'nama.max' => 'Nama maksimal 100 karakter.',
+    //            'nama.regex' => 'Nama hanya boleh berisi huruf dan spasi.',
+    //            'jenis_kelamin.required' => 'Jenis kelamin wajib diisi.',
+    //            'jenis_kelamin.in' => 'Jenis kelamin harus Laki-laki atau Perempuan.',
+    //            'tempat_lahir.required' => 'Tempat lahir wajib diisi.',
+    //            'tempat_lahir.max' => 'Tempat lahir maksimal 100 karakter.',
+    //            'tanggal_lahir.required' => 'Tanggal lahir wajib diisi.',
+    //            'tanggal_lahir.date' => 'Format tanggal lahir tidak valid.',
+    //            'tanggal_lahir.before' => 'Tanggal lahir harus sebelum hari ini.',
+    //            'tanggal_lahir.after' => 'Tanggal lahir terlalu lama.',
+    //            'agama.required' => 'Agama wajib diisi.',
+    //            'agama.max' => 'Agama maksimal 50 karakter.',
+    //            'alamat.required' => 'Alamat wajib diisi.',
+    //            'ayah_nama.required' => 'Nama ayah wajib diisi.',
+    //            'ayah_nama.max' => 'Nama ayah maksimal 100 karakter.',
+    //            'ayah_pendidikan.max' => 'Pendidikan ayah maksimal 50 karakter.',
+    //            'ayah_pekerjaan.max' => 'Pekerjaan ayah maksimal 100 karakter.',
+    //            'ibu_nama.required' => 'Nama ibu wajib diisi.',
+    //            'ibu_nama.max' => 'Nama ibu maksimal 100 karakter.',
+    //            'ibu_pendidikan.max' => 'Pendidikan ibu maksimal 50 karakter.',
+    //            'ibu_pekerjaan.max' => 'Pekerjaan ibu maksimal 100 karakter.',
+    //            'wali_nama.required' => 'Nama wali wajib diisi.',
+    //            'wali_nama.max' => 'Nama wali maksimal 100 karakter.',
+    //            'wali_pekerjaan.max' => 'Pekerjaan wali maksimal 100 karakter.',
+    //            'wali_alamat.required' => 'Alamat wali wajib diisi.',
+    //            'wali_no_hp.required' => 'Nomor HP wali wajib diisi.',
+    //            'wali_no_hp.max' => 'Nomor HP wali maksimal 100 karakter.',
+    //            'kelas_id.required' => 'Kelas wajib diisi.',
+    //            'kelas_id.exists' => 'Kelas tidak ditemukan.',
+    //            'kategori_id.required' => 'Kategori wajib diisi.',
+    //            'kategori_id.exists' => 'Kategori tidak ditemukan.',
+    //            'asal_sekolah.max' => 'Asal sekolah maksimal 150 karakter.',
+    //            'kelas_diterima.max' => 'Kelas diterima maksimal 10 karakter.',
+    //            'tahun_diterima.date_format' => 'Format tahun diterima harus YYYY.',
+    //            'tahun_diterima.before_or_equal' => 'Tahun diterima tidak boleh melebihi tahun sekarang.',
+    //            'status.in' => 'Status harus salah satu: Aktif, Lulus, Pindah, Keluar.'
+    //        ];
+    //    }
 
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response([
-            "errors" => $validator->getMessageBag()
+            'errors' => $validator->getMessageBag(),
         ], 400));
     }
 }

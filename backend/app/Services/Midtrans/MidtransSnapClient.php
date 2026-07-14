@@ -45,7 +45,7 @@ class MidtransSnapClient implements MidtransClient
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function createSnapTransaction(SnapPayload $payload): array
     {
@@ -80,7 +80,7 @@ class MidtransSnapClient implements MidtransClient
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function getStatus(string $orderId): MidtransStatusResponse
     {
@@ -109,7 +109,7 @@ class MidtransSnapClient implements MidtransClient
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function isConfigured(): bool
     {

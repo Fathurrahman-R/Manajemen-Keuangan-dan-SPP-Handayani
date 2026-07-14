@@ -118,7 +118,7 @@ function invokeWidgetDataMethod(string $widgetClass, string $failureType, ?int $
     setupWidgetHttpMockForFailure($failureType);
 
     // Create widget instance
-    $widget = new $widgetClass();
+    $widget = new $widgetClass;
 
     // Set the selectedTahunAjaranId property
     if (property_exists($widget, 'selectedTahunAjaranId')) {
@@ -141,6 +141,7 @@ function invokeProtectedMethod(object $widget, string $method): mixed
 {
     $reflection = new \ReflectionMethod($widget, $method);
     $reflection->setAccessible(true);
+
     return $reflection->invoke($widget);
 }
 
@@ -161,7 +162,7 @@ function invokeTableWidgetRecords(object $widget): Collection
         return $recordsClosure->call($widget);
     }
 
-    throw new \RuntimeException('TableWidget records() did not return a Closure for ' . get_class($widget));
+    throw new \RuntimeException('TableWidget records() did not return a Closure for '.get_class($widget));
 }
 
 /**
@@ -184,9 +185,9 @@ function assertChartWidgetFallback(mixed $result, string $widgetClass, string $f
 {
     expect($result)->toBeArray();
     expect(array_key_exists('datasets', $result))
-        ->toBeTrue("Expected 'datasets' key for {$widgetClass} on {$failureType}, got keys: " . implode(', ', array_keys($result)));
+        ->toBeTrue("Expected 'datasets' key for {$widgetClass} on {$failureType}, got keys: ".implode(', ', array_keys($result)));
     expect(array_key_exists('labels', $result))
-        ->toBeTrue("Expected 'labels' key for {$widgetClass} on {$failureType}, got keys: " . implode(', ', array_keys($result)));
+        ->toBeTrue("Expected 'labels' key for {$widgetClass} on {$failureType}, got keys: ".implode(', ', array_keys($result)));
     expect($result['datasets'])->toBeArray();
     expect($result['labels'])->toBeArray();
 }

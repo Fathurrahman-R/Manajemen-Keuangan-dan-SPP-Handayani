@@ -14,7 +14,7 @@ return [
 
     'colors' => [
         'primary' => env('HANDAYANI_PUBLIC_COLOR_PRIMARY', '#1B4FBF'), // Biru Handayani
-        'accent'  => env('HANDAYANI_PUBLIC_COLOR_ACCENT', '#0D8A6E'),  // Hijau Teal Handayani
+        'accent' => env('HANDAYANI_PUBLIC_COLOR_ACCENT', '#0D8A6E'),  // Hijau Teal Handayani
     ],
 
     // --- CONTENT HERO ---

@@ -2,12 +2,11 @@
 
 namespace App\Livewire;
 
+use App\Helpers\PermissionHelper;
 use App\Livewire\Concerns\HandlesApiErrors;
-use App\Services\ApiService;
 use App\Livewire\Concerns\HasImportExport;
+use App\Services\ApiService;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Storage;
-use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -23,12 +22,15 @@ use Filament\Tables\Table;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
+use Livewire\Component;
 
 class KasHarian extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable, HasImportExport, HandlesApiErrors;
+    use HandlesApiErrors, HasImportExport, InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     public $currentMonthYear;
+
     public function table(Table $table): Table
     {
         return $table
@@ -39,11 +41,11 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
                         'tahun' => (int) explode('-', $this->currentMonthYear)[0],
                     ];
 
-                    if(filled($filters['date']['bulan'] ?? null)) {
+                    if (filled($filters['date']['bulan'] ?? null)) {
                         $params['bulan'] = $filters['date']['bulan'];
                     }
 
-                    if(filled($filters['date']['tahun'] ?? null)) {
+                    if (filled($filters['date']['tahun'] ?? null)) {
                         $params['tahun'] = $filters['date']['tahun'];
                     }
 
@@ -55,8 +57,9 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
                     try {
                         $response = ApiService::client()->get('/laporan/kas', $params);
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             $this->handleApiError($response);
+
                             return new LengthAwarePaginator(items: [], total: 0, perPage: $recordsPerPage, currentPage: $page);
                         }
 
@@ -64,8 +67,8 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
                         $items = collect($collected['data'] ?? [])
                             ->when(
                                 filled($sortColumn),
-                                fn(Collection $data): Collection => $data->sortBy(
-                                    fn(array $record) => data_get($record, $sortColumn),
+                                fn (Collection $data): Collection => $data->sortBy(
+                                    fn (array $record) => data_get($record, $sortColumn),
                                     SORT_REGULAR,
                                     ($sortDirection ?? 'asc') === 'desc'
                                 )->values()
@@ -80,26 +83,29 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
                         );
                     } catch (ConnectionException $e) {
                         $this->notifyConnectionError();
+
                         return new LengthAwarePaginator(items: [], total: 0, perPage: $recordsPerPage, currentPage: $page);
                     } catch (\Throwable $e) {
                         $this->notifyUnexpectedError();
+
                         return new LengthAwarePaginator(items: [], total: 0, perPage: $recordsPerPage, currentPage: $page);
                     }
                 }
             )
             ->columns([
                 TextColumn::make('tanggal')->label('Tanggal')->sortable(),
-                TextColumn::make('total_masuk')->label('Total Masuk')->sortable()->money(currency: 'Rp.', decimalPlaces: 0,),
-                TextColumn::make('total_keluar')->label('Total Keluar')->sortable()->money(currency: 'Rp.', decimalPlaces: 0,),
-                TextColumn::make('saldo')->label('Saldo')->sortable()->money(currency: 'Rp.', decimalPlaces: 0,),
+                TextColumn::make('total_masuk')->label('Total Masuk')->sortable()->money(currency: 'Rp.', decimalPlaces: 0),
+                TextColumn::make('total_keluar')->label('Total Keluar')->sortable()->money(currency: 'Rp.', decimalPlaces: 0),
+                TextColumn::make('saldo')->label('Saldo')->sortable()->money(currency: 'Rp.', decimalPlaces: 0),
             ])
             ->recordActions([
                 Action::make('detail')
                     ->label('Detail')
                     ->icon('heroicon-o-eye')
+                    ->visible(fn () => PermissionHelper::hasResource('laporan.kas-detail'))
                     ->color('gray')
                     ->size('sm')
-                    ->modalHeading(fn (array $record) => 'Detail Kas — ' . ($record['tanggal'] ?? '-'))
+                    ->modalHeading(fn (array $record) => 'Detail Kas — '.($record['tanggal'] ?? '-'))
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Tutup')
                     ->modalWidth('5xl')
@@ -121,8 +127,8 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
                                     ->label('Tahun')
                                     ->numeric()
                                     ->maxValue(Carbon::now()->year()),
-                            ])
-                    ])
+                            ]),
+                    ]),
             ])
             ->deferLoading()
             ->striped()
@@ -135,6 +141,7 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
             ->headerActions([
                 Action::make('Export')
                     ->label('Export PDF')
+                    ->visible(fn (): bool => PermissionHelper::hasResource('laporan.export'))
                     ->color('danger')
                     ->icon('heroicon-o-document-arrow-down')
                     ->modalHeading('Export PDF Kas Harian')
@@ -161,7 +168,7 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
                             'tahun' => (int) $data['tahun'],
                         ];
 
-                        $filename = 'Kas harian-' . str_pad((string) $params['bulan'], 2, '0', STR_PAD_LEFT) . '-' . $params['tahun'] . '.pdf';
+                        $filename = 'Kas harian-'.str_pad((string) $params['bulan'], 2, '0', STR_PAD_LEFT).'-'.$params['tahun'].'.pdf';
                         $response = ApiService::client()
                             ->withHeaders(['Accept' => 'application/pdf'])
                             ->get('/laporan/export/kas', $params);
@@ -182,7 +189,7 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
                     ->color('success')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->button()
-                    ->visible(fn(): bool => in_array('export-laporan', session()->get('data.permissions', [])))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('laporan.export'))
                     ->modalHeading('Export Kas Harian')
                     ->modalSubmitActionLabel('Export')
                     ->schema([
@@ -193,7 +200,7 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
                             ->required(),
                         \Filament\Forms\Components\Select::make('bulan')
                             ->label('Bulan')
-                            ->options(collect(range(1, 12))->mapWithKeys(fn($m) => [$m => \Carbon\Carbon::create(null, $m)->translatedFormat('F')])->toArray())
+                            ->options(collect(range(1, 12))->mapWithKeys(fn ($m) => [$m => \Carbon\Carbon::create(null, $m)->translatedFormat('F')])->toArray())
                             ->default(now()->month)
                             ->required(),
                         \Filament\Forms\Components\TextInput::make('tahun')

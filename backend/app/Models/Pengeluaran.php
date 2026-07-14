@@ -11,6 +11,7 @@ class Pengeluaran extends Model
     use HasFactory;
 
     protected $table = 'pengeluarans';
+
     protected $fillable = [
         'tanggal',
         'uraian',
@@ -19,9 +20,13 @@ class Pengeluaran extends Model
         'tahun_ajaran_id',
         'pengeluaran_request_id',
     ];
+
     protected $primaryKey = 'id';
+
     protected $keyType = 'int';
+
     public $incrementing = true;
+
     public $timestamps = true;
 
     protected function casts(): array
@@ -32,6 +37,7 @@ class Pengeluaran extends Model
             'tahun_ajaran_id' => 'int',
         ];
     }
+
     public function branch()
     {
         return $this->BelongsTo(Branch::class, 'branch_id');

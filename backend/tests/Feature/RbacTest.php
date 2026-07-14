@@ -110,12 +110,12 @@ class RbacTest extends TestCase
         $role = Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
 
         $perms = collect($permissionNames)
-            ->map(fn($n) => Permission::firstOrCreate(['name' => $n, 'guard_name' => 'web']));
+            ->map(fn ($n) => Permission::firstOrCreate(['name' => $n, 'guard_name' => 'web']));
         $role->syncPermissions($perms);
 
         /** @var User $user */
         $user = User::factory()->create([
-            'username' => 'user-' . uniqid(),
+            'username' => 'user-'.uniqid(),
             'branch_id' => $this->branch->id,
         ]);
         $user->assignRole($role);
@@ -181,7 +181,7 @@ class RbacTest extends TestCase
             ->where('path_pattern', 'api/kategori')
             ->first();
 
-        if (!$endpoint) {
+        if (! $endpoint) {
             $this->markTestSkipped('Mapping /api/kategori tidak ditemukan.');
         }
 
@@ -251,7 +251,7 @@ class RbacTest extends TestCase
     {
         $this->authAs('admin', ['create-permission']);
 
-        $this->post('/api/rbac/permissions', ['name' => 'view-test-' . time()])
+        $this->post('/api/rbac/permissions', ['name' => 'view-test-'.time()])
             ->assertStatus(201)
             ->assertJsonPath('message', 'Permission created.');
     }
@@ -261,7 +261,7 @@ class RbacTest extends TestCase
     {
         $this->authAs('admin', ['create-permission']);
 
-        $name = 'view-dup-' . time();
+        $name = 'view-dup-'.time();
         $this->postJson('/api/rbac/permissions', ['name' => $name])
             ->assertStatus(201);
 
@@ -274,10 +274,10 @@ class RbacTest extends TestCase
     {
         $this->authAs('admin', ['edit-permission']);
 
-        $perm = Permission::create(['name' => 'view-upd-' . time(), 'guard_name' => 'web']);
-        $newName = $perm->name . '-v2';
+        $perm = Permission::create(['name' => 'view-upd-'.time(), 'guard_name' => 'web']);
+        $newName = $perm->name.'-v2';
 
-        $this->putJson('/api/rbac/permissions/' . $perm->id, ['name' => $newName])
+        $this->putJson('/api/rbac/permissions/'.$perm->id, ['name' => $newName])
             ->assertStatus(200);
 
         $this->assertDatabaseHas('permissions', ['name' => $newName]);
@@ -288,9 +288,9 @@ class RbacTest extends TestCase
     {
         $this->authAs('admin', ['delete-permission']);
 
-        $perm = Permission::create(['name' => 'view-del-' . time(), 'guard_name' => 'web']);
+        $perm = Permission::create(['name' => 'view-del-'.time(), 'guard_name' => 'web']);
 
-        $this->delete('/api/rbac/permissions/' . $perm->id)
+        $this->delete('/api/rbac/permissions/'.$perm->id)
             ->assertStatus(200);
 
         $this->assertDatabaseMissing('permissions', ['id' => $perm->id]);
@@ -301,7 +301,7 @@ class RbacTest extends TestCase
     {
         $this->authAs('admin', ['view-permission']); // view saja
 
-        $this->postJson('/api/rbac/permissions', ['name' => 'should-fail-' . time()])
+        $this->postJson('/api/rbac/permissions', ['name' => 'should-fail-'.time()])
             ->assertStatus(403);
     }
 
@@ -328,7 +328,7 @@ class RbacTest extends TestCase
 
         $this->post('/api/rbac/endpoints', [
             'method' => 'GET',
-            'path_pattern' => 'api/siswa/test-' . time(),
+            'path_pattern' => 'api/siswa/test-'.time(),
             'permission_id' => $perm->id,
             'group' => 'siswa',
             'is_active' => true,
@@ -344,11 +344,11 @@ class RbacTest extends TestCase
             ->where('path_pattern', 'api/kategori')
             ->first();
 
-        if (!$endpoint) {
+        if (! $endpoint) {
             $this->markTestSkipped('Endpoint mapping tidak ditemukan.');
         }
 
-        $this->putJson('/api/rbac/endpoints/' . $endpoint->id, [
+        $this->putJson('/api/rbac/endpoints/'.$endpoint->id, [
             'method' => $endpoint->method,
             'path_pattern' => $endpoint->path_pattern,
             'permission_id' => $endpoint->permission_id,
@@ -362,11 +362,11 @@ class RbacTest extends TestCase
         $this->authAs('admin', ['edit-permission']);
 
         $endpoint = PermissionEndpoint::first();
-        if (!$endpoint) {
+        if (! $endpoint) {
             $this->markTestSkipped('Tidak ada endpoint.');
         }
 
-        $this->putJson('/api/rbac/endpoints/' . $endpoint->id, [
+        $this->putJson('/api/rbac/endpoints/'.$endpoint->id, [
             'method' => $endpoint->method,
             'path_pattern' => $endpoint->path_pattern,
             'permission_id' => $endpoint->permission_id,
@@ -398,7 +398,7 @@ class RbacTest extends TestCase
         $this->authAs('admin', ['edit-permission']);
 
         $this->post('/api/rbac/resources', [
-            'resource_key' => 'test.module.create-' . time(),
+            'resource_key' => 'test.module.create-'.time(),
             'label' => 'Test Resource',
             'is_active' => true,
         ])->assertStatus(201);
@@ -423,10 +423,10 @@ class RbacTest extends TestCase
     {
         $this->authAs('admin', ['assign-permission']);
 
-        $role = Role::create(['name' => 'test-role-' . time(), 'guard_name' => 'web']);
-        $perm = Permission::create(['name' => 'view-assign-' . time(), 'guard_name' => 'web']);
+        $role = Role::create(['name' => 'test-role-'.time(), 'guard_name' => 'web']);
+        $perm = Permission::create(['name' => 'view-assign-'.time(), 'guard_name' => 'web']);
 
-        $this->putJson('/api/rbac/roles/' . $role->id . '/permissions', [
+        $this->putJson('/api/rbac/roles/'.$role->id.'/permissions', [
             'permissions' => [$perm->name],
         ])->assertStatus(200);
 
@@ -437,13 +437,13 @@ class RbacTest extends TestCase
     /** @test */
     public function rbac_026_unassign_permission_from_role()
     {
-        $role = Role::create(['name' => 'test-unassign-' . time(), 'guard_name' => 'web']);
-        $perm = Permission::create(['name' => 'view-unassign-' . time(), 'guard_name' => 'web']);
+        $role = Role::create(['name' => 'test-unassign-'.time(), 'guard_name' => 'web']);
+        $perm = Permission::create(['name' => 'view-unassign-'.time(), 'guard_name' => 'web']);
         $role->givePermissionTo($perm);
 
         $this->authAs('admin', ['assign-permission']);
 
-        $this->putJson('/api/rbac/roles/' . $role->id . '/permissions', [
+        $this->putJson('/api/rbac/roles/'.$role->id.'/permissions', [
             'permissions' => [],
         ])->assertStatus(200);
 
@@ -507,11 +507,11 @@ class RbacTest extends TestCase
         $this->authAs('admin', ['edit-permission']);
 
         $endpoint = PermissionEndpoint::first();
-        if (!$endpoint) {
+        if (! $endpoint) {
             $this->markTestSkipped('Tidak ada endpoint.');
         }
 
-        $this->putJson('/api/rbac/endpoints/' . $endpoint->id, [
+        $this->putJson('/api/rbac/endpoints/'.$endpoint->id, [
             'method' => $endpoint->method,
             'path_pattern' => $endpoint->path_pattern,
             'permission_id' => $endpoint->permission_id,

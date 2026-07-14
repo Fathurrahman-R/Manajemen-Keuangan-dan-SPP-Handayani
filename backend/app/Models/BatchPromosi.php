@@ -11,9 +11,13 @@ class BatchPromosi extends Model
     use HasFactory, HasUuids;
 
     protected $table = 'batch_promosis';
+
     protected $primaryKey = 'id';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
+
     public $timestamps = true;
 
     protected $fillable = [

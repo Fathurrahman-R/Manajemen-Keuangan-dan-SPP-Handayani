@@ -32,7 +32,7 @@ class WorkflowService
 
     public function update(PengeluaranRequest $request, array $data): PengeluaranRequest
     {
-        if (!$request->isEditable()) {
+        if (! $request->isEditable()) {
             throw ValidationException::withMessages([
                 'status' => ['Request hanya bisa diubah saat status draft atau rejected.'],
             ]);
@@ -51,7 +51,7 @@ class WorkflowService
 
     public function submit(PengeluaranRequest $request, User $user): PengeluaranRequest
     {
-        if (!in_array($request->status, ['draft', 'rejected'])) {
+        if (! in_array($request->status, ['draft', 'rejected'])) {
             throw ValidationException::withMessages([
                 'status' => ['Request hanya bisa disubmit dari status draft atau rejected.'],
             ]);

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Helpers\PermissionHelper;
 use Filament\Pages\Page;
 use UnitEnum;
 
@@ -9,7 +10,7 @@ class UserManagement extends Page
 {
     protected string $view = 'filament.pages.user-management';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Manajemen Akses';
+    protected static string|UnitEnum|null $navigationGroup = 'Manajemen Akses';
 
     protected static ?string $navigationLabel = 'Manajemen User';
 
@@ -19,15 +20,11 @@ class UserManagement extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        return in_array('view-user', $permissions);
+        return PermissionHelper::hasResource('user-management');
     }
 
     public function mount(): void
     {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        if (!in_array('view-user', $permissions)) {
-            abort(403);
-        }
+        abort_if(! PermissionHelper::hasResource('user-management'), 403);
     }
 }

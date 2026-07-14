@@ -19,7 +19,7 @@ trait HandlesApiErrors
             if (isset($errors['message'])) {
                 $msg = $errors['message'];
                 $message = is_array($msg) ? $msg[0] : $msg;
-            } elseif (!empty($errors)) {
+            } elseif (! empty($errors)) {
                 $firstKey = array_key_first($errors);
                 $message = $firstKey
                     ? (is_array($errors[$firstKey]) ? $errors[$firstKey][0] : $errors[$firstKey])

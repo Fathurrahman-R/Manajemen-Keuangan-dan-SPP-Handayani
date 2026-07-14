@@ -10,10 +10,7 @@
             Endpoint Mapping
         </x-filament::tabs.item>
         <x-filament::tabs.item wire:click="$set('activeTab', 'resources')" :active="$activeTab === 'resources'" icon="heroicon-o-cube">
-            Resource Registry
-        </x-filament::tabs.item>
-        <x-filament::tabs.item wire:click="$set('activeTab', 'pages')" :active="$activeTab === 'pages'" icon="heroicon-o-document-text">
-            Page Security
+            Resource & Page Registry
         </x-filament::tabs.item>
         <x-filament::tabs.item wire:click="$set('activeTab', 'guide')" :active="$activeTab === 'guide'" icon="heroicon-o-book-open">
             Panduan
@@ -28,9 +25,7 @@
         @elseif($activeTab === 'endpoints')
             @livewire(\App\Livewire\RbacEndpointsTable::class, key('endpoints-table'))
         @elseif($activeTab === 'resources')
-            @livewire(\App\Livewire\RbacResourcesTable::class, key('resources-table'))
-        @elseif($activeTab === 'pages')
-            @livewire(\App\Livewire\RbacPagePermissionsTable::class, key('page-perms-table'))
+            @livewire(\App\Livewire\RbacPagePermissionsTable::class, key('resources-table'))
         @elseif($activeTab === 'guide')
             {{ $this->guideSchema() }}
         @endif

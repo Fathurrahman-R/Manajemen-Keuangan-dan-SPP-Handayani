@@ -15,7 +15,7 @@ class SiswaObserverTest extends TestCase
 
     private function createSiswaWithDirtyStatus(string $newStatus, string $originalStatus = 'Aktif'): Siswa
     {
-        $siswa = new Siswa();
+        $siswa = new Siswa;
         $siswa->forceFill(['status' => $originalStatus]);
         $siswa->syncOriginal();
         $siswa->status = $newStatus;
@@ -25,7 +25,7 @@ class SiswaObserverTest extends TestCase
 
     private function createSiswaWithoutDirtyStatus(string $status): Siswa
     {
-        $siswa = new Siswa();
+        $siswa = new Siswa;
         $siswa->forceFill(['status' => $status]);
         $siswa->syncOriginal();
 

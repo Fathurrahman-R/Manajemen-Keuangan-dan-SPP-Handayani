@@ -2,6 +2,7 @@
 
 namespace App\Filament\Portal\Pages;
 
+use App\Helpers\PermissionHelper;
 use App\Services\ApiService;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -19,9 +20,9 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-class PortalRiwayatPembayaranPage extends Page implements HasTable, HasActions, HasSchemas
+class PortalRiwayatPembayaranPage extends Page implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithTable, InteractsWithActions, InteractsWithSchemas;
+    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     protected string $view = 'filament.portal.pages.riwayat-pembayaran';
 
@@ -43,7 +44,7 @@ class PortalRiwayatPembayaranPage extends Page implements HasTable, HasActions, 
     public function mount(): void
     {
         $roles = session()->get('data.roles', []);
-        if (!in_array('siswa', $roles) && !in_array('wali', $roles)) {
+        if (! PermissionHelper::hasResource('portal-access')) {
             abort(403);
         }
     }
@@ -65,7 +66,7 @@ class PortalRiwayatPembayaranPage extends Page implements HasTable, HasActions, 
 
                     try {
                         $response = ApiService::client()->get('/pembayaran/siswa', $params);
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             return new LengthAwarePaginator([], 0, $recordsPerPage, $page);
                         }
 
@@ -73,12 +74,13 @@ class PortalRiwayatPembayaranPage extends Page implements HasTable, HasActions, 
                         $items = $json['data'] ?? [];
 
                         // Hanya di halaman pertama: prepend list pending Midtrans di atas.
-                        if ($page === 1 && !empty($json['pending'])) {
+                        if ($page === 1 && ! empty($json['pending'])) {
                             $items = array_merge($json['pending'], $items);
                         }
 
                         $items = collect($items)->mapWithKeys(function ($item) {
                             $key = $item['order_id'] ?? $item['kode_pembayaran'] ?? uniqid();
+
                             return [$key => $item];
                         });
 
@@ -118,11 +120,11 @@ class PortalRiwayatPembayaranPage extends Page implements HasTable, HasActions, 
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->state(fn(array $record): string => ($record['is_pending'] ?? false) ? 'Menunggu Pembayaran' : 'Selesai')
-                    ->color(fn(array $record): string => ($record['is_pending'] ?? false) ? 'warning' : 'success'),
+                    ->state(fn (array $record): string => ($record['is_pending'] ?? false) ? 'Menunggu Pembayaran' : 'Selesai')
+                    ->color(fn (array $record): string => ($record['is_pending'] ?? false) ? 'warning' : 'success'),
                 TextColumn::make('kode_tagihan.jenis_tagihan.nama')
                     ->label('Jenis Tagihan')
-                    ->state(fn(array $record) => $record['kode_tagihan']['jenis_tagihan']['nama']
+                    ->state(fn (array $record) => $record['kode_tagihan']['jenis_tagihan']['nama']
                         ?? $record['kode_tagihan_relation']['jenis_tagihan']['nama']
                         ?? '-'),
             ])
@@ -132,16 +134,16 @@ class PortalRiwayatPembayaranPage extends Page implements HasTable, HasActions, 
                     ->icon('heroicon-o-arrow-top-right-on-square')
                     ->iconButton()
                     ->color('warning')
-                    ->visible(fn(array $record): bool => (bool) ($record['is_pending'] ?? false))
-                    ->url(fn(array $record): string => '/' . config('handayani.portal.path', 'portal') . '/status-pembayaran?order_id=' . urlencode($record['order_id'] ?? $record['kode_pembayaran'] ?? ''))
+                    ->visible(fn (array $record): bool => (bool) ($record['is_pending'] ?? false))
+                    ->url(fn (array $record): string => '/'.config('handayani.portal.path', 'portal').'/status-pembayaran?order_id='.urlencode($record['order_id'] ?? $record['kode_pembayaran'] ?? ''))
                     ->openUrlInNewTab(false),
                 Action::make('downloadKwitansi')
                     ->label('Kwitansi')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->iconButton()
                     ->color('primary')
-                    ->visible(fn(array $record): bool => !($record['is_pending'] ?? false)
-                        && in_array('print-kwitansi', session()->get('data.permissions', [])))
+                    ->visible(fn (array $record): bool => ! ($record['is_pending'] ?? false)
+                        && PermissionHelper::hasResource('pembayaran.print'))
                     ->action(function (array $record) {
                         return $this->downloadKwitansi($record['kode_pembayaran']);
                     }),
@@ -157,19 +159,20 @@ class PortalRiwayatPembayaranPage extends Page implements HasTable, HasActions, 
 
     public function downloadKwitansi(string $kodePembayaran): StreamedResponse
     {
-        $filename = 'kwitansi-' . $kodePembayaran . '.pdf';
+        $filename = 'kwitansi-'.$kodePembayaran.'.pdf';
 
         $response = ApiService::client()
             ->withHeaders(['Accept' => 'application/pdf'])
-            ->get('/pembayaran/kwitansi/' . $kodePembayaran);
+            ->get('/pembayaran/kwitansi/'.$kodePembayaran);
 
-        if (!$response->ok()) {
+        if (! $response->ok()) {
             Notification::make()
                 ->title('Kwitansi tidak tersedia')
                 ->body('File kwitansi tidak dapat diambil dari server.')
                 ->danger()
                 ->send();
-            return response()->streamDownload(fn() => null, $filename);
+
+            return response()->streamDownload(fn () => null, $filename);
         }
 
         Storage::disk('local')->put($filename, $response->body());

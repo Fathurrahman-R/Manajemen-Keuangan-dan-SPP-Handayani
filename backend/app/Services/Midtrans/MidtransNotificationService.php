@@ -32,7 +32,7 @@ class MidtransNotificationService
     {
         // 1. Check webhook enabled
         if (! config('midtrans.webhook_enabled')) {
-            throw new WebhookDisabledException();
+            throw new WebhookDisabledException;
         }
 
         $orderId = $rawPayload['order_id'] ?? null;

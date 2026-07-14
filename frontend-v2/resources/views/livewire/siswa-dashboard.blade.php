@@ -1,19 +1,4 @@
 <div>
-    {{-- Child Selector (for wali with multiple children) --}}
-    @if(count($childOptions) > 1)
-        <x-filament::section>
-            <div class="flex items-center gap-3">
-                <label class="text-sm text-gray-600 dark:text-gray-400">Pilih Anak:</label>
-                <select wire:model.live="selectedSiswaId"
-                        class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm">
-                    @foreach($childOptions as $child)
-                        <option value="{{ $child['id'] }}">{{ $child['nama'] }} ({{ $child['nis'] }})</option>
-                    @endforeach
-                </select>
-            </div>
-        </x-filament::section>
-    @endif
-
     {{-- Loading State --}}
     @if($loading)
         <x-filament::section>

@@ -1,7 +1,6 @@
 <?php
 
 use App\Services\BrandingConfig;
-use App\Services\BrandingService;
 
 test('applyBranchBranding does nothing when no branding is configured', function () {
     // When default branding (no custom), hasBranding returns false

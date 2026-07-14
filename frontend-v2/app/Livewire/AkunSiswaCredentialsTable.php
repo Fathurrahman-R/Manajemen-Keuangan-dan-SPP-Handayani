@@ -38,8 +38,7 @@ class AkunSiswaCredentialsTable extends Component implements HasActions, HasSche
                 $rows = collect($this->credentials);
                 if (filled($search)) {
                     $needle = mb_strtolower($search);
-                    $rows = $rows->filter(fn(array $r): bool =>
-                        str_contains(mb_strtolower((string) ($r['nama'] ?? '')), $needle)
+                    $rows = $rows->filter(fn (array $r): bool => str_contains(mb_strtolower((string) ($r['nama'] ?? '')), $needle)
                         || str_contains(mb_strtolower((string) ($r['username'] ?? '')), $needle)
                     );
                 }

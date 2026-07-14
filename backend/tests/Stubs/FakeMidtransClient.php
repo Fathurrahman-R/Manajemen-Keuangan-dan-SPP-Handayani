@@ -69,7 +69,7 @@ class FakeMidtransClient implements MidtransClient
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function createSnapTransaction(SnapPayload $payload): array
     {
@@ -78,13 +78,13 @@ class FakeMidtransClient implements MidtransClient
         }
 
         return $this->snapResponse ?? [
-            'token' => 'fake-token-' . $payload->orderId,
-            'redirect_url' => 'https://fake.midtrans.com/snap/' . $payload->orderId,
+            'token' => 'fake-token-'.$payload->orderId,
+            'redirect_url' => 'https://fake.midtrans.com/snap/'.$payload->orderId,
         ];
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function getStatus(string $orderId): MidtransStatusResponse
     {
@@ -110,7 +110,7 @@ class FakeMidtransClient implements MidtransClient
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function isConfigured(): bool
     {

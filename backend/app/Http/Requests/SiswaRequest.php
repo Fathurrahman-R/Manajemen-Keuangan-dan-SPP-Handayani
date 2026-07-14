@@ -26,44 +26,44 @@ class SiswaRequest extends FormRequest
     {
         $isMI = request('jenjang') == 'MI' || $this->route('jenjang') == 'MI';
         $requiredMI = $isMI ? 'required' : 'nullable';
-        $requiredOther = !$isMI ? 'required' : 'nullable';
+        $requiredOther = ! $isMI ? 'required' : 'nullable';
 
         // Parent fields are only required if the corresponding parent ID is not provided
-        $ayahFieldRequired = ($isMI && !$this->filled('ayah_id')) ? 'required' : 'nullable';
-        $ibuFieldRequired = ($isMI && !$this->filled('ibu_id')) ? 'required' : 'nullable';
-        $waliFieldRequired = (!$isMI && !$this->filled('wali_id')) ? 'required' : 'nullable';
+        $ayahFieldRequired = ($isMI && ! $this->filled('ayah_id')) ? 'required' : 'nullable';
+        $ibuFieldRequired = ($isMI && ! $this->filled('ibu_id')) ? 'required' : 'nullable';
+        $waliFieldRequired = (! $isMI && ! $this->filled('wali_id')) ? 'required' : 'nullable';
 
         return [
             'nis' => [
                 'required',
                 'max:20',
                 'regex:/^[0-9]+$/',
-                'min:4'
+                'min:4',
             ],
             'nisn' => [
                 $requiredMI,
                 'max:20',
                 'regex:/^[0-9]+$/',
-                'min:4'
+                'min:4',
             ],
             'nama' => [
                 'required',
                 'max:100',
-                'regex:/^[A-Za-zÀ-ÿ\'\s]+$/u'
+                'regex:/^[A-Za-zÀ-ÿ\'\s]+$/u',
             ],
             'jenis_kelamin' => [
                 'required',
-                'in:Laki-laki,Perempuan'
+                'in:Laki-laki,Perempuan',
             ],
             'tempat_lahir' => [
                 'required',
-                'max:100'
+                'max:100',
             ],
             'tanggal_lahir' => [
                 'required',
                 'date',
                 'before:today',
-                'after:1989-12-30'
+                'after:1989-12-30',
             ],
             'agama' => [
                 'required',
@@ -71,20 +71,20 @@ class SiswaRequest extends FormRequest
 
             ],
             'alamat' => [
-                'required'
+                'required',
             ],
             // nested ayah
             'ayah_nama' => [
                 $ayahFieldRequired,
-                'max:100'
+                'max:100',
             ],
             'ayah_pendidikan_terakhir' => [
                 'nullable',
-                'max:50'
+                'max:50',
             ],
             'ayah_pekerjaan' => [
                 'nullable',
-                'max:100'
+                'max:100',
             ],
             'ayah_email' => [
                 'nullable',
@@ -93,15 +93,15 @@ class SiswaRequest extends FormRequest
             // nested ibu
             'ibu_nama' => [
                 $ibuFieldRequired,
-                'max:100'
+                'max:100',
             ],
             'ibu_pendidikan_terakhir' => [
                 'nullable',
-                'max:50'
+                'max:50',
             ],
             'ibu_pekerjaan' => [
                 'nullable',
-                'max:100'
+                'max:100',
             ],
             'ibu_email' => [
                 'nullable',
@@ -109,21 +109,21 @@ class SiswaRequest extends FormRequest
             ],
             'wali_nama' => [
                 $waliFieldRequired,
-                'max:100'
+                'max:100',
             ],
             'wali_pekerjaan' => [
                 'nullable',
-                'max:100'
+                'max:100',
             ],
             'wali_alamat' => [
-                $waliFieldRequired
+                $waliFieldRequired,
             ],
             'wali_no_hp' => [
                 $waliFieldRequired,
-                'max:100'
+                'max:100',
             ],
             'wali_keterangan' => [
-                'nullable'
+                'nullable',
             ],
             'wali_email' => [
                 'nullable',
@@ -133,45 +133,45 @@ class SiswaRequest extends FormRequest
             'ayah_id' => [
                 'nullable',
                 'integer',
-                'exists:ayah,id'
+                'exists:ayah,id',
             ],
             'ibu_id' => [
                 'nullable',
                 'integer',
-                'exists:ibu,id'
+                'exists:ibu,id',
             ],
             'wali_id' => [
                 'nullable',
                 'integer',
-                'exists:walis,id'
+                'exists:walis,id',
             ],
             'kelas_id' => [
                 'required',
-                'exists:kelas,id'
+                'exists:kelas,id',
             ],
             'kategori_id' => [
                 'required',
-                'exists:kategoris,id'
+                'exists:kategoris,id',
             ],
             'asal_sekolah' => [
                 'nullable',
-                'max:150'
+                'max:150',
             ],
             'kelas_diterima' => [
                 'nullable',
-                'max:10'
+                'max:10',
             ],
             'tahun_diterima' => [
                 'nullable',
                 'date_format:Y',
-                'before_or_equal:' . date('Y')
+                'before_or_equal:'.date('Y'),
             ],
             'status' => [
                 'nullable',
-                'in:Aktif,Lulus,Pindah,Keluar'
+                'in:Aktif,Lulus,Pindah,Keluar',
             ],
             'keterangan' => [
-                'nullable'
+                'nullable',
             ],
         ];
     }
@@ -188,7 +188,7 @@ class SiswaRequest extends FormRequest
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response([
-            'errors' => $validator->getMessageBag()
+            'errors' => $validator->getMessageBag(),
         ], 400));
     }
 }

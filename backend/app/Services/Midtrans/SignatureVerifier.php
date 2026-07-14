@@ -11,7 +11,7 @@ class SignatureVerifier
      */
     public function compute(string $orderId, string $statusCode, string $grossAmount, string $serverKey): string
     {
-        return hash('sha512', $orderId . $statusCode . $grossAmount . $serverKey);
+        return hash('sha512', $orderId.$statusCode.$grossAmount.$serverKey);
     }
 
     /**

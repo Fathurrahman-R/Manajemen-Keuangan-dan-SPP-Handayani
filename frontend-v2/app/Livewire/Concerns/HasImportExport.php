@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Concerns;
 
+use App\Helpers\PermissionHelper;
 use App\Services\ApiService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -11,6 +12,7 @@ use Filament\Notifications\Notification;
 trait HasImportExport
 {
     public ?array $importPreviewData = null;
+
     public ?string $importPreviewId = null;
 
     /**
@@ -31,7 +33,7 @@ trait HasImportExport
             ->color('success')
             ->icon('heroicon-o-arrow-down-tray')
             ->button()
-            ->visible(fn(): bool => in_array('export-data', session()->get('data.permissions', [])))
+            ->visible(fn (): bool => PermissionHelper::hasResource('import-export.export'))
             ->modalHeading('Export Data')
             ->modalSubmitActionLabel('Export')
             ->schema($schema)
@@ -39,7 +41,7 @@ trait HasImportExport
                 if ($exportType === 'siswa' && property_exists($this, 'activeTab')) {
                     $data['jenjang'] = strtoupper($this->activeTab);
                 }
-                
+
                 return $this->doExportAction($exportType, $data);
             });
     }
@@ -54,8 +56,8 @@ trait HasImportExport
             ->color('warning')
             ->icon('heroicon-o-arrow-up-tray')
             ->button()
-            ->visible(fn(): bool => in_array('import-data', session()->get('data.permissions', [])))
-            ->modalHeading("Import Data " . ucfirst($importType))
+            ->visible(fn (): bool => PermissionHelper::hasResource('import-export.import'))
+            ->modalHeading('Import Data '.ucfirst($importType))
             ->modalSubmitActionLabel('Upload & Import')
             ->modalDescription('Upload file .xlsx atau .csv (maks 5MB). Download template terlebih dahulu jika belum punya.')
             ->schema([
@@ -81,13 +83,11 @@ trait HasImportExport
     {
         $actions = [];
 
-        $permissions = session()->get('data.permissions', []);
-
-        if (in_array('export-data', $permissions)) {
+        if (PermissionHelper::hasResource('import-export.export')) {
             $actions[] = $this->makeExportAction($type, $exportFilterSchema);
         }
 
-        if (in_array('import-data', $permissions)) {
+        if (PermissionHelper::hasResource('import-export.import')) {
             $actions[] = $this->makeDownloadTemplateAction($type);
             $actions[] = $this->makeImportAction($type);
             $actions[] = $this->makeImportHistoryAction($type);
@@ -106,7 +106,7 @@ trait HasImportExport
             ->color('gray')
             ->icon('heroicon-o-document-arrow-down')
             ->button()
-            ->visible(fn(): bool => in_array('import-data', session()->get('data.permissions', [])))
+            ->visible(fn (): bool => PermissionHelper::hasResource('import-export.import'))
             ->action(function () use ($importType) {
                 return $this->downloadImportTemplate($importType);
             });
@@ -122,7 +122,7 @@ trait HasImportExport
             ->color('gray')
             ->icon('heroicon-o-clock')
             ->button()
-            ->modalHeading('Riwayat Import ' . ucfirst($importType))
+            ->modalHeading('Riwayat Import '.ucfirst($importType))
             ->modalSubmitAction(false)
             ->modalCancelActionLabel('Tutup')
             ->modalContent(function () use ($importType) {
@@ -135,7 +135,7 @@ trait HasImportExport
                     $data = $response->json();
                     // Filter by import type
                     $history = collect($data['data'] ?? [])
-                        ->filter(fn($item) => ($item['import_type'] ?? '') === $importType)
+                        ->filter(fn ($item) => ($item['import_type'] ?? '') === $importType)
                         ->values()
                         ->toArray();
                 }
@@ -147,7 +147,7 @@ trait HasImportExport
     /**
      * Perform the export action.
      */
-    protected function doExportAction(string $exportType, array $data): \Symfony\Component\HttpFoundation\StreamedResponse|null
+    protected function doExportAction(string $exportType, array $data): ?\Symfony\Component\HttpFoundation\StreamedResponse
     {
         $endpoint = match ($exportType) {
             'siswa' => '/import-export/export/siswa',
@@ -158,7 +158,9 @@ trait HasImportExport
             default => null,
         };
 
-        if (!$endpoint) return null;
+        if (! $endpoint) {
+            return null;
+        }
 
         try {
             $response = ApiService::client()->post($endpoint, $data);
@@ -170,10 +172,11 @@ trait HasImportExport
                     ->body($result['message'] ?? 'Export sedang diproses di background.')
                     ->info()
                     ->send();
+
                 return null;
             } elseif ($response->successful()) {
                 $format = $data['format'] ?? 'xlsx';
-                $filename = "export_{$exportType}_" . now()->format('Y-m-d_His') . ".{$format}";
+                $filename = "export_{$exportType}_".now()->format('Y-m-d_His').".{$format}";
                 $content = $response->body();
                 $mimeType = $format === 'xlsx'
                     ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -189,6 +192,7 @@ trait HasImportExport
                     ->body(is_array($errors) ? implode(', ', \Illuminate\Support\Arr::flatten($errors)) : 'Terjadi kesalahan.')
                     ->danger()
                     ->send();
+
                 return null;
             }
         } catch (\Exception $e) {
@@ -197,6 +201,7 @@ trait HasImportExport
                 ->body($e->getMessage())
                 ->danger()
                 ->send();
+
             return null;
         }
     }
@@ -204,7 +209,7 @@ trait HasImportExport
     /**
      * Download import template.
      */
-    protected function downloadImportTemplate(string $importType): \Symfony\Component\HttpFoundation\StreamedResponse|null
+    protected function downloadImportTemplate(string $importType): ?\Symfony\Component\HttpFoundation\StreamedResponse
     {
         try {
             $response = ApiService::client()->get("/import-export/import/template/{$importType}");
@@ -224,6 +229,7 @@ trait HasImportExport
                     ->body('Gagal mengunduh template.')
                     ->danger()
                     ->send();
+
                 return null;
             }
         } catch (\Exception $e) {
@@ -232,6 +238,7 @@ trait HasImportExport
                 ->body($e->getMessage())
                 ->danger()
                 ->send();
+
             return null;
         }
     }
@@ -247,17 +254,18 @@ trait HasImportExport
                 ->body('Pilih file terlebih dahulu.')
                 ->danger()
                 ->send();
+
             return;
         }
 
         try {
             $file = $data['import_file'];
-            if (!$file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+            if (! $file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
                 // Fallback in case it's an array of files (e.g. multiple=true was somehow used)
                 $file = is_array($file) ? collect($file)->first() : $file;
             }
 
-            if (!$file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+            if (! $file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
                 throw new \Exception('File upload tidak valid.');
             }
 
@@ -313,7 +321,9 @@ trait HasImportExport
      */
     protected function confirmImportAction(string $importType): void
     {
-        if (!$this->importPreviewId) return;
+        if (! $this->importPreviewId) {
+            return;
+        }
 
         try {
             $response = ApiService::client()->post("/import-export/import/{$importType}/confirm", [

@@ -114,7 +114,7 @@ class SiswaImportTemplate implements FromArray, WithHeadings, WithStyles
         $this->addDropdownValidation($sheet, 'I', 2, $lastRow, ['TK', 'MI', 'KB']);
 
         // Kelas (column J)
-        if (!empty($this->kelasNames)) {
+        if (! empty($this->kelasNames)) {
             $this->addDropdownValidation($sheet, 'J', 2, $lastRow, $this->kelasNames);
         }
 
@@ -132,7 +132,7 @@ class SiswaImportTemplate implements FromArray, WithHeadings, WithStyles
      */
     private function addDropdownValidation(Worksheet $sheet, string $column, int $startRow, int $endRow, array $options): void
     {
-        $optionString = '"' . implode(',', $options) . '"';
+        $optionString = '"'.implode(',', $options).'"';
 
         for ($row = $startRow; $row <= min($startRow + 99, $endRow); $row++) {
             $cell = $sheet->getCell("{$column}{$row}");

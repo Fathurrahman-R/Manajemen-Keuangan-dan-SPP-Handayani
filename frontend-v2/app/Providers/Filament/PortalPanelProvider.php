@@ -2,12 +2,11 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Pages\Auth\Login;
 use App\Filament\Portal\Pages\PortalBerandaPage;
-use App\Filament\Portal\Pages\PortalTagihanPage;
+use App\Filament\Portal\Pages\PortalProfilPage;
 use App\Filament\Portal\Pages\PortalRiwayatPembayaranPage;
 use App\Filament\Portal\Pages\PortalStatusPembayaranPage;
-use App\Filament\Portal\Pages\PortalProfilPage;
+use App\Filament\Portal\Pages\PortalTagihanPage;
 use App\Http\Middleware\CustomAuthentication;
 use App\Services\BrandingService;
 use Filament\Actions\Action;
@@ -41,7 +40,7 @@ class PortalPanelProvider extends PanelProvider
         return $panel
             ->id('portal')
             ->path($path)
-            ->homeUrl($path . '/beranda')
+            ->homeUrl($path.'/beranda')
             ->darkMode(true)
             ->spa($spa)
             ->breadcrumbs($breadcrumbs)
@@ -62,27 +61,27 @@ class PortalPanelProvider extends PanelProvider
                         NavigationItem::make()
                             ->label('Beranda')
                             ->icon('heroicon-o-home')
-                            ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.portal.pages.portal-beranda-page'))
-                            ->url(fn(): string => PortalBerandaPage::getUrl()),
+                            ->isActiveWhen(fn (): bool => original_request()->routeIs('filament.portal.pages.portal-beranda-page'))
+                            ->url(fn (): string => PortalBerandaPage::getUrl()),
                         NavigationItem::make()
                             ->label('Tagihan')
                             ->icon('heroicon-o-credit-card')
-                            ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.portal.pages.portal-tagihan-page'))
-                            ->url(fn(): string => PortalTagihanPage::getUrl()),
+                            ->isActiveWhen(fn (): bool => original_request()->routeIs('filament.portal.pages.portal-tagihan-page'))
+                            ->url(fn (): string => PortalTagihanPage::getUrl()),
                         NavigationItem::make()
                             ->label('Riwayat')
                             ->icon('heroicon-o-clock')
-                            ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.portal.pages.portal-riwayat-pembayaran-page'))
-                            ->url(fn(): string => PortalRiwayatPembayaranPage::getUrl()),
+                            ->isActiveWhen(fn (): bool => original_request()->routeIs('filament.portal.pages.portal-riwayat-pembayaran-page'))
+                            ->url(fn (): string => PortalRiwayatPembayaranPage::getUrl()),
                         NavigationItem::make()
                             ->label('Profil')
                             ->icon('heroicon-o-user')
-                            ->isActiveWhen(fn(): bool => original_request()->routeIs('filament.portal.pages.portal-profil-page'))
-                            ->url(fn(): string => PortalProfilPage::getUrl()),
+                            ->isActiveWhen(fn (): bool => original_request()->routeIs('filament.portal.pages.portal-profil-page'))
+                            ->url(fn (): string => PortalProfilPage::getUrl()),
                     ]);
             })
             ->userMenuItems([
-                'logout' => fn(Action $action) => $action
+                'logout' => fn (Action $action) => $action
                     ->label('Logout')
                     ->action(function (): void {
                         try {
@@ -96,8 +95,8 @@ class PortalPanelProvider extends PanelProvider
                         session()->invalidate();
                         session()->regenerateToken();
 
-                        redirect()->to(filament()->getLoginUrl())->send();
-                    })
+                        redirect()->to('/login')->send();
+                    }),
             ])
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->brandName($this->resolveBrandName())
@@ -127,7 +126,8 @@ class PortalPanelProvider extends PanelProvider
     protected function resolveBrandName(): string
     {
         $branding = BrandingService::get();
-        return $branding->branchName ? $branding->branchName . ' Portal' : env('APP_NAME', 'Handayani') . ' Portal';
+
+        return $branding->branchName ? $branding->branchName.' Portal' : env('APP_NAME', 'Handayani').' Portal';
     }
 
     protected function resolveBrandLogo(): ?string
@@ -136,6 +136,7 @@ class PortalPanelProvider extends PanelProvider
         if ($branding->hasBranding() && $branding->logoUrl) {
             return $branding->logoUrl;
         }
+
         return null;
     }
 
@@ -145,6 +146,7 @@ class PortalPanelProvider extends PanelProvider
         if ($branding->hasBranding() && $branding->faviconUrl) {
             return $branding->faviconUrl;
         }
+
         return asset('images/logo.jpg');
     }
 
@@ -156,6 +158,7 @@ class PortalPanelProvider extends PanelProvider
                 'primary' => Color::hex($branding->primaryColor),
             ];
         }
+
         return [
             'primary' => Color::hex('#1B4FBF'),
         ];

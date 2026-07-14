@@ -30,7 +30,7 @@ class EmailValidationService
             $query->where('id', '!=', $excludeUserId);
         }
 
-        return !$query->exists();
+        return ! $query->exists();
     }
 
     /**

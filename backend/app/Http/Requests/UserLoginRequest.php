@@ -26,25 +26,25 @@ class UserLoginRequest extends FormRequest
         return [
             'identifier' => ['required_without:username', 'max:255'],
             'username' => ['required_without:identifier', 'max:100'],
-            'password' => ['required', 'min:8', 'max:100']
+            'password' => ['required', 'min:8', 'max:100'],
         ];
     }
 
-//    public function messages(): array
-//    {
-//        return [
-//            'username.required' => 'Username wajib diisi.',
-//            'username.max' => 'Username maksimal 100 karakter.',
-//            'password.required' => 'Password wajib diisi.',
-//            'password.min' => 'Password minimal 8 karakter.',
-//            'password.max' => 'Password maksimal 100 karakter.'
-//        ];
-//    }
+    //    public function messages(): array
+    //    {
+    //        return [
+    //            'username.required' => 'Username wajib diisi.',
+    //            'username.max' => 'Username maksimal 100 karakter.',
+    //            'password.required' => 'Password wajib diisi.',
+    //            'password.min' => 'Password minimal 8 karakter.',
+    //            'password.max' => 'Password maksimal 100 karakter.'
+    //        ];
+    //    }
 
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response([
-            "errors" => $validator->getMessageBag()
-        ],400));
+            'errors' => $validator->getMessageBag(),
+        ], 400));
     }
 }

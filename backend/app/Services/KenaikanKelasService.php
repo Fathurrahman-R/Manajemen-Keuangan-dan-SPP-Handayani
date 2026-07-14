@@ -20,9 +20,6 @@ class KenaikanKelasService
      *
      * Finds the Kelas with the same jenjang and branch_id that has the
      * smallest level value strictly greater than the current Kelas's level.
-     *
-     * @param Kelas $currentKelas
-     * @return Kelas|null
      */
     public function getNextKelas(Kelas $currentKelas): ?Kelas
     {
@@ -43,9 +40,6 @@ class KenaikanKelasService
      *
      * Returns true if no other Kelas in the same jenjang and branch_id
      * has a higher level value.
-     *
-     * @param Kelas $kelas
-     * @return bool
      */
     public function isKelasTertinggi(Kelas $kelas): bool
     {
@@ -53,7 +47,7 @@ class KenaikanKelasService
             return false;
         }
 
-        return !Kelas::where('jenjang', $kelas->jenjang)
+        return ! Kelas::where('jenjang', $kelas->jenjang)
             ->where('branch_id', $kelas->branch_id)
             ->where('level', '>', $kelas->level)
             ->whereNotNull('level')
@@ -65,10 +59,6 @@ class KenaikanKelasService
      *
      * Returns active students (status = 'Aktif') who have a SiswaKelas
      * record in the specified kelas for the given tahun ajaran.
-     *
-     * @param int $kelasId
-     * @param int $sourceTahunAjaranId
-     * @return Collection
      */
     public function getEligibleStudents(int $kelasId, int $sourceTahunAjaranId): Collection
     {
@@ -86,10 +76,6 @@ class KenaikanKelasService
      * Only the following transitions are permitted:
      * - KB → TK
      * - TK → MI
-     *
-     * @param string $fromJenjang
-     * @param string $toJenjang
-     * @return bool
      */
     public function validateAllowedTransition(string $fromJenjang, string $toJenjang): bool
     {
@@ -108,13 +94,6 @@ class KenaikanKelasService
      * Moves a single student to a specified target class for the target period.
      * Supports cross-jenjang transfers when isPindahJenjang is true.
      *
-     * @param int $siswaId
-     * @param int $targetKelasId
-     * @param int $targetTahunAjaranId
-     * @param bool $isPindahJenjang
-     * @param int $userId
-     * @param int $branchId
-     * @return array
      *
      * @throws HttpResponseException
      */
@@ -131,10 +110,10 @@ class KenaikanKelasService
             ->where('branch_id', $branchId)
             ->first();
 
-        if (!$siswa) {
+        if (! $siswa) {
             throw new HttpResponseException(
                 response()->json([
-                    'errors' => ['siswa_id' => ['Siswa tidak ditemukan atau bukan milik branch Anda.']]
+                    'errors' => ['siswa_id' => ['Siswa tidak ditemukan atau bukan milik branch Anda.']],
                 ], 422)
             );
         }
@@ -144,10 +123,10 @@ class KenaikanKelasService
             ->where('branch_id', $branchId)
             ->first();
 
-        if (!$targetKelas) {
+        if (! $targetKelas) {
             throw new HttpResponseException(
                 response()->json([
-                    'errors' => ['target_kelas_id' => ['Kelas tujuan tidak ditemukan atau bukan milik branch Anda.']]
+                    'errors' => ['target_kelas_id' => ['Kelas tujuan tidak ditemukan atau bukan milik branch Anda.']],
                 ], 422)
             );
         }
@@ -155,10 +134,10 @@ class KenaikanKelasService
         // 3. Get active TahunAjaran (source period)
         $activePeriod = TahunAjaran::getAktif($branchId);
 
-        if (!$activePeriod) {
+        if (! $activePeriod) {
             throw new HttpResponseException(
                 response()->json([
-                    'errors' => ['tahun_ajaran_id' => ['Tidak ada tahun ajaran aktif untuk branch ini.']]
+                    'errors' => ['tahun_ajaran_id' => ['Tidak ada tahun ajaran aktif untuk branch ini.']],
                 ], 422)
             );
         }
@@ -167,7 +146,7 @@ class KenaikanKelasService
         if ($targetTahunAjaranId === $activePeriod->id) {
             throw new HttpResponseException(
                 response()->json([
-                    'errors' => ['tahun_ajaran_id' => ['Periode tujuan harus berbeda dari periode sumber.']]
+                    'errors' => ['tahun_ajaran_id' => ['Periode tujuan harus berbeda dari periode sumber.']],
                 ], 422)
             );
         }
@@ -180,7 +159,7 @@ class KenaikanKelasService
         $sourceKelasId = $sourceSiswaKelas ? $sourceSiswaKelas->kelas_id : $siswa->kelas_id;
 
         // 6. If not pindah jenjang: validate target kelas jenjang matches siswa's current jenjang
-        if (!$isPindahJenjang) {
+        if (! $isPindahJenjang) {
             $sourceKelas = $sourceSiswaKelas
                 ? Kelas::find($sourceSiswaKelas->kelas_id)
                 : null;
@@ -190,7 +169,7 @@ class KenaikanKelasService
             if ($targetKelas->jenjang !== $siswaJenjang) {
                 throw new HttpResponseException(
                     response()->json([
-                        'errors' => ['target_kelas_id' => ['Jenjang kelas tujuan harus sama dengan jenjang siswa.']]
+                        'errors' => ['target_kelas_id' => ['Jenjang kelas tujuan harus sama dengan jenjang siswa.']],
                     ], 422)
                 );
             }
@@ -259,11 +238,6 @@ class KenaikanKelasService
      * Keeps specified students in the same class for the target tahun ajaran period.
      * Creates SiswaKelas records with the same kelas_id from the source period.
      *
-     * @param array $siswaIds
-     * @param int $targetTahunAjaranId
-     * @param int $userId
-     * @param int $branchId
-     * @return array
      *
      * @throws HttpResponseException
      */
@@ -272,10 +246,10 @@ class KenaikanKelasService
         // 1. Get active TahunAjaran (source period)
         $sourceTahunAjaran = TahunAjaran::getAktif($branchId);
 
-        if (!$sourceTahunAjaran) {
+        if (! $sourceTahunAjaran) {
             throw new HttpResponseException(
                 response()->json([
-                    'errors' => ['message' => ['Tidak ada tahun ajaran aktif untuk branch ini.']]
+                    'errors' => ['message' => ['Tidak ada tahun ajaran aktif untuk branch ini.']],
                 ], 422)
             );
         }
@@ -284,7 +258,7 @@ class KenaikanKelasService
         if ($targetTahunAjaranId === $sourceTahunAjaran->id) {
             throw new HttpResponseException(
                 response()->json([
-                    'errors' => ['tahun_ajaran_id' => ['Periode tujuan harus berbeda dari periode sumber.']]
+                    'errors' => ['tahun_ajaran_id' => ['Periode tujuan harus berbeda dari periode sumber.']],
                 ], 422)
             );
         }
@@ -325,7 +299,7 @@ class KenaikanKelasService
                     ->where('branch_id', $branchId)
                     ->first();
 
-                if (!$siswa) {
+                if (! $siswa) {
                     $totalSkipped++;
                     $skipped[] = [
                         'siswa_id' => $siswaId,
@@ -333,6 +307,7 @@ class KenaikanKelasService
                         'nis' => null,
                         'reason' => 'Siswa tidak ditemukan atau bukan milik branch Anda',
                     ];
+
                     continue;
                 }
 
@@ -341,7 +316,7 @@ class KenaikanKelasService
                     ->where('tahun_ajaran_id', $sourceTahunAjaran->id)
                     ->first();
 
-                if (!$sourceSiswaKelas) {
+                if (! $sourceSiswaKelas) {
                     $totalSkipped++;
                     $skipped[] = [
                         'siswa_id' => $siswa->id,
@@ -349,6 +324,7 @@ class KenaikanKelasService
                         'nis' => $siswa->nis,
                         'reason' => 'Tidak memiliki kelas di periode sumber',
                     ];
+
                     continue;
                 }
 
@@ -403,11 +379,6 @@ class KenaikanKelasService
      * Promotes all active students from the source kelas to the next kelas
      * in the hierarchy for the target tahun ajaran period.
      *
-     * @param int $kelasId
-     * @param int $targetTahunAjaranId
-     * @param int $userId
-     * @param int $branchId
-     * @return array
      *
      * @throws HttpResponseException
      */
@@ -418,10 +389,10 @@ class KenaikanKelasService
             ->where('branch_id', $branchId)
             ->first();
 
-        if (!$kelas) {
+        if (! $kelas) {
             throw new HttpResponseException(
                 response()->json([
-                    'errors' => ['kelas_id' => ['Kelas tidak ditemukan atau bukan milik branch Anda.']]
+                    'errors' => ['kelas_id' => ['Kelas tidak ditemukan atau bukan milik branch Anda.']],
                 ], 422)
             );
         }
@@ -429,10 +400,10 @@ class KenaikanKelasService
         // 2. Get the active TahunAjaran for the branch (source period)
         $sourceTahunAjaran = TahunAjaran::getAktif($branchId);
 
-        if (!$sourceTahunAjaran) {
+        if (! $sourceTahunAjaran) {
             throw new HttpResponseException(
                 response()->json([
-                    'errors' => ['message' => ['Tidak ada tahun ajaran aktif untuk branch ini.']]
+                    'errors' => ['message' => ['Tidak ada tahun ajaran aktif untuk branch ini.']],
                 ], 422)
             );
         }
@@ -441,7 +412,7 @@ class KenaikanKelasService
         if ($targetTahunAjaranId === $sourceTahunAjaran->id) {
             throw new HttpResponseException(
                 response()->json([
-                    'errors' => ['tahun_ajaran_id' => ['Periode tujuan harus berbeda dari periode sumber.']]
+                    'errors' => ['tahun_ajaran_id' => ['Periode tujuan harus berbeda dari periode sumber.']],
                 ], 422)
             );
         }
@@ -449,10 +420,10 @@ class KenaikanKelasService
         // 4. Get next kelas in hierarchy
         $nextKelas = $this->getNextKelas($kelas);
 
-        if (!$nextKelas) {
+        if (! $nextKelas) {
             throw new HttpResponseException(
                 response()->json([
-                    'errors' => ['kelas_id' => ['Tidak ada kelas berikutnya dalam hierarki. Siswa berada di kelas tertinggi, gunakan kelulusan atau pindah jenjang.']]
+                    'errors' => ['kelas_id' => ['Tidak ada kelas berikutnya dalam hierarki. Siswa berada di kelas tertinggi, gunakan kelulusan atau pindah jenjang.']],
                 ], 422)
             );
         }
@@ -464,7 +435,7 @@ class KenaikanKelasService
         if ($eligibleStudents->isEmpty()) {
             throw new HttpResponseException(
                 response()->json([
-                    'errors' => ['kelas_id' => ['Tidak ada siswa yang memenuhi syarat untuk promosi di kelas ini.']]
+                    'errors' => ['kelas_id' => ['Tidak ada siswa yang memenuhi syarat untuk promosi di kelas ini.']],
                 ], 422)
             );
         }
@@ -515,6 +486,7 @@ class KenaikanKelasService
                         'nis' => $siswa->nis,
                         'reason' => 'Sudah memiliki penempatan kelas untuk periode tujuan',
                     ];
+
                     continue;
                 }
 
@@ -563,11 +535,6 @@ class KenaikanKelasService
      * Sets their status to "Lulus" and kelas_id to NULL.
      * Does NOT create SiswaKelas records for the target period.
      *
-     * @param array $siswaIds
-     * @param int $targetTahunAjaranId
-     * @param int $userId
-     * @param int $branchId
-     * @return array
      *
      * @throws HttpResponseException
      */
@@ -576,10 +543,10 @@ class KenaikanKelasService
         // 1. Get active TahunAjaran (source period)
         $sourceTahunAjaran = TahunAjaran::getAktif($branchId);
 
-        if (!$sourceTahunAjaran) {
+        if (! $sourceTahunAjaran) {
             throw new HttpResponseException(
                 response()->json([
-                    'errors' => ['message' => ['Tidak ada tahun ajaran aktif untuk branch ini.']]
+                    'errors' => ['message' => ['Tidak ada tahun ajaran aktif untuk branch ini.']],
                 ], 422)
             );
         }
@@ -588,7 +555,7 @@ class KenaikanKelasService
         if ($targetTahunAjaranId === $sourceTahunAjaran->id) {
             throw new HttpResponseException(
                 response()->json([
-                    'errors' => ['tahun_ajaran_id' => ['Periode tujuan harus berbeda dari periode sumber.']]
+                    'errors' => ['tahun_ajaran_id' => ['Periode tujuan harus berbeda dari periode sumber.']],
                 ], 422)
             );
         }
@@ -629,12 +596,13 @@ class KenaikanKelasService
                     ->where('branch_id', $branchId)
                     ->first();
 
-                if (!$siswa) {
+                if (! $siswa) {
                     $totalSkipped++;
                     $skipped[] = [
                         'siswa_id' => $siswaId,
                         'reason' => 'siswa tidak ditemukan',
                     ];
+
                     continue;
                 }
 
@@ -647,6 +615,7 @@ class KenaikanKelasService
                         'nis' => $siswa->nis,
                         'reason' => 'status tidak aktif',
                     ];
+
                     continue;
                 }
 
@@ -658,7 +627,7 @@ class KenaikanKelasService
                 $currentKelas = $siswaKelas ? Kelas::find($siswaKelas->kelas_id) : null;
 
                 // Skip if current kelas is null or not kelas tertinggi
-                if (!$currentKelas || !$this->isKelasTertinggi($currentKelas)) {
+                if (! $currentKelas || ! $this->isKelasTertinggi($currentKelas)) {
                     $totalSkipped++;
                     $skipped[] = [
                         'siswa_id' => $siswa->id,
@@ -666,6 +635,7 @@ class KenaikanKelasService
                         'nis' => $siswa->nis,
                         'reason' => 'bukan kelas tertinggi',
                     ];
+
                     continue;
                 }
 
@@ -706,12 +676,6 @@ class KenaikanKelasService
      * Transfers a graduated student from one jenjang to the next (KB→TK, TK→MI).
      * Updates the student's jenjang, status, and creates placement records.
      *
-     * @param int $siswaId
-     * @param int $targetKelasId
-     * @param int $targetTahunAjaranId
-     * @param int $userId
-     * @param int $branchId
-     * @return array
      *
      * @throws HttpResponseException
      */
@@ -722,7 +686,7 @@ class KenaikanKelasService
             ->where('branch_id', $branchId)
             ->first();
 
-        if (!$siswa) {
+        if (! $siswa) {
             throw new HttpResponseException(response()->json([
                 'message' => 'Siswa tidak ditemukan',
             ], 404));
@@ -740,14 +704,14 @@ class KenaikanKelasService
             ->where('branch_id', $branchId)
             ->first();
 
-        if (!$targetKelas) {
+        if (! $targetKelas) {
             throw new HttpResponseException(response()->json([
                 'message' => 'Kelas tujuan tidak ditemukan',
             ], 404));
         }
 
         // 4. Validate allowed transition (KB→TK, TK→MI)
-        if (!$this->validateAllowedTransition($siswa->jenjang, $targetKelas->jenjang)) {
+        if (! $this->validateAllowedTransition($siswa->jenjang, $targetKelas->jenjang)) {
             throw new HttpResponseException(response()->json([
                 'message' => 'Transisi jenjang tidak diperbolehkan',
             ], 422));
@@ -756,7 +720,7 @@ class KenaikanKelasService
         // 5. Get active TahunAjaran (source period)
         $activeTahunAjaran = TahunAjaran::getAktif($branchId);
 
-        if (!$activeTahunAjaran) {
+        if (! $activeTahunAjaran) {
             throw new HttpResponseException(response()->json([
                 'message' => 'Tidak ada tahun ajaran aktif',
             ], 422));
@@ -845,9 +809,6 @@ class KenaikanKelasService
      * for the target period, restores siswa status, jenjang, and kelas_id.
      * Skips students whose SiswaKelas has been manually modified after the batch.
      *
-     * @param string $batchId
-     * @param int $branchId
-     * @return array
      *
      * @throws HttpResponseException
      */
@@ -858,7 +819,7 @@ class KenaikanKelasService
             ->where('branch_id', $branchId)
             ->first();
 
-        if (!$batch) {
+        if (! $batch) {
             throw new HttpResponseException(
                 response()->json([
                     'message' => 'Batch tidak ditemukan.',
@@ -910,6 +871,7 @@ class KenaikanKelasService
                                 'nama' => $detail->siswa ? $detail->siswa->nama : null,
                                 'reason' => 'penempatan kelas sudah diubah',
                             ];
+
                             continue;
                         }
 

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Helpers\PermissionHelper;
 use App\Services\ApiService;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -34,15 +35,15 @@ class DashboardKasStatsWidget extends BaseWidget
         $saldo = (int) ($data['saldo'] ?? ($pemasukan - $pengeluaran));
 
         return [
-            Stat::make('Pemasukan Periode', 'Rp ' . number_format($pemasukan, 0, ',', '.'))
+            Stat::make('Pemasukan Periode', 'Rp '.number_format($pemasukan, 0, ',', '.'))
                 ->description('Total pembayaran pada periode ini')
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
                 ->color('success'),
-            Stat::make('Pengeluaran Periode', 'Rp ' . number_format($pengeluaran, 0, ',', '.'))
+            Stat::make('Pengeluaran Periode', 'Rp '.number_format($pengeluaran, 0, ',', '.'))
                 ->description('Total pengeluaran pada periode ini')
                 ->descriptionIcon('heroicon-m-arrow-trending-down')
                 ->color('danger'),
-            Stat::make('Saldo Periode', 'Rp ' . number_format($saldo, 0, ',', '.'))
+            Stat::make('Saldo Periode', 'Rp '.number_format($saldo, 0, ',', '.'))
                 ->description('Pemasukan dikurangi pengeluaran')
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color($saldo >= 0 ? 'success' : 'danger'),
@@ -51,6 +52,6 @@ class DashboardKasStatsWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return in_array('view-dashboard', session()->get('data.permissions', []));
+        return PermissionHelper::hasResource('dashboard');
     }
 }

@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('jenis_tagihans', function (Blueprint $table) {
             $table->id();
-            $table->string('nama',100)->nullable(false);
+            $table->string('nama', 100)->nullable(false);
             $table->date('jatuh_tempo')->nullable(false);
-            $table->decimal('jumlah',12,2)->nullable(false);
+            $table->decimal('jumlah', 12, 2)->nullable(false);
             $table->timestamps();
         });
     }

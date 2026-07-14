@@ -45,7 +45,7 @@ class TahunAjaranController extends Controller
 
         if ($exists) {
             throw new HttpResponseException(response([
-                'errors' => ['nama' => ['Nama tahun ajaran sudah ada untuk branch ini.']]
+                'errors' => ['nama' => ['Nama tahun ajaran sudah ada untuk branch ini.']],
             ], 422));
         }
 
@@ -92,7 +92,7 @@ class TahunAjaranController extends Controller
 
         if ($exists) {
             throw new HttpResponseException(response([
-                'errors' => ['nama' => ['Nama tahun ajaran sudah ada untuk branch ini.']]
+                'errors' => ['nama' => ['Nama tahun ajaran sudah ada untuk branch ini.']],
             ], 422));
         }
 
@@ -120,7 +120,7 @@ class TahunAjaranController extends Controller
 
         if ($hasTagihan || $hasJenisTagihan || $hasSiswaKelas) {
             throw new HttpResponseException(response([
-                'errors' => ['message' => ['Tahun ajaran tidak dapat dihapus karena memiliki data terkait.']]
+                'errors' => ['message' => ['Tahun ajaran tidak dapat dihapus karena memiliki data terkait.']],
             ], 409));
         }
 
@@ -175,15 +175,15 @@ class TahunAjaranController extends Controller
     {
         $tahunAjaran = TahunAjaran::find($id);
 
-        if (!$tahunAjaran) {
+        if (! $tahunAjaran) {
             throw new HttpResponseException(response([
-                'errors' => ['message' => ['Tahun ajaran tidak ditemukan.']]
+                'errors' => ['message' => ['Tahun ajaran tidak ditemukan.']],
             ], 404));
         }
 
         if ($tahunAjaran->branch_id !== Auth::user()->branch_id) {
             throw new HttpResponseException(response([
-                'errors' => ['message' => ['Anda tidak memiliki izin untuk melakukan operasi ini.']]
+                'errors' => ['message' => ['Anda tidak memiliki izin untuk melakukan operasi ini.']],
             ], 403));
         }
 
@@ -198,7 +198,7 @@ class TahunAjaranController extends Controller
         $parts = explode('/', $nama);
         if (count($parts) !== 2) {
             throw new HttpResponseException(response([
-                'errors' => ['nama' => ['Format nama harus YYYY/YYYY dengan tahun kedua = tahun pertama + 1.']]
+                'errors' => ['nama' => ['Format nama harus YYYY/YYYY dengan tahun kedua = tahun pertama + 1.']],
             ], 422));
         }
 
@@ -207,7 +207,7 @@ class TahunAjaranController extends Controller
 
         if ($secondYear !== $firstYear + 1) {
             throw new HttpResponseException(response([
-                'errors' => ['nama' => ['Format nama harus YYYY/YYYY dengan tahun kedua = tahun pertama + 1.']]
+                'errors' => ['nama' => ['Format nama harus YYYY/YYYY dengan tahun kedua = tahun pertama + 1.']],
             ], 422));
         }
     }

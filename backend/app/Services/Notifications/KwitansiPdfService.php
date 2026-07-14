@@ -4,7 +4,6 @@ namespace App\Services\Notifications;
 
 use App\Http\Controllers\PdfGeneratorController;
 use App\Http\Controllers\PembayaranController;
-use App\Models\AppSetting;
 use App\Models\Pembayaran;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -35,19 +34,19 @@ class KwitansiPdfService
             // Absolute filesystem path DomPDF can read
             $logo = \Illuminate\Support\Facades\Storage::disk('public')->path($logoRelative);
         }
-        if (!$logo) {
+        if (! $logo) {
             $logo = public_path('favicon.ico');
         }
 
         $viewData = [
             'kode_pembayaran' => $data['kode_pembayaran'],
-            'setting'   => $data['setting'] ?? [],
-            'tanggal'   => $data['tanggal'] ?? null,
-            'pembayar'  => $data['pembayar'] ?? null,
-            'jumlah'    => $data['jumlah'] ?? 0,
-            'untuk'     => $data['untuk'] ?? '-',
-            'sejumlah'  => $data['sejumlah'] ?? '-',
-            'logo'      => $logo,
+            'setting' => $data['setting'] ?? [],
+            'tanggal' => $data['tanggal'] ?? null,
+            'pembayar' => $data['pembayar'] ?? null,
+            'jumlah' => $data['jumlah'] ?? 0,
+            'untuk' => $data['untuk'] ?? '-',
+            'sejumlah' => $data['sejumlah'] ?? '-',
+            'logo' => $logo,
         ];
 
         $pdf = Pdf::loadView('kwitansi', $viewData)
@@ -61,6 +60,6 @@ class KwitansiPdfService
      */
     public function filenameFor(Pembayaran $pembayaran): string
     {
-        return 'kwitansi-' . $pembayaran->kode_pembayaran . '.pdf';
+        return 'kwitansi-'.$pembayaran->kode_pembayaran.'.pdf';
     }
 }

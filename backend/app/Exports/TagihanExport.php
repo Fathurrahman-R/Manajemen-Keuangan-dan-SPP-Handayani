@@ -3,14 +3,13 @@
 namespace App\Exports;
 
 use App\Models\Kelas;
-use App\Models\TahunAjaran;
 use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class TagihanExport implements FromQuery, WithHeadings, WithMapping, WithChunkReading
+class TagihanExport implements FromQuery, WithChunkReading, WithHeadings, WithMapping
 {
     public function __construct(
         private Builder $query,
@@ -39,7 +38,7 @@ class TagihanExport implements FromQuery, WithHeadings, WithMapping, WithChunkRe
     }
 
     /**
-     * @param \App\Models\Tagihan $tagihan
+     * @param  \App\Models\Tagihan  $tagihan
      */
     public function map($tagihan): array
     {
@@ -75,7 +74,7 @@ class TagihanExport implements FromQuery, WithHeadings, WithMapping, WithChunkRe
      */
     private function resolveKelasName($siswa): ?string
     {
-        if (!$siswa) {
+        if (! $siswa) {
             return null;
         }
 
@@ -86,6 +85,7 @@ class TagihanExport implements FromQuery, WithHeadings, WithMapping, WithChunkRe
 
         if ($siswaKelas) {
             $kelas = Kelas::find($siswaKelas->kelas_id);
+
             return $kelas?->nama;
         }
 

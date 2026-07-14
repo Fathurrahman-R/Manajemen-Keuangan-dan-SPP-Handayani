@@ -34,7 +34,7 @@ class NotificationService
     {
         $setting = NotificationSetting::where('branch_id', $branchId)->first();
 
-        if (!$setting) {
+        if (! $setting) {
             return true; // Default enabled if no settings configured
         }
 
@@ -92,6 +92,7 @@ class NotificationService
         }
 
         RateLimiter::hit($key, 3600); // 1 hour window
+
         return true;
     }
 
@@ -112,7 +113,7 @@ class NotificationService
         $tagihanKode = $tagihans->first()?->kode_tagihan;
 
         // Check branch setting enabled
-        if (!$this->isEnabled($branchId, 'tagihan_baru')) {
+        if (! $this->isEnabled($branchId, 'tagihan_baru')) {
             $this->logNotification([
                 'branch_id' => $branchId,
                 'recipient_email' => '',
@@ -121,6 +122,7 @@ class NotificationService
                 'status' => 'skipped',
                 'reason' => 'disabled',
             ]);
+
             return;
         }
 
@@ -128,7 +130,7 @@ class NotificationService
         $siswa->loadMissing(['user', 'wali', 'ibu', 'ayah']);
         $email = $this->recipientResolver->resolve($siswa);
 
-        if (!$email) {
+        if (! $email) {
             $this->logNotification([
                 'branch_id' => $branchId,
                 'recipient_email' => '',
@@ -137,6 +139,7 @@ class NotificationService
                 'status' => 'skipped',
                 'reason' => 'no_email_available',
             ]);
+
             return;
         }
 
@@ -150,11 +153,12 @@ class NotificationService
                 'status' => 'skipped',
                 'reason' => 'opted_out',
             ]);
+
             return;
         }
 
         // Validate email
-        if (!$this->validateEmail($email)) {
+        if (! $this->validateEmail($email)) {
             $this->logNotification([
                 'branch_id' => $branchId,
                 'recipient_email' => $email,
@@ -163,11 +167,12 @@ class NotificationService
                 'status' => 'skipped',
                 'reason' => 'invalid_email',
             ]);
+
             return;
         }
 
         // Check rate limit
-        if (!$this->checkRateLimit($branchId)) {
+        if (! $this->checkRateLimit($branchId)) {
             $this->logNotification([
                 'branch_id' => $branchId,
                 'recipient_email' => $email,
@@ -176,6 +181,7 @@ class NotificationService
                 'status' => 'skipped',
                 'reason' => 'rate_limited',
             ]);
+
             return;
         }
 
@@ -221,7 +227,7 @@ class NotificationService
         $tagihanKode = $pembayaran->kode_tagihan;
 
         // Check branch setting enabled
-        if (!$this->isEnabled($branchId, 'kwitansi')) {
+        if (! $this->isEnabled($branchId, 'kwitansi')) {
             $this->logNotification([
                 'branch_id' => $branchId,
                 'recipient_email' => '',
@@ -230,13 +236,14 @@ class NotificationService
                 'status' => 'skipped',
                 'reason' => 'disabled',
             ]);
+
             return;
         }
 
         // Resolve recipient
         $email = $this->recipientResolver->resolve($siswa);
 
-        if (!$email) {
+        if (! $email) {
             $this->logNotification([
                 'branch_id' => $branchId,
                 'recipient_email' => '',
@@ -245,6 +252,7 @@ class NotificationService
                 'status' => 'skipped',
                 'reason' => 'no_email_available',
             ]);
+
             return;
         }
 
@@ -258,11 +266,12 @@ class NotificationService
                 'status' => 'skipped',
                 'reason' => 'opted_out',
             ]);
+
             return;
         }
 
         // Validate email
-        if (!$this->validateEmail($email)) {
+        if (! $this->validateEmail($email)) {
             $this->logNotification([
                 'branch_id' => $branchId,
                 'recipient_email' => $email,
@@ -271,11 +280,12 @@ class NotificationService
                 'status' => 'skipped',
                 'reason' => 'invalid_email',
             ]);
+
             return;
         }
 
         // Check rate limit
-        if (!$this->checkRateLimit($branchId)) {
+        if (! $this->checkRateLimit($branchId)) {
             $this->logNotification([
                 'branch_id' => $branchId,
                 'recipient_email' => $email,
@@ -284,6 +294,7 @@ class NotificationService
                 'status' => 'skipped',
                 'reason' => 'rate_limited',
             ]);
+
             return;
         }
 
@@ -342,7 +353,7 @@ class NotificationService
                     ->get();
 
                 foreach ($tagihans as $tagihan) {
-                    $notificationType = "reminder";
+                    $notificationType = 'reminder';
 
                     // Check if already sent today
                     if (NotificationSentRecord::alreadySent($tagihan->kode_tagihan, $notificationType)) {
@@ -350,13 +361,13 @@ class NotificationService
                     }
 
                     $siswa = $tagihan->siswa;
-                    if (!$siswa) {
+                    if (! $siswa) {
                         continue;
                     }
 
                     // Resolve recipient
                     $email = $this->recipientResolver->resolve($siswa);
-                    if (!$email) {
+                    if (! $email) {
                         $this->logNotification([
                             'branch_id' => $branchId,
                             'recipient_email' => '',
@@ -365,6 +376,7 @@ class NotificationService
                             'status' => 'skipped',
                             'reason' => 'no_email_available',
                         ]);
+
                         continue;
                     }
 
@@ -378,11 +390,12 @@ class NotificationService
                             'status' => 'skipped',
                             'reason' => 'opted_out',
                         ]);
+
                         continue;
                     }
 
                     // Validate email
-                    if (!$this->validateEmail($email)) {
+                    if (! $this->validateEmail($email)) {
                         $this->logNotification([
                             'branch_id' => $branchId,
                             'recipient_email' => $email,
@@ -391,11 +404,12 @@ class NotificationService
                             'status' => 'skipped',
                             'reason' => 'invalid_email',
                         ]);
+
                         continue;
                     }
 
                     // Check rate limit
-                    if (!$this->checkRateLimit($branchId)) {
+                    if (! $this->checkRateLimit($branchId)) {
                         $this->logNotification([
                             'branch_id' => $branchId,
                             'recipient_email' => $email,
@@ -404,6 +418,7 @@ class NotificationService
                             'status' => 'skipped',
                             'reason' => 'rate_limited',
                         ]);
+
                         continue;
                     }
 
@@ -483,13 +498,13 @@ class NotificationService
                 }
 
                 $siswa = $tagihan->siswa;
-                if (!$siswa) {
+                if (! $siswa) {
                     continue;
                 }
 
                 // Resolve recipient
                 $email = $this->recipientResolver->resolve($siswa);
-                if (!$email) {
+                if (! $email) {
                     $this->logNotification([
                         'branch_id' => $branchId,
                         'recipient_email' => '',
@@ -498,6 +513,7 @@ class NotificationService
                         'status' => 'skipped',
                         'reason' => 'no_email_available',
                     ]);
+
                     continue;
                 }
 
@@ -511,11 +527,12 @@ class NotificationService
                         'status' => 'skipped',
                         'reason' => 'opted_out',
                     ]);
+
                     continue;
                 }
 
                 // Validate email
-                if (!$this->validateEmail($email)) {
+                if (! $this->validateEmail($email)) {
                     $this->logNotification([
                         'branch_id' => $branchId,
                         'recipient_email' => $email,
@@ -524,11 +541,12 @@ class NotificationService
                         'status' => 'skipped',
                         'reason' => 'invalid_email',
                     ]);
+
                     continue;
                 }
 
                 // Check rate limit
-                if (!$this->checkRateLimit($branchId)) {
+                if (! $this->checkRateLimit($branchId)) {
                     $this->logNotification([
                         'branch_id' => $branchId,
                         'recipient_email' => $email,
@@ -537,6 +555,7 @@ class NotificationService
                         'status' => 'skipped',
                         'reason' => 'rate_limited',
                     ]);
+
                     continue;
                 }
 
@@ -617,21 +636,23 @@ class NotificationService
                             'status' => 'skipped',
                             'reason' => 'no_email_available',
                         ]);
+
                         continue;
                     }
                 }
 
                 // Validate email before retrying
-                if (!$this->validateEmail($email)) {
+                if (! $this->validateEmail($email)) {
                     $log->update([
                         'status' => 'skipped',
                         'reason' => 'invalid_email',
                     ]);
+
                     continue;
                 }
 
                 // Check rate limit
-                if (!$this->checkRateLimit($log->branch_id)) {
+                if (! $this->checkRateLimit($log->branch_id)) {
                     continue; // Will be retried later
                 }
 

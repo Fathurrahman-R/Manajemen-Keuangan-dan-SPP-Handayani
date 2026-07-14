@@ -22,12 +22,12 @@ class UserResource extends JsonResource
             'email_verified_at' => $this->email_verified_at,
             'is_active' => (bool) $this->is_active,
             'must_change_password' => (bool) $this->must_change_password,
-            'branch' => $this->whenLoaded('branch', fn() => [
+            'branch' => $this->whenLoaded('branch', fn () => [
                 'id' => $this->branch->id,
                 'location' => $this->branch->location,
             ]),
-            'roles' => $this->whenLoaded('roles', fn() => $this->getRoleNames()->toArray()),
-            'siswa' => $this->whenLoaded('siswa', fn() => [
+            'roles' => $this->whenLoaded('roles', fn () => $this->getRoleNames()->toArray()),
+            'siswa' => $this->whenLoaded('siswa', fn () => [
                 'id' => $this->siswa->id,
                 'ayah' => $this->siswa->ayah ? [
                     'nama' => $this->siswa->ayah->nama,

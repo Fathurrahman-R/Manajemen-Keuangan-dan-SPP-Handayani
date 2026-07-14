@@ -44,6 +44,7 @@ class SiswaImportValidator implements ToCollection, WithHeadingRow
                 return false;
             }
         }
+
         return true;
     }
 
@@ -55,7 +56,7 @@ class SiswaImportValidator implements ToCollection, WithHeadingRow
         $normalized = [];
         foreach ($row as $key => $value) {
             $normalizedKey = $this->normalizeKey($key);
-            
+
             // Handle Excel dates
             if ($normalizedKey === 'tanggal_lahir' && is_numeric($value)) {
                 try {
@@ -64,7 +65,7 @@ class SiswaImportValidator implements ToCollection, WithHeadingRow
                     // fallback to the original value if it can't be parsed
                 }
             }
-            
+
             $normalized[$normalizedKey] = is_string($value) ? trim($value) : $value;
         }
 
@@ -77,7 +78,7 @@ class SiswaImportValidator implements ToCollection, WithHeadingRow
         }
 
         // Normalize Jenis Kelamin
-        if (!empty($normalized['jenis_kelamin'])) {
+        if (! empty($normalized['jenis_kelamin'])) {
             $jk = strtolower(str_replace(' ', '', $normalized['jenis_kelamin']));
             if (in_array($jk, ['l', 'laki', 'laki-laki', 'lakilaki'])) {
                 $normalized['jenis_kelamin'] = 'Laki-laki';
@@ -87,7 +88,7 @@ class SiswaImportValidator implements ToCollection, WithHeadingRow
         }
 
         // Normalize Agama
-        if (!empty($normalized['agama'])) {
+        if (! empty($normalized['agama'])) {
             $agama = strtolower(trim($normalized['agama']));
             if ($agama === 'protestan') {
                 $normalized['agama'] = 'Kristen';

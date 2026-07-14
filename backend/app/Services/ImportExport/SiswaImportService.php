@@ -53,7 +53,7 @@ class SiswaImportService
         $kelasRecords = Kelas::where('branch_id', $branchId)
             ->get()
             ->keyBy(function ($kelas) {
-                return strtolower($kelas->nama . '|' . $kelas->jenjang);
+                return strtolower($kelas->nama.'|'.$kelas->jenjang);
             });
 
         // Track NIS within the file to detect intra-file duplicates
@@ -107,13 +107,13 @@ class SiswaImportService
     {
         $cached = Cache::get("import_preview:{$previewId}");
 
-        if (!$cached) {
+        if (! $cached) {
             throw new \InvalidArgumentException('Sesi preview telah kedaluwarsa. Silakan upload ulang file.');
         }
 
         // Check Periode_Aktif exists
         $periodeAktif = TahunAjaran::getAktif($branchId);
-        if (!$periodeAktif) {
+        if (! $periodeAktif) {
             throw new \InvalidArgumentException('Periode aktif belum diatur untuk cabang ini.');
         }
 
@@ -169,7 +169,7 @@ class SiswaImportService
     {
         $cached = Cache::get("import_preview:{$previewId}");
 
-        if (!$cached) {
+        if (! $cached) {
             throw new \InvalidArgumentException('Sesi preview telah kedaluwarsa. Silakan upload ulang file.');
         }
 
@@ -210,7 +210,7 @@ class SiswaImportService
             foreach ($validData as $row) {
                 // Create Ayah record if parent data present
                 $ayahId = null;
-                if (!empty($row['nama_ayah'])) {
+                if (! empty($row['nama_ayah'])) {
                     $ayah = Ayah::create([
                         'nama' => $row['nama_ayah'],
                         'pendidikan_terakhir' => $row['pendidikan_terakhir_ayah'] ?? null,
@@ -222,7 +222,7 @@ class SiswaImportService
 
                 // Create Ibu record if parent data present
                 $ibuId = null;
-                if (!empty($row['nama_ibu'])) {
+                if (! empty($row['nama_ibu'])) {
                     $ibu = Ibu::create([
                         'nama' => $row['nama_ibu'],
                         'pendidikan_terakhir' => $row['pendidikan_terakhir_ibu'] ?? null,
@@ -234,7 +234,7 @@ class SiswaImportService
 
                 // Create Wali record if wali data present
                 $waliId = null;
-                if (!empty($row['nama_wali'])) {
+                if (! empty($row['nama_wali'])) {
                     $wali = Wali::create([
                         'nama' => $row['nama_wali'],
                         'pekerjaan' => $row['pekerjaan_wali'] ?? null,
@@ -248,18 +248,18 @@ class SiswaImportService
 
                 // Resolve kelas_id
                 $kelasId = null;
-                if (!empty($row['kelas'])) {
+                if (! empty($row['kelas'])) {
                     $jenjang = $row['jenjang'] ?? null;
                     $kelas = Kelas::where('branch_id', $branchId)
                         ->where('nama', $row['kelas'])
-                        ->when($jenjang, fn($q) => $q->where('jenjang', $jenjang))
+                        ->when($jenjang, fn ($q) => $q->where('jenjang', $jenjang))
                         ->first();
                     $kelasId = $kelas?->id;
                 }
 
                 // Resolve kategori_id
                 $kategoriId = null;
-                if (!empty($row['kategori'])) {
+                if (! empty($row['kategori'])) {
                     $kategori = \App\Models\Kategori::where('nama', $row['kategori'])->first();
                     $kategoriId = $kategori?->id;
                 }
@@ -310,7 +310,7 @@ class SiswaImportService
      */
     private function parseFile(UploadedFile $file): array
     {
-        $import = new \App\Imports\SiswaImportValidator();
+        $import = new \App\Imports\SiswaImportValidator;
         Excel::import($import, $file);
 
         return $import->getRows();
@@ -344,9 +344,9 @@ class SiswaImportService
         }
 
         // NIS format: numeric, max 20 chars
-        if (!empty($row['nis'])) {
+        if (! empty($row['nis'])) {
             $nis = (string) $row['nis'];
-            if (!ctype_digit($nis)) {
+            if (! ctype_digit($nis)) {
                 $errors[] = ['row' => $rowNumber, 'column' => 'nis', 'message' => 'NIS harus berupa angka'];
             } elseif (strlen($nis) > 20) {
                 $errors[] = ['row' => $rowNumber, 'column' => 'nis', 'message' => 'NIS maksimal 20 karakter'];
@@ -354,50 +354,50 @@ class SiswaImportService
         }
 
         // NISN format: numeric, exactly 10 digits (if provided)
-        if (!empty($row['nisn'])) {
+        if (! empty($row['nisn'])) {
             $nisn = (string) $row['nisn'];
-            if (!ctype_digit($nisn) || strlen($nisn) !== 10) {
+            if (! ctype_digit($nisn) || strlen($nisn) !== 10) {
                 $errors[] = ['row' => $rowNumber, 'column' => 'nisn', 'message' => 'NISN harus berupa 10 digit angka'];
             }
         }
 
         // Jenis kelamin validation
-        if (!empty($row['jenis_kelamin']) && !in_array($row['jenis_kelamin'], ['Laki-laki', 'Perempuan'])) {
+        if (! empty($row['jenis_kelamin']) && ! in_array($row['jenis_kelamin'], ['Laki-laki', 'Perempuan'])) {
             $errors[] = ['row' => $rowNumber, 'column' => 'jenis_kelamin', 'message' => 'Jenis kelamin harus Laki-laki atau Perempuan'];
         }
 
         // Jenjang validation
-        if (!empty($row['jenjang']) && !in_array($row['jenjang'], ['TK', 'MI', 'KB'])) {
+        if (! empty($row['jenjang']) && ! in_array($row['jenjang'], ['TK', 'MI', 'KB'])) {
             $errors[] = ['row' => $rowNumber, 'column' => 'jenjang', 'message' => 'Jenjang harus TK, MI, atau KB'];
         }
 
         // Tanggal lahir format
-        if (!empty($row['tanggal_lahir'])) {
+        if (! empty($row['tanggal_lahir'])) {
             $date = $row['tanggal_lahir'];
-            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || !strtotime($date)) {
+            if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || ! strtotime($date)) {
                 $errors[] = ['row' => $rowNumber, 'column' => 'tanggal_lahir', 'message' => 'Format tanggal lahir harus YYYY-MM-DD'];
             }
         }
 
         // Agama validation
-        if (!empty($row['agama']) && !in_array($row['agama'], self::ALLOWED_AGAMA)) {
-            $errors[] = ['row' => $rowNumber, 'column' => 'agama', 'message' => 'Agama tidak valid. Pilihan: ' . implode(', ', self::ALLOWED_AGAMA)];
+        if (! empty($row['agama']) && ! in_array($row['agama'], self::ALLOWED_AGAMA)) {
+            $errors[] = ['row' => $rowNumber, 'column' => 'agama', 'message' => 'Agama tidak valid. Pilihan: '.implode(', ', self::ALLOWED_AGAMA)];
         }
 
         // Duplicate NIS check (existing in DB)
-        if (!empty($row['nis']) && in_array((string) $row['nis'], $existingNis)) {
+        if (! empty($row['nis']) && in_array((string) $row['nis'], $existingNis)) {
             $errors[] = ['row' => $rowNumber, 'column' => 'nis', 'message' => 'NIS sudah terdaftar di sistem'];
         }
 
         // Duplicate NIS check (within file)
-        if (!empty($row['nis']) && in_array((string) $row['nis'], $nisInFile)) {
+        if (! empty($row['nis']) && in_array((string) $row['nis'], $nisInFile)) {
             $errors[] = ['row' => $rowNumber, 'column' => 'nis', 'message' => 'NIS duplikat dalam file'];
         }
 
         // Kelas validation (if provided)
-        if (!empty($row['kelas']) && !empty($row['jenjang'])) {
-            $key = strtolower($row['kelas'] . '|' . $row['jenjang']);
-            if (!$kelasRecords->has($key)) {
+        if (! empty($row['kelas']) && ! empty($row['jenjang'])) {
+            $key = strtolower($row['kelas'].'|'.$row['jenjang']);
+            if (! $kelasRecords->has($key)) {
                 $errors[] = ['row' => $rowNumber, 'column' => 'kelas', 'message' => "Kelas '{$row['kelas']}' tidak ditemukan untuk jenjang '{$row['jenjang']}'"];
             }
         }

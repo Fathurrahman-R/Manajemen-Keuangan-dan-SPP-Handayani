@@ -60,7 +60,7 @@ class TagihanImportService
                 ->join('jenis_tagihans', 'tagihans.jenis_tagihan_id', '=', 'jenis_tagihans.id')
                 ->select('tagihans.nis', 'jenis_tagihans.nama as jenis_tagihan_nama')
                 ->get()
-                ->map(fn($t) => strtolower($t->nis . '|' . $t->jenis_tagihan_nama))
+                ->map(fn ($t) => strtolower($t->nis.'|'.$t->jenis_tagihan_nama))
                 ->toArray();
         }
 
@@ -84,8 +84,8 @@ class TagihanImportService
             if (empty($rowErrors)) {
                 $validRows[] = $row;
                 // Track this combination to detect intra-file duplicates
-                if (!empty($row['nis']) && !empty($row['jenis_tagihan'])) {
-                    $processedCombinations[] = strtolower($row['nis'] . '|' . $row['jenis_tagihan']);
+                if (! empty($row['nis']) && ! empty($row['jenis_tagihan'])) {
+                    $processedCombinations[] = strtolower($row['nis'].'|'.$row['jenis_tagihan']);
                 }
             } else {
                 foreach ($rowErrors as $error) {
@@ -128,13 +128,13 @@ class TagihanImportService
     {
         $cached = Cache::get("import_preview:{$previewId}");
 
-        if (!$cached) {
+        if (! $cached) {
             throw new \InvalidArgumentException('Sesi preview telah kedaluwarsa. Silakan upload ulang file.');
         }
 
         // Check Periode_Aktif exists
         $periodeAktif = TahunAjaran::getAktif($branchId);
-        if (!$periodeAktif) {
+        if (! $periodeAktif) {
             throw new \InvalidArgumentException('Periode aktif belum diatur untuk cabang ini.');
         }
 
@@ -190,7 +190,7 @@ class TagihanImportService
     {
         $cached = Cache::get("import_preview:{$previewId}");
 
-        if (!$cached) {
+        if (! $cached) {
             throw new \InvalidArgumentException('Sesi preview telah kedaluwarsa. Silakan upload ulang file.');
         }
 
@@ -235,7 +235,7 @@ class TagihanImportService
                     ->where('nama', $row['jenis_tagihan'])
                     ->first();
 
-                if (!$jenisTagihan) {
+                if (! $jenisTagihan) {
                     continue; // Should not happen if validation passed
                 }
 
@@ -266,7 +266,7 @@ class TagihanImportService
      */
     private function parseFile(UploadedFile $file): array
     {
-        $import = new \App\Imports\TagihanImportValidator();
+        $import = new \App\Imports\TagihanImportValidator;
         Excel::import($import, $file);
 
         return $import->getRows();
@@ -296,18 +296,18 @@ class TagihanImportService
         }
 
         // NIS exists in siswa table
-        if (!empty($row['nis']) && !in_array((string) $row['nis'], $existingSiswa)) {
+        if (! empty($row['nis']) && ! in_array((string) $row['nis'], $existingSiswa)) {
             $errors[] = ['row' => $rowNumber, 'column' => 'nis', 'message' => "Siswa dengan NIS '{$row['nis']}' tidak ditemukan"];
         }
 
         // Jenis tagihan exists
-        if (!empty($row['jenis_tagihan']) && !in_array($row['jenis_tagihan'], $jenisTagihanRecords)) {
+        if (! empty($row['jenis_tagihan']) && ! in_array($row['jenis_tagihan'], $jenisTagihanRecords)) {
             $errors[] = ['row' => $rowNumber, 'column' => 'jenis_tagihan', 'message' => "Jenis tagihan '{$row['jenis_tagihan']}' tidak ditemukan untuk periode aktif"];
         }
 
         // Duplicate check (existing in DB)
-        if (!empty($row['nis']) && !empty($row['jenis_tagihan'])) {
-            $combination = strtolower($row['nis'] . '|' . $row['jenis_tagihan']);
+        if (! empty($row['nis']) && ! empty($row['jenis_tagihan'])) {
+            $combination = strtolower($row['nis'].'|'.$row['jenis_tagihan']);
 
             if (in_array($combination, $existingTagihan)) {
                 $errors[] = ['row' => $rowNumber, 'column' => 'nis', 'message' => "Tagihan untuk NIS '{$row['nis']}' dengan jenis '{$row['jenis_tagihan']}' sudah ada"];
@@ -320,7 +320,7 @@ class TagihanImportService
         }
 
         // Check if Periode Aktif exists (early validation)
-        if (!$tahunAjaranId) {
+        if (! $tahunAjaranId) {
             $errors[] = ['row' => $rowNumber, 'column' => 'nis', 'message' => 'Periode aktif belum diatur'];
         }
 

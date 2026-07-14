@@ -14,9 +14,7 @@ class AkunSiswaController extends Controller
 {
     use Traits\Sortable;
 
-    public function __construct(protected AkunSiswaService $akunSiswaService)
-    {
-    }
+    public function __construct(protected AkunSiswaService $akunSiswaService) {}
 
     /**
      * List all siswa accounts (users with "siswa" role) in admin's active branch.
@@ -89,6 +87,7 @@ class AkunSiswaController extends Controller
         }
 
         $result = $this->akunSiswaService->bulkCreateAccounts($siswaList);
+
         return response()->json(['data' => $result]);
     }
 
@@ -100,11 +99,12 @@ class AkunSiswaController extends Controller
         $branchId = Auth::user()->branch_id;
         $user = User::role('siswa')->where('branch_id', $branchId)->where('id', $id)->first();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json(['errors' => ['message' => ['Akun tidak ditemukan.']]], 404);
         }
 
         $this->akunSiswaService->resetPassword($user);
+
         return response()->json(['message' => 'Password berhasil direset.']);
     }
 
@@ -116,11 +116,12 @@ class AkunSiswaController extends Controller
         $branchId = Auth::user()->branch_id;
         $user = User::role('siswa')->where('branch_id', $branchId)->where('id', $id)->first();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json(['errors' => ['message' => ['Akun tidak ditemukan.']]], 404);
         }
 
-        $user->update(['is_active' => !$user->is_active]);
+        $user->update(['is_active' => ! $user->is_active]);
+
         return response()->json(['data' => ['id' => $user->id, 'is_active' => $user->is_active]]);
     }
 
@@ -142,7 +143,7 @@ class AkunSiswaController extends Controller
             ->with('siswa')
             ->get();
 
-        $credentials = $users->map(fn($user) => [
+        $credentials = $users->map(fn ($user) => [
             'id' => $user->id,
             'username' => $user->username,
             'password_pattern' => 'Tanggal lahir (DDMMYYYY)',
@@ -170,7 +171,7 @@ class AkunSiswaController extends Controller
             ->with('siswa')
             ->get();
 
-        $credentials = $users->map(fn($user) => [
+        $credentials = $users->map(fn ($user) => [
             'username' => $user->username,
             'password_pattern' => 'Tanggal lahir (DDMMYYYY)',
             'nama' => $user->siswa?->nama ?? $user->name,

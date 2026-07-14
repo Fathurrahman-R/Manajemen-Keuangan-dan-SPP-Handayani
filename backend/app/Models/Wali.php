@@ -8,11 +8,17 @@ use Illuminate\Database\Eloquent\Model;
 class Wali extends Model
 {
     use HasFactory;
+
     protected $table = 'walis';
+
     protected $primaryKey = 'id';
+
     protected $keyType = 'int';
+
     public $timestamps = true;
+
     public $incrementing = true;
+
     protected $fillable = [
         'nama',
         'jenis_kelamin',
@@ -25,13 +31,14 @@ class Wali extends Model
         'email',
         'email_verified_at',
     ];
+
     protected $casts = [
-        'id' => 'integer'
+        'id' => 'integer',
     ];
 
     public function siswa()
     {
         // relasi utama siswa sebagai wali
-        return $this->hasMany(Siswa::class,'wali_id','id');
+        return $this->hasMany(Siswa::class, 'wali_id', 'id');
     }
 }

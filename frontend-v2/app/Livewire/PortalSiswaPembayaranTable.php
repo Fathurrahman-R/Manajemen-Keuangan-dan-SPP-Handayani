@@ -19,6 +19,7 @@ class PortalSiswaPembayaranTable extends Component implements HasActions, HasSch
     use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     public ?int $selectedSiswaId = null;
+
     public ?int $selectedTahunAjaranId = null;
 
     public function table(Table $table): Table
@@ -26,7 +27,9 @@ class PortalSiswaPembayaranTable extends Component implements HasActions, HasSch
         return $table
             ->records(function (): LengthAwarePaginator {
                 $params = [];
-                if ($this->selectedSiswaId) $params['siswa_id'] = $this->selectedSiswaId;
+                if ($this->selectedSiswaId) {
+                    $params['siswa_id'] = $this->selectedSiswaId;
+                }
 
                 if ($this->selectedTahunAjaranId !== null) {
                     $params['tahun_ajaran_id'] = $this->selectedTahunAjaranId;

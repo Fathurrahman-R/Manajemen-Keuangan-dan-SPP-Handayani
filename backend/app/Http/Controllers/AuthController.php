@@ -25,9 +25,9 @@ class AuthController extends Controller
             throw new HttpResponseException(response([
                 'errors' => [
                     'username' => [
-                        'Username already registered.'
-                    ]
-                ]
+                        'Username already registered.',
+                    ],
+                ],
             ], 400));
         }
 
@@ -47,16 +47,16 @@ class AuthController extends Controller
 
         $user = $this->identifierService->findUserByIdentifier($identifier);
 
-        if (!$user || !Hash::check($data['password'], $user->password)) {
+        if (! $user || ! Hash::check($data['password'], $user->password)) {
             throw new HttpResponseException(response()->json([
-                'errors' => ['message' => ['username or password is wrong']]
+                'errors' => ['message' => ['username or password is wrong']],
             ], 401));
         }
 
         // Check if account is active
         if ($user->is_active === false) {
             throw new HttpResponseException(response()->json([
-                'errors' => ['message' => ['Akun tidak aktif. Hubungi admin sekolah.']]
+                'errors' => ['message' => ['Akun tidak aktif. Hubungi admin sekolah.']],
             ], 401));
         }
 
@@ -89,7 +89,7 @@ class AuthController extends Controller
                 'permissions' => $abilities,
                 'roles' => $user->getRoleNames()->toArray(),
                 'must_change_password' => $user->must_change_password,
-            ]
+            ],
         ]);
     }
 

@@ -15,10 +15,10 @@ class WaliMIResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'=>$this->id,
-            'nama'=>$this->nama,
-            'pendidikan_terakhir'=>$this->pendidikan_terakhir,
-            'pekerjaan'=>$this->pekerjaan
+            'id' => $this->id,
+            'nama' => $this->nama,
+            'pendidikan_terakhir' => $this->pendidikan_terakhir,
+            'pekerjaan' => $this->pekerjaan,
         ];
     }
 }

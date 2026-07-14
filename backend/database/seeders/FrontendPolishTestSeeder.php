@@ -24,10 +24,11 @@ class FrontendPolishTestSeeder extends Seeder
     public function run(): void
     {
         $mainBranch = Branch::first();
-        $admin = User::whereHas('roles', fn($q) => $q->where('name', 'superadmin'))->first();
+        $admin = User::whereHas('roles', fn ($q) => $q->where('name', 'superadmin'))->first();
 
-        if (!$mainBranch || !$admin) {
+        if (! $mainBranch || ! $admin) {
             $this->command->error('Jalankan DatabaseSeeder terlebih dahulu!');
+
             return;
         }
 
@@ -148,10 +149,10 @@ class FrontendPolishTestSeeder extends Seeder
 
         if ($siswa) {
             $existingUser = User::where('username', 'siswa_test')->first();
-            if (!$existingUser) {
+            if (! $existingUser) {
                 $user = User::create([
                     'username' => 'siswa_test',
-                    'name' => 'Siswa Test - ' . $siswa->nama,
+                    'name' => 'Siswa Test - '.$siswa->nama,
                     'password' => Hash::make('password123'),
                     'branch_id' => $branch->id,
                     'siswa_id' => $siswa->id,
@@ -163,7 +164,7 @@ class FrontendPolishTestSeeder extends Seeder
 
         // Create a "must change password" user for testing ChangePassword page
         $existingNewUser = User::where('username', 'user_baru')->first();
-        if (!$existingNewUser) {
+        if (! $existingNewUser) {
             $newUser = User::create([
                 'username' => 'user_baru',
                 'name' => 'User Baru',

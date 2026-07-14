@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\KategoriRequest;
 use App\Http\Resources\KategoriResource;
 use App\Models\Kategori;
-use Illuminate\Http\Exceptions\HttpResponseException;
 use Dedoc\Scramble\Attributes\HeaderParameter;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 
 class KategoriController extends Controller
@@ -16,6 +16,7 @@ class KategoriController extends Controller
     {
         $kategori = Kategori::query()
             ->where('branch_id', Auth::user()->branch_id)->get();
+
         // Return koleksi (bisa kosong) tanpa error
         return KategoriResource::collection($kategori);
     }
@@ -31,8 +32,8 @@ class KategoriController extends Controller
         if ($exists) {
             throw new HttpResponseException(response([
                 'errors' => [
-                    'message' => ['nama kategori sudah ada.']
-                ]
+                    'message' => ['nama kategori sudah ada.'],
+                ],
             ], 400));
         }
         $kategori = new Kategori([
@@ -40,6 +41,7 @@ class KategoriController extends Controller
             'branch_id' => Auth::user()->branch_id,
         ]);
         $kategori->save();
+
         return (new KategoriResource($kategori))->response()->setStatusCode(201);
     }
 
@@ -47,15 +49,16 @@ class KategoriController extends Controller
     public function get(string $id)
     {
         $kategori = Kategori::query()->find($id);
-        if (!$kategori) {
+        if (! $kategori) {
             throw new HttpResponseException(response([
                 'errors' => [
                     'message' => [
-                        'kategori tidak ditemukan.'
-                    ]
-                ]
+                        'kategori tidak ditemukan.',
+                    ],
+                ],
             ], 404));
         }
+
         return (new KategoriResource($kategori))->response()->setStatusCode(200);
     }
 
@@ -64,13 +67,13 @@ class KategoriController extends Controller
     {
         $data = $request->validated();
         $kategori = Kategori::query()->find($id);
-        if (!$kategori) {
+        if (! $kategori) {
             throw new HttpResponseException(response([
                 'errors' => [
                     'message' => [
-                        'kategori tidak ditemukan.'
-                    ]
-                ]
+                        'kategori tidak ditemukan.',
+                    ],
+                ],
             ], 404));
         }
         $namaUp = strtoupper($data['nama']);
@@ -81,12 +84,13 @@ class KategoriController extends Controller
         if ($duplicate) {
             throw new HttpResponseException(response([
                 'errors' => [
-                    'message' => ['nama kategori sudah ada.']
-                ]
+                    'message' => ['nama kategori sudah ada.'],
+                ],
             ], 400));
         }
         $kategori->nama = $namaUp;
         $kategori->save();
+
         return (new KategoriResource($kategori))->response()->setStatusCode(200);
     }
 
@@ -94,27 +98,28 @@ class KategoriController extends Controller
     public function delete(string $id)
     {
         $kategori = Kategori::query()->find($id);
-        if (!$kategori) {
+        if (! $kategori) {
             throw new HttpResponseException(response([
                 'errors' => [
                     'message' => [
-                        'kategori tidak ditemukan.'
-                    ]
-                ]
+                        'kategori tidak ditemukan.',
+                    ],
+                ],
             ], 404));
         }
         if ($kategori->siswa()->exists()) {
             throw new HttpResponseException(response([
                 'errors' => [
                     'message' => [
-                        'kategori digunakan pada data siswa.'
-                    ]
-                ]
+                        'kategori digunakan pada data siswa.',
+                    ],
+                ],
             ], 400));
         }
         $kategori->delete();
+
         return response([
-            'data' => true
+            'data' => true,
         ], 200);
     }
 }

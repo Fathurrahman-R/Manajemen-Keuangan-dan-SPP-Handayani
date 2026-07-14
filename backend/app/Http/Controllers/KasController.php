@@ -23,32 +23,32 @@ class KasController extends Controller
         $tahun = $request->tahun;
 
         // Validasi parameter
-        if (!$bulan || !$tahun) {
+        if (! $bulan || ! $tahun) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'message' => ['parameter bulan dan tahun wajib.']
-                ]
+                    'message' => ['parameter bulan dan tahun wajib.'],
+                ],
             ], 400));
         }
-        if (!ctype_digit((string)$bulan) || (int)$bulan < 1 || (int)$bulan > 12) {
+        if (! ctype_digit((string) $bulan) || (int) $bulan < 1 || (int) $bulan > 12) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'bulan' => ['bulan harus angka antara 1 sampai 12.']
-                ]
+                    'bulan' => ['bulan harus angka antara 1 sampai 12.'],
+                ],
             ], 400));
         }
-        if (!preg_match('/^\d{4}$/', (string)$tahun)) {
+        if (! preg_match('/^\d{4}$/', (string) $tahun)) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'tahun' => ['tahun harus 4 digit.']
-                ]
+                    'tahun' => ['tahun harus 4 digit.'],
+                ],
             ], 400));
         }
 
         // Range bulan
         $bulan = str_pad((string) $bulan, 2, '0', STR_PAD_LEFT);
         $start = "$tahun-$bulan-01";
-        $end   = date('Y-m-t', strtotime($start));
+        $end = date('Y-m-t', strtotime($start));
 
         /*
         |--------------------------------------------------------------------------
@@ -79,13 +79,13 @@ class KasController extends Controller
             $pengeluaran->keys()->toArray()
         ))->unique()->sort();
 
-//        if ($dates->isEmpty()) {
-//            throw new HttpResponseException(response()->json([
-//                'errors' => [
-//                    'message' => ['Data tidak ditemukan untuk filter yang diberikan.']
-//                ]
-//            ], 404));
-//        }
+        //        if ($dates->isEmpty()) {
+        //            throw new HttpResponseException(response()->json([
+        //                'errors' => [
+        //                    'message' => ['Data tidak ditemukan untuk filter yang diberikan.']
+        //                ]
+        //            ], 404));
+        //        }
 
         /*
         |--------------------------------------------------------------------------
@@ -96,11 +96,11 @@ class KasController extends Controller
 
         foreach ($dates as $tanggal) {
 
-            (float)$masuk  = $pemasukan[$tanggal]->total ?? 0;
-            (float)$keluar = $pengeluaran[$tanggal]->total ?? 0;
+            (float) $masuk = $pemasukan[$tanggal]->total ?? 0;
+            (float) $keluar = $pengeluaran[$tanggal]->total ?? 0;
 
             // ❗ SALDO GLOBAL — sesuai buku kas
-            (float)$saldoGlobal =
+            (float) $saldoGlobal =
                 Pembayaran::query()
                     ->where('branch_id', Auth::user()->branch_id)
                     ->whereDate('tanggal', '<=', $tanggal)->sum('jumlah')
@@ -109,10 +109,10 @@ class KasController extends Controller
                     ->whereDate('tanggal', '<=', $tanggal)->sum('jumlah');
 
             $kas[] = (object) [
-                'tanggal'      => \Carbon\Carbon::parse($tanggal)->locale('id')->translatedFormat('d F Y'),
-                'total_masuk'  => floatval($masuk),
+                'tanggal' => \Carbon\Carbon::parse($tanggal)->locale('id')->translatedFormat('d F Y'),
+                'total_masuk' => floatval($masuk),
                 'total_keluar' => floatval($keluar),
-                'saldo'        => floatval($saldoGlobal),
+                'saldo' => floatval($saldoGlobal),
             ];
         }
 
@@ -121,7 +121,7 @@ class KasController extends Controller
         | 4) Urutkan DESC (transaksi terbaru di atas)
         |--------------------------------------------------------------------------
         */
-        $kas = collect($kas)->sortByDesc(fn($x) => $x->tanggal)->values();
+        $kas = collect($kas)->sortByDesc(fn ($x) => $x->tanggal)->values();
 
         return KasResource::collection($kas);
     }
@@ -132,18 +132,18 @@ class KasController extends Controller
     {
         $tahun = $request->tahun;
 
-        if (!$tahun) {
+        if (! $tahun) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'message' => ['parameter tahun wajib.']
-                ]
+                    'message' => ['parameter tahun wajib.'],
+                ],
             ], 400));
         }
-        if (!preg_match('/^\d{4}$/', (string)$tahun)) {
+        if (! preg_match('/^\d{4}$/', (string) $tahun)) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'tahun' => ['tahun harus 4 digit.']
-                ]
+                    'tahun' => ['tahun harus 4 digit.'],
+                ],
             ], 400));
         }
 
@@ -178,13 +178,13 @@ class KasController extends Controller
             $pengeluaran->keys()->toArray()
         ))->unique()->sort();
 
-//        if ($months->isEmpty()) {
-//            throw new HttpResponseException(response()->json([
-//                'errors' => [
-//                    'message' => ['Data tidak ditemukan untuk filter yang diberikan.']
-//                ]
-//            ], 404));
-//        }
+        //        if ($months->isEmpty()) {
+        //            throw new HttpResponseException(response()->json([
+        //                'errors' => [
+        //                    'message' => ['Data tidak ditemukan untuk filter yang diberikan.']
+        //                ]
+        //            ], 404));
+        //        }
 
         /*
         |--------------------------------------------------------------------------
@@ -195,7 +195,7 @@ class KasController extends Controller
 
         foreach ($months as $bulan) {
 
-            $masuk  = $pemasukan[$bulan]->total ?? 0;
+            $masuk = $pemasukan[$bulan]->total ?? 0;
             $keluar = $pengeluaran[$bulan]->total ?? 0;
 
             // Ambil tanggal terakhir bulan tsb
@@ -210,11 +210,11 @@ class KasController extends Controller
                     ->where('branch_id', Auth::user()->branch_id)
                     ->whereDate('tanggal', '<=', $lastDate)->sum('jumlah');
 
-            $kas[] = (object)[
-                'tanggal'      => \Carbon\Carbon::parse("$bulan-01")->locale('id')->translatedFormat('F Y'),
-                'total_masuk'  => $masuk,
+            $kas[] = (object) [
+                'tanggal' => \Carbon\Carbon::parse("$bulan-01")->locale('id')->translatedFormat('F Y'),
+                'total_masuk' => $masuk,
                 'total_keluar' => $keluar,
-                'saldo'        => $saldoGlobal,
+                'saldo' => $saldoGlobal,
             ];
         }
 

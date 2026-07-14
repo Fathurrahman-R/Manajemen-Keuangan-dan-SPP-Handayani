@@ -2,13 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Models\JenisTagihan;
 use Tests\TestCase;
 
 class JenisTagihanTest extends TestCase
 {
     // ===== SUCCESS TESTS =====
-    public function testIndexJenisTagihanSuccess()
+    public function test_index_jenis_tagihan_success()
     {
         $scenario = $this->createJenisTagihanIndexScenario(3);
         $user = $scenario['user'];
@@ -17,7 +16,7 @@ class JenisTagihanTest extends TestCase
             ->assertJson(['errors' => []]);
     }
 
-    public function testIndexJenisTagihanEmpty()
+    public function test_index_jenis_tagihan_empty()
     {
         $scenario = $this->createJenisTagihanIndexScenario(0);
         $user = $scenario['user'];
@@ -27,7 +26,7 @@ class JenisTagihanTest extends TestCase
             ->assertJson(['data' => []]);
     }
 
-    public function testCreateJenisTagihanSuccess()
+    public function test_create_jenis_tagihan_success()
     {
         $scenario = $this->createJenisTagihanIndexScenario(0);
         $user = $scenario['user'];
@@ -37,40 +36,40 @@ class JenisTagihanTest extends TestCase
             ->assertJson(['errors' => []]);
     }
 
-    public function testGetJenisTagihanSuccess()
+    public function test_get_jenis_tagihan_success()
     {
         $scenario = $this->createJenisTagihanCrudScenario();
         $user = $scenario['user'];
         $jt = $scenario['jt'];
-        $this->get('api/jenis-tagihan/' . $jt->id, ['Authorization' => $user->token])
+        $this->get('api/jenis-tagihan/'.$jt->id, ['Authorization' => $user->token])
             ->assertStatus(200)
             ->assertJson(['errors' => []]);
     }
 
-    public function testUpdateJenisTagihanSuccess()
+    public function test_update_jenis_tagihan_success()
     {
         $scenario = $this->createJenisTagihanCrudScenario();
         $user = $scenario['user'];
         $jt = $scenario['jt'];
         $payload = $this->buildJenisTagihanValidPayload();
         $payload['nama'] = 'SPP MARET';
-        $this->put('api/jenis-tagihan/' . $jt->id, $payload, ['Authorization' => $user->token])
+        $this->put('api/jenis-tagihan/'.$jt->id, $payload, ['Authorization' => $user->token])
             ->assertStatus(200)
             ->assertJson(['errors' => []]);
     }
 
-    public function testDeleteJenisTagihanSuccess()
+    public function test_delete_jenis_tagihan_success()
     {
         $scenario = $this->createJenisTagihanCrudScenario();
         $user = $scenario['user'];
         $jt = $scenario['jt'];
-        $this->delete('api/jenis-tagihan/' . $jt->id, [], ['Authorization' => $user->token])
+        $this->delete('api/jenis-tagihan/'.$jt->id, [], ['Authorization' => $user->token])
             ->assertStatus(200)
             ->assertJson(['errors' => []]);
     }
 
     // ===== VALIDATION & ERROR TESTS =====
-    public function testCreateJenisTagihanValidationRequired()
+    public function test_create_jenis_tagihan_validation_required()
     {
         $scenario = $this->createJenisTagihanIndexScenario(0);
         $user = $scenario['user'];
@@ -79,7 +78,7 @@ class JenisTagihanTest extends TestCase
             ->assertJson(['errors' => []]);
     }
 
-    public function testCreateJenisTagihanValidationNamaShortAndLong()
+    public function test_create_jenis_tagihan_validation_nama_short_and_long()
     {
         $scenario = $this->createJenisTagihanIndexScenario(0);
         $user = $scenario['user'];
@@ -91,7 +90,7 @@ class JenisTagihanTest extends TestCase
             ->assertJson(['errors' => []]);
     }
 
-    public function testCreateJenisTagihanValidationJatuhTempoFormat()
+    public function test_create_jenis_tagihan_validation_jatuh_tempo_format()
     {
         $scenario = $this->createJenisTagihanIndexScenario(0);
         $user = $scenario['user'];
@@ -100,7 +99,7 @@ class JenisTagihanTest extends TestCase
             ->assertJson(['errors' => []]);
     }
 
-    public function testCreateJenisTagihanValidationJumlahFormat()
+    public function test_create_jenis_tagihan_validation_jumlah_format()
     {
         $scenario = $this->createJenisTagihanIndexScenario(0);
         $user = $scenario['user'];
@@ -112,7 +111,7 @@ class JenisTagihanTest extends TestCase
             ->assertJson(['errors' => []]);
     }
 
-    public function testGetJenisTagihanNotFound()
+    public function test_get_jenis_tagihan_not_found()
     {
         $scenario = $this->createJenisTagihanIndexScenario(0);
         $user = $scenario['user'];
@@ -121,7 +120,7 @@ class JenisTagihanTest extends TestCase
             ->assertJson(['errors' => []]);
     }
 
-    public function testUpdateJenisTagihanNotFound()
+    public function test_update_jenis_tagihan_not_found()
     {
         $scenario = $this->createJenisTagihanIndexScenario(0);
         $user = $scenario['user'];
@@ -131,7 +130,7 @@ class JenisTagihanTest extends TestCase
             ->assertJson(['errors' => []]);
     }
 
-    public function testDeleteJenisTagihanNotFound()
+    public function test_delete_jenis_tagihan_not_found()
     {
         $scenario = $this->createJenisTagihanIndexScenario(0);
         $user = $scenario['user'];
@@ -140,17 +139,17 @@ class JenisTagihanTest extends TestCase
             ->assertJson(['errors' => []]);
     }
 
-    public function testDeleteJenisTagihanUsedByTagihan()
+    public function test_delete_jenis_tagihan_used_by_tagihan()
     {
         $scenario = $this->createJenisTagihanWithTagihanScenario();
         $user = $scenario['user'];
         $jt = $scenario['jt'];
-        $this->delete('api/jenis-tagihan/' . $jt->id, [], ['Authorization' => $user->token])
+        $this->delete('api/jenis-tagihan/'.$jt->id, [], ['Authorization' => $user->token])
             ->assertStatus(200)
             ->assertJson(['errors' => []]);
     }
 
-    public function testUnauthorizedIndexJenisTagihan()
+    public function test_unauthorized_index_jenis_tagihan()
     {
         $this->createJenisTagihanIndexScenario(2);
         $this->get('api/jenis-tagihan')
@@ -158,36 +157,36 @@ class JenisTagihanTest extends TestCase
             ->assertJson(['errors' => []]);
     }
 
-    public function testUnauthorizedCreateJenisTagihan()
+    public function test_unauthorized_create_jenis_tagihan()
     {
         $this->post('api/jenis-tagihan', $this->buildJenisTagihanValidPayload())
             ->assertStatus(200)
             ->assertJson(['errors' => []]);
     }
 
-    public function testUnauthorizedGetJenisTagihan()
+    public function test_unauthorized_get_jenis_tagihan()
     {
         $scenario = $this->createJenisTagihanCrudScenario();
         $jt = $scenario['jt'];
-        $this->get('api/jenis-tagihan/' . $jt->id)
+        $this->get('api/jenis-tagihan/'.$jt->id)
             ->assertStatus(200)
             ->assertJson(['errors' => []]);
     }
 
-    public function testUnauthorizedUpdateJenisTagihan()
+    public function test_unauthorized_update_jenis_tagihan()
     {
         $scenario = $this->createJenisTagihanCrudScenario();
         $jt = $scenario['jt'];
-        $this->put('api/jenis-tagihan/' . $jt->id, $this->buildJenisTagihanValidPayload())
+        $this->put('api/jenis-tagihan/'.$jt->id, $this->buildJenisTagihanValidPayload())
             ->assertStatus(200)
             ->assertJson(['errors' => []]);
     }
 
-    public function testUnauthorizedDeleteJenisTagihan()
+    public function test_unauthorized_delete_jenis_tagihan()
     {
         $scenario = $this->createJenisTagihanCrudScenario();
         $jt = $scenario['jt'];
-        $this->delete('api/jenis-tagihan/' . $jt->id)
+        $this->delete('api/jenis-tagihan/'.$jt->id)
             ->assertStatus(200)
             ->assertJson(['errors' => []]);
     }

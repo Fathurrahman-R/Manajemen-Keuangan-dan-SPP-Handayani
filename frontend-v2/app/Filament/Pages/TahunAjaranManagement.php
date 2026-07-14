@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Helpers\PermissionHelper;
 use Filament\Pages\Page;
 use UnitEnum;
 
@@ -9,7 +10,7 @@ class TahunAjaranManagement extends Page
 {
     protected string $view = 'filament.pages.tahun-ajaran-management';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Data Master';
+    protected static string|UnitEnum|null $navigationGroup = 'Data Master';
 
     protected static ?string $navigationLabel = 'Tahun Ajaran';
 
@@ -19,18 +20,11 @@ class TahunAjaranManagement extends Page
 
     public static function canAccess(): bool
     {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        $role = session()->get('data.role', session()->get('data')['role'] ?? '');
-
-        return in_array('view-tahun-ajaran', $permissions) || $role === 'admin';
+        return PermissionHelper::hasResource('tahun-ajaran');
     }
 
     public function mount(): void
     {
-        $permissions = session()->get('data.permissions', []);
-        $role = session()->get('data.role', '');
-        if (!in_array('view-tahun-ajaran', $permissions) && $role !== 'admin') {
-            abort(403);
-        }
+        abort_if(! PermissionHelper::hasResource('tahun-ajaran'), 403);
     }
 }

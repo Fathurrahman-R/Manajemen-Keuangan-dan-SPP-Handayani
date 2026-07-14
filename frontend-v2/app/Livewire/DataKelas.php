@@ -2,10 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Helpers\PermissionHelper;
 use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
-use Illuminate\Http\Client\ConnectionException;
-use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -19,12 +18,14 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Livewire\Component;
 
 class DataKelas extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable, HandlesApiErrors;
+    use HandlesApiErrors, InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     public $activeTab = 'KB';
 
@@ -39,19 +40,20 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
             ->records(
                 function (?string $search, ?string $sortColumn = null, ?string $sortDirection = null): array {
                     try {
-                        $response = ApiService::client()->get('/kelas/' . $this->activeTab);
+                        $response = ApiService::client()->get('/kelas/'.$this->activeTab);
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             $this->handleApiError($response);
+
                             return [];
                         }
 
                         return $response->collect('data')
-                            ->when(filled($search), fn(Collection $data): Collection => $data->filter(fn(array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))))
+                            ->when(filled($search), fn (Collection $data): Collection => $data->filter(fn (array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))))
                             ->when(
                                 filled($sortColumn),
-                                fn(Collection $data): Collection => $data->sortBy(
-                                    fn(array $record) => data_get($record, $sortColumn),
+                                fn (Collection $data): Collection => $data->sortBy(
+                                    fn (array $record) => data_get($record, $sortColumn),
                                     SORT_REGULAR,
                                     ($sortDirection ?? 'asc') === 'desc'
                                 )->values()
@@ -59,9 +61,11 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                             ->toArray();
                     } catch (ConnectionException $e) {
                         $this->notifyConnectionError();
+
                         return [];
                     } catch (\Throwable $e) {
                         $this->notifyUnexpectedError();
+
                         return [];
                     }
                 }
@@ -84,7 +88,7 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                     ->icon('heroicon-s-pencil-square') // Optional icon
                     ->iconButton()
                     ->color('warning')
-                    ->visible(fn(): bool => in_array('update-kelas', session()->get('data.permissions', [])))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('kelas.update'))
                     ->modalHeading('Ubah Kelas')
                     ->modalFooterActions(function (Action $action) {
                         return [
@@ -92,14 +96,14 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                                 ->label('Simpan')
                                 ->color('primary')
                                 ->extraAttributes([
-                                    'class' => 'text-white font-semibold'
+                                    'class' => 'text-white font-semibold',
                                 ]),
                             $action->getModalCancelAction()->label('Batal'),
                         ];
                     })
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->modalSubmitAction()
-                    ->fillForm(fn(array $record): array => [
+                    ->fillForm(fn (array $record): array => [
                         'id' => $record['id'],
                         'nama' => $record['nama'],
                         'level' => $record['level'] ?? null,
@@ -121,12 +125,12 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                         ];
 
                         $response = ApiService::client()
-                            ->put('/kelas/' . $this->activeTab .'/' . $record['id'], $payload);
+                            ->put('/kelas/'.$this->activeTab.'/'.$record['id'], $payload);
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             $errors = $response->json()['errors'] ?? [];
                             $errorKeys = array_keys($errors);
-                            $message = !empty($errorKeys) ? $errors[$errorKeys[0]][0] : 'Kelas Gagal Diubah';
+                            $message = ! empty($errorKeys) ? $errors[$errorKeys[0]][0] : 'Kelas Gagal Diubah';
 
                             Notification::make()
                                 ->title($message)
@@ -147,7 +151,7 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                     ->icon('heroicon-s-trash') // Optional icon
                     ->iconButton()
                     ->color('danger') // Optional color
-                    ->visible(fn(): bool => in_array('delete-kelas', session()->get('data.permissions', [])))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('kelas.delete'))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Kelas')
                     ->modalDescription('Apakah kamu yakin untuk menghapus kelas ini?')
@@ -156,9 +160,9 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->action(function (array $data, $record): void {
                         $response = ApiService::client()
-                            ->delete('/kelas' . '/' . $record['id']);
+                            ->delete('/kelas'.'/'.$record['id']);
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             Notification::make()
                                 ->title('Kelas Gagal Dihapus')
                                 ->danger()
@@ -181,7 +185,7 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                     ->label('Hapus Terpilih')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
-                    ->visible(fn(): bool => in_array('delete-kelas', session()->get('data.permissions', [])))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('kelas.delete'))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Kelas Terpilih')
                     ->modalDescription('Apakah kamu yakin ingin menghapus semua kelas yang dipilih?')
@@ -190,7 +194,7 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                         $success = 0;
                         $failed = 0;
                         foreach ($records as $record) {
-                            $response = ApiService::client()->delete('/kelas/' . $record['id']);
+                            $response = ApiService::client()->delete('/kelas/'.$record['id']);
                             $response->ok() ? $success++ : $failed++;
                         }
                         if ($failed > 0) {
@@ -207,7 +211,7 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                     ->label('Tambah') // Text displayed on the button
                     ->color('primary') // Optional color
                     ->button()
-                    ->visible(fn(): bool => in_array('create-kelas', session()->get('data.permissions', [])))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('kelas.create'))
                     ->modalHeading('Tambah Kelas')
                     ->modalFooterActions(function (Action $action) {
                         return [
@@ -215,7 +219,7 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                                 ->label('Simpan')
                                 ->color('primary')
                                 ->extraAttributes([
-                                    'class' => 'text-white font-semibold'
+                                    'class' => 'text-white font-semibold',
                                 ]),
                             $action->getModalCancelAction()->label('Batal'),
                         ];
@@ -238,12 +242,12 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                         ];
 
                         $response = ApiService::client()
-                            ->post('/kelas/' . $this->activeTab, $payload);
+                            ->post('/kelas/'.$this->activeTab, $payload);
 
                         if ($response->status() != 201) {
                             $errors = $response->json()['errors'] ?? [];
                             $errorKeys = array_keys($errors);
-                            $message = !empty($errorKeys) ? $errors[$errorKeys[0]][0] : 'Kelas Gagal Ditambahkan';
+                            $message = ! empty($errorKeys) ? $errors[$errorKeys[0]][0] : 'Kelas Gagal Ditambahkan';
 
                             Notification::make()
                                 ->title($message)
@@ -266,7 +270,7 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
     public function render()
     {
         return view('livewire.data-kelas', [
-            'activeTab' => $this->activeTab
+            'activeTab' => $this->activeTab,
         ]);
     }
 

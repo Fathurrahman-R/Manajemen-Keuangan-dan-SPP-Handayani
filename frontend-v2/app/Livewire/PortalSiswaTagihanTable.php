@@ -19,6 +19,7 @@ class PortalSiswaTagihanTable extends Component implements HasActions, HasSchema
     use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     public ?int $selectedSiswaId = null;
+
     public ?int $selectedTahunAjaranId = null;
 
     public function table(Table $table): Table
@@ -26,7 +27,9 @@ class PortalSiswaTagihanTable extends Component implements HasActions, HasSchema
         return $table
             ->records(function (?string $search): LengthAwarePaginator {
                 $params = [];
-                if ($this->selectedSiswaId) $params['siswa_id'] = $this->selectedSiswaId;
+                if ($this->selectedSiswaId) {
+                    $params['siswa_id'] = $this->selectedSiswaId;
+                }
 
                 if ($this->selectedTahunAjaranId !== null) {
                     $params['tahun_ajaran_id'] = $this->selectedTahunAjaranId;
@@ -43,8 +46,7 @@ class PortalSiswaTagihanTable extends Component implements HasActions, HasSchema
 
                 if (filled($search)) {
                     $needle = mb_strtolower($search);
-                    $rows = array_values(array_filter($rows, fn(array $r): bool =>
-                        str_contains(mb_strtolower((string) ($r['nama_jenis_tagihan'] ?? '')), $needle)
+                    $rows = array_values(array_filter($rows, fn (array $r): bool => str_contains(mb_strtolower((string) ($r['nama_jenis_tagihan'] ?? '')), $needle)
                     ));
                 }
 
@@ -66,7 +68,7 @@ class PortalSiswaTagihanTable extends Component implements HasActions, HasSchema
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'Lunas' => 'success',
                         'Belum Lunas' => 'warning',
                         default => 'danger',

@@ -28,7 +28,7 @@ class ParentSearchController extends Controller
 
     public function index(Request $request, string $kind): JsonResponse
     {
-        if (!isset(self::MODELS[$kind])) {
+        if (! isset(self::MODELS[$kind])) {
             return response()->json(['data' => []], 404);
         }
 
@@ -42,7 +42,7 @@ class ParentSearchController extends Controller
         });
 
         if ($search) {
-            $query->where('nama', 'like', '%' . $search . '%');
+            $query->where('nama', 'like', '%'.$search.'%');
         }
 
         return response()->json(['data' => $query->limit(20)->get()]);
@@ -70,9 +70,10 @@ class ParentSearchController extends Controller
     public function showAyah($id): JsonResponse
     {
         $ayah = Ayah::find($id);
-        if (!$ayah) {
+        if (! $ayah) {
             return response()->json(['message' => 'Not found'], 404);
         }
+
         return response()->json(['data' => $ayah]);
     }
 
@@ -82,9 +83,10 @@ class ParentSearchController extends Controller
     public function showIbu($id): JsonResponse
     {
         $ibu = Ibu::find($id);
-        if (!$ibu) {
+        if (! $ibu) {
             return response()->json(['message' => 'Not found'], 404);
         }
+
         return response()->json(['data' => $ibu]);
     }
 }

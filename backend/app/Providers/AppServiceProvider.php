@@ -53,6 +53,7 @@ class AppServiceProvider extends ServiceProvider
             if ($user === null) {
                 return null;
             }
+
             return $user->hasRole(DefaultRoles::SUPERADMIN->value) ? true : null;
         });
 

@@ -36,7 +36,7 @@ class KasHarianPemasukanSheet implements FromQuery, WithHeadings, WithMapping, W
     }
 
     /**
-     * @param \App\Models\Pembayaran $pembayaran
+     * @param  \App\Models\Pembayaran  $pembayaran
      */
     public function map($pembayaran): array
     {

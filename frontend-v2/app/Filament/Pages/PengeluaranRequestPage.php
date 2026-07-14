@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Helpers\PermissionHelper;
 use BackedEnum;
 use Filament\Pages\Page;
 
@@ -24,14 +25,11 @@ class PengeluaranRequestPage extends Page
 
     public function mount(): void
     {
-        $permissions = session()->get('data.permissions', []);
-        $hasAccess = in_array('view-pengeluaran', $permissions)
-            || in_array('create-pengeluaran-request', $permissions)
-            || in_array('approve-pengeluaran', $permissions)
-            || in_array('disburse-pengeluaran', $permissions);
+        $hasAccess = PermissionHelper::hasResource('pengeluaran')
+            || PermissionHelper::hasResource('pengeluaran.request')
+            || PermissionHelper::hasResource('pengeluaran.approve')
+            || PermissionHelper::hasResource('pengeluaran.disburse');
 
-        if (!$hasAccess) {
-            abort(403);
-        }
+        abort_if(! $hasAccess, 403);
     }
 }

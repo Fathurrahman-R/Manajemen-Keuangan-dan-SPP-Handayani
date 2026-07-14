@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Helpers\PermissionHelper;
 use App\Services\ApiService;
-use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -16,28 +16,41 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Support\Enums\Alignment;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Component;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TagihanCardView extends Component implements HasActions, HasSchemas
 {
-    use InteractsWithActions, InteractsWithSchemas;
-    use \App\Livewire\Concerns\HasPeriodFilter;
     use \App\Livewire\Concerns\HandlesApiErrors;
+    use \App\Livewire\Concerns\HasPeriodFilter;
+    use InteractsWithActions, InteractsWithSchemas;
 
     public string $search = '';
+
     public string $jenjang = '';     // set from parent page (KB/TK/MI)
+
     public string $filterKelas = ''; // replaces filterJenjang
+
     public string $filterKategori = '';
+
     public string $filterStatus = '';
+
     public ?string $filterJatuhTempoFrom = null;
+
     public ?string $filterJatuhTempoTo = null;
+
     public int $perPage = 5;
+
     public int $page = 1;
 
     public bool $loading = true;
+
     public array $siswaData = [];
+
     public array $meta = [];
+
     public array $kelasOptions = [];
+
     public array $kategoriOptions = [];
 
     public array $selectedTagihanForPayment = [];
@@ -52,15 +65,16 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
 
     public function loadKelasOptions(): void
     {
-        if (!$this->jenjang) {
+        if (! $this->jenjang) {
             $this->kelasOptions = [];
+
             return;
         }
         try {
-            $response = ApiService::client()->get('/kelas/' . $this->jenjang);
+            $response = ApiService::client()->get('/kelas/'.$this->jenjang);
             if ($response->ok()) {
                 $this->kelasOptions = collect($response->json('data') ?? [])
-                    ->mapWithKeys(fn($k) => [$k['id'] => $k['nama']])
+                    ->mapWithKeys(fn ($k) => [$k['id'] => $k['nama']])
                     ->toArray();
             }
         } catch (\Throwable $e) {
@@ -74,7 +88,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
             $response = ApiService::client()->get('/kategori');
             if ($response->ok()) {
                 $this->kategoriOptions = collect($response->json('data') ?? [])
-                    ->mapWithKeys(fn($k) => [$k['id'] => $k['nama']])
+                    ->mapWithKeys(fn ($k) => [$k['id'] => $k['nama']])
                     ->toArray();
             }
         } catch (\Throwable $e) {
@@ -230,28 +244,28 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
 
     public function isAdmin(): bool
     {
-        $permissions = session()->get('data.permissions', []);
-        return in_array('create-tagihan', $permissions) || in_array('delete-tagihan', $permissions);
+        return PermissionHelper::hasResource('tagihan.create') || PermissionHelper::hasResource('tagihan.delete');
     }
 
     public function canCreate(): bool
     {
-        return in_array('create-tagihan', session()->get('data.permissions', []));
+        return PermissionHelper::hasResource('tagihan.create');
     }
 
     public function canPay(): bool
     {
-        return in_array('create-pembayaran', session()->get('data.permissions', []));
+        return PermissionHelper::hasResource('pembayaran.create');
     }
 
     public function canDelete(): bool
     {
-        return in_array('delete-tagihan', session()->get('data.permissions', []));
+        return PermissionHelper::hasResource('tagihan.delete');
     }
 
     public function deleteTagihanAction(): Action
     {
         return Action::make('deleteTagihan')
+            ->visible(fn (): bool => PermissionHelper::hasResource('tagihan.delete'))
             ->requiresConfirmation()
             ->modalHeading('Hapus Tagihan')
             ->modalDescription('Apakah kamu yakin ingin menghapus tagihan ini? Tindakan ini tidak dapat dibatalkan.')
@@ -259,10 +273,12 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
             ->color('danger')
             ->action(function (array $arguments): void {
                 $kodeTagihan = $arguments['kodeTagihan'] ?? null;
-                if (!$kodeTagihan) return;
+                if (! $kodeTagihan) {
+                    return;
+                }
 
                 try {
-                    $response = ApiService::client()->delete('/tagihan/' . $kodeTagihan);
+                    $response = ApiService::client()->delete('/tagihan/'.$kodeTagihan);
                     if ($response->ok()) {
                         Notification::make()->title('Tagihan Berhasil Dihapus')->success()->send();
                         $this->loadData();
@@ -323,6 +339,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
     public function payAction(): Action
     {
         return Action::make('pay')
+            ->visible(fn (): bool => PermissionHelper::hasResource('pembayaran.create'))
             ->label('Bayar')
             ->icon('heroicon-o-banknotes')
             ->color('primary')
@@ -343,7 +360,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                 $this->processPayment($data);
             })
             ->modalHeading('Pembayaran Tagihan')
-            ->modalDescription(fn() => count($this->selectedTagihanForPayment) . ' tagihan akan dibayar lunas.')
+            ->modalDescription(fn () => count($this->selectedTagihanForPayment).' tagihan akan dibayar lunas.')
             ->modalWidth('md');
     }
 
@@ -354,6 +371,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                 ->title('Tidak ada tagihan yang dipilih.')
                 ->warning()
                 ->send();
+
             return;
         }
 
@@ -415,6 +433,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
     public function cicilAction(): Action
     {
         return Action::make('cicil')
+            ->visible(fn (): bool => PermissionHelper::hasResource('pembayaran.create'))
             ->label('Bayar Cicilan')
             ->icon('heroicon-o-banknotes')
             ->color('success')
@@ -438,13 +457,14 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                     ->maxLength(100),
             ])
             ->action(function (array $data): void {
-                if (!$this->cicilKodeTagihan) {
+                if (! $this->cicilKodeTagihan) {
                     Notification::make()->title('Tidak ada tagihan yang dipilih.')->warning()->send();
+
                     return;
                 }
 
                 try {
-                    $response = ApiService::client()->post('/pembayaran/bayar/' . $this->cicilKodeTagihan, [
+                    $response = ApiService::client()->post('/pembayaran/bayar/'.$this->cicilKodeTagihan, [
                         'jumlah' => (float) $data['jumlah'],
                         'metode' => $data['metode'],
                         'pembayar' => $data['pembayar'],
@@ -464,25 +484,26 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                 }
             })
             ->modalHeading('Bayar Cicilan')
-            ->modalDescription(fn() => 'Kode Tagihan: ' . ($this->cicilKodeTagihan ?? '-'))
+            ->modalDescription(fn () => 'Kode Tagihan: '.($this->cicilKodeTagihan ?? '-'))
             ->modalWidth('md');
     }
 
     public function downloadKwitansi(string $kodePembayaran): ?StreamedResponse
     {
         try {
-            $filename = 'kwitansi-' . $kodePembayaran . '.pdf';
+            $filename = 'kwitansi-'.$kodePembayaran.'.pdf';
 
             $response = ApiService::client()
                 ->withHeaders(['Accept' => 'application/pdf'])
-                ->get('/pembayaran/kwitansi/' . $kodePembayaran);
+                ->get('/pembayaran/kwitansi/'.$kodePembayaran);
 
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 Notification::make()
                     ->title('Kwitansi gagal diunduh')
                     ->danger()
                     ->persistent()
                     ->send();
+
                 return null;
             }
 
@@ -501,6 +522,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                 ->danger()
                 ->persistent()
                 ->send();
+
             return null;
         }
     }
@@ -515,7 +537,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
             ->icon('heroicon-o-document-arrow-down')
             ->color('gray')
             ->button()
-            ->visible(fn(): bool => in_array('view-tagihan', session()->get('data.permissions', [])))
+            ->visible(fn (): bool => PermissionHelper::hasResource('tagihan.export'))
             ->modalHeading('Export Laporan Tagihan (PDF)')
             ->modalSubmitActionLabel('Export')
             ->modalCancelActionLabel('Batal')
@@ -524,8 +546,8 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                     ->label('Status Tagihan')
                     ->options([
                         'Belum Dibayar' => 'Belum Dibayar',
-                        'Belum Lunas'   => 'Belum Lunas',
-                        'Lunas'         => 'Lunas',
+                        'Belum Lunas' => 'Belum Lunas',
+                        'Lunas' => 'Lunas',
                     ])
                     ->columns(3)
                     ->bulkToggleable()
@@ -561,18 +583,18 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                 if (filled($this->search)) {
                     $params['search'] = $this->search;
                 }
-                if (!empty($data['kategori_id'])) {
+                if (! empty($data['kategori_id'])) {
                     $params['kategori_id'] = $data['kategori_id'];
-                } else if (filled($this->filterKategori)) {
+                } elseif (filled($this->filterKategori)) {
                     $params['kategori_id'] = $this->filterKategori;
                 }
-                if (!empty($data['status'])) {
+                if (! empty($data['status'])) {
                     $params['status'] = $data['status'];
                 }
-                if (!empty($data['jatuh_tempo_from'])) {
+                if (! empty($data['jatuh_tempo_from'])) {
                     $params['jatuh_tempo_from'] = $data['jatuh_tempo_from'];
                 }
-                if (!empty($data['jatuh_tempo_to'])) {
+                if (! empty($data['jatuh_tempo_to'])) {
                     $params['jatuh_tempo_to'] = $data['jatuh_tempo_to'];
                 }
 
@@ -581,17 +603,18 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                         ->withHeaders(['Accept' => 'application/pdf'])
                         ->get('/tagihan/export-pdf', $params);
 
-                    if (!$response->ok()) {
+                    if (! $response->ok()) {
                         Notification::make()
                             ->title('Gagal mengekspor laporan')
-                            ->body('Server menolak permintaan: ' . $response->status())
+                            ->body('Server menolak permintaan: '.$response->status())
                             ->danger()
                             ->send();
+
                         return null;
                     }
 
                     $body = $response->body();
-                    $filename = 'laporan-tagihan-' . now()->format('Ymd-His') . '.pdf';
+                    $filename = 'laporan-tagihan-'.now()->format('Ymd-His').'.pdf';
 
                     return response()->streamDownload(function () use ($body) {
                         echo $body;
@@ -603,6 +626,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                         ->title('Tidak dapat terhubung ke server')
                         ->danger()
                         ->send();
+
                     return null;
                 }
             });
@@ -614,7 +638,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
             ->label('Tambah Tagihan')
             ->color('primary')
             ->button()
-            ->visible(fn(): bool => $this->canCreate())
+            ->visible(fn (): bool => $this->canCreate())
             ->modalHeading('Tambah Tagihan')
             ->modalFooterActions(function (Action $action) {
                 return [
@@ -631,11 +655,11 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                     ->label('Periode Ajaran')
                     ->options(function () {
                         return collect($this->tahunAjaranOptions ?? [])
-                            ->mapWithKeys(fn($opt) => [
-                                $opt['id'] => $opt['nama'] . ($opt['status'] === 'Aktif' ? ' (Aktif)' : '')
+                            ->mapWithKeys(fn ($opt) => [
+                                $opt['id'] => $opt['nama'].($opt['status'] === 'Aktif' ? ' (Aktif)' : ''),
                             ])->toArray();
                     })
-                    ->default(fn() => $this->selectedTahunAjaranId)
+                    ->default(fn () => $this->selectedTahunAjaranId)
                     ->live()
                     ->required(),
                 Select::make('jenis_tagihan_id')
@@ -648,11 +672,15 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                             ? ['tahun_ajaran_id' => $tahunAjaranId]
                             : [];
                         $response = ApiService::client()->get('/jenis-tagihan', $params);
-                        if (!$response->ok()) return [];
+                        if (! $response->ok()) {
+                            return [];
+                        }
+
                         return collect($response->json('data') ?? [])
                             ->mapWithKeys(function ($item) {
-                                $jumlah = 'Rp. ' . number_format($item['jumlah'], 0, '', ',');
-                                return [$item['id'] => $item['nama'] . ' - ' . $jumlah];
+                                $jumlah = 'Rp. '.number_format($item['jumlah'], 0, '', ',');
+
+                                return [$item['id'] => $item['nama'].' - '.$jumlah];
                             })->toArray();
                     })
                     ->live()
@@ -662,11 +690,16 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                     ->searchable()
                     ->searchPrompt('Cari Kelas')
                     ->options(function () {
-                        if (!$this->jenjang) return [];
-                        $response = ApiService::client()->get('/kelas/' . $this->jenjang);
-                        if (!$response->ok()) return [];
+                        if (! $this->jenjang) {
+                            return [];
+                        }
+                        $response = ApiService::client()->get('/kelas/'.$this->jenjang);
+                        if (! $response->ok()) {
+                            return [];
+                        }
+
                         return collect($response->json('data') ?? [])
-                            ->mapWithKeys(fn($item) => [$item['id'] => $item['nama']])
+                            ->mapWithKeys(fn ($item) => [$item['id'] => $item['nama']])
                             ->toArray();
                     })
                     ->required(),
@@ -676,9 +709,12 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                     ->searchPrompt('Cari Kategori')
                     ->options(function () {
                         $response = ApiService::client()->get('/kategori');
-                        if (!$response->ok()) return [];
+                        if (! $response->ok()) {
+                            return [];
+                        }
+
                         return collect($response->json('data') ?? [])
-                            ->mapWithKeys(fn($item) => [$item['id'] => $item['nama']])
+                            ->mapWithKeys(fn ($item) => [$item['id'] => $item['nama']])
                             ->toArray();
                     })
                     ->required(),
@@ -700,8 +736,6 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                 }
             });
     }
-
-
 
     public function render()
     {

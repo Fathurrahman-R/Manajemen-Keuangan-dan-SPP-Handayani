@@ -21,9 +21,9 @@ class PembayaranExportService
     /**
      * Export pembayaran data to file (sync) or dispatch queue job (async).
      *
-     * @param array $filters Filter parameters (tahun_ajaran_id, tanggal_mulai, tanggal_selesai)
-     * @param string $format Export format: 'xlsx' or 'csv'
-     * @param int $branchId Branch ID scope
+     * @param  array  $filters  Filter parameters (tahun_ajaran_id, tanggal_mulai, tanggal_selesai)
+     * @param  string  $format  Export format: 'xlsx' or 'csv'
+     * @param  int  $branchId  Branch ID scope
      * @return BinaryFileResponse|array Returns file response if sync, or job reference array if queued
      */
     public function export(array $filters, string $format, int $branchId): BinaryFileResponse|array
@@ -59,15 +59,15 @@ class PembayaranExportService
         $query = Pembayaran::query()
             ->where('pembayarans.branch_id', $branchId);
 
-        $hasTahunAjaranFilter = !empty($filters['tahun_ajaran_id']);
-        $hasDateFilter = !empty($filters['tanggal_mulai']) || !empty($filters['tanggal_selesai']);
+        $hasTahunAjaranFilter = ! empty($filters['tahun_ajaran_id']);
+        $hasDateFilter = ! empty($filters['tanggal_mulai']) || ! empty($filters['tanggal_selesai']);
 
         // Apply date range filter
-        if (!empty($filters['tanggal_mulai'])) {
+        if (! empty($filters['tanggal_mulai'])) {
             $query->where('pembayarans.tanggal', '>=', $filters['tanggal_mulai']);
         }
 
-        if (!empty($filters['tanggal_selesai'])) {
+        if (! empty($filters['tanggal_selesai'])) {
             $query->where('pembayarans.tanggal', '<=', $filters['tanggal_selesai']);
         }
 
@@ -76,7 +76,7 @@ class PembayaranExportService
             $query->whereHas('tagihan', function (Builder $q) use ($filters) {
                 $q->where('tahun_ajaran_id', $filters['tahun_ajaran_id']);
             });
-        } elseif (!$hasDateFilter) {
+        } elseif (! $hasDateFilter) {
             // Default to Periode_Aktif if no tahun_ajaran_id and no date range filter
             $periodeAktif = TahunAjaran::getAktif($branchId);
 
@@ -98,7 +98,7 @@ class PembayaranExportService
         $query = $this->buildQuery($filters, $branchId);
 
         $export = new PembayaranExport($query);
-        $fileName = 'export_pembayaran_' . now()->format('Y-m-d_His') . '.' . $format;
+        $fileName = 'export_pembayaran_'.now()->format('Y-m-d_His').'.'.$format;
 
         return Excel::download($export, $fileName);
     }

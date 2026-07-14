@@ -5,13 +5,13 @@ namespace App\DTOs\ImportExport;
 class ImportPreviewDTO
 {
     /**
-     * @param string $previewId UUID untuk referensi session
-     * @param int $totalRows Total baris dalam file
-     * @param int $validRows Jumlah baris valid
-     * @param int $errorRows Jumlah baris error
-     * @param array<int, array{row: int, column: string, message: string}> $errors Detail error per baris
-     * @param array $validData Parsed valid rows (stored in cache)
-     * @param bool $requiresQueue true jika >500 rows
+     * @param  string  $previewId  UUID untuk referensi session
+     * @param  int  $totalRows  Total baris dalam file
+     * @param  int  $validRows  Jumlah baris valid
+     * @param  int  $errorRows  Jumlah baris error
+     * @param  array<int, array{row: int, column: string, message: string}>  $errors  Detail error per baris
+     * @param  array  $validData  Parsed valid rows (stored in cache)
+     * @param  bool  $requiresQueue  true jika >500 rows
      */
     public function __construct(
         public readonly string $previewId,

@@ -23,6 +23,7 @@ class NotificationSettingController extends Controller
                 'overdue_interval_days' => 7,
             ]
         );
+
         return response()->json(['data' => $setting]);
     }
 
@@ -41,6 +42,7 @@ class NotificationSettingController extends Controller
             ]
         );
         $setting->update($request->validated());
+
         return response()->json(['data' => $setting]);
     }
 }

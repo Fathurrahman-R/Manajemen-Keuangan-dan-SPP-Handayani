@@ -11,10 +11,15 @@ class Pembayaran extends Model
     use HasFactory;
 
     protected $table = 'pembayarans';
+
     protected $primaryKey = 'kode_pembayaran';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
+
     public $timestamps = true;
+
     protected $fillable = [
         'kode_pembayaran',
         'kode_tagihan',

@@ -9,7 +9,6 @@ use App\Models\Kelas;
 use App\Models\Pembayaran;
 use App\Models\Pengeluaran;
 use App\Models\Siswa;
-use App\Models\SiswaKelas;
 use App\Models\Tagihan;
 use App\Models\TahunAjaran;
 use App\Models\User;
@@ -34,13 +33,21 @@ class ExportServicePropertyTest extends TestCase
     use RefreshDatabase;
 
     private Branch $branch;
+
     private Branch $otherBranch;
+
     private TahunAjaran $tahunAjaran;
+
     private TahunAjaran $otherTahunAjaran;
+
     private Kelas $kelas;
+
     private Kelas $otherKelas;
+
     private Kategori $kategori;
+
     private Wali $wali;
+
     private JenisTagihan $jenisTagihan;
 
     protected function setUp(): void
@@ -109,7 +116,7 @@ class ExportServicePropertyTest extends TestCase
             ]);
         }
 
-        $service = new SiswaExportService();
+        $service = new SiswaExportService;
         $query = $service->buildQuery([], $this->branch->id);
         $results = $query->get();
 
@@ -173,7 +180,7 @@ class ExportServicePropertyTest extends TestCase
             ]);
         }
 
-        $service = new TagihanExportService();
+        $service = new TagihanExportService;
         $count = $service->getRecordCount([], $this->branch->id);
 
         $this->assertEquals($countOurBranch, $count,
@@ -243,7 +250,7 @@ class ExportServicePropertyTest extends TestCase
             ]);
         }
 
-        $service = new PembayaranExportService();
+        $service = new PembayaranExportService;
         $query = $service->buildQuery([], $this->branch->id);
         $results = $query->get();
 
@@ -330,7 +337,7 @@ class ExportServicePropertyTest extends TestCase
             'tanggal' => sprintf('%d-%02d-%02d', $tahun, $bulan, $faker->numberBetween(1, 28)),
         ]);
 
-        $service = new KasExportService();
+        $service = new KasExportService;
         $recordCount = $service->getRecordCount($bulan, $tahun, $this->branch->id);
 
         $this->assertEquals($countPemasukan + $countPengeluaran, $recordCount,
@@ -343,6 +350,7 @@ class ExportServicePropertyTest extends TestCase
         for ($i = 1; $i <= 10; $i++) {
             $data["iteration_{$i}"] = [$i, $i * 17];
         }
+
         return $data;
     }
 
@@ -394,7 +402,7 @@ class ExportServicePropertyTest extends TestCase
             $filters['status'] = $faker->randomElement($statusOptions);
         }
 
-        $service = new SiswaExportService();
+        $service = new SiswaExportService;
         $query = $service->buildQuery($filters, $this->branch->id);
         $results = $query->get();
 
@@ -445,7 +453,7 @@ class ExportServicePropertyTest extends TestCase
         $filterStatus = $faker->randomElement($statusOptions);
         $filters = ['status' => $filterStatus];
 
-        $service = new TagihanExportService();
+        $service = new TagihanExportService;
         $query = $service->buildQuery($filters, $this->branch->id);
         $results = $query->get();
 
@@ -500,7 +508,7 @@ class ExportServicePropertyTest extends TestCase
             'tanggal_selesai' => $tanggalSelesai,
         ];
 
-        $service = new PembayaranExportService();
+        $service = new PembayaranExportService;
         $query = $service->buildQuery($filters, $this->branch->id);
         $results = $query->get();
 
@@ -518,6 +526,7 @@ class ExportServicePropertyTest extends TestCase
         for ($i = 1; $i <= 10; $i++) {
             $data["iteration_{$i}"] = [$i, $i * 31];
         }
+
         return $data;
     }
 
@@ -550,7 +559,7 @@ class ExportServicePropertyTest extends TestCase
             'status' => $faker->randomElement(['Aktif', 'Lulus', 'Pindah']),
         ]);
 
-        $service = new SiswaExportService();
+        $service = new SiswaExportService;
         $query = $service->buildQuery([], $this->branch->id);
         $result = $query->first();
 
@@ -594,7 +603,7 @@ class ExportServicePropertyTest extends TestCase
             'status' => $tagihanStatus,
         ]);
 
-        $service = new TagihanExportService();
+        $service = new TagihanExportService;
         $query = $service->buildQuery([], $this->branch->id);
         $result = $query->first();
 
@@ -645,7 +654,7 @@ class ExportServicePropertyTest extends TestCase
             'metode' => $metode,
         ]);
 
-        $service = new PembayaranExportService();
+        $service = new PembayaranExportService;
         $query = $service->buildQuery(['tanggal_mulai' => '2024-01-01', 'tanggal_selesai' => '2024-12-31'], $this->branch->id);
         $result = $query->first();
 
@@ -666,6 +675,7 @@ class ExportServicePropertyTest extends TestCase
         for ($i = 1; $i <= 10; $i++) {
             $data["iteration_{$i}"] = [$i, $i * 43];
         }
+
         return $data;
     }
 
@@ -811,6 +821,7 @@ class ExportServicePropertyTest extends TestCase
         for ($i = 1; $i <= 10; $i++) {
             $data["iteration_{$i}"] = [$i, $i * 53];
         }
+
         return $data;
     }
 
@@ -878,7 +889,7 @@ class ExportServicePropertyTest extends TestCase
             $expectedPengeluaran += $jumlah;
         }
 
-        $service = new KasExportService();
+        $service = new KasExportService;
 
         // Verify sum of individual records matches expected totals
         $pemasukanQuery = $service->buildPemasukanQuery($bulan, $tahun, $this->branch->id);
@@ -1010,6 +1021,7 @@ class ExportServicePropertyTest extends TestCase
         for ($i = 1; $i <= 10; $i++) {
             $data["iteration_{$i}"] = [$i, $i * 67];
         }
+
         return $data;
     }
 }

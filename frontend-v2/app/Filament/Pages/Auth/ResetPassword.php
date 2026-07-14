@@ -28,14 +28,15 @@ class ResetPassword extends SimplePage
     {
         $this->token = request()->query('token');
 
-        if (!$this->token) {
+        if (! $this->token) {
             $this->errorMessage = 'Token tidak ditemukan.';
+
             return;
         }
 
         // Validate token
         try {
-            $response = Http::get(env('API_URL') . '/reset-password/' . $this->token);
+            $response = Http::get(env('API_URL').'/reset-password/'.$this->token);
 
             if ($response->ok() && $response->json('valid')) {
                 $this->tokenValid = true;
@@ -74,7 +75,7 @@ class ResetPassword extends SimplePage
         $data = $this->form->getState();
 
         try {
-            $response = Http::post(env('API_URL') . '/reset-password', [
+            $response = Http::post(env('API_URL').'/reset-password', [
                 'token' => $this->token,
                 'password' => $data['password'],
                 'password_confirmation' => $data['password_confirmation'],

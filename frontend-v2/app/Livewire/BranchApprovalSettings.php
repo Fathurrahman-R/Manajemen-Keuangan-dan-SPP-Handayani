@@ -16,8 +16,8 @@ use Livewire\Component;
 
 class BranchApprovalSettings extends Component implements HasForms
 {
-    use InteractsWithForms;
     use HandlesApiErrors;
+    use InteractsWithForms;
 
     public ?array $data = [];
 

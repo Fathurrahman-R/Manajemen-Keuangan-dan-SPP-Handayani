@@ -25,11 +25,12 @@ class WorkflowNotificationService
         foreach ($approvers as $approver) {
             $email = $approver->email;
 
-            if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            if (empty($email) || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 Log::info('Skipped pengeluaran workflow email: no valid email', [
                     'user_id' => $approver->id,
                     'pengeluaran_request_id' => $request->id,
                 ]);
+
                 continue;
             }
 
@@ -59,7 +60,7 @@ class WorkflowNotificationService
         $requester = $request->requester;
         $recipients = collect();
 
-        if ($requester && !empty($requester->email) && filter_var($requester->email, FILTER_VALIDATE_EMAIL)) {
+        if ($requester && ! empty($requester->email) && filter_var($requester->email, FILTER_VALIDATE_EMAIL)) {
             $recipients->push($requester->email);
         }
 
@@ -69,7 +70,7 @@ class WorkflowNotificationService
             $disburserLog = $request->approvalLogs->where('new_status', 'disbursed')->last();
             if ($disburserLog && $disburserLog->user) {
                 $disburserEmail = $disburserLog->user->email;
-                if (!empty($disburserEmail) && filter_var($disburserEmail, FILTER_VALIDATE_EMAIL)) {
+                if (! empty($disburserEmail) && filter_var($disburserEmail, FILTER_VALIDATE_EMAIL)) {
                     $recipients->push($disburserEmail);
                 }
             }
@@ -81,6 +82,7 @@ class WorkflowNotificationService
             Log::info("Skipped pengeluaran workflow email ({$event}): no valid email for requester/disburser", [
                 'pengeluaran_request_id' => $request->id,
             ]);
+
             return;
         }
 

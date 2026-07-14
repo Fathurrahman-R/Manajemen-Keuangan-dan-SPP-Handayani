@@ -1,45 +1,30 @@
 <?php
+
 namespace Database\Seeders;
-use Illuminate\Database\Seeder;
+
 use App\Models\AppSetting;
+use App\Models\Branch;
+use Illuminate\Database\Seeder;
+
 class AppSettingSeeder extends Seeder
 {
-    public function run(): void{
-        AppSetting::create([
-            'logo' => 'logo-sekolah/qZ3JCppidsn5nVPDnVqfFAy1mFB5tnifaZWZ40dZ.jpg',
-            'kode_pos' => '12345',
-            'bendahara' => 'Siti',
-            'kepala_sekolah' => 'Ahmad',
-            'telepon' => '081234567890',
-            'email' => 'info@sekolahcontoh.test',
-            'alamat' => 'Jl. Parit H. Husai 2, Komp. Acisa Asri No.47, Bansir Darat Pontianak Tenggara',
-            'lokasi' => 'Pontianak',
-            'nama_sekolah' => 'LPA Handayani',
-            'branch_id'=>1,
-        ]);
-        AppSetting::create([
-            'logo' => 'logo-sekolah/qZ3JCppidsn5nVPDnVqfFAy1mFB5tnifaZWZ40dZ.jpg',
-            'kode_pos' => '12345',
-            'bendahara' => 'Siti',
-            'kepala_sekolah' => 'Ahmad',
-            'telepon' => '081234567890',
-            'email' => 'info@sekolahcontoh.test',
-            'alamat' => 'Jl. Parit H. Husai 2, Komp. Acisa Asri No.47, Bansir Darat Pontianak Tenggara',
-            'lokasi' => 'Pontianak',
-            'nama_sekolah' => 'LPA Handayani',
-            'branch_id'=>2,
-        ]);
-        AppSetting::create([
-            'logo' => 'logo-sekolah/qZ3JCppidsn5nVPDnVqfFAy1mFB5tnifaZWZ40dZ.jpg',
-            'kode_pos' => '12345',
-            'bendahara' => 'Siti',
-            'kepala_sekolah' => 'Ahmad',
-            'telepon' => '081234567890',
-            'email' => 'info@sekolahcontoh.test',
-            'alamat' => 'Jl. Parit H. Husai 2, Komp. Acisa Asri No.47, Bansir Darat Pontianak Tenggara',
-            'lokasi' => 'Pontianak',
-            'nama_sekolah' => 'LPA Handayani',
-            'branch_id'=>3,
-        ]);
+    public function run(): void
+    {
+        foreach (Branch::all() as $branch) {
+            AppSetting::firstOrCreate(
+                ['branch_id' => $branch->id],
+                [
+                    'nama_sekolah' => 'Lembaga Pendidikan Handayani '.$branch->location,
+                    'lokasi' => $branch->location,
+                    'alamat' => 'Jl. Pendidikan No. '.rand(1, 100).', '.$branch->location,
+                    'email' => 'handayani.'.strtolower(str_replace(' ', '', $branch->location)).'@example.com',
+                    'telepon' => '0761-'.rand(100000, 999999),
+                    'kepala_sekolah' => fake()->name(),
+                    'bendahara' => fake()->name(),
+                    'kode_pos' => (string) rand(28000, 29999),
+                    'logo' => 'logo-handayani.png',
+                ]
+            );
+        }
     }
 }

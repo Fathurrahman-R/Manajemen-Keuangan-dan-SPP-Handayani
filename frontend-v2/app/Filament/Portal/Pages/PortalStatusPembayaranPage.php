@@ -2,6 +2,7 @@
 
 namespace App\Filament\Portal\Pages;
 
+use App\Helpers\PermissionHelper;
 use App\Services\MidtransApi;
 use App\Services\MidtransApiException;
 use BackedEnum;
@@ -28,10 +29,15 @@ class PortalStatusPembayaranPage extends Page
 
     // Page properties
     public string $order_id = '';
+
     public array $transaction = [];
+
     public string $status = 'pending';
+
     public int $pollCount = 0;
+
     public bool $isPolling = true;
+
     public bool $loadError = false;
 
     protected ?string $heading = 'Status Pembayaran';
@@ -39,7 +45,7 @@ class PortalStatusPembayaranPage extends Page
     public function mount(): void
     {
         $roles = session()->get('data.roles', []);
-        if (!in_array('siswa', $roles) && !in_array('wali', $roles)) {
+        if (! PermissionHelper::hasResource('portal-access')) {
             abort(403);
         }
 
@@ -81,7 +87,7 @@ class PortalStatusPembayaranPage extends Page
      */
     public function pollStatus(): void
     {
-        if (!$this->isPolling) {
+        if (! $this->isPolling) {
             return;
         }
 
@@ -90,6 +96,7 @@ class PortalStatusPembayaranPage extends Page
         // Stop at 24 polls (120 seconds at 5s interval)
         if ($this->pollCount >= 24) {
             $this->isPolling = false;
+
             return;
         }
 

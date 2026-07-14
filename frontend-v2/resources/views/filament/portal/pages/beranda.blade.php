@@ -32,19 +32,19 @@
         </div>
     </x-filament::section>
 
-    <div wire:loading.class="opacity-50 pointer-events-none transition-opacity" wire:target="selectedTahunAjaranId, selectedSiswaId" class="space-y-6">
+    <div wire:loading.class="opacity-50 pointer-events-none transition-opacity" wire:target="selectedTahunAjaranId" class="space-y-6">
         @livewire(
             \App\Filament\Widgets\PortalSiswaStatsWidget::class,
-            ['selectedSiswaId' => $this->selectedSiswaId, 'selectedTahunAjaranId' => $this->selectedTahunAjaranId],
-            key('portal-stats-' . ($this->selectedSiswaId ?? 'self') . '-' . ($this->selectedTahunAjaranId ?? 'all'))
+            ['selectedSiswaId' => null, 'selectedTahunAjaranId' => $this->selectedTahunAjaranId],
+            key('portal-stats-' . ($this->selectedTahunAjaranId ?? 'all'))
         )
 
         <x-filament::section>
             <x-slot name="heading">Daftar Tagihan</x-slot>
             @livewire(
                 \App\Livewire\PortalSiswaTagihanTable::class,
-                ['selectedSiswaId' => $this->selectedSiswaId, 'selectedTahunAjaranId' => $this->selectedTahunAjaranId],
-                key('portal-tagihan-' . ($this->selectedSiswaId ?? 'self') . '-' . ($this->selectedTahunAjaranId ?? 'all'))
+                ['selectedSiswaId' => null, 'selectedTahunAjaranId' => $this->selectedTahunAjaranId],
+                key('portal-tagihan-' . ($this->selectedTahunAjaranId ?? 'all'))
             )
         </x-filament::section>
 
@@ -52,8 +52,8 @@
             <x-slot name="heading">Pembayaran Terbaru</x-slot>
             @livewire(
                 \App\Livewire\PortalSiswaPembayaranTable::class,
-                ['selectedSiswaId' => $this->selectedSiswaId, 'selectedTahunAjaranId' => $this->selectedTahunAjaranId],
-                key('portal-pembayaran-' . ($this->selectedSiswaId ?? 'self') . '-' . ($this->selectedTahunAjaranId ?? 'all'))
+                ['selectedSiswaId' => null, 'selectedTahunAjaranId' => $this->selectedTahunAjaranId],
+                key('portal-pembayaran-' . ($this->selectedTahunAjaranId ?? 'all'))
             )
         </x-filament::section>
     </div>

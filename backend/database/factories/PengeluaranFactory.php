@@ -19,7 +19,7 @@ class PengeluaranFactory extends Factory
         return [
             'tanggal' => $this->faker->date(),
             'uraian' => $this->faker->sentence(3),
-            'jumlah' => $this->faker->randomFloat(12, 50000,100000),
+            'jumlah' => $this->faker->randomFloat(12, 50000, 100000),
         ];
     }
 }

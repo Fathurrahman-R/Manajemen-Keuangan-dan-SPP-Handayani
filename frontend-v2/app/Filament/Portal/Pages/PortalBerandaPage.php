@@ -3,10 +3,10 @@
 namespace App\Filament\Portal\Pages;
 
 use App\Filament\Widgets\PortalSiswaStatsWidget;
+use App\Helpers\PermissionHelper;
 use App\Livewire\Concerns\HasPeriodFilter;
 use BackedEnum;
 use Filament\Pages\Page;
-use Livewire\Attributes\Url;
 
 class PortalBerandaPage extends Page
 {
@@ -17,7 +17,7 @@ class PortalBerandaPage extends Page
      * akumulasi sejak awal masuk sampai sekarang. Tetap bisa di-filter ke
      * periode tertentu via dropdown.
      */
-    public bool $allowAllPeriodsOption = false;
+    public bool $allowAllPeriodsOption = true;
 
     protected string $view = 'filament.portal.pages.beranda';
 
@@ -34,11 +34,6 @@ class PortalBerandaPage extends Page
     /**
      * Wali dengan beberapa anak dapat memilih siswa via dropdown ini.
      */
-    #[Url(as: 'siswa')]
-    public ?int $selectedSiswaId = null;
-
-    public array $childOptions = [];
-
     public static function shouldRegisterNavigation(): bool
     {
         return false; // Navigation handled manually via PortalPanelProvider
@@ -46,35 +41,21 @@ class PortalBerandaPage extends Page
 
     public function mount(): void
     {
-        $permissions = session()->get('data.permissions', []);
-        if (!in_array('view-own-billing', $permissions)) {
+        if (! PermissionHelper::hasResource('portal-access')) {
             abort(403);
         }
-
-//        $roles = session()->get('data.roles', []);
-//        if (in_array('wali', $roles)) {
-//            $this->childOptions = session()->get('data.children', []);
-//        }
 
         $this->mountHasPeriodFilter();
     }
 
-    public function updatedSelectedSiswaId(): void
-    {
-        // Trigger re-render so widget & tables receive new selectedSiswaId.
-    }
 
-    public function updatedSelectedTahunAjaranId($value): void
-    {
-        session(['selected_tahun_ajaran_id' => $value ? (int) $value : null]);
-    }
 
-//    protected function getHeaderWidgets(): array
-//    {
-//        return [
-//            PortalSiswaStatsWidget::class,
-//        ];
-//    }
+    //    protected function getHeaderWidgets(): array
+    //    {
+    //        return [
+    //            PortalSiswaStatsWidget::class,
+    //        ];
+    //    }
 
     public function getHeaderWidgetsColumns(): int|array
     {

@@ -20,6 +20,7 @@ class DetailWali extends Component implements HasSchemas
     use InteractsWithSchemas;
 
     public ?int $id;
+
     public ?array $waliData = null;
 
     public function mount(int $id): void
@@ -104,7 +105,7 @@ class DetailWali extends Component implements HasSchemas
     public function render()
     {
         $response = ApiService::client()
-            ->get('/wali/' . $this->id);
+            ->get('/wali/'.$this->id);
 
         if (! $response->ok()) {
             throw new Exception($response->json()['errors']['message'][0]);
@@ -114,7 +115,7 @@ class DetailWali extends Component implements HasSchemas
 
         // Fetch children (siswa) associated with this wali
         $childrenResponse = ApiService::client()
-            ->get('/wali/' . $this->id . '/siswa');
+            ->get('/wali/'.$this->id.'/siswa');
 
         if ($childrenResponse->ok()) {
             $this->waliData['children'] = collect($childrenResponse->json()['data'] ?? [])

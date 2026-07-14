@@ -12,7 +12,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ProcessExportJob implements ShouldQueue
@@ -20,6 +19,7 @@ class ProcessExportJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
     public int $timeout = 600; // 10 minutes
 
     public function __construct(
@@ -32,7 +32,7 @@ class ProcessExportJob implements ShouldQueue
 
     public function handle(): void
     {
-        $fileName = "export_{$this->exportType}_" . now()->format('Y-m-d_His') . ".{$this->format}";
+        $fileName = "export_{$this->exportType}_".now()->format('Y-m-d_His').".{$this->format}";
         $filePath = "exports/{$fileName}";
 
         try {
@@ -65,7 +65,7 @@ class ProcessExportJob implements ShouldQueue
                 $service = app(SiswaExportService::class);
                 $query = $service->buildQuery($this->filters, $this->branchId);
                 $tahunAjaranId = $this->filters['tahun_ajaran_id'] ?? null;
-                if (!$tahunAjaranId) {
+                if (! $tahunAjaranId) {
                     $periodeAktif = \App\Models\TahunAjaran::getAktif($this->branchId);
                     $tahunAjaranId = $periodeAktif?->id;
                 }

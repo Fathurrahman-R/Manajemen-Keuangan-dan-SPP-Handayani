@@ -51,10 +51,10 @@ class ImportBatchService
                 ->pluck('nis')
                 ->toArray();
 
-            if (!empty($affectedSiswa)) {
+            if (! empty($affectedSiswa)) {
                 return [
                     'allowed' => false,
-                    'reason' => 'Tidak dapat rollback: siswa dengan NIS berikut memiliki tagihan: ' . implode(', ', $affectedSiswa),
+                    'reason' => 'Tidak dapat rollback: siswa dengan NIS berikut memiliki tagihan: '.implode(', ', $affectedSiswa),
                 ];
             }
         }
@@ -65,10 +65,10 @@ class ImportBatchService
                 ->pluck('kode_tagihan')
                 ->toArray();
 
-            if (!empty($affectedTagihan)) {
+            if (! empty($affectedTagihan)) {
                 return [
                     'allowed' => false,
-                    'reason' => 'Tidak dapat rollback: tagihan berikut memiliki pembayaran: ' . implode(', ', $affectedTagihan),
+                    'reason' => 'Tidak dapat rollback: tagihan berikut memiliki pembayaran: '.implode(', ', $affectedTagihan),
                 ];
             }
         }
@@ -85,12 +85,12 @@ class ImportBatchService
             ->where('branch_id', $branchId)
             ->first();
 
-        if (!$batch) {
+        if (! $batch) {
             throw new \InvalidArgumentException('Import batch tidak ditemukan');
         }
 
         $eligibility = $this->canRollback($batch);
-        if (!$eligibility['allowed']) {
+        if (! $eligibility['allowed']) {
             throw new \InvalidArgumentException($eligibility['reason']);
         }
 

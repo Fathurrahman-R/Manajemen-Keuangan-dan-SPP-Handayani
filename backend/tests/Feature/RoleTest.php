@@ -16,8 +16,9 @@ class RoleTest extends TestCase
         /** @var User $user */
         $user = User::factory()->superadmin()->create([
             'username' => 'superadmin',
-            'token'    => $token,
+            'token' => $token,
         ]);
+
         return $user;
     }
 
@@ -26,8 +27,9 @@ class RoleTest extends TestCase
         /** @var User $user */
         $user = User::factory()->admin()->create([
             'username' => 'admin-user',
-            'token'    => $token,
+            'token' => $token,
         ]);
+
         return $user;
     }
 
@@ -38,7 +40,7 @@ class RoleTest extends TestCase
 
     // ── GET /roles ────────────────────────────────────────────────────────────
 
-    public function testIndexRoleBerhasil(): void
+    public function test_index_role_berhasil(): void
     {
         $this->createSuperadmin();
         $this->createRole();
@@ -48,13 +50,13 @@ class RoleTest extends TestCase
             ->assertJsonStructure(['data']);
     }
 
-    public function testIndexRoleTanpaAuth(): void
+    public function test_index_role_tanpa_auth(): void
     {
         $this->getJson('api/roles')
             ->assertStatus(401);
     }
 
-    public function testIndexRoleForbiddenBukanSuperadmin(): void
+    public function test_index_role_forbidden_bukan_superadmin(): void
     {
         $this->createAdmin();
 
@@ -64,32 +66,32 @@ class RoleTest extends TestCase
 
     // ── POST /roles ───────────────────────────────────────────────────────────
 
-    public function testStoreRoleBerhasil(): void
+    public function test_store_role_berhasil(): void
     {
         $this->createSuperadmin();
 
         $this->postJson('api/roles', [
-            'name'        => 'kasir',
+            'name' => 'kasir',
             'permissions' => [],
         ], ['Authorization' => 'sa-token'])
             ->assertStatus(201)
             ->assertJsonPath('data.name', 'kasir');
     }
 
-    public function testStoreRoleDuplikat(): void
+    public function test_store_role_duplikat(): void
     {
         $this->createSuperadmin();
         $this->createRole('kasir');
 
         $this->postJson('api/roles', [
-            'name'        => 'kasir',
+            'name' => 'kasir',
             'permissions' => [],
         ], ['Authorization' => 'sa-token'])
             ->assertStatus(400)
             ->assertJsonPath('errors.message.0', 'Role dengan nama tersebut sudah ada.');
     }
 
-    public function testStoreRoleValidasiFailed(): void
+    public function test_store_role_validasi_failed(): void
     {
         $this->createSuperadmin();
 
@@ -100,7 +102,7 @@ class RoleTest extends TestCase
 
     // ── GET /roles/{id} ───────────────────────────────────────────────────────
 
-    public function testShowRoleBerhasil(): void
+    public function test_show_role_berhasil(): void
     {
         $this->createSuperadmin();
         $role = $this->createRole();
@@ -110,7 +112,7 @@ class RoleTest extends TestCase
             ->assertJsonPath('data.name', 'kasir');
     }
 
-    public function testShowRoleTidakDitemukan(): void
+    public function test_show_role_tidak_ditemukan(): void
     {
         $this->createSuperadmin();
 
@@ -120,25 +122,25 @@ class RoleTest extends TestCase
 
     // ── PUT /roles/{id} ───────────────────────────────────────────────────────
 
-    public function testUpdateRoleBerhasil(): void
+    public function test_update_role_berhasil(): void
     {
         $this->createSuperadmin();
         $role = $this->createRole();
 
         $this->putJson("api/roles/{$role->id}", [
-            'name'        => 'kasir-updated',
+            'name' => 'kasir-updated',
             'permissions' => [],
         ], ['Authorization' => 'sa-token'])
             ->assertStatus(200)
             ->assertJsonPath('data.name', 'kasir-updated');
     }
 
-    public function testUpdateRoleTidakDitemukan(): void
+    public function test_update_role_tidak_ditemukan(): void
     {
         $this->createSuperadmin();
 
         $this->putJson('api/roles/9999', [
-            'name'        => 'kasir',
+            'name' => 'kasir',
             'permissions' => [],
         ], ['Authorization' => 'sa-token'])
             ->assertStatus(400);
@@ -146,7 +148,7 @@ class RoleTest extends TestCase
 
     // ── DELETE /roles/{id} ────────────────────────────────────────────────────
 
-    public function testDestroyRoleBerhasil(): void
+    public function test_destroy_role_berhasil(): void
     {
         $this->createSuperadmin();
         $role = $this->createRole();
@@ -156,7 +158,7 @@ class RoleTest extends TestCase
             ->assertJsonPath('data', true);
     }
 
-    public function testDestroyRoleTidakDitemukan(): void
+    public function test_destroy_role_tidak_ditemukan(): void
     {
         $this->createSuperadmin();
 
@@ -166,7 +168,7 @@ class RoleTest extends TestCase
 
     // ── POST /roles/attach ────────────────────────────────────────────────────
 
-    public function testAttachRoleBerhasil(): void
+    public function test_attach_role_berhasil(): void
     {
         $this->createSuperadmin();
         $this->createRole('kasir');
@@ -175,25 +177,25 @@ class RoleTest extends TestCase
 
         $this->postJson('api/roles/attach', [
             'user_id' => $target->id,
-            'role'    => 'kasir',
+            'role' => 'kasir',
         ], ['Authorization' => 'sa-token'])
             ->assertStatus(200)
             ->assertJsonPath('message', 'Role berhasil dikaitkan.');
     }
 
-    public function testAttachRoleUserTidakDitemukan(): void
+    public function test_attach_role_user_tidak_ditemukan(): void
     {
         $this->createSuperadmin();
         $this->createRole('kasir');
 
         $this->postJson('api/roles/attach', [
             'user_id' => 9999,
-            'role'    => 'kasir',
+            'role' => 'kasir',
         ], ['Authorization' => 'sa-token'])
             ->assertStatus(422); // form request validation: exists:users,id
     }
 
-    public function testAttachRoleTidakDitemukan(): void
+    public function test_attach_role_tidak_ditemukan(): void
     {
         $this->createSuperadmin();
         /** @var User $target */
@@ -201,14 +203,14 @@ class RoleTest extends TestCase
 
         $this->postJson('api/roles/attach', [
             'user_id' => $target->id,
-            'role'    => 'tidak-ada',
+            'role' => 'tidak-ada',
         ], ['Authorization' => 'sa-token'])
             ->assertStatus(400);
     }
 
     // ── POST /roles/detach ────────────────────────────────────────────────────
 
-    public function testDetachRoleBerhasil(): void
+    public function test_detach_role_berhasil(): void
     {
         $this->createSuperadmin();
         /** @var User $target */
@@ -216,13 +218,13 @@ class RoleTest extends TestCase
 
         $this->postJson('api/roles/detach', [
             'user_id' => $target->id,
-            'role'    => DefaultRoles::ADMIN->value,
+            'role' => DefaultRoles::ADMIN->value,
         ], ['Authorization' => 'sa-token'])
             ->assertStatus(200)
             ->assertJsonPath('message', 'Role berhasil dilepaskan.');
     }
 
-    public function testDetachRoleTidakDitemukan(): void
+    public function test_detach_role_tidak_ditemukan(): void
     {
         $this->createSuperadmin();
         /** @var User $target */
@@ -230,7 +232,7 @@ class RoleTest extends TestCase
 
         $this->postJson('api/roles/detach', [
             'user_id' => $target->id,
-            'role'    => 'tidak-ada',
+            'role' => 'tidak-ada',
         ], ['Authorization' => 'sa-token'])
             ->assertStatus(400);
     }

@@ -5,8 +5,6 @@ namespace App\Console\Commands;
 use App\Enum\Permission;
 use App\Models\PermissionResource;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 
 class SyncResourcesCommand extends Command
 {
@@ -113,6 +111,7 @@ class SyncResourcesCommand extends Command
             $existing = PermissionResource::where('resource_key', $resourceKey)->first();
             if ($existing) {
                 $skipped++;
+
                 continue;
             }
 
@@ -129,7 +128,7 @@ class SyncResourcesCommand extends Command
             $this->line("  + {$resourceKey} → {$name}");
         }
 
-        $this->info("Resource registry selesai.");
+        $this->info('Resource registry selesai.');
         $this->info("  + {$created} baru");
         $this->info("  = {$skipped} sudah ada (skip)");
 

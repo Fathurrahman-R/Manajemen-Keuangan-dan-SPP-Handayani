@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Helpers\PermissionHelper;
 use App\Services\ApiService;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -29,7 +30,7 @@ class PembayaranTerbaruWidget extends BaseWidget
                 try {
                     $response = ApiService::client()->get('/dashboard/pembayaran-terbaru', $params);
 
-                    if (!$response->ok()) {
+                    if (! $response->ok()) {
                         return collect([]);
                     }
 
@@ -65,6 +66,6 @@ class PembayaranTerbaruWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return in_array('view-dashboard', session()->get('data.permissions', []));
+        return PermissionHelper::hasResource('dashboard');
     }
 }

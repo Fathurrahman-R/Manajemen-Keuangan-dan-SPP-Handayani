@@ -2,15 +2,16 @@
 
 namespace App\Filament\Pages;
 
+use App\Helpers\PermissionHelper;
 use Filament\Pages\Page;
-use UnitEnum;
 use Filament\Support\Enums\Alignment;
+use UnitEnum;
 
 class DataMasterCategory extends Page
 {
     protected string $view = 'filament.pages.data-master-category';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Data Master';
+    protected static string|UnitEnum|null $navigationGroup = 'Data Master';
 
     protected static ?string $navigationLabel = 'Kategori';
 
@@ -22,15 +23,11 @@ class DataMasterCategory extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        return in_array('view-kategori', $permissions);
+        return PermissionHelper::hasResource('kategori');
     }
 
     public function mount(): void
     {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        if (!in_array('view-kategori', $permissions)) {
-            abort(403);
-        }
+        abort_if(! PermissionHelper::hasResource('kategori'), 403);
     }
 }

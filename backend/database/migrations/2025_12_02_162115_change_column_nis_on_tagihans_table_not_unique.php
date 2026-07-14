@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -14,8 +13,14 @@ return new class extends Migration
     {
         // 1. Drop foreign key & unique index if they exist
         Schema::table('tagihans', function (Blueprint $table) {
-            try { $table->dropForeign(['nis']); } catch (Throwable $e) { /* ignore if not exists */ }
-            try { $table->dropUnique('tagihans_nis_unique'); } catch (Throwable $e) { /* ignore if not exists */ }
+            try {
+                $table->dropForeign(['nis']);
+            } catch (Throwable $e) { /* ignore if not exists */
+            }
+            try {
+                $table->dropUnique('tagihans_nis_unique');
+            } catch (Throwable $e) { /* ignore if not exists */
+            }
         });
 
         // 2. Alter column (remove unique constraint, keep NOT NULL) & recreate FK with cascade
@@ -38,7 +43,10 @@ return new class extends Migration
     {
         // Revert: drop FK with cascade, optionally restore unique + FK without cascade
         Schema::table('tagihans', function (Blueprint $table) {
-            try { $table->dropForeign(['nis']); } catch (Throwable $e) { /* ignore */ }
+            try {
+                $table->dropForeign(['nis']);
+            } catch (Throwable $e) { /* ignore */
+            }
         });
 
         Schema::table('tagihans', function (Blueprint $table) {

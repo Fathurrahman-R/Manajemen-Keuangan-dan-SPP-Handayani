@@ -20,7 +20,7 @@ class PasswordResetService
             ->first();
 
         // Even if user doesn't exist, we don't reveal that
-        if (!$user) {
+        if (! $user) {
             return;
         }
 
@@ -35,14 +35,14 @@ class PasswordResetService
 
         // Send email with reset link
         $frontendUrl = config('app.frontend_url', env('FRONTEND_URL', 'http://127.0.0.1:8000'));
-        $resetUrl = $frontendUrl . '/reset-password?token=' . $token;
+        $resetUrl = $frontendUrl.'/reset-password?token='.$token;
 
         Mail::send(
             'emails.reset-password',
             ['resetUrl' => $resetUrl],
             function ($message) use ($email) {
                 $message->to($email)
-                    ->subject('Reset Password - ' . config('app.name'));
+                    ->subject('Reset Password - '.config('app.name'));
             }
         );
     }
@@ -54,7 +54,7 @@ class PasswordResetService
     {
         $resetToken = PasswordResetToken::where('token', $token)->first();
 
-        if (!$resetToken || !$resetToken->isValid()) {
+        if (! $resetToken || ! $resetToken->isValid()) {
             return null;
         }
 
@@ -68,7 +68,7 @@ class PasswordResetService
     {
         $resetToken = $this->validateToken($token);
 
-        if (!$resetToken) {
+        if (! $resetToken) {
             return false;
         }
 
@@ -76,7 +76,7 @@ class PasswordResetService
             ->where('is_active', true)
             ->first();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 

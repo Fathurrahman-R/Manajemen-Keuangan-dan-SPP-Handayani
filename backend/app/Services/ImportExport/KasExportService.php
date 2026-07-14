@@ -6,7 +6,6 @@ use App\Models\ExportJob;
 use App\Models\Pembayaran;
 use App\Models\Pengeluaran;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -26,10 +25,10 @@ class KasExportService
      *
      * Scoped to branch_id. If total records > 1000, dispatches queue job.
      *
-     * @param int $bulan Month (1-12)
-     * @param int $tahun Year (e.g., 2024)
-     * @param string $format Export format: 'xlsx' or 'csv'
-     * @param int $branchId Branch ID scope
+     * @param  int  $bulan  Month (1-12)
+     * @param  int  $tahun  Year (e.g., 2024)
+     * @param  string  $format  Export format: 'xlsx' or 'csv'
+     * @param  int  $branchId  Branch ID scope
      * @return BinaryFileResponse|array Returns file response if sync, or job reference array if queued
      */
     public function exportKasHarian(int $bulan, int $tahun, string $format, int $branchId): BinaryFileResponse|array
@@ -56,9 +55,9 @@ class KasExportService
      *
      * Scoped to branch_id. If total records > 1000, dispatches queue job.
      *
-     * @param int $tahun Year (e.g., 2024)
-     * @param string $format Export format: 'xlsx' or 'csv'
-     * @param int $branchId Branch ID scope
+     * @param  int  $tahun  Year (e.g., 2024)
+     * @param  string  $format  Export format: 'xlsx' or 'csv'
+     * @param  int  $branchId  Branch ID scope
      * @return BinaryFileResponse|array Returns file response if sync, or job reference array if queued
      */
     public function exportRekapBulanan(int $tahun, string $format, int $branchId): BinaryFileResponse|array
@@ -77,9 +76,9 @@ class KasExportService
     /**
      * Count total records (pemasukan + pengeluaran) for a given month and year.
      *
-     * @param int $bulan Month (1-12)
-     * @param int $tahun Year (e.g., 2024)
-     * @param int $branchId Branch ID scope
+     * @param  int  $bulan  Month (1-12)
+     * @param  int  $tahun  Year (e.g., 2024)
+     * @param  int  $branchId  Branch ID scope
      * @return int Total record count
      */
     public function getRecordCount(int $bulan, int $tahun, int $branchId): int
@@ -93,8 +92,8 @@ class KasExportService
     /**
      * Count total records (pemasukan + pengeluaran) for an entire year.
      *
-     * @param int $tahun Year (e.g., 2024)
-     * @param int $branchId Branch ID scope
+     * @param  int  $tahun  Year (e.g., 2024)
+     * @param  int  $branchId  Branch ID scope
      * @return int Total record count
      */
     public function getRekapRecordCount(int $tahun, int $branchId): int
@@ -144,15 +143,17 @@ class KasExportService
         $pemasukanQuery = $this->buildPemasukanQuery($bulan, $tahun, $branchId);
         $pengeluaranQuery = $this->buildPengeluaranQuery($bulan, $tahun, $branchId);
 
-        $fileName = 'export_kas_harian_' . $tahun . '-' . str_pad($bulan, 2, '0', STR_PAD_LEFT) . '_' . now()->format('His') . '.' . $format;
+        $fileName = 'export_kas_harian_'.$tahun.'-'.str_pad($bulan, 2, '0', STR_PAD_LEFT).'_'.now()->format('His').'.'.$format;
 
         if ($format === 'xlsx') {
             $export = new \App\Exports\KasHarianExport($pemasukanQuery, $pengeluaranQuery, $bulan, $tahun);
+
             return Excel::download($export, $fileName);
         }
 
         // CSV: single file with "tipe" column
         $export = new \App\Exports\KasHarianCsvExport($pemasukanQuery, $pengeluaranQuery, $bulan, $tahun);
+
         return Excel::download($export, $fileName);
     }
 
@@ -161,7 +162,7 @@ class KasExportService
      */
     private function generateRekapBulananFile(int $tahun, string $format, int $branchId): BinaryFileResponse
     {
-        $fileName = 'export_rekap_bulanan_' . $tahun . '_' . now()->format('His') . '.' . $format;
+        $fileName = 'export_rekap_bulanan_'.$tahun.'_'.now()->format('His').'.'.$format;
 
         // Build summary data per month
         $pemasukanPerBulan = Pembayaran::query()
@@ -205,6 +206,7 @@ class KasExportService
                 ->orderBy('tanggal');
 
             $export = new \App\Exports\RekapBulananExport($summary, $pemasukanQuery, $pengeluaranQuery, $tahun);
+
             return Excel::download($export, $fileName);
         }
 
@@ -220,6 +222,7 @@ class KasExportService
             ->orderBy('tanggal');
 
         $export = new \App\Exports\RekapBulananCsvExport($summary, $pemasukanQuery, $pengeluaranQuery, $tahun);
+
         return Excel::download($export, $fileName);
     }
 

@@ -11,6 +11,7 @@ namespace App\Exceptions\Midtrans;
 class TransactionNotYetProcessedException extends MidtransException
 {
     public string $errorCode = 'TRANSACTION_NOT_YET_PROCESSED';
+
     public int $httpStatus = 409;
 
     public function __construct(string $orderId)

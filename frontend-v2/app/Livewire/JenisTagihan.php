@@ -2,10 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Helpers\PermissionHelper;
 use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
-use Illuminate\Http\Client\ConnectionException;
-use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -20,14 +19,16 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Livewire\Component;
 
 class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
-    use HandlesApiErrors;
     use \App\Livewire\Concerns\HasPeriodFilter;
+    use HandlesApiErrors;
+    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     public function table(Table $table): Table
     {
@@ -41,17 +42,18 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
 
                         $response = ApiService::client()->get('/jenis-tagihan', $params);
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             $this->handleApiError($response);
+
                             return [];
                         }
 
                         return $response->collect('data')
-                            ->when(filled($search), fn(Collection $data): Collection => $data->filter(fn(array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))))
+                            ->when(filled($search), fn (Collection $data): Collection => $data->filter(fn (array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))))
                             ->when(
                                 filled($sortColumn),
-                                fn(Collection $data): Collection => $data->sortBy(
-                                    fn(array $record) => data_get($record, $sortColumn),
+                                fn (Collection $data): Collection => $data->sortBy(
+                                    fn (array $record) => data_get($record, $sortColumn),
                                     SORT_REGULAR,
                                     ($sortDirection ?? 'asc') === 'desc'
                                 )->values()
@@ -59,9 +61,11 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                             ->toArray();
                     } catch (ConnectionException $e) {
                         $this->notifyConnectionError();
+
                         return [];
                     } catch (\Throwable $e) {
                         $this->notifyUnexpectedError();
+
                         return [];
                     }
                 }
@@ -69,7 +73,7 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
             ->columns([
                 TextColumn::make('nama')->label('Nama')->sortable()->searchable(),
                 TextColumn::make('jatuh_tempo')->label('Jatuh Tempo')->sortable(),
-                TextColumn::make('jumlah')->label('Jumlah')->sortable()->money(currency: 'Rp.', decimalPlaces: 0,),
+                TextColumn::make('jumlah')->label('Jumlah')->sortable()->money(currency: 'Rp.', decimalPlaces: 0),
             ])
             ->deferLoading()
             ->striped()
@@ -85,12 +89,12 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                     ->icon('heroicon-s-pencil-square')
                     ->iconButton()
                     ->color('warning')
-                    ->visible(fn(): bool => in_array('update-jenis-tagihan', session()->get('data.permissions', [])))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('jenis-tagihan.update'))
                     ->modalHeading('Ubah Jenis Tagihan')
                     ->modalSubmitActionLabel('Simpan')
                     ->modalCancelActionLabel('Batal')
                     ->modalFooterActionsAlignment(Alignment::End)
-                    ->fillForm(fn(array $record): array => [
+                    ->fillForm(fn (array $record): array => [
                         'nama' => $record['nama'],
                         'jatuh_tempo' => $record['jatuh_tempo'],
                         'jumlah' => $record['jumlah'],
@@ -113,9 +117,9 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                     ])
                     ->action(function (array $data, $record): void {
                         $response = ApiService::client()
-                            ->put('/jenis-tagihan/' . $record['id'], $data);
+                            ->put('/jenis-tagihan/'.$record['id'], $data);
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             Notification::make()
                                 ->title('Jenis Tagihan Gagal Diubah')
                                 ->danger()
@@ -133,7 +137,7 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                     ->icon('heroicon-s-trash') // Optional icon
                     ->iconButton()
                     ->color('danger') // Optional color
-                    ->visible(fn(): bool => in_array('delete-jenis-tagihan', session()->get('data.permissions', [])))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('jenis-tagihan.delete'))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Jenis Tagihan')
                     ->modalDescription('Apakah kamu yakin untuk menghapus jenis tagihan ini?')
@@ -142,9 +146,9 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->action(function (array $data, $record): void {
                         $response = ApiService::client()
-                            ->delete('/jenis-tagihan/' . $record['id']);
+                            ->delete('/jenis-tagihan/'.$record['id']);
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             Notification::make()
                                 ->title('Jenis Tagihan Gagal Dihapus')
                                 ->danger()
@@ -165,7 +169,7 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                     ->label('Hapus Terpilih')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
-                    ->visible(fn(): bool => in_array('delete-jenis-tagihan', session()->get('data.permissions', [])))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('jenis-tagihan.delete'))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Jenis Tagihan Terpilih')
                     ->modalDescription('Apakah kamu yakin ingin menghapus semua jenis tagihan yang dipilih?')
@@ -174,7 +178,7 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                         $success = 0;
                         $failed = 0;
                         foreach ($records as $record) {
-                            $response = ApiService::client()->delete('/jenis-tagihan/' . $record['id']);
+                            $response = ApiService::client()->delete('/jenis-tagihan/'.$record['id']);
                             $response->ok() ? $success++ : $failed++;
                         }
                         if ($failed > 0) {
@@ -191,7 +195,7 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                     ->label('Tambah') // Text displayed on the button
                     ->color('primary') // Optional color
                     ->button()
-                    ->visible(fn(): bool => in_array('create-jenis-tagihan', session()->get('data.permissions', [])))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('jenis-tagihan.create'))
                     ->modalHeading('Tambah Jenis Tagihan')
                     ->modalFooterActions(function (Action $action) {
                         return [
@@ -199,7 +203,7 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                                 ->label('Simpan')
                                 ->color('primary')
                                 ->extraAttributes([
-                                    'class' => 'text-white font-semibold'
+                                    'class' => 'text-white font-semibold',
                                 ]),
                             $action->getModalCancelAction()->label('Batal'),
                         ];

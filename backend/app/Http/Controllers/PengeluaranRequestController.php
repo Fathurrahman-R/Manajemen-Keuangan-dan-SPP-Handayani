@@ -6,7 +6,6 @@ use App\Models\PengeluaranRequest;
 use App\Services\WorkflowService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class PengeluaranRequestController extends Controller
 {
@@ -28,7 +27,7 @@ class PengeluaranRequestController extends Controller
             // Draft requests are only visible to the requester
             ->where(function ($q) use ($userId) {
                 $q->where('status', '!=', 'draft')
-                  ->orWhere('requester_id', $userId);
+                    ->orWhere('requester_id', $userId);
             })
             ->orderByDesc('created_at');
 
@@ -42,7 +41,7 @@ class PengeluaranRequestController extends Controller
         $allPeriods = $request->boolean('all_periods')
             || ($tahunAjaranId !== null && $tahunAjaranId !== '' && (int) $tahunAjaranId === 0);
 
-        if (!$allPeriods && $tahunAjaranId !== null && $tahunAjaranId !== '') {
+        if (! $allPeriods && $tahunAjaranId !== null && $tahunAjaranId !== '') {
             $ta = \App\Models\TahunAjaran::where('id', (int) $tahunAjaranId)
                 ->where('branch_id', $branchId)
                 ->first();
@@ -68,7 +67,7 @@ class PengeluaranRequestController extends Controller
         $pengeluaranRequest = PengeluaranRequest::with(['requester:id,name,username', 'approvalLogs.user:id,name,username'])
             ->find($id);
 
-        if (!$pengeluaranRequest) {
+        if (! $pengeluaranRequest) {
             return response()->json(['message' => 'Request tidak ditemukan.'], 404);
         }
 
@@ -102,7 +101,7 @@ class PengeluaranRequestController extends Controller
     {
         $pengeluaranRequest = PengeluaranRequest::where('branch_id', $request->user()->branch_id)->find($id);
 
-        if (!$pengeluaranRequest) {
+        if (! $pengeluaranRequest) {
             return response()->json(['message' => 'Request tidak ditemukan.'], 404);
         }
 
@@ -131,11 +130,11 @@ class PengeluaranRequestController extends Controller
     {
         $pengeluaranRequest = PengeluaranRequest::where('branch_id', $request->user()->branch_id)->find($id);
 
-        if (!$pengeluaranRequest) {
+        if (! $pengeluaranRequest) {
             return response()->json(['message' => 'Request tidak ditemukan.'], 404);
         }
 
-        if (!$pengeluaranRequest->isDeletable()) {
+        if (! $pengeluaranRequest->isDeletable()) {
             return response()->json(['errors' => ['status' => ['Request hanya bisa dihapus saat status draft.']]], 422);
         }
 
@@ -148,7 +147,7 @@ class PengeluaranRequestController extends Controller
     {
         $pengeluaranRequest = PengeluaranRequest::where('branch_id', $request->user()->branch_id)->find($id);
 
-        if (!$pengeluaranRequest) {
+        if (! $pengeluaranRequest) {
             return response()->json(['message' => 'Request tidak ditemukan.'], 404);
         }
 
@@ -166,7 +165,7 @@ class PengeluaranRequestController extends Controller
     {
         $pengeluaranRequest = PengeluaranRequest::where('branch_id', $request->user()->branch_id)->find($id);
 
-        if (!$pengeluaranRequest) {
+        if (! $pengeluaranRequest) {
             return response()->json(['message' => 'Request tidak ditemukan.'], 404);
         }
 
@@ -180,7 +179,7 @@ class PengeluaranRequestController extends Controller
     {
         $pengeluaranRequest = PengeluaranRequest::where('branch_id', $request->user()->branch_id)->find($id);
 
-        if (!$pengeluaranRequest) {
+        if (! $pengeluaranRequest) {
             return response()->json(['message' => 'Request tidak ditemukan.'], 404);
         }
 
@@ -195,7 +194,7 @@ class PengeluaranRequestController extends Controller
     {
         $pengeluaranRequest = PengeluaranRequest::where('branch_id', $request->user()->branch_id)->find($id);
 
-        if (!$pengeluaranRequest) {
+        if (! $pengeluaranRequest) {
             return response()->json(['message' => 'Request tidak ditemukan.'], 404);
         }
 

@@ -24,33 +24,33 @@ class SiswaKBRequest extends FormRequest
     public function rules(): array
     {
         // Wali fields are only required if wali_id is not provided
-        $waliFieldRequired = !$this->filled('wali_id') ? 'required' : 'nullable';
+        $waliFieldRequired = ! $this->filled('wali_id') ? 'required' : 'nullable';
 
         return [
             'nis' => [
                 'required',
                 'max:20',
                 'regex:/^[0-9]+$/',
-                'min:4'
+                'min:4',
             ],
             'nama' => [
                 'required',
                 'max:100',
-                'regex:/^[A-Za-zÀ-ÿ\'\s]+$/u'
+                'regex:/^[A-Za-zÀ-ÿ\'\s]+$/u',
             ],
             'jenis_kelamin' => [
                 'required',
-                'in:Laki-laki,Perempuan'
+                'in:Laki-laki,Perempuan',
             ],
             'tempat_lahir' => [
                 'required',
-                'max:100'
+                'max:100',
             ],
             'tanggal_lahir' => [
                 'required',
                 'date',
                 'before:today',
-                'after:1989-12-30'
+                'after:1989-12-30',
             ],
             'agama' => [
                 'required',
@@ -58,31 +58,31 @@ class SiswaKBRequest extends FormRequest
 
             ],
             'alamat' => [
-                'required'
+                'required',
             ],
             // optional parent linking ID
             'wali_id' => [
                 'nullable',
                 'integer',
-                'exists:walis,id'
+                'exists:walis,id',
             ],
             'wali_nama' => [
                 $waliFieldRequired,
-                'max:100'
+                'max:100',
             ],
             'wali_pekerjaan' => [
                 'nullable',
-                'max:100'
+                'max:100',
             ],
             'wali_alamat' => [
-                $waliFieldRequired
+                $waliFieldRequired,
             ],
             'wali_no_hp' => [
                 $waliFieldRequired,
-                'max:100'
+                'max:100',
             ],
             'wali_keterangan' => [
-                'nullable'
+                'nullable',
             ],
             'wali_email' => [
                 'nullable',
@@ -90,18 +90,18 @@ class SiswaKBRequest extends FormRequest
             ],
             'kelas_id' => [
                 'required',
-                'exists:kelas,id'
+                'exists:kelas,id',
             ],
             'kategori_id' => [
                 'required',
-                'exists:kategoris,id'
+                'exists:kategoris,id',
             ],
             'status' => [
                 'nullable',
-                'in:Aktif,Lulus,Pindah,Keluar'
+                'in:Aktif,Lulus,Pindah,Keluar',
             ],
             'keterangan' => [
-                'nullable'
+                'nullable',
             ],
         ];
     }
@@ -116,7 +116,7 @@ class SiswaKBRequest extends FormRequest
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response([
-            "errors" => $validator->getMessageBag()
+            'errors' => $validator->getMessageBag(),
         ], 400));
     }
 }

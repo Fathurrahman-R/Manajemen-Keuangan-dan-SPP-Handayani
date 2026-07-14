@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Pembayaran;
-use App\Models\Tagihan;
 use Illuminate\Support\Facades\DB;
 
 class GenerateKodePembayaran
@@ -18,15 +16,15 @@ class GenerateKodePembayaran
         $prefix = "PAY-$year$month";
 
         // LOCK tabel (harus diluar transaction)
-        DB::statement("SET autocommit = 0;");
-        DB::statement("LOCK TABLES pembayarans WRITE;");
+        DB::statement('SET autocommit = 0;');
+        DB::statement('LOCK TABLES pembayarans WRITE;');
 
         $latest = DB::table('pembayarans')
             ->where('kode_pembayaran', 'like', "$prefix-%")
             ->orderBy('kode_pembayaran', 'desc')
             ->first();
 
-        if (!$latest) {
+        if (! $latest) {
             $increment = 1;
         } else {
             $lastNumber = intval(substr($latest->kode_pembayaran, -4));
@@ -38,10 +36,9 @@ class GenerateKodePembayaran
         $kode = "$prefix-$increment";
 
         // UNLOCK dan enable autocommit kembali
-        DB::statement("UNLOCK TABLES;");
-        DB::statement("SET autocommit = 1;");
+        DB::statement('UNLOCK TABLES;');
+        DB::statement('SET autocommit = 1;');
 
         return $kode;
     }
-
 }

@@ -30,7 +30,7 @@ class NotificationController extends Controller
     {
         $notification = Notification::where('user_id', $request->user()->id)->find($id);
 
-        if (!$notification) {
+        if (! $notification) {
             return response()->json(['message' => 'Notifikasi tidak ditemukan.'], 404);
         }
 

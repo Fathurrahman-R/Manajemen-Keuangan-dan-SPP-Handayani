@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Helpers\PermissionHelper;
 use App\Services\ApiService;
-use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -15,31 +15,45 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Livewire\Component;
 
 class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
     use \App\Livewire\Concerns\HandlesApiErrors;
+    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     public ?int $selectedSourcePeriodId = null;
+
     public ?int $selectedTargetPeriodId = null;
+
     public ?int $selectedKelasId = null;
+
     public string $activeJenjangTab = 'MI';
+
     public array $studentActions = [];
+
     public array $studentTargetKelas = [];
+
     public array $kelasList = [];
+
     public array $tahunAjaranOptions = [];
+
     public array $students = [];
+
     public array $summary = [];
+
     public bool $isKelasTertinggi = false;
+
     public array $targetJenjangKelasList = [];
+
     public bool $processing = false;
+
     public array $history = [];
 
     public function mount(): void
     {
         $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        if (!in_array('view-kenaikan-kelas', $permissions)) {
+        if (! in_array('view-kenaikan-kelas', $permissions)) {
             abort(403);
         }
 
@@ -59,14 +73,14 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
             ->label('Proses Kenaikan Kelas')
             ->icon('heroicon-o-check-circle')
             ->color('primary')
-            ->visible(fn(): bool => in_array('process-kenaikan-kelas', session()->get('data.permissions', [])))
-            ->disabled(fn() => $this->processing || count($this->students) === 0 || !$this->selectedTargetPeriodId)
+            ->visible(fn (): bool => in_array('process-kenaikan-kelas', session()->get('data.permissions', [])))
+            ->disabled(fn () => $this->processing || count($this->students) === 0 || ! $this->selectedTargetPeriodId)
             ->requiresConfirmation()
             ->modalHeading('Konfirmasi Proses Kenaikan Kelas')
-            ->modalDescription(fn() => 'Apakah Anda yakin ingin memproses kenaikan kelas untuk ' . array_sum($this->summary) . ' siswa? Tindakan ini akan membuat perubahan pada data siswa.')
+            ->modalDescription(fn () => 'Apakah Anda yakin ingin memproses kenaikan kelas untuk '.array_sum($this->summary).' siswa? Tindakan ini akan membuat perubahan pada data siswa.')
             ->modalSubmitActionLabel('Ya, Proses')
             ->modalCancelActionLabel('Batal')
-            ->action(fn() => $this->processAll());
+            ->action(fn () => $this->processAll());
     }
 
     /**
@@ -87,46 +101,47 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
                 TextColumn::make('processed_at')
                     ->label('Tanggal')
                     ->sortable()
-                    ->formatStateUsing(fn($state) => $state ? \Carbon\Carbon::parse($state)->format('d/m/Y H:i') : '-'),
+                    ->formatStateUsing(fn ($state) => $state ? \Carbon\Carbon::parse($state)->format('d/m/Y H:i') : '-'),
                 TextColumn::make('batch_type')
                     ->label('Tipe')
-                    ->formatStateUsing(fn($state) => $this->translateBatchType($state ?? '')),
+                    ->formatStateUsing(fn ($state) => $this->translateBatchType($state ?? '')),
                 TextColumn::make('kelas_asal')
                     ->label('Kelas Asal')
-                    ->state(fn(array $record) => $record['kelas']['nama'] ?? $record['kelas_nama'] ?? '-'),
+                    ->state(fn (array $record) => $record['kelas']['nama'] ?? $record['kelas_nama'] ?? '-'),
                 TextColumn::make('dari_periode')
                     ->label('Dari Periode')
-                    ->state(fn(array $record) => $record['source_tahun_ajaran']['nama'] ?? $record['source_tahun_ajaran_nama'] ?? '-'),
+                    ->state(fn (array $record) => $record['source_tahun_ajaran']['nama'] ?? $record['source_tahun_ajaran_nama'] ?? '-'),
                 TextColumn::make('ke_periode')
                     ->label('Ke Periode')
-                    ->state(fn(array $record) => $record['target_tahun_ajaran']['nama'] ?? $record['target_tahun_ajaran_nama'] ?? '-')
+                    ->state(fn (array $record) => $record['target_tahun_ajaran']['nama'] ?? $record['target_tahun_ajaran_nama'] ?? '-')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('details_count')
                     ->label('Jumlah Siswa')
-                    ->state(fn(array $record) => $record['details_count'] ?? count($record['details'] ?? []))
+                    ->state(fn (array $record) => $record['details_count'] ?? count($record['details'] ?? []))
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'completed' => 'success',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn($state) => $state === 'completed' ? 'Completed' : 'Undone')
+                    ->formatStateUsing(fn ($state) => $state === 'completed' ? 'Completed' : 'Undone')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('processed_by_user')
                     ->label('User')
-                    ->state(fn(array $record) => $record['processed_by_user']['name'] ?? '-')
+                    ->state(fn (array $record) => $record['processed_by_user']['name'] ?? '-')
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->recordActions([
                 Action::make('detail')
                     ->label('Detail')
+                    ->visible(fn (): bool => PermissionHelper::hasResource('kenaikan-kelas.view-detail'))
                     ->icon('heroicon-o-eye')
                     ->iconButton()
                     ->tooltip('Lihat Detail')
                     ->color('info')
-                    ->modalHeading(fn(array $record) => 'Detail: ' . $this->translateBatchType($record['batch_type'] ?? ''))
+                    ->modalHeading(fn (array $record) => 'Detail: '.$this->translateBatchType($record['batch_type'] ?? ''))
                     ->modalWidth('4xl')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Tutup')
@@ -137,6 +152,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
                         } catch (\Throwable $e) {
                             $detail = null;
                         }
+
                         return view('livewire.partials.batch-detail', ['detail' => $detail]);
                     }),
                 Action::make('undo')
@@ -145,13 +161,13 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
                     ->iconButton()
                     ->tooltip('Batalkan')
                     ->color('danger')
-                    ->visible(fn(array $record): bool => ($record['status'] ?? '') === 'completed' && in_array('undo-kenaikan-kelas', session()->get('data.permissions', [])))
+                    ->visible(fn (array $record): bool => ($record['status'] ?? '') === 'completed' && in_array('undo-kenaikan-kelas', session()->get('data.permissions', [])))
                     ->requiresConfirmation()
                     ->modalHeading('Batalkan Batch')
                     ->modalDescription('Apakah Anda yakin ingin membatalkan batch ini? Semua perubahan yang dilakukan akan dikembalikan.')
                     ->modalSubmitActionLabel('Ya, Batalkan')
                     ->modalCancelActionLabel('Batal')
-                    ->action(fn(array $record) => $this->undoBatch($record['id'])),
+                    ->action(fn (array $record) => $this->undoBatch($record['id'])),
             ])
             ->emptyStateHeading('Belum Ada Riwayat')
             ->emptyStateDescription('Belum ada riwayat proses kenaikan kelas.')
@@ -202,6 +218,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
                 return (int) $option['id'];
             }
         }
+
         return null;
     }
 
@@ -243,13 +260,14 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
      */
     public function loadStudents(): void
     {
-        if (!$this->selectedKelasId || !$this->selectedSourcePeriodId) {
+        if (! $this->selectedKelasId || ! $this->selectedSourcePeriodId) {
             $this->students = [];
             $this->studentActions = [];
             $this->studentTargetKelas = [];
             $this->isKelasTertinggi = false;
             $this->targetJenjangKelasList = [];
             $this->computeSummary();
+
             return;
         }
 
@@ -364,7 +382,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
     {
         $this->isKelasTertinggi = false;
 
-        if (!$this->selectedKelasId) {
+        if (! $this->selectedKelasId) {
             return;
         }
 
@@ -376,7 +394,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
             }
         }
 
-        if (!$selectedKelas || !isset($selectedKelas['level'])) {
+        if (! $selectedKelas || ! isset($selectedKelas['level'])) {
             return;
         }
 
@@ -388,7 +406,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
             }
         }
 
-        $this->isKelasTertinggi = !$hasHigherLevel;
+        $this->isKelasTertinggi = ! $hasHigherLevel;
     }
 
     /**
@@ -418,7 +436,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
 
         $nextJenjang = $this->getNextJenjang($this->activeJenjangTab);
 
-        if (!$nextJenjang) {
+        if (! $nextJenjang) {
             return;
         }
 
@@ -523,9 +541,9 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
                     ->success()
                     ->send();
 
-                if (!empty($skipped)) {
+                if (! empty($skipped)) {
                     $skippedMessages = collect($skipped)
-                        ->map(fn($item) => ($item['nama'] ?? 'Siswa') . ': ' . ($item['reason'] ?? 'Alasan tidak diketahui'))
+                        ->map(fn ($item) => ($item['nama'] ?? 'Siswa').': '.($item['reason'] ?? 'Alasan tidak diketahui'))
                         ->implode('; ');
 
                     Notification::make()
@@ -572,12 +590,13 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
         $this->processing = true;
 
         try {
-            if (!$this->selectedTargetPeriodId) {
+            if (! $this->selectedTargetPeriodId) {
                 Notification::make()
                     ->title('Periode tujuan harus dipilih sebelum memproses.')
                     ->danger()
                     ->send();
                 $this->processing = false;
+
                 return;
             }
 
@@ -596,7 +615,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
             $errors = [];
 
             // Process naik_kelas
-            if (!empty($grouped['naik_kelas'])) {
+            if (! empty($grouped['naik_kelas'])) {
                 try {
                     $response = ApiService::client()->post('/kenaikan-kelas/bulk-promotion', [
                         'kelas_id' => $this->selectedKelasId,
@@ -614,7 +633,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
             }
 
             // Process tinggal_kelas
-            if (!empty($grouped['tinggal_kelas'])) {
+            if (! empty($grouped['tinggal_kelas'])) {
                 try {
                     $response = ApiService::client()->post('/kenaikan-kelas/retention', [
                         'siswa_ids' => $grouped['tinggal_kelas'],
@@ -632,7 +651,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
             }
 
             // Process lulus
-            if (!empty($grouped['lulus'])) {
+            if (! empty($grouped['lulus'])) {
                 try {
                     $response = ApiService::client()->post('/kenaikan-kelas/graduation', [
                         'siswa_ids' => $grouped['lulus'],
@@ -650,12 +669,13 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
             }
 
             // Process pindah_jenjang
-            if (!empty($grouped['pindah_jenjang'])) {
+            if (! empty($grouped['pindah_jenjang'])) {
                 foreach ($grouped['pindah_jenjang'] as $siswaId) {
                     $targetKelasId = $this->studentTargetKelas[$siswaId] ?? null;
 
-                    if (!$targetKelasId) {
+                    if (! $targetKelasId) {
                         $errors[] = "Pindah Jenjang: Kelas tujuan belum dipilih untuk siswa ID {$siswaId}.";
+
                         continue;
                     }
 
@@ -677,7 +697,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
                 }
             }
 
-            if (!empty($errors)) {
+            if (! empty($errors)) {
                 Notification::make()
                     ->title('Terjadi kesalahan saat memproses')
                     ->body(implode("\n", $errors))
@@ -686,19 +706,19 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
                     ->send();
             }
 
-            if (!empty($results)) {
+            if (! empty($results)) {
                 $summaryParts = [];
                 if (isset($results['naik_kelas'])) {
-                    $summaryParts[] = 'Naik Kelas: ' . ($results['naik_kelas']['total_success'] ?? 0) . ' siswa';
+                    $summaryParts[] = 'Naik Kelas: '.($results['naik_kelas']['total_success'] ?? 0).' siswa';
                 }
                 if (isset($results['tinggal_kelas'])) {
-                    $summaryParts[] = 'Tinggal Kelas: ' . ($results['tinggal_kelas']['total_success'] ?? 0) . ' siswa';
+                    $summaryParts[] = 'Tinggal Kelas: '.($results['tinggal_kelas']['total_success'] ?? 0).' siswa';
                 }
                 if (isset($results['lulus'])) {
-                    $summaryParts[] = 'Lulus: ' . ($results['lulus']['total_graduated'] ?? $results['lulus']['total_success'] ?? 0) . ' siswa';
+                    $summaryParts[] = 'Lulus: '.($results['lulus']['total_graduated'] ?? $results['lulus']['total_success'] ?? 0).' siswa';
                 }
                 if (isset($results['pindah_jenjang'])) {
-                    $summaryParts[] = 'Pindah Jenjang: ' . count($results['pindah_jenjang']) . ' siswa';
+                    $summaryParts[] = 'Pindah Jenjang: '.count($results['pindah_jenjang']).' siswa';
                 }
 
                 Notification::make()
@@ -745,8 +765,6 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
             return $prefix ? "{$prefix}: Terjadi kesalahan." : 'Terjadi kesalahan.';
         }
     }
-
-
 
     public function render()
     {

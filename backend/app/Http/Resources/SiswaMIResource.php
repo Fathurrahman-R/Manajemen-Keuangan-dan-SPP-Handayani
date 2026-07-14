@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources;
 
-use App\Models\Kelas;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -34,7 +33,7 @@ class SiswaMIResource extends JsonResource
             'kelas_diterima' => $this->kelas_diterima,
             'tahun_diterima' => $this->tahun_diterima,
             'status' => $this->status,
-            'keterangan' => $this->keterangan
+            'keterangan' => $this->keterangan,
         ];
     }
 }

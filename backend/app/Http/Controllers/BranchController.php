@@ -48,7 +48,7 @@ class BranchController extends Controller
     {
         $branch = Branch::find($id);
 
-        if (!$branch) {
+        if (! $branch) {
             throw new HttpResponseException(response([
                 'errors' => [
                     'message' => ['Cabang tidak ditemukan.'],
@@ -64,7 +64,7 @@ class BranchController extends Controller
     {
         $branch = Branch::find($id);
 
-        if (!$branch) {
+        if (! $branch) {
             throw new HttpResponseException(response([
                 'errors' => [
                     'message' => ['Cabang tidak ditemukan.'],
@@ -100,7 +100,7 @@ class BranchController extends Controller
     {
         $branch = Branch::find($id);
 
-        if (!$branch) {
+        if (! $branch) {
             throw new HttpResponseException(response([
                 'errors' => [
                     'message' => ['Cabang tidak ditemukan.'],

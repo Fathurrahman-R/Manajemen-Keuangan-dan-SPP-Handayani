@@ -44,6 +44,7 @@ class TagihanImportValidator implements ToCollection, WithHeadingRow
                 return false;
             }
         }
+
         return true;
     }
 

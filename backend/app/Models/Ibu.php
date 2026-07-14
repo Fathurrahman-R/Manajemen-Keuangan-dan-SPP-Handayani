@@ -11,10 +11,15 @@ class Ibu extends Model
     use HasFactory;
 
     protected $table = 'ibu'; // diperbaiki dari 'ayah'
+
     protected $primaryKey = 'id';
+
     protected $keyType = 'int';
+
     public $incrementing = true;
+
     public $timestamps = true;
+
     protected $fillable = [
         'nama',
         'pendidikan_terakhir',
@@ -22,8 +27,9 @@ class Ibu extends Model
         'email',
         'email_verified_at',
     ];
+
     protected $casts = [
-        'id' => 'integer'
+        'id' => 'integer',
     ];
 
     public function siswa()

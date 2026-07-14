@@ -22,8 +22,8 @@ class CheckPagePermission
         foreach ($activeRules as $rule) {
             if ($this->pathMatches($path, $rule->route_pattern)) {
                 $user = $request->user();
-                if (!$user || !$user->can($rule->permission_name)) {
-                    abort(403, 'Unauthorized — ' . $rule->permission_name . ' required.');
+                if (! $user || ! $user->can($rule->permission_name)) {
+                    abort(403, 'Unauthorized — '.$rule->permission_name.' required.');
                 }
                 // Stop at first match.
                 break;
@@ -40,11 +40,11 @@ class CheckPagePermission
     private function pathMatches(string $path, string $pattern): bool
     {
         // Normalise both sides.
-        $pattern = '/' . trim($pattern, '/');
-        $path = '/' . trim($path, '/');
+        $pattern = '/'.trim($pattern, '/');
+        $path = '/'.trim($path, '/');
 
         // Convert glob * to regex.
-        $regex = '/^' . preg_replace('/\*/', '.*', preg_quote($pattern, '/')) . '$/';
+        $regex = '/^'.preg_replace('/\*/', '.*', preg_quote($pattern, '/')).'$/';
 
         return (bool) preg_match($regex, $path);
     }

@@ -12,8 +12,6 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
-use Livewire\Attributes\Reactive;
 use Livewire\Component;
 
 /**
@@ -64,21 +62,21 @@ class KenaikanKelasBatchDetailTable extends Component implements HasActions, Has
             ->columns([
                 TextColumn::make('nis')
                     ->label('NIS')
-                    ->state(fn(array $record): string => $record['siswa']['nis'] ?? $record['siswa_nis'] ?? '-'),
+                    ->state(fn (array $record): string => $record['siswa']['nis'] ?? $record['siswa_nis'] ?? '-'),
                 TextColumn::make('nama')
                     ->label('Nama')
-                    ->state(fn(array $record): string => $record['siswa']['nama'] ?? $record['siswa_nama'] ?? '-'),
+                    ->state(fn (array $record): string => $record['siswa']['nama'] ?? $record['siswa_nama'] ?? '-'),
                 TextColumn::make('action')
                     ->label('Aksi')
                     ->badge()
-                    ->state(fn(array $record): string => match ($record['action'] ?? '') {
+                    ->state(fn (array $record): string => match ($record['action'] ?? '') {
                         'naik_kelas' => 'Naik Kelas',
                         'lulus' => 'Lulus',
                         'tinggal_kelas' => 'Tinggal Kelas',
                         'pindah_jenjang' => 'Pindah Jenjang',
                         default => ucfirst(str_replace('_', ' ', (string) ($record['action'] ?? '-'))),
                     })
-                    ->color(fn(array $record) => match ($record['action'] ?? '') {
+                    ->color(fn (array $record) => match ($record['action'] ?? '') {
                         'naik_kelas' => 'info',
                         'lulus' => 'success',
                         'tinggal_kelas' => 'warning',
@@ -87,10 +85,10 @@ class KenaikanKelasBatchDetailTable extends Component implements HasActions, Has
                     }),
                 TextColumn::make('source_kelas')
                     ->label('Kelas Asal')
-                    ->state(fn(array $record): string => $record['source_kelas']['nama'] ?? $record['source_kelas_nama'] ?? '-'),
+                    ->state(fn (array $record): string => $record['source_kelas']['nama'] ?? $record['source_kelas_nama'] ?? '-'),
                 TextColumn::make('target_kelas')
                     ->label('Kelas Tujuan')
-                    ->state(fn(array $record): string => $record['target_kelas']['nama'] ?? $record['target_kelas_nama'] ?? '-'),
+                    ->state(fn (array $record): string => $record['target_kelas']['nama'] ?? $record['target_kelas_nama'] ?? '-'),
             ])
             ->striped()
             ->paginated(false)

@@ -8,6 +8,7 @@ use Illuminate\Console\Command;
 class MidtransPruneLogsCommand extends Command
 {
     protected $signature = 'midtrans:prune-logs {--days= : Number of days to retain logs}';
+
     protected $description = 'Delete midtrans_transaction_logs rows older than the specified number of days';
 
     public function handle(): int

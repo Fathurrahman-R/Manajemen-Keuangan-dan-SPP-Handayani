@@ -45,12 +45,12 @@ class MidtransInitiationService
     {
         // 1. Check feature flag
         if (! config('midtrans.enabled')) {
-            throw new MidtransDisabledException();
+            throw new MidtransDisabledException;
         }
 
         // 2. Check client configuration
         if (! $this->client->isConfigured()) {
-            throw new MidtransNotConfiguredException();
+            throw new MidtransNotConfiguredException;
         }
 
         return DB::transaction(function () use ($user, $kodeTagihan, $amountPaid, $paymentChannel) {
@@ -250,11 +250,11 @@ class MidtransInitiationService
     public function initiateBatch(User $user, array $kodeTagihanList, ?string $paymentChannel = null): InitiationResult
     {
         if (! config('midtrans.enabled')) {
-            throw new MidtransDisabledException();
+            throw new MidtransDisabledException;
         }
 
         if (! $this->client->isConfigured()) {
-            throw new MidtransNotConfiguredException();
+            throw new MidtransNotConfiguredException;
         }
 
         $kodeTagihanList = array_values(array_unique(array_filter($kodeTagihanList)));

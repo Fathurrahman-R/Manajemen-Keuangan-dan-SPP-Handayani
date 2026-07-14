@@ -61,7 +61,7 @@ class MidtransFeeService
             } else {
                 // flat / legacy
                 $entry['amount'] = (int) ($cfg['amount'] ?? $cfg['flat'] ?? 0);
-                $entry['description'] = 'Rp ' . number_format($entry['amount'], 0, ',', '.') . ' per transaksi';
+                $entry['description'] = 'Rp '.number_format($entry['amount'], 0, ',', '.').' per transaksi';
             }
 
             if ($amountPaidPreview !== null) {
@@ -109,13 +109,14 @@ class MidtransFeeService
         }
 
         $channels = (array) config('midtrans.fee_channels', []);
+
         return $channels[$channel] ?? null;
     }
 
     /**
      * Hitung fee dari config channel, mendukung format flat & percent.
      *
-     * @param array<string, mixed> $config
+     * @param  array<string, mixed>  $config
      */
     private function calculateFromConfig(int $amountPaid, array $config): int
     {
@@ -124,6 +125,7 @@ class MidtransFeeService
         if ($type === 'percent') {
             $percent = (float) ($config['percent'] ?? 0);
             $flat = (int) ($config['flat'] ?? 0);
+
             // Round ke integer Rupiah (Midtrans tidak menerima desimal IDR).
             return (int) round(($amountPaid * $percent / 100) + $flat);
         }
@@ -134,10 +136,11 @@ class MidtransFeeService
 
     private function formatPercentDescription(float $percent, int $flat): string
     {
-        $desc = rtrim(rtrim(number_format($percent, 2, ',', '.'), '0'), ',') . '% dari nominal';
+        $desc = rtrim(rtrim(number_format($percent, 2, ',', '.'), '0'), ',').'% dari nominal';
         if ($flat > 0) {
-            $desc .= ' + Rp ' . number_format($flat, 0, ',', '.');
+            $desc .= ' + Rp '.number_format($flat, 0, ',', '.');
         }
+
         return $desc;
     }
 }

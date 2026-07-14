@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Helpers\PermissionHelper;
 use App\Services\ApiService;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -21,7 +22,7 @@ class DashboardStatsWidget extends BaseWidget
         try {
             $response = ApiService::client()->get('/dashboard/summary', $params);
 
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 return $this->fallbackStats();
             }
 
@@ -31,17 +32,17 @@ class DashboardStatsWidget extends BaseWidget
         }
 
         return [
-            Stat::make('Total Tagihan', 'Rp ' . number_format($data['total_tagihan'] ?? 0, 0, ',', '.'))
+            Stat::make('Total Tagihan', 'Rp '.number_format($data['total_tagihan'] ?? 0, 0, ',', '.'))
                 ->description('Seluruh tagihan periode ini')
                 ->descriptionIcon('heroicon-m-document-text')
                 ->color('primary'),
 
-            Stat::make('Total Terbayar', 'Rp ' . number_format($data['total_terbayar'] ?? 0, 0, ',', '.'))
+            Stat::make('Total Terbayar', 'Rp '.number_format($data['total_terbayar'] ?? 0, 0, ',', '.'))
                 ->description('Sudah dibayar')
                 ->descriptionIcon('heroicon-m-check-circle')
                 ->color('success'),
 
-            Stat::make('Total Tunggakan', 'Rp ' . number_format($data['total_tunggakan'] ?? 0, 0, ',', '.'))
+            Stat::make('Total Tunggakan', 'Rp '.number_format($data['total_tunggakan'] ?? 0, 0, ',', '.'))
                 ->description('Belum dibayar')
                 ->descriptionIcon('heroicon-m-exclamation-triangle')
                 ->color('danger'),
@@ -56,7 +57,7 @@ class DashboardStatsWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-user-minus')
                 ->color('warning'),
 
-            Stat::make('Pelunasan', ($data['persentase_pelunasan'] ?? 0) . '%')
+            Stat::make('Pelunasan', ($data['persentase_pelunasan'] ?? 0).'%')
                 ->description('Persentase pelunasan')
                 ->descriptionIcon('heroicon-m-chart-bar')
                 ->color('success'),
@@ -100,6 +101,6 @@ class DashboardStatsWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return in_array('view-dashboard', session()->get('data.permissions', []));
+        return PermissionHelper::hasResource('dashboard');
     }
 }

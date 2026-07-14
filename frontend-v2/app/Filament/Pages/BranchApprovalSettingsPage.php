@@ -10,7 +10,7 @@ class BranchApprovalSettingsPage extends Page
 {
     protected string $view = 'filament.pages.branch-approval-settings';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Pengaturan';
+    protected static string|UnitEnum|null $navigationGroup = 'Pengaturan';
 
     protected static ?string $navigationLabel = 'Pengaturan Approval';
 
@@ -27,6 +27,6 @@ class BranchApprovalSettingsPage extends Page
 
     public function mount(): void
     {
-        abort_if(!PermissionHelper::hasResource('branch-approval-setting'), 403);
+        abort_if(! PermissionHelper::hasResource('branch-approval-setting'), 403);
     }
 }

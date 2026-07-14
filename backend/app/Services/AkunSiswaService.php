@@ -13,7 +13,6 @@ class AkunSiswaService
     /**
      * Create account for a single siswa.
      *
-     * @param Siswa $siswa
      * @return User|null Returns null if account already exists in the same branch
      */
     public function createAccount(Siswa $siswa): ?User
@@ -26,7 +25,8 @@ class AkunSiswaService
             ->first();
 
         if ($existingUser) {
-            Log::warning('Akun siswa sudah ada: NIS ' . $username . ' di branch ' . $siswa->branch_id);
+            Log::warning('Akun siswa sudah ada: NIS '.$username.' di branch '.$siswa->branch_id);
+
             return null;
         }
 
@@ -55,7 +55,6 @@ class AkunSiswaService
      * Each siswa is processed independently (no wrapping transaction).
      * Partial success is acceptable.
      *
-     * @param \Illuminate\Database\Eloquent\Collection $siswaList
      * @return array{created: int, errors: array}
      */
     public function bulkCreateAccounts(\Illuminate\Database\Eloquent\Collection $siswaList): array
@@ -81,14 +80,13 @@ class AkunSiswaService
 
     /**
      * Reset password to default (tanggal_lahir DDMMYYYY).
-     *
-     * @param User $user
-     * @return void
      */
     public function resetPassword(User $user): void
     {
         $siswa = $user->siswa;
-        if (!$siswa) return;
+        if (! $siswa) {
+            return;
+        }
 
         $password = $this->generateDefaultPassword($siswa->tanggal_lahir);
         $user->update([
@@ -99,9 +97,6 @@ class AkunSiswaService
 
     /**
      * Deactivate account for a siswa.
-     *
-     * @param Siswa $siswa
-     * @return void
      */
     public function deactivateAccount(Siswa $siswa): void
     {
@@ -113,9 +108,6 @@ class AkunSiswaService
 
     /**
      * Activate account for a siswa.
-     *
-     * @param Siswa $siswa
-     * @return void
      */
     public function activateAccount(Siswa $siswa): void
     {
@@ -128,7 +120,7 @@ class AkunSiswaService
     /**
      * Generate default password from tanggal_lahir.
      *
-     * @param string $tanggalLahir Date in Y-m-d format (e.g., "2010-05-15")
+     * @param  string  $tanggalLahir  Date in Y-m-d format (e.g., "2010-05-15")
      * @return string Password in DDMMYYYY format (e.g., "15052010")
      */
     public function generateDefaultPassword(string $tanggalLahir): string

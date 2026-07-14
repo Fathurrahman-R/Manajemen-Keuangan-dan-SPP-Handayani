@@ -9,8 +9,6 @@ use App\Http\Requests\ExportSiswaRequest;
 use App\Http\Requests\ExportTagihanRequest;
 use App\Http\Requests\ImportConfirmRequest;
 use App\Http\Requests\ImportUploadRequest;
-use App\Models\ExportJob;
-use App\Models\ImportBatch;
 use App\Services\ImportExport\ImportBatchService;
 use App\Services\ImportExport\KasExportService;
 use App\Services\ImportExport\PembayaranExportService;
@@ -234,12 +232,14 @@ class ImportExportController extends Controller
     public function templateSiswa(): BinaryFileResponse
     {
         $branchId = auth()->user()->branch_id;
+
         return $this->templateService->generateSiswaTemplate($branchId);
     }
 
     public function templateTagihan(): BinaryFileResponse
     {
         $branchId = auth()->user()->branch_id;
+
         return $this->templateService->generateTagihanTemplate($branchId);
     }
 
@@ -271,45 +271,5 @@ class ImportExportController extends Controller
                 'errors' => ['message' => [$e->getMessage()]],
             ], 422);
         }
-    }
-
-    // ==================== JOB STATUS ====================
-
-    public function jobStatus(string $jobId): JsonResponse
-    {
-        // Check export jobs
-        $exportJob = ExportJob::where('job_reference', $jobId)->first();
-        if ($exportJob) {
-            $response = [
-                'type' => 'export',
-                'status' => $exportJob->status,
-                'export_type' => $exportJob->export_type,
-            ];
-
-            if ($exportJob->status === 'completed') {
-                $response['download_url'] = $exportJob->getSignedUrl();
-            } elseif ($exportJob->status === 'failed') {
-                $response['error_message'] = $exportJob->error_message;
-            }
-
-            return response()->json($response);
-        }
-
-        // Check import batches
-        $importBatch = ImportBatch::where('batch_reference', $jobId)->first();
-        if ($importBatch) {
-            return response()->json([
-                'type' => 'import',
-                'status' => $importBatch->status,
-                'import_type' => $importBatch->import_type,
-                'success_count' => $importBatch->success_count,
-                'error_count' => $importBatch->error_count,
-                'error_message' => $importBatch->error_message,
-            ]);
-        }
-
-        return response()->json([
-            'errors' => ['message' => ['Job tidak ditemukan']],
-        ], 404);
     }
 }

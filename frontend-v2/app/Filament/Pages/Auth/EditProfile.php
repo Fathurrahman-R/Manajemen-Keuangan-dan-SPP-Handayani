@@ -3,6 +3,7 @@
 namespace App\Filament\Pages\Auth;
 
 use App\Services\ApiService;
+use BackedEnum;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\TextInput;
@@ -13,11 +14,10 @@ use Filament\Pages\Page;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
-use BackedEnum;
 
-class EditProfile extends Page implements HasForms, HasActions, HasSchemas
+class EditProfile extends Page implements HasActions, HasForms, HasSchemas
 {
-    use InteractsWithForms, InteractsWithActions, InteractsWithSchemas {
+    use InteractsWithActions, InteractsWithForms, InteractsWithSchemas {
         InteractsWithForms::getCachedSchemas insteadof InteractsWithSchemas;
     }
 
@@ -35,20 +35,29 @@ class EditProfile extends Page implements HasForms, HasActions, HasSchemas
 
     // Email form state
     public ?string $email = '';
+
     public string $current_password_for_email = '';
+
     public ?string $currentEmail = null;
+
     public bool $emailVerified = false;
+
     public string $otp = '';
+
     public bool $showOtpModal = false;
 
     // Password form state
     public string $current_password = '';
+
     public string $new_password = '';
+
     public string $new_password_confirmation = '';
 
     // User info
     public ?string $username = null;
+
     public ?array $roles = [];
+
     public ?string $branchLocation = null;
 
     public function mount(): void
@@ -58,7 +67,7 @@ class EditProfile extends Page implements HasForms, HasActions, HasSchemas
             if ($response->ok()) {
                 $userData = $response->json('data') ?? [];
                 $this->currentEmail = $userData['email'] ?? null;
-                $this->emailVerified = !empty($userData['email_verified_at']);
+                $this->emailVerified = ! empty($userData['email_verified_at']);
                 $this->email = $this->currentEmail ?? '';
                 $this->username = $userData['username'] ?? null;
                 $this->roles = $userData['roles'] ?? [];
@@ -225,8 +234,9 @@ class EditProfile extends Page implements HasForms, HasActions, HasSchemas
 
     public function sendOtp(): void
     {
-        if (!$this->currentEmail) {
+        if (! $this->currentEmail) {
             Notification::make()->title('Email belum diatur')->danger()->send();
+
             return;
         }
 
@@ -239,7 +249,7 @@ class EditProfile extends Page implements HasForms, HasActions, HasSchemas
                 $this->otp = '';
                 $this->showOtpModal = true;
                 Notification::make()
-                    ->title('OTP berhasil dikirim ke email ' . $this->currentEmail)
+                    ->title('OTP berhasil dikirim ke email '.$this->currentEmail)
                     ->success()
                     ->send();
             } else {

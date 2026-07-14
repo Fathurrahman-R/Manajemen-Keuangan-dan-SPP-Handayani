@@ -2,17 +2,16 @@
 
 namespace App\Livewire;
 
+use App\Helpers\PermissionHelper;
 use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
-use Illuminate\Http\Client\ConnectionException;
-use Livewire\Component;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
-use Filament\Actions\BulkAction;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
@@ -22,13 +21,15 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Livewire\Component;
 
 class RoleManagement extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
     use HandlesApiErrors;
+    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     /**
      * Cached permission groups fetched from the backend.
@@ -37,7 +38,7 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
     protected ?array $permissionAudiencesCache = null;
 
     /**
-     * Fetch permission audiences from the backend `/roles/permissions` endpoint.
+     * Fetch permission audiences from the backend `/rbac/roles/permissions-tree` endpoint.
      * Result is cached per-request to avoid repeated API calls when the
      * modal is rendered alongside the table.
      */
@@ -48,24 +49,25 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
         }
 
         try {
-            $response = ApiService::client()->get('/roles/permissions');
+            $response = ApiService::client()->get('/rbac/roles/permissions-tree');
 
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 $this->handleApiError($response);
+
                 return $this->permissionAudiencesCache = [];
             }
 
             $raw = $response->json('data') ?? [];
             $audiences = $raw['audiences'] ?? null;
 
-            if (!is_array($audiences)) {
+            if (! is_array($audiences)) {
                 // Backward compat: treat the whole flat payload as a single "admin" audience
                 $audiences = [
                     'admin' => [
                         'label' => 'Admin / Karyawan',
                         'groups' => array_filter(
                             $raw,
-                            fn($v, $k) => is_array($v) && $k !== 'audiences',
+                            fn ($v, $k) => is_array($v) && $k !== 'audiences',
                             ARRAY_FILTER_USE_BOTH
                         ),
                     ],
@@ -79,12 +81,12 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
 
                 $normalisedGroups = [];
                 foreach ($groups as $groupName => $permissions) {
-                    if (!is_array($permissions)) {
+                    if (! is_array($permissions)) {
                         continue;
                     }
                     $map = [];
                     foreach ($permissions as $perm) {
-                        if (!isset($perm['name'])) {
+                        if (! isset($perm['name'])) {
                             continue;
                         }
                         $map[$perm['name']] = $perm['label'] ?? $perm['name'];
@@ -95,7 +97,7 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
                 }
                 if ($normalisedGroups !== []) {
                     $normalised[$key] = [
-                        'label'  => $label,
+                        'label' => $label,
                         'groups' => $normalisedGroups,
                     ];
                 }
@@ -104,9 +106,11 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
             return $this->permissionAudiencesCache = $normalised;
         } catch (ConnectionException $e) {
             $this->notifyConnectionError();
+
             return $this->permissionAudiencesCache = [];
         } catch (\Throwable $e) {
             $this->notifyUnexpectedError();
+
             return $this->permissionAudiencesCache = [];
         }
     }
@@ -123,6 +127,7 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
                 $flat[$group] = $perms;
             }
         }
+
         return $flat;
     }
 
@@ -144,8 +149,8 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
             foreach ($audienceGroups as $group => $permissions) {
                 $children[] = Section::make($group)
                     ->schema([
-                        CheckboxList::make('permissions_' . Str::snake($group))
-                            ->label('Permissions ' . Str::lower($group))
+                        CheckboxList::make('permissions_'.Str::snake($group))
+                            ->label('Permissions '.Str::lower($group))
                             ->options($permissions)
                             ->bulkToggleable()
                             ->columns(2),
@@ -169,11 +174,12 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
     {
         $permissions = [];
         foreach ($this->getPermissionGroups() as $group => $groupPermissions) {
-            $key = 'permissions_' . Str::snake($group);
+            $key = 'permissions_'.Str::snake($group);
             if (isset($data[$key]) && is_array($data[$key])) {
                 $permissions = array_merge($permissions, $data[$key]);
             }
         }
+
         return $permissions;
     }
 
@@ -191,17 +197,11 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
 
         // Distribute permissions into their respective group fields
         foreach ($this->getPermissionGroups() as $group => $groupPermissions) {
-            $key = 'permissions_' . Str::snake($group);
+            $key = 'permissions_'.Str::snake($group);
             $data[$key] = array_values(array_intersect($recordPermissions, array_keys($groupPermissions)));
         }
 
         return $data;
-    }
-
-    protected function hasPermission(string $permission): bool
-    {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        return in_array($permission, $permissions);
     }
 
     public function table(Table $table): Table
@@ -210,19 +210,20 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
             ->records(
                 function (?string $search, ?string $sortColumn = null, ?string $sortDirection = null): array {
                     try {
-                        $response = ApiService::client()->get('/roles');
+                        $response = ApiService::client()->get('/rbac/roles');
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             $this->handleApiError($response);
+
                             return [];
                         }
 
                         return $response->collect('data')
-                            ->when(filled($search), fn(Collection $data): Collection => $data->filter(fn(array $record): bool => str_contains(Str::lower($record['name']), Str::lower($search))))
+                            ->when(filled($search), fn (Collection $data): Collection => $data->filter(fn (array $record): bool => str_contains(Str::lower($record['name']), Str::lower($search))))
                             ->when(
                                 filled($sortColumn),
-                                fn(Collection $data): Collection => $data->sortBy(
-                                    fn(array $record) => data_get($record, $sortColumn),
+                                fn (Collection $data): Collection => $data->sortBy(
+                                    fn (array $record) => data_get($record, $sortColumn),
                                     SORT_REGULAR,
                                     ($sortDirection ?? 'asc') === 'desc'
                                 )->values()
@@ -230,9 +231,11 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
                             ->toArray();
                     } catch (ConnectionException $e) {
                         $this->notifyConnectionError();
+
                         return [];
                     } catch (\Throwable $e) {
                         $this->notifyUnexpectedError();
+
                         return [];
                     }
                 },
@@ -245,6 +248,7 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
                         if (isset($record['permissions']) && is_array($record['permissions'])) {
                             return collect($record['permissions'])->pluck('name')->toArray();
                         }
+
                         return [];
                     })
                     ->badge()
@@ -259,6 +263,8 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
             ->emptyStateHeading('Tidak Ada Role')
             ->emptyStateDescription('Silahkan menambahkan role')
             ->emptyStateIcon('heroicon-o-document-text')
+            ->filters([]) // placeholder for future filters
+            ->groups([])  // placeholder for future groups
             ->recordActions([
                 Action::make('update')
                     ->tooltip('Ubah Role')
@@ -267,31 +273,31 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
                     ->color('warning')
                     ->modalHeading('Ubah Role')
                     ->modalWidth('4xl')
-                    ->visible(fn(): bool => $this->hasPermission('update-role'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('role.update'))
                     ->modalFooterActions(function (Action $action) {
                         return [
                             $action->getModalSubmitAction()
                                 ->label('Simpan')
                                 ->color('primary')
                                 ->extraAttributes([
-                                    'class' => 'text-white font-semibold'
+                                    'class' => 'text-white font-semibold',
                                 ]),
                             $action->getModalCancelAction()->label('Batal'),
                         ];
                     })
                     ->modalFooterActionsAlignment(Alignment::End)
-                    ->fillForm(fn(array $record): array => $this->buildFillFormData($record))
+                    ->fillForm(fn (array $record): array => $this->buildFillFormData($record))
                     ->schema($this->getPermissionFormSchema())
                     ->action(function (array $data, $record): void {
                         $permissions = $this->collectPermissionsFromFormData($data);
 
                         $response = ApiService::client()
-                            ->put('/roles/' . $record['id'], [
+                            ->put('/rbac/roles/'.$record['id'], [
                                 'name' => $data['name'],
                                 'permissions' => $permissions,
                             ]);
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             $body = $response->json();
                             $errorMessage = 'Role gagal diubah.';
 
@@ -320,14 +326,14 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
                     ->icon('heroicon-s-trash')
                     ->iconButton()
                     ->color('danger')
-                    ->visible(fn(): bool => $this->hasPermission('delete-role'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('roles.delete'))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Role')
-                    ->modalDescription(fn(array $record) => "Apakah kamu yakin ingin menghapus role \"{$record['name']}\"? Tindakan ini tidak dapat dibatalkan.")
+                    ->modalDescription(fn (array $record) => "Apakah kamu yakin ingin menghapus role \"{$record['name']}\"? Tindakan ini tidak dapat dibatalkan.")
                     ->modalSubmitActionLabel('Ya, Hapus')
                     ->modalCancelActionLabel('Batal')
                     ->action(function (array $record): void {
-                        $response = ApiService::client()->delete('/roles/' . $record['id']);
+                        $response = ApiService::client()->delete('/rbac/roles/'.$record['id']);
 
                         if ($response->ok()) {
                             Notification::make()
@@ -348,14 +354,14 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
                                 ->send();
                         }
                     })
-                    ->after(fn() => $this->resetTable()),
+                    ->after(fn () => $this->resetTable()),
             ])
             ->bulkActions([
                 BulkAction::make('bulkDelete')
                     ->label('Hapus Terpilih')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
-                    ->visible(fn(): bool => in_array('delete-role', session()->get('data.permissions', [])))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('roles.delete'))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Role Terpilih')
                     ->modalDescription('Apakah kamu yakin ingin menghapus semua role yang dipilih?')
@@ -364,7 +370,7 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
                         $success = 0;
                         $failed = 0;
                         foreach ($records as $record) {
-                            $response = ApiService::client()->delete('/roles/' . $record['id']);
+                            $response = ApiService::client()->delete('/rbac/roles/'.$record['id']);
                             $response->ok() ? $success++ : $failed++;
                         }
                         if ($failed > 0) {
@@ -383,14 +389,14 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
                     ->button()
                     ->modalHeading('Tambah Role')
                     ->modalWidth('4xl')
-                    ->visible(fn(): bool => $this->hasPermission('create-role'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('role.create'))
                     ->modalFooterActions(function (Action $action) {
                         return [
                             $action->getModalSubmitAction()
                                 ->label('Simpan')
                                 ->color('primary')
                                 ->extraAttributes([
-                                    'class' => 'text-white font-semibold'
+                                    'class' => 'text-white font-semibold',
                                 ]),
                             $action->getModalCancelAction()->label('Batal'),
                         ];
@@ -406,16 +412,17 @@ class RoleManagement extends Component implements HasActions, HasSchemas, HasTab
                                 ->body('Pilih minimal satu permission.')
                                 ->danger()
                                 ->send();
+
                             return;
                         }
 
                         $response = ApiService::client()
-                            ->post('/roles', [
+                            ->post('/rbac/roles', [
                                 'name' => $data['name'],
                                 'permissions' => $permissions,
                             ]);
 
-                        if (!$response->ok() && $response->status() !== 201) {
+                        if (! $response->ok() && $response->status() !== 201) {
                             $body = $response->json();
                             $errorMessage = 'Role gagal ditambahkan.';
 

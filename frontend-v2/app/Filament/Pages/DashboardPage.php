@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Helpers\PermissionHelper;
 use App\Livewire\Concerns\HasPeriodFilter;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -35,10 +36,7 @@ class DashboardPage extends Page
 
     public function mount(): void
     {
-        $permissions = session()->get('data.permissions', []);
-        if (!in_array('view-dashboard', $permissions)) {
-            abort(403);
-        }
+        abort_if(! PermissionHelper::hasResource('dashboard'), 403);
 
         $this->mountHasPeriodFilter();
     }
@@ -55,7 +53,7 @@ class DashboardPage extends Page
                 ->label('Refresh')
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
-                ->action(fn() => null),
+                ->action(fn () => null),
         ];
     }
 }

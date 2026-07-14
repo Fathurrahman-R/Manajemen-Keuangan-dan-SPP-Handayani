@@ -10,9 +10,13 @@ class TahunAjaran extends Model
     use HasFactory;
 
     protected $table = 'tahun_ajarans';
+
     protected $primaryKey = 'id';
+
     protected $keyType = 'int';
+
     public $incrementing = true;
+
     public $timestamps = true;
 
     protected $fillable = [

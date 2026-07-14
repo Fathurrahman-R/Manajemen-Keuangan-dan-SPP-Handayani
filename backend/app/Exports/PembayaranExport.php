@@ -8,7 +8,7 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class PembayaranExport implements FromQuery, WithHeadings, WithMapping, WithChunkReading
+class PembayaranExport implements FromQuery, WithChunkReading, WithHeadings, WithMapping
 {
     public function __construct(
         private Builder $query,
@@ -35,7 +35,7 @@ class PembayaranExport implements FromQuery, WithHeadings, WithMapping, WithChun
     }
 
     /**
-     * @param \App\Models\Pembayaran $pembayaran
+     * @param  \App\Models\Pembayaran  $pembayaran
      */
     public function map($pembayaran): array
     {

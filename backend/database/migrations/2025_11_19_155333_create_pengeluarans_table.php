@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->date('tanggal')->nullable(false)->default(now())->index();
             $table->text('uraian')->nullable(false);
-            $table->decimal('jumlah',12,2)->nullable(false);
+            $table->decimal('jumlah', 12, 2)->nullable(false);
             $table->timestamps();
         });
     }

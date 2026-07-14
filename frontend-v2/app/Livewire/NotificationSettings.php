@@ -17,8 +17,8 @@ use Livewire\Component;
 
 class NotificationSettings extends Component implements HasForms
 {
-    use InteractsWithForms;
     use HandlesApiErrors;
+    use InteractsWithForms;
 
     public ?array $data = [];
 
@@ -105,11 +105,11 @@ class NotificationSettings extends Component implements HasForms
 
         // Convert reminder_days_before tags to integer array
         $reminderDays = [];
-        if (!empty($state['reminder_days_before']) && is_array($state['reminder_days_before'])) {
+        if (! empty($state['reminder_days_before']) && is_array($state['reminder_days_before'])) {
             $reminderDays = array_values(
                 array_filter(
                     array_map('intval', $state['reminder_days_before']),
-                    fn($v) => $v > 0 && $v <= 30
+                    fn ($v) => $v > 0 && $v <= 30
                 )
             );
             sort($reminderDays);

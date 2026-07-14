@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Helpers\PermissionHelper;
 use App\Services\ApiService;
 use Filament\Widgets\ChartWidget;
 
@@ -29,7 +30,7 @@ class StatusTagihanChart extends ChartWidget
         try {
             $response = ApiService::client()->get('/dashboard/charts/status-tagihan', $params);
 
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 return ['datasets' => [], 'labels' => []];
             }
 
@@ -51,6 +52,6 @@ class StatusTagihanChart extends ChartWidget
 
     public static function canView(): bool
     {
-        return in_array('view-dashboard', session()->get('data.permissions', []));
+        return PermissionHelper::hasResource('dashboard');
     }
 }

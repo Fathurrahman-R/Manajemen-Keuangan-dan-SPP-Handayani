@@ -1,7 +1,5 @@
 <?php
 
-use App\Http\Controllers\PublicPageController;
-
 it('returns 200 for the root URL', function () {
     $response = $this->get('/');
 
@@ -66,7 +64,7 @@ it('renders the WhatsApp link', function () {
     $response = $this->get('/');
 
     $response->assertStatus(200);
-    $response->assertSee('wa.me/' . config('handayani-public.whatsapp_number'), false);
+    $response->assertSee('wa.me/'.config('handayani-public.whatsapp_number'), false);
 });
 
 it('does not include Filament or Livewire assets', function () {

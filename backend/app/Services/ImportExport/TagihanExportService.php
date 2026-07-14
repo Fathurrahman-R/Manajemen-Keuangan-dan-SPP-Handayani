@@ -21,9 +21,9 @@ class TagihanExportService
     /**
      * Export tagihan data to file (sync) or dispatch queue job (async).
      *
-     * @param array $filters Filter parameters (tahun_ajaran_id, jenjang, kelas_id, status)
-     * @param string $format Export format: 'xlsx' or 'csv'
-     * @param int $branchId Branch ID scope
+     * @param  array  $filters  Filter parameters (tahun_ajaran_id, jenjang, kelas_id, status)
+     * @param  string  $format  Export format: 'xlsx' or 'csv'
+     * @param  int  $branchId  Branch ID scope
      * @return BinaryFileResponse|array Returns file response if sync, or job reference array if queued
      */
     public function export(array $filters, string $format, int $branchId): BinaryFileResponse|array
@@ -60,7 +60,7 @@ class TagihanExportService
         // Determine which tahun_ajaran to use (default to Periode_Aktif)
         $tahunAjaranId = $filters['tahun_ajaran_id'] ?? null;
 
-        if (!$tahunAjaranId) {
+        if (! $tahunAjaranId) {
             $periodeAktif = TahunAjaran::getAktif($branchId);
             $tahunAjaranId = $periodeAktif?->id;
         }
@@ -71,28 +71,28 @@ class TagihanExportService
         }
 
         // Apply status filter
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('tagihans.status', $filters['status']);
         }
 
         // Join with Siswa for jenjang filtering and name resolution
-        $needsSiswaJoin = !empty($filters['jenjang']) || !empty($filters['kelas_id']);
+        $needsSiswaJoin = ! empty($filters['jenjang']) || ! empty($filters['kelas_id']);
 
         if ($needsSiswaJoin) {
             $query->join('siswas', 'tagihans.nis', '=', 'siswas.nis');
 
             // Apply jenjang filter
-            if (!empty($filters['jenjang'])) {
+            if (! empty($filters['jenjang'])) {
                 $query->where('siswas.jenjang', $filters['jenjang']);
             }
 
             // Filter by kelas_id via SiswaKelas for the relevant tahun_ajaran
-            if (!empty($filters['kelas_id'])) {
+            if (! empty($filters['kelas_id'])) {
                 $query->join('siswa_kelas', function ($join) use ($tahunAjaranId) {
                     $join->on('siswas.id', '=', 'siswa_kelas.siswa_id')
                         ->where('siswa_kelas.tahun_ajaran_id', '=', $tahunAjaranId);
                 })
-                ->where('siswa_kelas.kelas_id', $filters['kelas_id']);
+                    ->where('siswa_kelas.kelas_id', $filters['kelas_id']);
             }
 
             $query->select('tagihans.*');
@@ -111,7 +111,7 @@ class TagihanExportService
         $query = $this->buildQuery($filters, $branchId);
 
         $export = new TagihanExport($query);
-        $fileName = 'export_tagihan_' . now()->format('Y-m-d_His') . '.' . $format;
+        $fileName = 'export_tagihan_'.now()->format('Y-m-d_His').'.'.$format;
 
         return Excel::download($export, $fileName);
     }

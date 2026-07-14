@@ -36,7 +36,7 @@ class RekapBulananPemasukanSheet implements FromQuery, WithHeadings, WithMapping
     }
 
     /**
-     * @param \App\Models\Pembayaran $pembayaran
+     * @param  \App\Models\Pembayaran  $pembayaran
      */
     public function map($pembayaran): array
     {

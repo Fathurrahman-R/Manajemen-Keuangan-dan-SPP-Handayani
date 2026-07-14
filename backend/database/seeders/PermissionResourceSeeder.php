@@ -31,133 +31,151 @@ class PermissionResourceSeeder extends Seeder
             // ═══════════════════════════════════════
             // AKADEMIK
             // ═══════════════════════════════════════
-            ['key' => 'siswa',               'group' => 'akademik',   'perm' => 'view-siswa'],
+            ['key' => 'siswa.view',          'group' => 'akademik',   'perm' => 'view-siswa'],
             ['key' => 'siswa.create',        'group' => null,         'perm' => 'create-siswa'],
             ['key' => 'siswa.read',          'group' => null,         'perm' => 'read-siswa'],
             ['key' => 'siswa.update',        'group' => null,         'perm' => 'update-siswa'],
             ['key' => 'siswa.delete',        'group' => null,         'perm' => 'delete-siswa'],
 
-            ['key' => 'kelas',               'group' => 'akademik',   'perm' => 'view-kelas'],
+            ['key' => 'ayah.view',           'group' => null,         'perm' => 'view-siswa'],
+            ['key' => 'ibu.view',            'group' => null,         'perm' => 'view-siswa'],
+            ['key' => 'wali.view',           'group' => null,         'perm' => 'view-siswa'],
+            ['key' => 'wali.create',         'group' => null,         'perm' => 'create-siswa'],
+            ['key' => 'wali.update',         'group' => null,         'perm' => 'update-siswa'],
+            ['key' => 'wali.delete',         'group' => null,         'perm' => 'delete-siswa'],
+
+            ['key' => 'kelas.view',          'group' => 'akademik',   'perm' => 'view-kelas'],
             ['key' => 'kelas.create',        'group' => null,         'perm' => 'create-kelas'],
             ['key' => 'kelas.read',          'group' => null,         'perm' => 'read-kelas'],
             ['key' => 'kelas.update',        'group' => null,         'perm' => 'update-kelas'],
             ['key' => 'kelas.delete',        'group' => null,         'perm' => 'delete-kelas'],
 
-            ['key' => 'kategori',            'group' => 'akademik',   'perm' => 'view-kategori'],
+            ['key' => 'kategori.view',       'group' => 'akademik',   'perm' => 'view-kategori'],
             ['key' => 'kategori.create',     'group' => null,         'perm' => 'create-kategori'],
             ['key' => 'kategori.read',       'group' => null,         'perm' => 'read-kategori'],
             ['key' => 'kategori.update',     'group' => null,         'perm' => 'update-kategori'],
             ['key' => 'kategori.delete',     'group' => null,         'perm' => 'delete-kategori'],
 
-            ['key' => 'tahun-ajaran',        'group' => 'akademik',   'perm' => 'view-tahun-ajaran'],
+            ['key' => 'tahun-ajaran.view',   'group' => 'akademik',   'perm' => 'view-tahun-ajaran'],
             ['key' => 'tahun-ajaran.create', 'group' => null,         'perm' => 'create-tahun-ajaran'],
             ['key' => 'tahun-ajaran.update', 'group' => null,         'perm' => 'update-tahun-ajaran'],
             ['key' => 'tahun-ajaran.delete', 'group' => null,         'perm' => 'delete-tahun-ajaran'],
+            ['key' => 'tahun-ajaran.toggle', 'group' => null,         'perm' => 'toggle-tahun-ajaran'],
 
-            ['key' => 'kenaikan-kelas',      'group' => 'akademik',   'perm' => 'view-kenaikan-kelas'],
-            ['key' => 'kenaikan-kelas.process','group' => null,       'perm' => 'process-kenaikan-kelas'],
+            ['key' => 'kenaikan-kelas.view', 'group' => 'akademik',   'perm' => 'view-kenaikan-kelas'],
+            ['key' => 'kenaikan-kelas.process', 'group' => null,       'perm' => 'process-kenaikan-kelas'],
             ['key' => 'kenaikan-kelas.undo', 'group' => null,         'perm' => 'undo-kenaikan-kelas'],
+            ['key' => 'kenaikan-kelas.detail', 'group' => null,   'perm' => 'view-detail-kenaikan'],
 
             // ═══════════════════════════════════════
             // KEUANGAN
             // ═══════════════════════════════════════
-            ['key' => 'jenis-tagihan',       'group' => 'keuangan',   'perm' => 'view-jenis-tagihan'],
-            ['key' => 'jenis-tagihan.create','group' => null,         'perm' => 'create-jenis-tagihan'],
-            ['key' => 'jenis-tagihan.read',  'group' => null,         'perm' => 'read-jenis-tagihan'],
-            ['key' => 'jenis-tagihan.update','group' => null,         'perm' => 'update-jenis-tagihan'],
-            ['key' => 'jenis-tagihan.delete','group' => null,         'perm' => 'delete-jenis-tagihan'],
+            ['key' => 'jenis-tagihan.view',  'group' => 'keuangan',   'perm' => 'view-jenis-tagihan'],
+            ['key' => 'jenis-tagihan.create', 'group' => null,         'perm' => 'create-jenis-tagihan'],
+            ['key' => 'jenis-tagihan.update', 'group' => null,         'perm' => 'update-jenis-tagihan'],
+            ['key' => 'jenis-tagihan.delete', 'group' => null,         'perm' => 'delete-jenis-tagihan'],
 
-            ['key' => 'tagihan',             'group' => 'keuangan',   'perm' => 'view-tagihan'],
+            ['key' => 'tagihan.view',        'group' => 'keuangan',   'perm' => 'view-tagihan'],
             ['key' => 'tagihan.create',      'group' => null,         'perm' => 'create-tagihan'],
-            ['key' => 'tagihan.read',        'group' => null,         'perm' => 'read-tagihan'],
             ['key' => 'tagihan.update',      'group' => null,         'perm' => 'update-tagihan'],
             ['key' => 'tagihan.delete',      'group' => null,         'perm' => 'delete-tagihan'],
+            ['key' => 'tagihan.export',      'group' => null,         'perm' => 'export-data'],
+            ['key' => 'tagihan.siswa',       'group' => null,         'perm' => 'view-own-billing'],
 
-            ['key' => 'pembayaran',          'group' => 'keuangan',   'perm' => 'view-pembayaran'],
+            ['key' => 'pembayaran.view',     'group' => 'keuangan',   'perm' => 'view-pembayaran'],
             ['key' => 'pembayaran.create',   'group' => null,         'perm' => 'create-pembayaran'],
             ['key' => 'pembayaran.delete',   'group' => null,         'perm' => 'delete-pembayaran'],
-            ['key' => 'pembayaran.print',    'group' => null,         'perm' => 'print-kwitansi'],
+            ['key' => 'pembayaran.kwitansi', 'group' => null,         'perm' => 'print-kwitansi'],
+            ['key' => 'pembayaran.siswa',    'group' => null,         'perm' => 'view-own-billing'],
 
-            ['key' => 'pengeluaran',         'group' => 'keuangan',   'perm' => 'view-pengeluaran'],
+            ['key' => 'pengeluaran.view',    'group' => 'keuangan',   'perm' => 'view-pengeluaran'],
             ['key' => 'pengeluaran.create',  'group' => null,         'perm' => 'create-pengeluaran'],
-            ['key' => 'pengeluaran.read',    'group' => null,         'perm' => 'read-pengeluaran'],
             ['key' => 'pengeluaran.update',  'group' => null,         'perm' => 'update-pengeluaran'],
             ['key' => 'pengeluaran.delete',  'group' => null,         'perm' => 'delete-pengeluaran'],
-            ['key' => 'pengeluaran.request', 'group' => null,         'perm' => 'create-pengeluaran-request'],
             ['key' => 'pengeluaran.approve', 'group' => null,         'perm' => 'approve-pengeluaran'],
-            ['key' => 'pengeluaran.disburse','group' => null,         'perm' => 'disburse-pengeluaran'],
+            ['key' => 'pengeluaran.disburse', 'group' => null,         'perm' => 'disburse-pengeluaran'],
 
-            ['key' => 'midtrans',            'group' => 'keuangan',   'perm' => 'view-midtrans-transactions'],
+            ['key' => 'midtrans.admin',      'group' => 'keuangan',   'perm' => 'view-midtrans-transactions'],
             ['key' => 'midtrans.pay',        'group' => null,         'perm' => 'pay-tagihan-online'],
             ['key' => 'midtrans.sync',       'group' => null,         'perm' => 'sync-midtrans-transactions'],
-
-            ['key' => 'midtrans-config',     'group' => 'keuangan',   'perm' => 'view-midtrans-config'],
-            ['key' => 'midtrans-config.update','group' => null,       'perm' => 'update-midtrans-config'],
 
             // ═══════════════════════════════════════
             // LAPORAN
             // ═══════════════════════════════════════
-            ['key' => 'kas-harian',          'group' => 'laporan',    'perm' => 'view-kas-harian'],
-            ['key' => 'rekap-bulanan',       'group' => 'laporan',    'perm' => 'view-rekap-bulanan'],
+            ['key' => 'laporan.kas',         'group' => 'laporan',    'perm' => 'view-kas-harian'],
+            ['key' => 'laporan.kas-detail',  'group' => null,         'perm' => 'detail-kas-harian'],
+            ['key' => 'laporan.rekap',       'group' => 'laporan',    'perm' => 'view-rekap-bulanan'],
+            ['key' => 'laporan.rekap-detail', 'group' => null,        'perm' => 'detail-rekap-bulanan'],
             ['key' => 'laporan.export',      'group' => null,         'perm' => 'export-laporan'],
 
-            ['key' => 'import-export',       'group' => 'laporan',    'perm' => 'import-data'],
-            ['key' => 'import-export.import','group' => null,         'perm' => 'import-data'],
-            ['key' => 'import-export.export','group' => null,         'perm' => 'export-data'],
+            ['key' => 'import-data',         'group' => 'laporan',    'perm' => 'import-data'],
+            ['key' => 'export-data',         'group' => 'laporan',    'perm' => 'export-data'],
 
             // ═══════════════════════════════════════
             // PENGATURAN
             // ═══════════════════════════════════════
-            ['key' => 'user-management',     'group' => 'pengaturan', 'perm' => 'view-user'],
-            ['key' => 'user-management.create','group' => null,       'perm' => 'create-user'],
-            ['key' => 'user-management.read','group' => null,         'perm' => 'read-user'],
-            ['key' => 'user-management.update','group' => null,       'perm' => 'update-user'],
-            ['key' => 'user-management.delete','group' => null,       'perm' => 'delete-user'],
+            ['key' => 'users.view',          'group' => 'pengaturan', 'perm' => 'view-user'],
+            ['key' => 'users.create',        'group' => null,         'perm' => 'create-user'],
+            ['key' => 'users.read',          'group' => null,         'perm' => 'read-user'],
+            ['key' => 'users.update',        'group' => null,         'perm' => 'update-user'],
+            ['key' => 'users.delete',        'group' => null,         'perm' => 'delete-user'],
+            ['key' => 'users.toggle',        'group' => null,         'perm' => 'toggle-user'],
 
-            ['key' => 'role-management',     'group' => 'pengaturan', 'perm' => 'view-roles'],
+            ['key' => 'role.view',           'group' => 'pengaturan', 'perm' => 'view-roles'],
             ['key' => 'role.create',         'group' => null,         'perm' => 'create-role'],
             ['key' => 'role.update',         'group' => null,         'perm' => 'update-role'],
             ['key' => 'role.delete',         'group' => null,         'perm' => 'delete-role'],
-            ['key' => 'role.attach',         'group' => null,         'perm' => 'attach-role'],
-            ['key' => 'role.detach',         'group' => null,         'perm' => 'detach-role'],
 
-            ['key' => 'akun-siswa',          'group' => 'pengaturan', 'perm' => 'view-akun-siswa'],
-            ['key' => 'akun-siswa.generate', 'group' => null,         'perm' => 'generate-akun-siswa'],
+            ['key' => 'akun-siswa.view',     'group' => 'pengaturan', 'perm' => 'view-akun-siswa'],
+            ['key' => 'akun-siswa.create',   'group' => null,         'perm' => 'generate-akun-siswa'],
+            ['key' => 'akun-siswa.toggle',   'group' => null,         'perm' => 'toggle-akun-siswa'],
+            ['key' => 'akun-siswa.reset',    'group' => null,         'perm' => 'reset-akun-siswa-password'],
+            ['key' => 'akun-siswa.view-credentials', 'group' => null, 'perm' => 'view-akun-siswa-credentials'],
+            ['key' => 'akun-siswa.print-credentials', 'group' => null, 'perm' => 'print-akun-siswa'],
 
-            ['key' => 'app-setting',         'group' => 'pengaturan', 'perm' => 'view-app-setting'],
-            ['key' => 'app-setting.update',  'group' => null,         'perm' => 'update-app-setting'],
+            ['key' => 'pengaturan.view',     'group' => 'pengaturan', 'perm' => 'view-app-setting'],
+            ['key' => 'pengaturan.update',   'group' => null,         'perm' => 'update-app-setting'],
 
-            ['key' => 'branch',              'group' => 'pengaturan', 'perm' => 'view-branch'],
+            ['key' => 'auto-approve.view',   'group' => 'pengaturan', 'perm' => 'view-auto-approve-setting'],
+            ['key' => 'auto-approve.update', 'group' => null,         'perm' => 'update-auto-approve-setting'],
+
+            ['key' => 'branch.view',         'group' => 'pengaturan', 'perm' => 'view-branch'],
             ['key' => 'branch.create',       'group' => null,         'perm' => 'create-branch'],
             ['key' => 'branch.read',         'group' => null,         'perm' => 'read-branch'],
             ['key' => 'branch.update',       'group' => null,         'perm' => 'update-branch'],
             ['key' => 'branch.delete',       'group' => null,         'perm' => 'delete-branch'],
 
-            ['key' => 'notification-setting','group' => 'pengaturan', 'perm' => 'view-notification-setting'],
-            ['key' => 'notification-setting.update','group' => null,  'perm' => 'update-notification-setting'],
+            ['key' => 'notification-setting.view', 'group' => 'pengaturan', 'perm' => 'view-notification-setting'],
+            ['key' => 'notification-setting.update', 'group' => null,  'perm' => 'update-notification-setting'],
 
-            ['key' => 'notification-logs',   'group' => 'pengaturan', 'perm' => 'view-notification-logs'],
-
-            ['key' => 'branch-approval-setting','group' => 'pengaturan', 'perm' => 'view-app-setting'],
+            ['key' => 'notification-logs.view',   'group' => 'pengaturan', 'perm' => 'view-notification-logs'],
+            ['key' => 'notification-logs.retry', 'group' => null,      'perm' => 'retry-notification'],
 
             // RBAC
-            ['key' => 'rbac',                'group' => 'pengaturan', 'perm' => 'view-permissions'],
-            ['key' => 'rbac.view',           'group' => null,         'perm' => 'view-permission'],
-            ['key' => 'rbac.create',         'group' => null,         'perm' => 'create-permission'],
-            ['key' => 'rbac.edit',           'group' => null,         'perm' => 'edit-permission'],
-            ['key' => 'rbac.delete',         'group' => null,         'perm' => 'delete-permission'],
-            ['key' => 'rbac.assign',         'group' => null,         'perm' => 'assign-permission'],
-            ['key' => 'rbac.attach',         'group' => null,         'perm' => 'attach-permissions'],
-            ['key' => 'rbac.detach',         'group' => null,         'perm' => 'detach-permissions'],
+            ['key' => 'rbac',                'group' => 'pengaturan', 'perm' => 'manage-rbac'],
+            ['key' => 'permission.view',     'group' => null,         'perm' => 'view-permissions'],
+            ['key' => 'permission.create',   'group' => null,         'perm' => 'create-permission'],
+            ['key' => 'permission.update',   'group' => null,         'perm' => 'update-permission'],
+            ['key' => 'permission.delete',   'group' => null,         'perm' => 'delete-permission'],
 
-            // PORTAL
+            ['key' => 'endpoint-mapping.view', 'group' => null,       'perm' => 'view-endpoint-mapping'],
+            ['key' => 'endpoint-mapping.create', 'group' => null,     'perm' => 'create-endpoint-mapping'],
+            ['key' => 'endpoint-mapping.update', 'group' => null,     'perm' => 'update-endpoint-mapping'],
+            ['key' => 'endpoint-mapping.delete', 'group' => null,     'perm' => 'delete-endpoint-mapping'],
+
+            ['key' => 'resource-registry.view', 'group' => null,      'perm' => 'view-resource-registry'],
+            ['key' => 'resource-registry.create', 'group' => null,    'perm' => 'create-resource-registry'],
+            ['key' => 'resource-registry.update', 'group' => null,    'perm' => 'update-resource-registry'],
+            ['key' => 'resource-registry.delete', 'group' => null,    'perm' => 'delete-resource-registry'],
+
+            // PORTAL (Khusus UI yang dibinding ke backend)
             ['key' => 'portal.billing',      'group' => null,         'perm' => 'view-own-billing'],
             ['key' => 'portal.tagihan',      'group' => null,         'perm' => 'view-tagihan-siswa'],
+            ['key' => 'portal-beranda',      'group' => null,         'perm' => 'view-tagihan-siswa'],
+            ['key' => 'portal-access',       'group' => null,         'perm' => 'view-own-billing'],
         ];
 
         foreach ($resources as $res) {
-            $permission = Permission::where('name', $res['perm'])->first();
-
             PagePermission::updateOrCreate(
                 ['resource_key' => $res['key']],
                 [
@@ -170,6 +188,6 @@ class PermissionResourceSeeder extends Seeder
             );
         }
 
-        $this->command->info('Page permissions seeded: ' . count($resources) . ' resources.');
+        $this->command->info('Page permissions seeded: '.count($resources).' resources.');
     }
 }

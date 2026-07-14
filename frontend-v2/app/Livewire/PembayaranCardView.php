@@ -2,33 +2,43 @@
 
 namespace App\Livewire;
 
+use App\Helpers\PermissionHelper;
 use App\Services\ApiService;
-use Livewire\Component;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Component;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PembayaranCardView extends Component implements HasActions, HasSchemas
 {
-    use InteractsWithActions, InteractsWithSchemas;
     use \App\Livewire\Concerns\HandlesApiErrors;
     use \App\Livewire\Concerns\HasPeriodFilter;
+    use InteractsWithActions, InteractsWithSchemas;
 
     public string $search = '';
+
     public string $filterJenjang = '';
+
     public string $filterKelas = '';
+
     public string $filterMetode = '';
+
     public string $sort = 'latest';
+
     public int $perPage = 5;
+
     public int $page = 1;
 
     public bool $loading = true;
+
     public array $siswaData = [];
+
     public array $meta = [];
+
     public array $kelasOptions = [];
 
     public function mount(): void
@@ -42,16 +52,17 @@ class PembayaranCardView extends Component implements HasActions, HasSchemas
     {
         try {
             // Kalau jenjang dipilih, fetch kelas hanya untuk jenjang itu.
-            $endpoint = filled($this->filterJenjang) ? '/kelas/' . $this->filterJenjang : '/kelas';
+            $endpoint = filled($this->filterJenjang) ? '/kelas/'.$this->filterJenjang : '/kelas';
             $response = ApiService::client()->get($endpoint);
             if ($response->ok()) {
                 $this->kelasOptions = collect($response->json('data') ?? [])
                     ->mapWithKeys(function ($k) {
                         $label = $k['nama'];
                         // Kalau endpoint global (lintas jenjang), tampilkan jenjang dalam label.
-                        if (filled($this->filterJenjang) === false && !empty($k['jenjang'])) {
-                            $label .= ' (' . $k['jenjang'] . ')';
+                        if (filled($this->filterJenjang) === false && ! empty($k['jenjang'])) {
+                            $label .= ' ('.$k['jenjang'].')';
                         }
+
                         return [$k['id'] => $label];
                     })
                     ->toArray();
@@ -123,8 +134,6 @@ class PembayaranCardView extends Component implements HasActions, HasSchemas
         $this->loading = false;
     }
 
-
-
     public function updatedSearch(): void
     {
         $this->page = 1;
@@ -190,7 +199,7 @@ class PembayaranCardView extends Component implements HasActions, HasSchemas
 
     public function canDelete(): bool
     {
-        return in_array('delete-pembayaran', session()->get('data.permissions', []));
+        return PermissionHelper::hasResource('pembayaran.delete');
     }
 
     public function deletePembayaran(string $kodePembayaran): void
@@ -204,16 +213,19 @@ class PembayaranCardView extends Component implements HasActions, HasSchemas
     public function deletePembayaranAction(): \Filament\Actions\Action
     {
         return \Filament\Actions\Action::make('deletePembayaran')
+            ->visible(fn (): bool => PermissionHelper::hasResource('pembayaran.delete'))
             ->requiresConfirmation()
             ->modalHeading('Hapus Pembayaran')
             ->modalDescription('Apakah kamu yakin ingin menghapus pembayaran ini? Tindakan ini tidak dapat dibatalkan.')
             ->modalSubmitActionLabel('Hapus')
             ->color('danger')
             ->action(function (): void {
-                if (!$this->deletingKodePembayaran) return;
+                if (! $this->deletingKodePembayaran) {
+                    return;
+                }
 
                 try {
-                    $response = ApiService::client()->delete('/pembayaran/' . $this->deletingKodePembayaran);
+                    $response = ApiService::client()->delete('/pembayaran/'.$this->deletingKodePembayaran);
 
                     if ($response->ok()) {
                         Notification::make()->title('Pembayaran Berhasil Dihapus')->success()->send();
@@ -231,18 +243,19 @@ class PembayaranCardView extends Component implements HasActions, HasSchemas
 
     public function downloadKwitansi(string $kodePembayaran): StreamedResponse
     {
-        $filename = 'kwitansi-' . $kodePembayaran . '.pdf';
+        $filename = 'kwitansi-'.$kodePembayaran.'.pdf';
 
         $response = ApiService::client()
             ->withHeaders(['Accept' => 'application/pdf'])
-            ->get('/pembayaran/kwitansi/' . $kodePembayaran);
+            ->get('/pembayaran/kwitansi/'.$kodePembayaran);
 
-        if (!$response->ok()) {
+        if (! $response->ok()) {
             Notification::make()
                 ->title('Kwitansi tidak ditemukan')
                 ->danger()
                 ->send();
-            return response()->streamDownload(fn() => null, $filename);
+
+            return response()->streamDownload(fn () => null, $filename);
         }
 
         Storage::disk('local')->put($filename, $response->body());

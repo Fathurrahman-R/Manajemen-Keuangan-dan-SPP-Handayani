@@ -12,7 +12,7 @@ class SiswaObserver
     public function updated(Siswa $siswa): void
     {
         // Only react if status field was changed
-        if (!$siswa->isDirty('status')) {
+        if (! $siswa->isDirty('status')) {
             return;
         }
 

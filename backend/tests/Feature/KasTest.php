@@ -7,7 +7,7 @@ use Tests\TestCase;
 
 class KasTest extends TestCase
 {
-    public function testKasHarian_RunningBalanceSesuaiRiwayatSaldoPadaTanggal(): void
+    public function test_kas_harian_running_balance_sesuai_riwayat_saldo_pada_tanggal(): void
     {
         $scenario = $this->createKasHarian();
         $user = $scenario['user'];
@@ -15,7 +15,7 @@ class KasTest extends TestCase
         $response = $this->get('api/laporan/kas?bulan=1&tahun=2025', ['Authorization' => $user->token])
             ->assertStatus(200)
             ->assertJson([
-                "errors" => []
+                'errors' => [],
             ]);
 
         //        $data = $response->json('data');
@@ -43,7 +43,7 @@ class KasTest extends TestCase
         //        self::assertNotEquals($expectedSaldoT3, $byTanggal[$labelT3]['saldo'] ?? null);
     }
 
-    public function testRekapBulanan_RunningBalanceSesuaiRiwayatSaldoPadaBulan(): void
+    public function test_rekap_bulanan_running_balance_sesuai_riwayat_saldo_pada_bulan(): void
     {
         $scenario = $this->createRekapBulanan();
         $user = $scenario['user'];
@@ -51,7 +51,7 @@ class KasTest extends TestCase
         $response = $this->get('api/laporan/rekap?tahun=2025', ['Authorization' => $user->token])
             ->assertStatus(200)
             ->assertJson([
-                "errors" => []
+                'errors' => [],
             ]);
 
         //        $data = $response->json('data');
@@ -74,109 +74,116 @@ class KasTest extends TestCase
         //        self::assertNotEquals($expectedFeb, $byBulan[$labelFeb]['saldo'] ?? null);
     }
 
-    public function testKasHarian_ListSatuBulan()
+    public function test_kas_harian_list_satu_bulan()
     {
         $scenario = $this->createKasHarian();
         $user = $scenario['user'];
-        $this->get('api/laporan/kas?bulan=1&tahun=2025',[ 'Authorization'=>$user->token ])
+        $this->get('api/laporan/kas?bulan=1&tahun=2025', ['Authorization' => $user->token])
             ->assertStatus(200)
-            ->assertJson(['errors'=>[]]);
+            ->assertJson(['errors' => []]);
     }
 
-    public function testKasHarian_SaldoAwalTermasukBulanSebelumnya()
+    public function test_kas_harian_saldo_awal_termasuk_bulan_sebelumnya()
     {
         $scenario = $this->createKasHarianWithPrevMonth();
         $user = $scenario['user'];
-        $response = $this->get('api/laporan/kas?bulan=1&tahun=2025',[ 'Authorization'=>$user->token ])
+        $response = $this->get('api/laporan/kas?bulan=1&tahun=2025', ['Authorization' => $user->token])
             ->assertStatus(200)
-            ->assertJson(['errors'=>[]]);
+            ->assertJson(['errors' => []]);
         // $data = $response->json('data');
         // TODO: Hitung expected saldo awal = (pemasukan prev month - pengeluaran prev month) + transaksi hari pertama bulan.
         // self::assertIsArray($data);
     }
 
-    public function testRekapBulanan_ListSatuTahun()
+    public function test_rekap_bulanan_list_satu_tahun()
     {
         $scenario = $this->createRekapBulanan();
         $user = $scenario['user'];
-        $this->get('api/laporan/rekap?tahun=2025',[ 'Authorization'=>$user->token ])
+        $this->get('api/laporan/rekap?tahun=2025', ['Authorization' => $user->token])
             ->assertStatus(200)
-            ->assertJson(['errors'=>[]]);
+            ->assertJson(['errors' => []]);
     }
 
-    public function testRekapBulanan_SaldoAwalTermasukTahunSebelumnya()
+    public function test_rekap_bulanan_saldo_awal_termasuk_tahun_sebelumnya()
     {
         $scenario = $this->createRekapBulananWithPrevYear();
         $user = $scenario['user'];
-        $response = $this->get('api/laporan/rekap?tahun=2025',[ 'Authorization'=>$user->token ])
+        $response = $this->get('api/laporan/rekap?tahun=2025', ['Authorization' => $user->token])
             ->assertStatus(200)
-            ->assertJson(['errors'=>[]]);
+            ->assertJson(['errors' => []]);
         // $data = $response->json('data');
         // TODO: Validasi saldo bulan Januari sudah termasuk transaksi tahun sebelumnya.
     }
 
     // --- Validation tests kas harian ---
-    public function testKasHarian_ValidasiMissingParameter()
+    public function test_kas_harian_validasi_missing_parameter()
     {
         $user = \App\Models\User::factory()->create();
-        $this->get('api/laporan/kas?bulan=1',[ 'Authorization'=>$user->token ])
+        $this->get('api/laporan/kas?bulan=1', ['Authorization' => $user->token])
             ->assertStatus(200)
-            ->assertJson(['errors'=>[]]);
+            ->assertJson(['errors' => []]);
     }
-    public function testKasHarian_ValidasiBulanInvalid()
+
+    public function test_kas_harian_validasi_bulan_invalid()
     {
         $user = \App\Models\User::factory()->create();
-        $this->get('api/laporan/kas?bulan=13&tahun=2025',[ 'Authorization'=>$user->token ])
+        $this->get('api/laporan/kas?bulan=13&tahun=2025', ['Authorization' => $user->token])
             ->assertStatus(200)
-            ->assertJson(['errors'=>[]]);
+            ->assertJson(['errors' => []]);
     }
-    public function testKasHarian_ValidasiTahunInvalid()
+
+    public function test_kas_harian_validasi_tahun_invalid()
     {
         $user = \App\Models\User::factory()->create();
-        $this->get('api/laporan/kas?bulan=1&tahun=20',[ 'Authorization'=>$user->token ])
+        $this->get('api/laporan/kas?bulan=1&tahun=20', ['Authorization' => $user->token])
             ->assertStatus(200)
-            ->assertJson(['errors'=>[]]);
+            ->assertJson(['errors' => []]);
     }
-    public function testKasHarian_Unauthorized()
+
+    public function test_kas_harian_unauthorized()
     {
         $this->get('api/laporan/kas?bulan=1&tahun=2025')
             ->assertStatus(200)
-            ->assertJson(['errors'=>[]]);
+            ->assertJson(['errors' => []]);
     }
-    public function testKasHarian_IndexKosong()
+
+    public function test_kas_harian_index_kosong()
     {
         $user = \App\Models\User::factory()->create();
-        $this->get('api/laporan/kas?bulan=1&tahun=2030',[ 'Authorization'=>$user->token ])
+        $this->get('api/laporan/kas?bulan=1&tahun=2030', ['Authorization' => $user->token])
             ->assertStatus(200)
-            ->assertJson(['errors'=>[]]);
+            ->assertJson(['errors' => []]);
     }
 
     // --- Validation tests rekap bulanan ---
-    public function testRekapBulanan_ValidasiMissingParameter()
+    public function test_rekap_bulanan_validasi_missing_parameter()
     {
         $user = \App\Models\User::factory()->create();
-        $this->get('api/laporan/rekap',[ 'Authorization'=>$user->token ])
+        $this->get('api/laporan/rekap', ['Authorization' => $user->token])
             ->assertStatus(200)
-            ->assertJson(['errors'=>[]]);
+            ->assertJson(['errors' => []]);
     }
-    public function testRekapBulanan_ValidasiTahunInvalid()
+
+    public function test_rekap_bulanan_validasi_tahun_invalid()
     {
         $user = \App\Models\User::factory()->create();
-        $this->get('api/laporan/rekap?tahun=20',[ 'Authorization'=>$user->token ])
+        $this->get('api/laporan/rekap?tahun=20', ['Authorization' => $user->token])
             ->assertStatus(200)
-            ->assertJson(['errors'=>[]]);
+            ->assertJson(['errors' => []]);
     }
-    public function testRekapBulanan_Unauthorized()
+
+    public function test_rekap_bulanan_unauthorized()
     {
         $this->get('api/laporan/rekap?tahun=2025')
             ->assertStatus(200)
-            ->assertJson(['errors'=>[]]);
+            ->assertJson(['errors' => []]);
     }
-    public function testRekapBulanan_IndexKosong()
+
+    public function test_rekap_bulanan_index_kosong()
     {
         $user = \App\Models\User::factory()->create();
-        $this->get('api/laporan/rekap?tahun=2030',[ 'Authorization'=>$user->token ])
+        $this->get('api/laporan/rekap?tahun=2030', ['Authorization' => $user->token])
             ->assertStatus(200)
-            ->assertJson(['errors'=>[]]);
+            ->assertJson(['errors' => []]);
     }
 }

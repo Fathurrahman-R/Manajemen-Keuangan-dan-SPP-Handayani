@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('walis', function (Blueprint $table) {
             $table->id();
-            $table->string('nama',100)->nullable(false);
-            $table->string('pekerjaan',100)->nullable();
+            $table->string('nama', 100)->nullable(false);
+            $table->string('pekerjaan', 100)->nullable();
             $table->text('alamat')->nullable(false);
-            $table->string('no_hp',100)->nullable(false);
+            $table->string('no_hp', 100)->nullable(false);
             $table->text('keterangan')->nullable();
             $table->timestamps();
         });

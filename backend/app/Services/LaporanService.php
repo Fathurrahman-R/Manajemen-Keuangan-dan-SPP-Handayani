@@ -17,32 +17,32 @@ class LaporanService
         $tahun = $request->tahun;
 
         // Validasi parameter
-        if (!$bulan || !$tahun) {
+        if (! $bulan || ! $tahun) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'message' => ['parameter bulan dan tahun wajib.']
-                ]
+                    'message' => ['parameter bulan dan tahun wajib.'],
+                ],
             ], 400));
         }
-        if (!ctype_digit((string)$bulan) || (int)$bulan < 1 || (int)$bulan > 12) {
+        if (! ctype_digit((string) $bulan) || (int) $bulan < 1 || (int) $bulan > 12) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'bulan' => ['bulan harus angka antara 1 sampai 12.']
-                ]
+                    'bulan' => ['bulan harus angka antara 1 sampai 12.'],
+                ],
             ], 400));
         }
-        if (!preg_match('/^\d{4}$/', (string)$tahun)) {
+        if (! preg_match('/^\d{4}$/', (string) $tahun)) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'tahun' => ['tahun harus 4 digit.']
-                ]
+                    'tahun' => ['tahun harus 4 digit.'],
+                ],
             ], 400));
         }
 
         // Range bulan
         $bulan = str_pad((string) $bulan, 2, '0', STR_PAD_LEFT);
         $start = "$tahun-$bulan-01";
-        $end   = date('Y-m-t', strtotime($start));
+        $end = date('Y-m-t', strtotime($start));
 
         /*
         |--------------------------------------------------------------------------
@@ -73,13 +73,13 @@ class LaporanService
             $pengeluaran->keys()->toArray()
         ))->unique()->sort();
 
-//        if ($dates->isEmpty()) {
-//            throw new HttpResponseException(response()->json([
-//                'errors' => [
-//                    'message' => ['Data tidak ditemukan untuk filter yang diberikan.']
-//                ]
-//            ], 404));
-//        }
+        //        if ($dates->isEmpty()) {
+        //            throw new HttpResponseException(response()->json([
+        //                'errors' => [
+        //                    'message' => ['Data tidak ditemukan untuk filter yang diberikan.']
+        //                ]
+        //            ], 404));
+        //        }
 
         /*
         |--------------------------------------------------------------------------
@@ -90,11 +90,11 @@ class LaporanService
 
         foreach ($dates as $tanggal) {
 
-            (float)$masuk  = $pemasukan[$tanggal]->total ?? 0;
-            (float)$keluar = $pengeluaran[$tanggal]->total ?? 0;
+            (float) $masuk = $pemasukan[$tanggal]->total ?? 0;
+            (float) $keluar = $pengeluaran[$tanggal]->total ?? 0;
 
             // ❗ SALDO GLOBAL — sesuai buku kas
-            (float)$saldoGlobal =
+            (float) $saldoGlobal =
                 Pembayaran::query()
                     ->where('branch_id', Auth::user()->branch_id)
                     ->whereDate('tanggal', '<=', $tanggal)->sum('jumlah')
@@ -103,11 +103,11 @@ class LaporanService
                     ->whereDate('tanggal', '<=', $tanggal)->sum('jumlah');
 
             $kas[] = [
-                'tanggal_raw'  => $tanggal,
+                'tanggal_raw' => $tanggal,
                 'tanggal_view' => \Carbon\Carbon::parse($tanggal)->locale('id')->translatedFormat('d F Y'),
-                'total_masuk'  => floatval($masuk),
+                'total_masuk' => floatval($masuk),
                 'total_keluar' => floatval($keluar),
-                'saldo'        => floatval($saldoGlobal),
+                'saldo' => floatval($saldoGlobal),
             ];
         }
 
@@ -120,30 +120,31 @@ class LaporanService
             ->sortBy(fn ($row) => $row['tanggal_raw'])
             ->values()
             ->map(fn ($row) => (object) [
-                'tanggal'      => $row['tanggal_view'],
-                'total_masuk'  => $row['total_masuk'],
+                'tanggal' => $row['tanggal_view'],
+                'total_masuk' => $row['total_masuk'],
                 'total_keluar' => $row['total_keluar'],
-                'saldo'        => $row['saldo'],
+                'saldo' => $row['saldo'],
             ]);
 
         return KasResource::collection($kas);
     }
+
     public function RekapBulanan(Request $request)
     {
         $tahun = $request->tahun;
 
-        if (!$tahun) {
+        if (! $tahun) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'message' => ['parameter tahun wajib.']
-                ]
+                    'message' => ['parameter tahun wajib.'],
+                ],
             ], 400));
         }
-        if (!preg_match('/^\d{4}$/', (string)$tahun)) {
+        if (! preg_match('/^\d{4}$/', (string) $tahun)) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'tahun' => ['tahun harus 4 digit.']
-                ]
+                    'tahun' => ['tahun harus 4 digit.'],
+                ],
             ], 400));
         }
 
@@ -178,13 +179,13 @@ class LaporanService
             $pengeluaran->keys()->toArray()
         ))->unique()->sort();
 
-//        if ($months->isEmpty()) {
-//            throw new HttpResponseException(response()->json([
-//                'errors' => [
-//                    'message' => ['Data tidak ditemukan untuk filter yang diberikan.']
-//                ]
-//            ], 404));
-//        }
+        //        if ($months->isEmpty()) {
+        //            throw new HttpResponseException(response()->json([
+        //                'errors' => [
+        //                    'message' => ['Data tidak ditemukan untuk filter yang diberikan.']
+        //                ]
+        //            ], 404));
+        //        }
 
         /*
         |--------------------------------------------------------------------------
@@ -210,11 +211,11 @@ class LaporanService
                     ->whereDate('tanggal', '<=', $lastDate)->sum('jumlah');
 
             $kas[] = [
-                'bulan_raw'    => $bulan,
-                'tanggal'      => \Carbon\Carbon::parse("$bulan-01")->locale('id')->translatedFormat('F'),
-                'total_masuk'  => $masuk,
+                'bulan_raw' => $bulan,
+                'tanggal' => \Carbon\Carbon::parse("$bulan-01")->locale('id')->translatedFormat('F'),
+                'total_masuk' => $masuk,
                 'total_keluar' => $keluar,
-                'saldo'        => $saldoGlobal,
+                'saldo' => $saldoGlobal,
             ];
         }
 
@@ -223,10 +224,10 @@ class LaporanService
                 ->sortBy(fn ($row) => $row['bulan_raw'])
                 ->values()
                 ->map(fn ($row) => (object) [
-                    'tanggal'      => $row['tanggal'],
-                    'total_masuk'  => $row['total_masuk'],
+                    'tanggal' => $row['tanggal'],
+                    'total_masuk' => $row['total_masuk'],
                     'total_keluar' => $row['total_keluar'],
-                    'saldo'        => $row['saldo'],
+                    'saldo' => $row['saldo'],
                 ])
         );
     }

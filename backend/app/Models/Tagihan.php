@@ -11,9 +11,13 @@ class Tagihan extends Model
     use HasFactory;
 
     protected $table = 'tagihans';
+
     protected $primaryKey = 'kode_tagihan';
+
     public $incrementing = false;
+
     public $timestamps = true;
+
     protected $fillable = [
         'kode_tagihan',
         'jenis_tagihan_id',
@@ -29,7 +33,7 @@ class Tagihan extends Model
     {
         return [
             'tmp' => 'float',
-            'branch_id' => 'int'
+            'branch_id' => 'int',
         ];
     }
 
@@ -40,20 +44,21 @@ class Tagihan extends Model
 
     public function siswa()
     {
-        return $this->belongsTo(Siswa::class, 'nis','nis');
+        return $this->belongsTo(Siswa::class, 'nis', 'nis');
     }
 
     public function pembayaran()
     {
-        return $this->hasMany(Pembayaran::class, 'kode_tagihan','kode_tagihan');
+        return $this->hasMany(Pembayaran::class, 'kode_tagihan', 'kode_tagihan');
     }
+
     public function tahunAjaran()
     {
         return $this->belongsTo(TahunAjaran::class, 'tahun_ajaran_id');
     }
+
     public function branch()
     {
         return $this->BelongsTo(Branch::class, 'branch_id');
     }
 }
-

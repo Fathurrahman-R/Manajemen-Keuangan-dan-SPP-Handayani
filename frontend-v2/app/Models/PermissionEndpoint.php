@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class PermissionEndpoint extends Model
 {
     protected $table = 'permission_endpoints';
+
     protected $guarded = [];
 
     public function permission()

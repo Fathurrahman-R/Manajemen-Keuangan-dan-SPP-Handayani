@@ -4,8 +4,6 @@ namespace Database\Factories;
 
 use App\Models\Ayah;
 use App\Models\Ibu;
-use App\Models\Kategori;
-use App\Models\Kelas;
 use App\Models\Siswa;
 use App\Models\Wali;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -21,9 +19,9 @@ class SiswaFactory extends Factory
     {
         return [
             'nis' => $this->faker->unique()->numerify('######'),
-//            'nis' => '000001',
+            //            'nis' => '000001',
             'nisn' => $this->faker->unique()->numerify('######'),
-//            'nisn' => '000001',
+            //            'nisn' => '000001',
             'nama' => $this->faker->name(),
             'jenis_kelamin' => $this->faker->randomElement(['Laki-laki', 'Perempuan']),
             'tempat_lahir' => $this->faker->city(),
@@ -34,9 +32,9 @@ class SiswaFactory extends Factory
             // relasi otomatis
             'ayah_id' => Ayah::factory(),
             'ibu_id' => Ibu::factory(),
-//            'wali_id' => Wali::factory(),
-            'kelas_id' => $this->faker->numberBetween(1,6),
-            'kategori_id' => $this->faker->numberBetween(1,5),
+            //            'wali_id' => Wali::factory(),
+            'kelas_id' => $this->faker->numberBetween(1, 6),
+            'kategori_id' => $this->faker->numberBetween(1, 5),
 
             'jenjang' => 'MI',
             'asal_sekolah' => null,
@@ -51,8 +49,8 @@ class SiswaFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             return [
-                'nis' =>'000001',
-                'nisn' =>'000001',
+                'nis' => '000001',
+                'nisn' => '000001',
             ];
         });
     }

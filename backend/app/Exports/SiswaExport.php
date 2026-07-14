@@ -9,7 +9,7 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class SiswaExport implements FromQuery, WithHeadings, WithMapping, WithChunkReading
+class SiswaExport implements FromQuery, WithChunkReading, WithHeadings, WithMapping
 {
     public function __construct(
         private Builder $query,
@@ -58,7 +58,7 @@ class SiswaExport implements FromQuery, WithHeadings, WithMapping, WithChunkRead
     }
 
     /**
-     * @param \App\Models\Siswa $siswa
+     * @param  \App\Models\Siswa  $siswa
      */
     public function map($siswa): array
     {
@@ -111,8 +111,9 @@ class SiswaExport implements FromQuery, WithHeadings, WithMapping, WithChunkRead
     private function resolveKelasName($siswa): ?string
     {
         // If we have a resolved_kelas_id from the join, use it
-        if (!empty($siswa->resolved_kelas_id)) {
+        if (! empty($siswa->resolved_kelas_id)) {
             $kelas = Kelas::find($siswa->resolved_kelas_id);
+
             return $kelas?->nama;
         }
 

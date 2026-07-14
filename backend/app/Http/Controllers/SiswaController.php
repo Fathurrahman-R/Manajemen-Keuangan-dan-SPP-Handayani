@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\SiswaRequest;
-use App\Http\Resources\SiswaMIResource;
 use App\Http\Resources\SiswaResource;
 use App\Models\Ayah;
 use App\Models\Ibu;
@@ -16,10 +15,8 @@ use App\Services\AkunSiswaService;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 
 class SiswaController extends Controller
@@ -32,6 +29,7 @@ class SiswaController extends Controller
     {
         $this->akunSiswaService = $akunSiswaService;
     }
+
     #[HeaderParameter('Authorization')]
     #[QueryParameter('search')]
     #[QueryParameter('kelas_id')]
@@ -41,7 +39,7 @@ class SiswaController extends Controller
     #[QueryParameter('direction', description: 'Sort direction (asc or desc)', required: false, example: 'asc')]
     public function index(string $jenjang)
     {
-        $baseQuery = Siswa::with(['ayah','ibu','wali','kelas','kategori'])
+        $baseQuery = Siswa::with(['ayah', 'ibu', 'wali', 'kelas', 'kategori'])
             ->where('jenjang', strtoupper($jenjang))->where('siswas.branch_id', Auth::user()->branch_id);
         $query = clone $baseQuery;
         $term = request('search', request('q'));
@@ -55,51 +53,53 @@ class SiswaController extends Controller
             });
         }
         $kelasId = request('kelas_id');
-        if (!is_null($kelasId) && $kelasId !== '') {
+        if (! is_null($kelasId) && $kelasId !== '') {
             $query->where('kelas_id', (int) $kelasId);
         }
 
         $jenisKelamin = request('jenis_kelamin');
-        if (!is_null($jenisKelamin) && $jenisKelamin !== '') {
+        if (! is_null($jenisKelamin) && $jenisKelamin !== '') {
             $query->where('jenis_kelamin', $jenisKelamin);
         }
 
         $agama = request('agama');
-        if (!is_null($agama) && $agama !== '') {
+        if (! is_null($agama) && $agama !== '') {
             $query->where('agama', $agama);
         }
 
         $status = request('status');
-        if (!is_null($status) && $status !== '') {
+        if (! is_null($status) && $status !== '') {
             $query->where('status', $status);
         }
 
         $this->applySorting($query, ['nama', 'nis', 'kelas_id', 'created_at'], 'nama', 'asc');
 
         $siswa = $query->paginate(request('per_page', 30));
+
         return SiswaResource::collection($siswa);
     }
 
     #[HeaderParameter('Authorization')]
-    public function create(SiswaRequest $request,string $jenjang)
+    public function create(SiswaRequest $request, string $jenjang)
     {
         $data = $request->validated();
 
-        $ayahId = null; $ibuId = null; $waliId = null;
+        $ayahId = null;
+        $ibuId = null;
+        $waliId = null;
 
         $exists = Siswa::where('jenjang', strtoupper($jenjang))
             ->where('nis', $data['nis'])
             ->exists();
         if ($exists) {
             throw new HttpResponseException(response([
-                "errors" => ["message" => ["siswa dengan NIS tersebut sudah terdaftar."]]
+                'errors' => ['message' => ['siswa dengan NIS tersebut sudah terdaftar.']],
             ], 400));
         }
 
         // build related models from nested fields
-        if(strtoupper($jenjang)!== 'MI')
-        {
-            if (!empty($data['wali_id'])) {
+        if (strtoupper($jenjang) !== 'MI') {
+            if (! empty($data['wali_id'])) {
                 // Use existing wali record
                 $waliId = $data['wali_id'];
             } else {
@@ -117,7 +117,7 @@ class SiswaController extends Controller
         }
 
         if (strtoupper($jenjang) === 'MI') {
-            if (!empty($data['ayah_id'])) {
+            if (! empty($data['ayah_id'])) {
                 // Use existing ayah record
                 $ayahId = $data['ayah_id'];
             } else {
@@ -131,7 +131,7 @@ class SiswaController extends Controller
                 $ayahId = $ayah->id;
             }
 
-            if (!empty($data['ibu_id'])) {
+            if (! empty($data['ibu_id'])) {
                 // Use existing ibu record
                 $ibuId = $data['ibu_id'];
             } else {
@@ -146,17 +146,22 @@ class SiswaController extends Controller
             }
         }
 
-
         $siswa = new Siswa($data);
         $siswa->jenjang = strtoupper($jenjang);
         $siswa->branch_id = Auth::user()->branch_id;
-        if ($ayahId) { $siswa->ayah_id = $ayahId; }
-        if ($ibuId) { $siswa->ibu_id = $ibuId; }
-        if ($waliId) { $siswa->wali_id = $waliId; }
+        if ($ayahId) {
+            $siswa->ayah_id = $ayahId;
+        }
+        if ($ibuId) {
+            $siswa->ibu_id = $ibuId;
+        }
+        if ($waliId) {
+            $siswa->wali_id = $waliId;
+        }
         $siswa->save();
 
         // Sync SiswaKelas for Periode_Aktif when kelas_id is provided
-        if (!empty($data['kelas_id'])) {
+        if (! empty($data['kelas_id'])) {
             $this->syncSiswaKelas($siswa);
         }
 
@@ -164,11 +169,11 @@ class SiswaController extends Controller
         try {
             $this->akunSiswaService->createAccount($siswa);
         } catch (\Throwable $e) {
-            Log::error('Gagal membuat akun siswa untuk NIS ' . $siswa->nis . ': ' . $e->getMessage());
+            Log::error('Gagal membuat akun siswa untuk NIS '.$siswa->nis.': '.$e->getMessage());
         }
 
         $siswa->refresh();
-        $siswa->load(['ayah','ibu','wali','kelas','kategori']);
+        $siswa->load(['ayah', 'ibu', 'wali', 'kelas', 'kategori']);
 
         return (new SiswaResource($siswa))->response()->setStatusCode(201);
     }
@@ -178,9 +183,9 @@ class SiswaController extends Controller
     {
         $data = $request->validated();
         $siswa = Siswa::where('id', $id)->first();
-        if (!$siswa || strtoupper($siswa->jenjang) !== strtoupper($jenjang)) {
+        if (! $siswa || strtoupper($siswa->jenjang) !== strtoupper($jenjang)) {
             throw new HttpResponseException(response([
-                "errors" => ["message" => ["siswa tidak ditemukan."]]
+                'errors' => ['message' => ['siswa tidak ditemukan.']],
             ], 404));
         }
 
@@ -214,9 +219,9 @@ class SiswaController extends Controller
                 if ($wali) {
                     $wali->update([
                         'nama' => $data['wali_nama'],
-//                        'agama' => $data['wali_agama'],
-//                        'jenis_kelamin' => $data['wali_jenis_kelamin'],
-//                        'pendidikan_terakhir' => strtoupper($data['wali_pendidikan_terakhir']),
+                        //                        'agama' => $data['wali_agama'],
+                        //                        'jenis_kelamin' => $data['wali_jenis_kelamin'],
+                        //                        'pendidikan_terakhir' => strtoupper($data['wali_pendidikan_terakhir']),
                         'pekerjaan' => $data['wali_pekerjaan'] ?? null,
                         'alamat' => $data['wali_alamat'],
                         'no_hp' => $data['wali_no_hp'],
@@ -229,9 +234,9 @@ class SiswaController extends Controller
 
         // update siswa main fields excluding nested inputs
         $updateFields = collect($data)->except([
-            'wali_nama','wali_pekerjaan','wali_alamat','wali_no_hp','wali_keterangan','wali_email',
-            'ayah_nama','ayah_pendidikan','ayah_pekerjaan','ayah_email',
-            'ibu_nama','ibu_pendidikan','ibu_pekerjaan','ibu_email'
+            'wali_nama', 'wali_pekerjaan', 'wali_alamat', 'wali_no_hp', 'wali_keterangan', 'wali_email',
+            'ayah_nama', 'ayah_pendidikan', 'ayah_pekerjaan', 'ayah_email',
+            'ibu_nama', 'ibu_pendidikan', 'ibu_pekerjaan', 'ibu_email',
         ])->toArray();
         $siswa->update($updateFields);
 
@@ -240,28 +245,29 @@ class SiswaController extends Controller
             $this->syncSiswaKelas($siswa);
         }
 
-        return (new SiswaResource($siswa->load(['ayah','ibu','wali','kelas','kategori'])))->response()->setStatusCode(200);
+        return (new SiswaResource($siswa->load(['ayah', 'ibu', 'wali', 'kelas', 'kategori'])))->response()->setStatusCode(200);
     }
 
     #[HeaderParameter('Authorization')]
     public function get(string $jenjang, string $id)
     {
         $siswa = Siswa::where('jenjang', strtoupper($jenjang))->find($id);
-        if (!$siswa) {
+        if (! $siswa) {
             throw new HttpResponseException(response([
-                "errors" => ["message" => ["siswa tidak ditemukan."]]
+                'errors' => ['message' => ['siswa tidak ditemukan.']],
             ], 404));
         }
-        return (new SiswaResource($siswa->load(['ayah','ibu','wali','kelas','kategori'])))->response()->setStatusCode(200);
+
+        return (new SiswaResource($siswa->load(['ayah', 'ibu', 'wali', 'kelas', 'kategori'])))->response()->setStatusCode(200);
     }
 
     #[HeaderParameter('Authorization')]
     public function delete(string $jenjang, string $id)
     {
         $siswa = Siswa::where('id', $id)->where('jenjang', $jenjang)->first();
-        if (!$siswa) {
+        if (! $siswa) {
             throw new HttpResponseException(response([
-                "errors" => ["message" => ["siswa tidak ditemukan."]]
+                'errors' => ['message' => ['siswa tidak ditemukan.']],
             ], 404));
         }
 
@@ -274,17 +280,25 @@ class SiswaController extends Controller
 
         // Delete linked user account if exists
         $user = User::where('username', $nis)->first();
-        if ($user) { $user->delete(); }
+        if ($user) {
+            $user->delete();
+        }
 
         // Delete siswa first to avoid FK constraints
         $siswa->delete();
 
         // Delete related records based on jenjang
         if ($jenjangSiswa === 'MI') {
-            if ($ayahId) { Ayah::where('id', $ayahId)->delete(); }
-            if ($ibuId) { Ibu::where('id', $ibuId)->delete(); }
+            if ($ayahId) {
+                Ayah::where('id', $ayahId)->delete();
+            }
+            if ($ibuId) {
+                Ibu::where('id', $ibuId)->delete();
+            }
         } elseif (in_array($jenjangSiswa, ['TK', 'KB'])) {
-            if ($waliId) { Wali::where('id', $waliId)->delete(); }
+            if ($waliId) {
+                Wali::where('id', $waliId)->delete();
+            }
         }
 
         return response(['data' => true])->setStatusCode(200);
@@ -299,7 +313,7 @@ class SiswaController extends Controller
         $user = Auth::user();
         $periodeAktif = TahunAjaran::getAktif($user->branch_id);
 
-        if (!$periodeAktif) {
+        if (! $periodeAktif) {
             // No active period — skip silently for backward compatibility
             // (kelas_id is already set on siswas table directly)
             return;

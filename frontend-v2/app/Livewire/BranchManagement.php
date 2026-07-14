@@ -2,10 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Helpers\PermissionHelper;
 use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
-use Illuminate\Http\Client\ConnectionException;
-use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -20,19 +19,15 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Livewire\Component;
 
 class BranchManagement extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
     use HandlesApiErrors;
-
-    protected function hasPermission(string $permission): bool
-    {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        return in_array($permission, $permissions);
-    }
+    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     public function table(Table $table): Table
     {
@@ -42,22 +37,23 @@ class BranchManagement extends Component implements HasActions, HasSchemas, HasT
                     try {
                         $response = ApiService::client()->get('/branches');
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             $this->handleApiError($response);
+
                             return [];
                         }
 
                         return $response->collect('data')
                             ->when(
                                 filled($search),
-                                fn(Collection $data): Collection => $data->filter(
-                                    fn(array $record): bool => str_contains(Str::lower($record['location']), Str::lower($search))
+                                fn (Collection $data): Collection => $data->filter(
+                                    fn (array $record): bool => str_contains(Str::lower($record['location']), Str::lower($search))
                                 )
                             )
                             ->when(
                                 filled($sortColumn),
-                                fn(Collection $data): Collection => $data->sortBy(
-                                    fn(array $record) => data_get($record, $sortColumn),
+                                fn (Collection $data): Collection => $data->sortBy(
+                                    fn (array $record) => data_get($record, $sortColumn),
                                     SORT_REGULAR,
                                     ($sortDirection ?? 'asc') === 'desc'
                                 )->values()
@@ -65,9 +61,11 @@ class BranchManagement extends Component implements HasActions, HasSchemas, HasT
                             ->toArray();
                     } catch (ConnectionException $e) {
                         $this->notifyConnectionError();
+
                         return [];
                     } catch (\Throwable $e) {
                         $this->notifyUnexpectedError();
+
                         return [];
                     }
                 }
@@ -90,12 +88,12 @@ class BranchManagement extends Component implements HasActions, HasSchemas, HasT
                     ->icon('heroicon-s-pencil-square')
                     ->iconButton()
                     ->color('warning')
-                    ->visible(fn(): bool => $this->hasPermission('update-branch'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('branch.update'))
                     ->modalHeading('Ubah Cabang')
                     ->modalSubmitActionLabel('Simpan')
                     ->modalCancelActionLabel('Batal')
                     ->modalFooterActionsAlignment(Alignment::End)
-                    ->fillForm(fn(array $record): array => [
+                    ->fillForm(fn (array $record): array => [
                         'id' => $record['id'],
                         'location' => $record['location'],
                     ])
@@ -106,11 +104,11 @@ class BranchManagement extends Component implements HasActions, HasSchemas, HasT
                             ->maxLength(150),
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = ApiService::client()->put('/branches/' . $record['id'], [
+                        $response = ApiService::client()->put('/branches/'.$record['id'], [
                             'location' => $data['location'],
                         ]);
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             Notification::make()
                                 ->title('Cabang Gagal Diubah')
                                 ->danger()
@@ -122,14 +120,14 @@ class BranchManagement extends Component implements HasActions, HasSchemas, HasT
                                 ->send();
                         }
                     })
-                    ->after(fn() => $this->resetTable()),
+                    ->after(fn () => $this->resetTable()),
                 Action::make('delete')
                     ->label('Hapus')
                     ->tooltip('Hapus Cabang')
                     ->icon('heroicon-s-trash')
                     ->iconButton()
                     ->color('danger')
-                    ->visible(fn(): bool => $this->hasPermission('delete-branch'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('branch.delete'))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Cabang')
                     ->modalDescription('Apakah kamu yakin untuk menghapus cabang ini?')
@@ -137,9 +135,9 @@ class BranchManagement extends Component implements HasActions, HasSchemas, HasT
                     ->modalCancelActionLabel('Batal')
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->action(function (array $data, $record): void {
-                        $response = ApiService::client()->delete('/branches/' . $record['id']);
+                        $response = ApiService::client()->delete('/branches/'.$record['id']);
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             Notification::make()
                                 ->title('Cabang Gagal Dihapus')
                                 ->danger()
@@ -151,14 +149,14 @@ class BranchManagement extends Component implements HasActions, HasSchemas, HasT
                                 ->send();
                         }
                     })
-                    ->after(fn() => $this->resetTable()),
+                    ->after(fn () => $this->resetTable()),
             ])
             ->headerActions([
                 Action::make('add')
                     ->label('Tambah')
                     ->color('primary')
                     ->button()
-                    ->visible(fn(): bool => $this->hasPermission('create-branch'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('branch.create'))
                     ->modalHeading('Tambah Cabang')
                     ->modalSubmitActionLabel('Simpan')
                     ->modalCancelActionLabel('Batal')
@@ -186,7 +184,7 @@ class BranchManagement extends Component implements HasActions, HasSchemas, HasT
                                 ->send();
                         }
                     })
-                    ->after(fn() => $this->resetTable())
+                    ->after(fn () => $this->resetTable())
                     ->extraAttributes([
                         'class' => 'text-white font-semibold',
                         'id' => 'add-branch',
@@ -197,7 +195,7 @@ class BranchManagement extends Component implements HasActions, HasSchemas, HasT
                     ->label('Hapus Terpilih')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
-                    ->visible(fn(): bool => $this->hasPermission('delete-branch'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('branch.delete'))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Cabang Terpilih')
                     ->modalDescription('Apakah kamu yakin ingin menghapus semua cabang yang dipilih?')
@@ -206,7 +204,7 @@ class BranchManagement extends Component implements HasActions, HasSchemas, HasT
                         $success = 0;
                         $failed = 0;
                         foreach ($records as $record) {
-                            $response = ApiService::client()->delete('/branches/' . $record['id']);
+                            $response = ApiService::client()->delete('/branches/'.$record['id']);
                             $response->ok() ? $success++ : $failed++;
                         }
                         if ($failed > 0) {

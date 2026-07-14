@@ -10,7 +10,7 @@ class NotificationLogPage extends Page
 {
     protected string $view = 'filament.pages.notification-log';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Pengaturan';
+    protected static string|UnitEnum|null $navigationGroup = 'Pengaturan';
 
     protected static ?string $navigationLabel = 'Log Notifikasi';
 
@@ -27,6 +27,6 @@ class NotificationLogPage extends Page
 
     public function mount(): void
     {
-        abort_if(!PermissionHelper::hasResource('notification-logs'), 403);
+        abort_if(! PermissionHelper::hasResource('notification-logs'), 403);
     }
 }

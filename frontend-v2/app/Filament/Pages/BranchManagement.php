@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Helpers\PermissionHelper;
 use Filament\Pages\Page;
 use UnitEnum;
 
@@ -9,7 +10,7 @@ class BranchManagement extends Page
 {
     protected string $view = 'filament.pages.branch-management';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Pengaturan';
+    protected static string|UnitEnum|null $navigationGroup = 'Pengaturan';
 
     protected static ?string $navigationLabel = 'Manajemen Cabang';
 
@@ -19,15 +20,11 @@ class BranchManagement extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        return in_array('view-branch', $permissions);
+        return PermissionHelper::hasResource('branch');
     }
 
     public function mount(): void
     {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        if (!in_array('view-branch', $permissions)) {
-            abort(403);
-        }
+        abort_if(! PermissionHelper::hasResource('branch'), 403);
     }
 }

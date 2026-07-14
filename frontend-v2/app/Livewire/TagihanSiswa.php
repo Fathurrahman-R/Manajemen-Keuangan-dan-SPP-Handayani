@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Helpers\PermissionHelper;
 use App\Services\ApiService;
 use App\Services\MidtransApi;
 use App\Services\MidtransApiException;
@@ -24,10 +25,15 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
     use InteractsWithSchemas;
 
     public array $tagihanData = [];
+
     public array $siblings = [];
+
     public ?int $selectedSiswaId = null;
+
     public ?string $selectedSiswaName = null;
+
     public ?int $ownerSiswaId = null;
+
     public ?string $ownerSiswaName = null;
 
     /** Kode tagihan yang dipilih siswa untuk bayar batch online. */
@@ -91,10 +97,12 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
     public function getBatchEligibleProperty(): array
     {
         $midtransOn = $this->isMidtransEnabled();
+
         return collect($this->tagihanData)
             ->filter(function (array $t) use ($midtransOn): bool {
                 $sisa = (int) (($t['jenis_tagihan']['jumlah'] ?? 0) - ($t['tmp'] ?? 0));
                 $pending = (bool) ($t['midtrans_pending'] ?? false);
+
                 return $midtransOn && $sisa > 0 && ! $pending && ($t['status'] ?? null) !== 'Lunas';
             })
             ->values()
@@ -111,6 +119,7 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
                 $sum += (int) (($row['jenis_tagihan']['jumlah'] ?? 0) - ($row['tmp'] ?? 0));
             }
         }
+
         return $sum;
     }
 
@@ -152,7 +161,7 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
 
         $channelOptions = collect($channels)
             ->mapWithKeys(fn (array $c): array => [
-                $c['key'] => $c['label'] . ' — ' . ($c['description'] ?? ''),
+                $c['key'] => $c['label'].' — '.($c['description'] ?? ''),
             ])
             ->all();
 
@@ -160,6 +169,7 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
             ->label(__('midtrans.pay_online', [], 'id'))
             ->color('primary')
             ->size('xs')
+            ->visible(fn () => PermissionHelper::hasResource('midtrans.pay'))
             ->modalHeading(__('midtrans.pay_online', [], 'id'))
             ->modalDescription(fn (array $arguments): string => $arguments['tagihan_name'] ?? '-')
             ->modalSubmitActionLabel(__('midtrans.confirm_payment', [], 'id'))
@@ -197,8 +207,8 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
                         $totalLabel = __('midtrans.total_payment', [], 'id');
 
                         return new HtmlString(
-                            '<span class="block">' . e($feeLabel) . ': Rp ' . number_format($fee, 0, ',', '.') . '</span>' .
-                            '<span class="block font-semibold text-primary-600 dark:text-primary-400">' . e($totalLabel) . ': Rp ' . number_format($total, 0, ',', '.') . '</span>'
+                            '<span class="block">'.e($feeLabel).': Rp '.number_format($fee, 0, ',', '.').'</span>'.
+                            '<span class="block font-semibold text-primary-600 dark:text-primary-400">'.e($totalLabel).': Rp '.number_format($total, 0, ',', '.').'</span>'
                         );
                     }),
             ])
@@ -212,6 +222,7 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
                         ->title(__('midtrans.TAGIHAN_NOT_FOUND', [], 'id'))
                         ->danger()
                         ->send();
+
                     return;
                 }
 
@@ -223,6 +234,7 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
 
                     if (! $orderId) {
                         $this->notifyUnexpectedError();
+
                         return;
                     }
 
@@ -231,11 +243,12 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
                     // can poll for the resolved transaction state.
                     if ($redirectUrl) {
                         $this->redirect($redirectUrl);
+
                         return;
                     }
 
                     $portalPath = config('handayani.portal.path', 'portal');
-                    $this->redirect('/' . $portalPath . '/status-pembayaran?order_id=' . urlencode($orderId));
+                    $this->redirect('/'.$portalPath.'/status-pembayaran?order_id='.urlencode($orderId));
                 } catch (MidtransApiException $e) {
                     if ($e->errorCode === 'TAGIHAN_HAS_PENDING_TRANSACTION') {
                         // Chain into the continue confirmation modal, passing the
@@ -245,6 +258,7 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
                             'snap_token' => $e->data['snap_token'] ?? null,
                             'redirect_url' => $e->data['redirect_url'] ?? null,
                         ]);
+
                         return;
                     }
 
@@ -297,7 +311,7 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
      * Mendukung dua tipe fee dari backend: flat (`amount`) dan percent
      * (`percent` + optional `flat`).
      *
-     * @param array<string, mixed>|null $channelData hasil dari /midtrans/fee-channels
+     * @param  array<string, mixed>|null  $channelData  hasil dari /midtrans/fee-channels
      */
     private function computeFeeFromChannel(?array $channelData, int $amountPaid): int
     {
@@ -310,6 +324,7 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
         if ($type === 'percent') {
             $percent = (float) ($channelData['percent'] ?? 0);
             $flat = (int) ($channelData['flat'] ?? 0);
+
             return (int) round(($amountPaid * $percent / 100) + $flat);
         }
 
@@ -329,6 +344,7 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
         return Action::make('continue')
             ->label(__('midtrans.continue_payment', [], 'id'))
             ->color('warning')
+            ->visible(fn () => PermissionHelper::hasResource('midtrans.pay'))
             ->modalIcon('heroicon-o-exclamation-triangle')
             ->modalIconColor('warning')
             ->modalHeading(__('midtrans.TAGIHAN_HAS_PENDING_TRANSACTION', [], 'id'))
@@ -341,16 +357,18 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
 
                 if ($redirectUrl) {
                     $this->redirect($redirectUrl);
+
                     return;
                 }
 
                 if (! $orderId) {
                     $this->notifyUnexpectedError();
+
                     return;
                 }
 
                 $portalPath = config('handayani.portal.path', 'portal');
-                $this->redirect('/' . $portalPath . '/status-pembayaran?order_id=' . urlencode($orderId));
+                $this->redirect('/'.$portalPath.'/status-pembayaran?order_id='.urlencode($orderId));
             });
     }
 
@@ -366,6 +384,7 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
             ->label(__('midtrans.continue_payment', [], 'id'))
             ->color('warning')
             ->size('xs')
+            ->visible(fn () => PermissionHelper::hasResource('midtrans.pay'))
             ->icon('heroicon-o-arrow-top-right-on-square')
             ->action(function (array $arguments): void {
                 $kodeTagihan = $arguments['kode_tagihan'] ?? null;
@@ -373,6 +392,7 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
 
                 if (! $kodeTagihan || $sisa <= 0) {
                     $this->notifyUnexpectedError();
+
                     return;
                 }
 
@@ -394,12 +414,14 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
 
                         if ($redirectUrl) {
                             $this->redirect($redirectUrl);
+
                             return;
                         }
 
                         if ($orderId) {
                             $portalPath = config('handayani.portal.path', 'portal');
-                            $this->redirect('/' . $portalPath . '/status-pembayaran?order_id=' . urlencode($orderId));
+                            $this->redirect('/'.$portalPath.'/status-pembayaran?order_id='.urlencode($orderId));
+
                             return;
                         }
                     }
@@ -433,15 +455,16 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
 
         $channelOptions = collect($channels)
             ->mapWithKeys(fn (array $c): array => [
-                $c['key'] => $c['label'] . ' — ' . ($c['description'] ?? ''),
+                $c['key'] => $c['label'].' — '.($c['description'] ?? ''),
             ])
             ->all();
 
         return Action::make('payBatch')
             ->label(__('midtrans.pay_online', [], 'id'))
             ->color('primary')
+            ->visible(fn () => PermissionHelper::hasResource('midtrans.pay'))
             ->modalHeading(__('midtrans.pay_online', [], 'id'))
-            ->modalDescription(fn (): string => count($this->selectedKodeTagihan) . ' tagihan akan dibayar lunas.')
+            ->modalDescription(fn (): string => count($this->selectedKodeTagihan).' tagihan akan dibayar lunas.')
             ->modalSubmitActionLabel(__('midtrans.confirm_payment', [], 'id'))
             ->modalCancelActionLabel(__('midtrans.cancel', [], 'id'))
             ->fillForm(fn (): array => ['payment_channel' => $defaultChannel])
@@ -464,9 +487,9 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
                         $totalLabel = __('midtrans.total_payment', [], 'id');
 
                         return new HtmlString(
-                            '<span class="block">' . e($sub) . ': Rp ' . number_format($this->selectedTotal, 0, ',', '.') . '</span>' .
-                            '<span class="block">' . e($feeLabel) . ': Rp ' . number_format($fee, 0, ',', '.') . '</span>' .
-                            '<span class="block font-semibold text-primary-600 dark:text-primary-400">' . e($totalLabel) . ': Rp ' . number_format($total, 0, ',', '.') . '</span>'
+                            '<span class="block">'.e($sub).': Rp '.number_format($this->selectedTotal, 0, ',', '.').'</span>'.
+                            '<span class="block">'.e($feeLabel).': Rp '.number_format($fee, 0, ',', '.').'</span>'.
+                            '<span class="block font-semibold text-primary-600 dark:text-primary-400">'.e($totalLabel).': Rp '.number_format($total, 0, ',', '.').'</span>'
                         );
                     }),
             ])
@@ -481,6 +504,7 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
                         ->title('Tidak ada tagihan yang dipilih.')
                         ->danger()
                         ->send();
+
                     return;
                 }
 
@@ -494,16 +518,18 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
 
                     if (! $orderId) {
                         $this->notifyUnexpectedError();
+
                         return;
                     }
 
                     if ($redirectUrl) {
                         $this->redirect($redirectUrl);
+
                         return;
                     }
 
                     $portalPath = config('handayani.portal.path', 'portal');
-                    $this->redirect('/' . $portalPath . '/status-pembayaran?order_id=' . urlencode($orderId));
+                    $this->redirect('/'.$portalPath.'/status-pembayaran?order_id='.urlencode($orderId));
                 } catch (MidtransApiException $e) {
                     if ($e->errorCode === 'TAGIHAN_HAS_PENDING_TRANSACTION') {
                         $this->replaceMountedAction('continue', [
@@ -511,6 +537,7 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
                             'snap_token' => $e->data['snap_token'] ?? null,
                             'redirect_url' => $e->data['redirect_url'] ?? null,
                         ]);
+
                         return;
                     }
 

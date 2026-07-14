@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Helpers\PermissionHelper;
 use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
 use Filament\Actions\Action;
@@ -24,8 +25,8 @@ use Livewire\Component;
 
 class PengeluaranRequest extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable, HandlesApiErrors;
     use \App\Livewire\Concerns\HasPeriodFilter;
+    use HandlesApiErrors, InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     public function mount(): void
     {
@@ -38,7 +39,7 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
             ->records(function (int $page, int $recordsPerPage, array $filters, ?string $sortColumn = null, ?string $sortDirection = null): LengthAwarePaginator {
                 $params = ['per_page' => $recordsPerPage, 'page' => $page];
 
-                if (!empty($filters['status']['value'] ?? null)) {
+                if (! empty($filters['status']['value'] ?? null)) {
                     $params['status'] = $filters['status']['value'];
                 }
 
@@ -56,8 +57,9 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                 try {
                     $response = ApiService::client()->get('/pengeluaran-request', $params);
 
-                    if (!$response->ok()) {
+                    if (! $response->ok()) {
                         $this->handleApiError($response);
+
                         return new LengthAwarePaginator(items: [], total: 0, perPage: $recordsPerPage, currentPage: $page);
                     }
 
@@ -71,9 +73,11 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                     );
                 } catch (ConnectionException $e) {
                     $this->notifyConnectionError();
+
                     return new LengthAwarePaginator(items: [], total: 0, perPage: $recordsPerPage, currentPage: $page);
                 } catch (\Throwable $e) {
                     $this->notifyUnexpectedError();
+
                     return new LengthAwarePaginator(items: [], total: 0, perPage: $recordsPerPage, currentPage: $page);
                 }
             })
@@ -85,7 +89,7 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                 TextColumn::make('status')->label('Status')
                     ->sortable()
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'draft' => 'gray',
                         'submitted' => 'info',
                         'approved' => 'success',
@@ -110,9 +114,9 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                     ->label('Submit')
                     ->icon('heroicon-o-paper-airplane')
                     ->color('info')
-                    ->visible(fn($record) => in_array($record['status'], ['draft', 'rejected'])
+                    ->visible(fn ($record) => in_array($record['status'], ['draft', 'rejected'])
                         && ($record['requester_id'] ?? null) == session()->get('data.id')
-                        && in_array('create-pengeluaran-request', session()->get('data.permissions', [])))
+                        && PermissionHelper::hasResource('pengeluaran.request'))
                     ->requiresConfirmation()
                     ->action(function ($record) {
                         $response = ApiService::client()->post("/pengeluaran-request/{$record['id']}/submit");
@@ -127,8 +131,8 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                     ->label('Approve')
                     ->icon('heroicon-o-check')
                     ->color('success')
-                    ->visible(fn($record) => $record['status'] === 'submitted'
-                        && in_array('approve-pengeluaran', session()->get('data.permissions', [])))
+                    ->visible(fn ($record) => $record['status'] === 'submitted'
+                        && PermissionHelper::hasResource('pengeluaran.approve'))
                     ->schema([
                         Textarea::make('note')->label('Catatan (opsional)'),
                     ])
@@ -143,8 +147,8 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                     ->label('Reject')
                     ->icon('heroicon-o-x-mark')
                     ->color('danger')
-                    ->visible(fn($record) => $record['status'] === 'submitted'
-                        && in_array('approve-pengeluaran', session()->get('data.permissions', [])))
+                    ->visible(fn ($record) => $record['status'] === 'submitted'
+                        && PermissionHelper::hasResource('pengeluaran.approve'))
                     ->schema([
                         Textarea::make('reason')->label('Alasan Penolakan')->required(),
                     ])
@@ -159,7 +163,7 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                     ->label('Alasan Ditolak')
                     ->icon('heroicon-o-information-circle')
                     ->color('danger')
-                    ->visible(fn($record) => $record['status'] === 'rejected')
+                    ->visible(fn ($record) => $record['status'] === 'rejected')
                     ->modalHeading('Alasan Penolakan')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Tutup')
@@ -169,6 +173,7 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                         $reason = $rejectionLog['note'] ?? 'Alasan tidak tersedia.';
                         $rejectedBy = $rejectionLog['user']['name'] ?? null;
                         $rejectedAt = isset($rejectionLog['created_at']) ? \Carbon\Carbon::parse($rejectionLog['created_at'])->format('d M Y, H:i') : null;
+
                         return view('livewire.partials.rejection-reason', compact('reason', 'rejectedBy', 'rejectedAt'));
                     }),
                 \Filament\Actions\Action::make('viewNote')
@@ -176,10 +181,13 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                     ->icon('heroicon-o-chat-bubble-left-ellipsis')
                     ->color('info')
                     ->visible(function ($record) {
-                        if (!in_array($record['status'], ['approved', 'disbursed'])) return false;
+                        if (! in_array($record['status'], ['approved', 'disbursed'])) {
+                            return false;
+                        }
                         $logs = $record['approval_logs'] ?? [];
                         $approveLog = collect($logs)->firstWhere('new_status', 'approved');
-                        return $approveLog && !empty($approveLog['note']);
+
+                        return $approveLog && ! empty($approveLog['note']);
                     })
                     ->modalHeading('Catatan Approval')
                     ->modalSubmitAction(false)
@@ -190,14 +198,15 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                         $note = $approveLog['note'] ?? '';
                         $approvedBy = $approveLog['user']['name'] ?? null;
                         $approvedAt = isset($approveLog['created_at']) ? \Carbon\Carbon::parse($approveLog['created_at'])->format('d M Y, H:i') : null;
+
                         return view('livewire.partials.approval-note', compact('note', 'approvedBy', 'approvedAt'));
                     }),
                 \Filament\Actions\Action::make('disburse')
                     ->label('Cairkan')
                     ->icon('heroicon-o-banknotes')
                     ->color('success')
-                    ->visible(fn($record) => $record['status'] === 'approved'
-                        && in_array('disburse-pengeluaran', session()->get('data.permissions', [])))
+                    ->visible(fn ($record) => $record['status'] === 'approved'
+                        && PermissionHelper::hasResource('pengeluaran.disburse'))
                     ->requiresConfirmation()
                     ->modalHeading('Cairkan Dana')
                     ->modalDescription('Yakin ingin mencairkan pengeluaran ini? Pengeluaran akan dicatat di kas.')
@@ -212,7 +221,7 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                     ->label('Info Pencairan')
                     ->icon('heroicon-o-banknotes')
                     ->color('gray')
-                    ->visible(fn($record) => $record['status'] === 'disbursed')
+                    ->visible(fn ($record) => $record['status'] === 'disbursed')
                     ->modalHeading('Informasi Pencairan')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Tutup')
@@ -221,6 +230,7 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                         $disburseLog = collect($logs)->firstWhere('new_status', 'disbursed');
                         $disbursedBy = $disburseLog['user']['name'] ?? 'Tidak diketahui';
                         $disbursedAt = isset($disburseLog['created_at']) ? \Carbon\Carbon::parse($disburseLog['created_at'])->format('d M Y, H:i') : '-';
+
                         return view('livewire.partials.disburse-info', compact('disbursedBy', 'disbursedAt'));
                     }),
             ])
@@ -229,7 +239,7 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                     ->label('Buat Request')
                     ->icon('heroicon-o-plus')
                     ->color('primary')
-                    ->visible(fn() => in_array('create-pengeluaran-request', session()->get('data.permissions', [])))
+                    ->visible(fn () => PermissionHelper::hasResource('pengeluaran.request'))
                     ->schema([
                         TextInput::make('uraian')->label('Uraian')->required()->maxLength(255),
                         TextInput::make('jumlah')->label('Jumlah (Rp)')->numeric()->required()->minValue(1),

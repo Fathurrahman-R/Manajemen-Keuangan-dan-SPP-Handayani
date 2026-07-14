@@ -24,6 +24,7 @@ class BrandingService
         if (is_array($cached)) {
             $config = BrandingConfig::fromApiResponse($cached);
             session()->put(self::SESSION_KEY, $config);
+
             return $config;
         }
 
@@ -75,6 +76,7 @@ class BrandingService
                 $data = $response->json('data', $response->json());
                 $config = BrandingConfig::fromApiResponse(is_array($data) ? $data : []);
                 session()->put(self::SESSION_KEY, $config);
+
                 return $config;
             }
         } catch (\Throwable $e) {
@@ -86,6 +88,7 @@ class BrandingService
         // Fallback to default branding
         $config = BrandingConfig::default();
         session()->put(self::SESSION_KEY, $config);
+
         return $config;
     }
 }

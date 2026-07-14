@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Helpers\PermissionHelper;
 use Filament\Pages\Page;
 use UnitEnum;
 
@@ -9,7 +10,7 @@ class TransaksiPembayaran extends Page
 {
     protected string $view = 'filament.pages.transaksi-pembayaran';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Transaksi';
+    protected static string|UnitEnum|null $navigationGroup = 'Transaksi';
 
     protected static ?string $navigationLabel = 'Pembayaran';
 
@@ -24,10 +25,6 @@ class TransaksiPembayaran extends Page
 
     public function mount(): void
     {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        if (!in_array('view-pembayaran', $permissions)) {
-            abort(403);
-        }
+        abort_if(! PermissionHelper::hasResource('pembayaran'), 403);
     }
 }
-

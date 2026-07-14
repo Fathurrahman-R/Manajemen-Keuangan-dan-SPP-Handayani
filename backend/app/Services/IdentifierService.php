@@ -34,12 +34,12 @@ class IdentifierService
             ->where('is_active', true)
             ->first();
 
-        if (!$user) {
+        if (! $user) {
             return null;
         }
 
         // If admin/operator already has email, username login is disabled for them
-        if ($user->email !== null && !$user->hasRole('siswa')) {
+        if ($user->email !== null && ! $user->hasRole('siswa')) {
             return null;
         }
 

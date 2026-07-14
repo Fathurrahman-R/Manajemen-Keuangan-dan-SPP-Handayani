@@ -4,17 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\WaliRequest;
 use App\Http\Resources\WaliResource;
-use App\Models\Siswa;
 use App\Models\Wali;
-use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Dedoc\Scramble\Attributes\QueryParameter;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Facades\Auth;
 
 class WaliController extends Controller
 {
     use Traits\Sortable;
+
     #[HeaderParameter('Authorization')]
     #[QueryParameter('search', description: 'Cari wali berdasarkan nama', required: false, example: 'Budi')]
     #[QueryParameter('per_page', description: 'Jumlah data per halaman', required: false, example: 30)]
@@ -45,6 +44,7 @@ class WaliController extends Controller
 
         $wali = new Wali($data);
         $wali->save();
+
         return (new WaliResource($wali))->response()->setStatusCode(201);
     }
 
@@ -53,15 +53,16 @@ class WaliController extends Controller
     {
         $wali = Wali::query()->find($id);
 
-        if (!$wali) {
+        if (! $wali) {
             throw new HttpResponseException(response([
-                "errors" => [
-                    "message" => [
-                        "wali tidak ditemukan."
-                    ]
-                ]
+                'errors' => [
+                    'message' => [
+                        'wali tidak ditemukan.',
+                    ],
+                ],
             ], 404));
         }
+
         return (new WaliResource($wali))->response()->setStatusCode(200);
     }
 
@@ -71,17 +72,18 @@ class WaliController extends Controller
         $auth = Auth::user();
         $data = $request->validated();
         $wali = Wali::query()->find($id);
-        if (!$wali) {
+        if (! $wali) {
             throw new HttpResponseException(response([
-                "errors" => [
-                    "message" => [
-                        "wali tidak ditemukan."
-                    ]
-                ]
+                'errors' => [
+                    'message' => [
+                        'wali tidak ditemukan.',
+                    ],
+                ],
             ], 404));
         }
 
         $wali->update($data);
+
         return (new WaliResource($wali))->response()->setStatusCode(200);
     }
 
@@ -89,27 +91,28 @@ class WaliController extends Controller
     public function delete(string $id)
     {
         $wali = Wali::find($id);
-        if (!$wali) {
+        if (! $wali) {
             throw new HttpResponseException(response([
-                "errors" => [
-                    "message" => [
-                        "wali tidak ditemukan."
-                    ]
-                ]
+                'errors' => [
+                    'message' => [
+                        'wali tidak ditemukan.',
+                    ],
+                ],
             ], 404));
         }
         if ($wali->siswa()->exists()) {
             throw new HttpResponseException(response([
-                "errors" => [
-                    "message" => [
-                        "wali digunakan pada data siswa."
-                    ]
-                ]
+                'errors' => [
+                    'message' => [
+                        'wali digunakan pada data siswa.',
+                    ],
+                ],
             ], 400));
         }
         $wali->delete();
+
         return response([
-            "data" => true
+            'data' => true,
         ])->setStatusCode(200);
     }
 }

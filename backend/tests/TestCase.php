@@ -15,7 +15,6 @@ use App\Models\Wali;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\DB;
 
-
 abstract class TestCase extends BaseTestCase
 {
     protected function setUp(): void
@@ -112,7 +111,7 @@ abstract class TestCase extends BaseTestCase
         $kategori = Kategori::factory()->create();
         $jt = JenisTagihan::factory()->create([
             'nama' => 'SPP',
-            'jumlah' => 100000
+            'jumlah' => 100000,
         ]);
         $siswa = Siswa::factory()
             ->for($wali, 'ayah')
@@ -121,25 +120,27 @@ abstract class TestCase extends BaseTestCase
             ->for($kelas, 'kelas')
             ->for($kategori, 'kategori')
             ->create([
-                'jenjang' => 'MI'
+                'jenjang' => 'MI',
             ]);
         $tagihan = Tagihan::factory()
             ->for($siswa, 'siswa')
             ->for($jt, 'jenis_tagihan')
             ->create([
                 'tmp' => 100000,
-                'status' => 'Lunas'
+                'status' => 'Lunas',
             ]);
         $pembayaran = Pembayaran::factory()
             ->for($tagihan, 'tagihan')
             ->create([
                 'jumlah' => 50000,
                 'metode' => 'offline',
-                'pembayar' => $wali->nama
+                'pembayar' => $wali->nama,
             ]);
         $setting = AppSetting::factory()->create();
+
         return compact('user', 'pembayaran');
     }
+
     protected function createPembayaranLunas()
     {
         $user = User::factory()->admin()->create();
@@ -148,7 +149,7 @@ abstract class TestCase extends BaseTestCase
         $kategori = Kategori::factory()->create();
         $jt = JenisTagihan::factory()->create([
             'nama' => 'SPP',
-            'jumlah' => 100000
+            'jumlah' => 100000,
         ]);
         $siswa = Siswa::factory()
             ->for($wali, 'ayah')
@@ -157,7 +158,7 @@ abstract class TestCase extends BaseTestCase
             ->for($kelas, 'kelas')
             ->for($kategori, 'kategori')
             ->create([
-                'jenjang' => 'MI'
+                'jenjang' => 'MI',
             ]);
         $tagihan = Tagihan::factory()
             ->for($siswa, 'siswa')
@@ -168,17 +169,19 @@ abstract class TestCase extends BaseTestCase
             ->create([
                 'jumlah' => $jt->jumlah,
                 'metode' => 'offline',
-                'pembayar' => $wali->nama
+                'pembayar' => $wali->nama,
             ]);
         $setting = AppSetting::factory()->create();
+
         return compact('user', 'pembayaran');
     }
+
     protected function createTagihan()
     {
         $user = User::factory()->admin()->create();
         $jt = JenisTagihan::factory()->create([
             'nama' => 'Pendaftaran',
-            'jumlah' => 50000
+            'jumlah' => 50000,
         ]);
         $kelas = Kelas::factory()->create();
         $kategori = Kategori::factory()->create();
@@ -192,8 +195,10 @@ abstract class TestCase extends BaseTestCase
             ->for($siswa, 'siswa')
             ->for($jt, 'jenis_tagihan')
             ->create();
+
         return compact('user', 'tagihan');
     }
+
     protected function createKasHarian()
     {
         $user = User::factory()->admin()->create();
@@ -202,7 +207,7 @@ abstract class TestCase extends BaseTestCase
         $kategori = Kategori::factory()->create();
         $jt = JenisTagihan::factory()->create([
             'nama' => 'SPP',
-            'jumlah' => 100000
+            'jumlah' => 100000,
         ]);
         $siswa = Siswa::factory()
             ->for($wali, 'ayah')
@@ -211,7 +216,7 @@ abstract class TestCase extends BaseTestCase
             ->for($kelas, 'kelas')
             ->for($kategori, 'kategori')
             ->create([
-                'jenjang' => 'MI'
+                'jenjang' => 'MI',
             ]);
         $tagihan = Tagihan::factory()
             ->for($siswa, 'siswa')
@@ -224,7 +229,7 @@ abstract class TestCase extends BaseTestCase
                 'tanggal' => '2025-01-01',
                 'jumlah' => $jt->jumlah,
                 'metode' => 'offline',
-                'pembayar' => $wali->nama
+                'pembayar' => $wali->nama,
             ]);
         // Tambahan pemasukan di Januari
         Pembayaran::factory()
@@ -233,7 +238,7 @@ abstract class TestCase extends BaseTestCase
                 'tanggal' => '2025-01-10',
                 'jumlah' => 50000,
                 'metode' => 'offline',
-                'pembayar' => $wali->nama
+                'pembayar' => $wali->nama,
             ]);
         // Pemasukan di bulan lain (Februari) — memastikan tidak mempengaruhi saldo Januari
         Pembayaran::factory()
@@ -242,7 +247,7 @@ abstract class TestCase extends BaseTestCase
                 'tanggal' => '2025-02-01',
                 'jumlah' => $jt->jumlah,
                 'metode' => 'offline',
-                'pembayar' => $wali->nama
+                'pembayar' => $wali->nama,
             ]);
         Pengeluaran::factory()->create([
             'tanggal' => '2025-01-01',
@@ -253,6 +258,7 @@ abstract class TestCase extends BaseTestCase
             'tanggal' => '2025-01-05',
             'jumlah' => 25000,
         ]);
+
         return compact('user');
     }
 
@@ -263,33 +269,34 @@ abstract class TestCase extends BaseTestCase
         $wali = \App\Models\Wali::factory()->create();
         $kelas = \App\Models\Kelas::factory()->create();
         $kategori = \App\Models\Kategori::factory()->create();
-        $jt = \App\Models\JenisTagihan::factory()->create(['nama'=>'SPP','jumlah'=>100000]);
+        $jt = \App\Models\JenisTagihan::factory()->create(['nama' => 'SPP', 'jumlah' => 100000]);
         $siswa = \App\Models\Siswa::factory()
-            ->for($wali,'wali')
-            ->for($kelas,'kelas')
-            ->for($kategori,'kategori')
-            ->create(['jenjang'=>'MI']);
-        $tagihan = \App\Models\Tagihan::factory()->for($siswa,'siswa')->for($jt,'jenis_tagihan')->create();
+            ->for($wali, 'wali')
+            ->for($kelas, 'kelas')
+            ->for($kategori, 'kategori')
+            ->create(['jenjang' => 'MI']);
+        $tagihan = \App\Models\Tagihan::factory()->for($siswa, 'siswa')->for($jt, 'jenis_tagihan')->create();
         // Transaksi bulan sebelumnya
-        \App\Models\Pembayaran::factory()->for($tagihan,'tagihan')->create([
+        \App\Models\Pembayaran::factory()->for($tagihan, 'tagihan')->create([
             'tanggal' => '2024-12-15',
             'jumlah' => 75000,
-            'metode' => 'offline'
+            'metode' => 'offline',
         ]);
         \App\Models\Pengeluaran::factory()->create([
             'tanggal' => '2024-12-20',
-            'jumlah' => 25000
+            'jumlah' => 25000,
         ]);
         // Transaksi bulan target (Januari 2025)
-        \App\Models\Pembayaran::factory()->for($tagihan,'tagihan')->create([
+        \App\Models\Pembayaran::factory()->for($tagihan, 'tagihan')->create([
             'tanggal' => '2025-01-05',
             'jumlah' => 50000,
-            'metode' => 'offline'
+            'metode' => 'offline',
         ]);
         \App\Models\Pengeluaran::factory()->create([
             'tanggal' => '2025-01-10',
-            'jumlah' => 10000
+            'jumlah' => 10000,
         ]);
+
         return compact('user');
     }
 
@@ -301,14 +308,14 @@ abstract class TestCase extends BaseTestCase
         $kategori = Kategori::factory()->create();
         $jt = JenisTagihan::factory()->create([
             'nama' => 'SPP',
-            'jumlah' => 100000
+            'jumlah' => 100000,
         ]);
         $siswa = Siswa::factory()
             ->for($wali, 'wali')
             ->for($kelas, 'kelas')
             ->for($kategori, 'kategori')
             ->create([
-                'jenjang' => 'MI'
+                'jenjang' => 'MI',
             ]);
         $tagihan = Tagihan::factory()
             ->for($siswa, 'siswa')
@@ -319,12 +326,12 @@ abstract class TestCase extends BaseTestCase
         Pembayaran::factory()->for($tagihan, 'tagihan')->create([
             'tanggal' => '2025-01-01',
             'jumlah' => 100000,
-            'metode' => 'offline'
+            'metode' => 'offline',
         ]);
         Pembayaran::factory()->for($tagihan, 'tagihan')->create([
             'tanggal' => '2025-02-01',
             'jumlah' => 150000,
-            'metode' => 'offline'
+            'metode' => 'offline',
         ]);
 
         // Pengeluaran Jan & Feb
@@ -350,34 +357,35 @@ abstract class TestCase extends BaseTestCase
         $wali = \App\Models\Wali::factory()->create();
         $kelas = \App\Models\Kelas::factory()->create();
         $kategori = \App\Models\Kategori::factory()->create();
-        $jt = \App\Models\JenisTagihan::factory()->create(['nama'=>'SPP','jumlah'=>100000]);
-        $siswa = \App\Models\Siswa::factory()->for($wali,'wali')->for($kelas,'kelas')->for($kategori,'kategori')->create(['jenjang'=>'MI']);
-        $tagihan = \App\Models\Tagihan::factory()->for($siswa,'siswa')->for($jt,'jenis_tagihan')->create();
+        $jt = \App\Models\JenisTagihan::factory()->create(['nama' => 'SPP', 'jumlah' => 100000]);
+        $siswa = \App\Models\Siswa::factory()->for($wali, 'wali')->for($kelas, 'kelas')->for($kategori, 'kategori')->create(['jenjang' => 'MI']);
+        $tagihan = \App\Models\Tagihan::factory()->for($siswa, 'siswa')->for($jt, 'jenis_tagihan')->create();
         // Tahun sebelumnya (2024)
-        \App\Models\Pembayaran::factory()->for($tagihan,'tagihan')->create([
-            'tanggal'=>'2024-11-01',
-            'jumlah'=>60000,
-            'metode'=>'offline'
+        \App\Models\Pembayaran::factory()->for($tagihan, 'tagihan')->create([
+            'tanggal' => '2024-11-01',
+            'jumlah' => 60000,
+            'metode' => 'offline',
         ]);
         \App\Models\Pengeluaran::factory()->create([
-            'tanggal'=>'2024-12-01',
-            'jumlah'=>15000
+            'tanggal' => '2024-12-01',
+            'jumlah' => 15000,
         ]);
         // Tahun target (2025) beberapa bulan
-        \App\Models\Pembayaran::factory()->for($tagihan,'tagihan')->create([
-            'tanggal'=>'2025-01-10',
-            'jumlah'=>50000,
-            'metode'=>'offline'
+        \App\Models\Pembayaran::factory()->for($tagihan, 'tagihan')->create([
+            'tanggal' => '2025-01-10',
+            'jumlah' => 50000,
+            'metode' => 'offline',
         ]);
-        \App\Models\Pembayaran::factory()->for($tagihan,'tagihan')->create([
-            'tanggal'=>'2025-02-05',
-            'jumlah'=>40000,
-            'metode'=>'offline'
+        \App\Models\Pembayaran::factory()->for($tagihan, 'tagihan')->create([
+            'tanggal' => '2025-02-05',
+            'jumlah' => 40000,
+            'metode' => 'offline',
         ]);
         \App\Models\Pengeluaran::factory()->create([
-            'tanggal'=>'2025-02-15',
-            'jumlah'=>10000
+            'tanggal' => '2025-02-15',
+            'jumlah' => 10000,
         ]);
+
         return compact('user');
     }
 
@@ -396,6 +404,7 @@ abstract class TestCase extends BaseTestCase
     {
         $user = \App\Models\User::factory()->admin()->create();
         \App\Models\Wali::factory()->count($count)->create();
+
         return compact('user');
     }
 
@@ -404,6 +413,7 @@ abstract class TestCase extends BaseTestCase
         $user = \App\Models\User::factory()->admin()->create();
         \App\Models\Wali::factory()->create(['nama' => 'Budi Santoso']);
         \App\Models\Wali::factory()->create(['nama' => 'Andi Wijaya']);
+
         return compact('user');
     }
 
@@ -414,6 +424,7 @@ abstract class TestCase extends BaseTestCase
         $siswa = \App\Models\Siswa::factory()->create([
             'wali_id' => $wali->id,
         ]);
+
         return compact('user', 'wali');
     }
 
@@ -440,6 +451,7 @@ abstract class TestCase extends BaseTestCase
     {
         $p = $this->buildWaliValidPayload();
         $p['jenis_kelamin'] = 'Unknown';
+
         return $p;
     }
 
@@ -447,6 +459,7 @@ abstract class TestCase extends BaseTestCase
     {
         $p = $this->buildWaliValidPayload();
         $p['no_hp'] = 'invalid#phone';
+
         return $p;
     }
 
@@ -457,6 +470,7 @@ abstract class TestCase extends BaseTestCase
         Kelas::factory()->count($count)->create([
             'jenjang' => $jenjang,
         ]);
+
         return compact('user');
     }
 
@@ -465,8 +479,9 @@ abstract class TestCase extends BaseTestCase
         $user = User::factory()->admin()->create();
         $kelas = Kelas::factory()->create([
             'jenjang' => $jenjang,
-            'nama' => 'KELAS 1'
+            'nama' => 'KELAS 1',
         ]);
+
         return compact('user', 'kelas');
     }
 
@@ -484,13 +499,14 @@ abstract class TestCase extends BaseTestCase
             'kelas_id' => $kelas->id,
             'kategori_id' => $kategori->id,
         ]);
+
         return compact('user', 'kelas');
     }
 
     protected function buildKelasValidPayload(): array
     {
         return [
-            'nama' => 'Kelas 2'
+            'nama' => 'Kelas 2',
         ];
     }
 
@@ -502,14 +518,14 @@ abstract class TestCase extends BaseTestCase
     protected function buildKelasInvalidPayloadLongNama(): array
     {
         return [
-            'nama' => str_repeat('A', 101)
+            'nama' => str_repeat('A', 101),
         ];
     }
 
     protected function buildKelasDuplicatePayload(string $existingName): array
     {
         return [
-            'nama' => $existingName
+            'nama' => $existingName,
         ];
     }
 
@@ -518,6 +534,7 @@ abstract class TestCase extends BaseTestCase
     {
         $user = User::factory()->admin()->create();
         Kategori::factory()->count($count)->create();
+
         return compact('user');
     }
 
@@ -525,8 +542,10 @@ abstract class TestCase extends BaseTestCase
     {
         $user = User::factory()->admin()->create();
         $kategori = Kategori::factory()->create(['nama' => 'BERSAUDARA']);
+
         return compact('user', 'kategori');
     }
+
     protected function createKategoriWithSiswaScenario(): array
     {
         $user = User::factory()->admin()->create();
@@ -537,8 +556,9 @@ abstract class TestCase extends BaseTestCase
             'jenjang' => 'MI',
             'wali_id' => $wali->id,
             'kelas_id' => $kelas->id,
-            'kategori_id' => $kategori->id
+            'kategori_id' => $kategori->id,
         ]);
+
         return compact('user', 'kategori');
     }
 
@@ -569,6 +589,7 @@ abstract class TestCase extends BaseTestCase
         $user->token = 'token-index';
         $user->save();
         JenisTagihan::factory()->count($count)->create();
+
         return compact('user');
     }
 
@@ -581,7 +602,8 @@ abstract class TestCase extends BaseTestCase
             'nama' => 'SPP JANUARI',
             'jumlah' => 75000,
         ]);
-        return compact('user','jt');
+
+        return compact('user', 'jt');
     }
 
     protected function createJenisTagihanWithTagihanScenario(): array
@@ -598,7 +620,8 @@ abstract class TestCase extends BaseTestCase
             'jenis_tagihan_id' => $jt->id,
             'nis' => $siswa->nis,
         ]);
-        return compact('user','jt');
+
+        return compact('user', 'jt');
     }
 
     protected function buildJenisTagihanValidPayload(): array
@@ -619,6 +642,7 @@ abstract class TestCase extends BaseTestCase
     {
         $p = $this->buildJenisTagihanValidPayload();
         $p['nama'] = 'A';
+
         return $p;
     }
 
@@ -626,6 +650,7 @@ abstract class TestCase extends BaseTestCase
     {
         $p = $this->buildJenisTagihanValidPayload();
         $p['nama'] = str_repeat('X', 101);
+
         return $p;
     }
 
@@ -633,6 +658,7 @@ abstract class TestCase extends BaseTestCase
     {
         $p = $this->buildJenisTagihanValidPayload();
         $p['jatuh_tempo'] = '31-12-2025';
+
         return $p;
     }
 
@@ -640,6 +666,7 @@ abstract class TestCase extends BaseTestCase
     {
         $p = $this->buildJenisTagihanValidPayload();
         $p['jumlah'] = 'ABC';
+
         return $p;
     }
 
@@ -647,6 +674,7 @@ abstract class TestCase extends BaseTestCase
     {
         $p = $this->buildJenisTagihanValidPayload();
         $p['jumlah'] = '1234567890123.00';
+
         return $p;
     }
 
@@ -670,8 +698,10 @@ abstract class TestCase extends BaseTestCase
                 'nis' => $s->nis,
             ]);
         }
-        return compact('admin','jt','kelas','kategori','wali','siswa');
+
+        return compact('admin', 'jt', 'kelas', 'kategori', 'wali', 'siswa');
     }
+
     protected function createTagihanMassScenario(int $count = 3): array
     {
         $admin = \App\Models\User::factory()->admin()->create(['token' => 'tagihan-index']);
@@ -685,12 +715,14 @@ abstract class TestCase extends BaseTestCase
             'kelas_id' => $kelas->id,
             'kategori_id' => $kategori->id,
         ]);
-        return compact('admin','jt','kelas','kategori','wali','siswa');
+
+        return compact('admin', 'jt', 'kelas', 'kategori', 'wali', 'siswa');
     }
 
     protected function createTagihanEmptyScenario(): array
     {
         $admin = \App\Models\User::factory()->admin()->create(['token' => 'tagihan-empty']);
+
         return compact('admin');
     }
 
@@ -723,7 +755,8 @@ abstract class TestCase extends BaseTestCase
             'jenis_tagihan_id' => $jt->id,
             'nis' => $otherSiswa->nis,
         ]);
-        return compact('admin','jt','kelas','kategori','wali','targetSiswa','otherSiswa','tagihanTarget','tagihanOther');
+
+        return compact('admin', 'jt', 'kelas', 'kategori', 'wali', 'targetSiswa', 'otherSiswa', 'tagihanTarget', 'tagihanOther');
     }
 
     protected function createTagihanCrudScenario(): array
@@ -743,7 +776,8 @@ abstract class TestCase extends BaseTestCase
             'jenis_tagihan_id' => $jt->id,
             'nis' => $siswa->nis,
         ]);
-        return compact('admin','jt','kelas','kategori','wali','siswa','tagihan');
+
+        return compact('admin', 'jt', 'kelas', 'kategori', 'wali', 'siswa', 'tagihan');
     }
 
     protected function createTagihanWithPembayaranScenario(): array
@@ -755,14 +789,15 @@ abstract class TestCase extends BaseTestCase
             'jenis_tagihan_id' => $jt->id,
             'nis' => $siswa->nis,
             'tmp' => 100000,
-            'status' => 'Lunas'
+            'status' => 'Lunas',
         ]);
         \App\Models\Pembayaran::factory()->create([
             'kode_tagihan' => $tagihan->kode_tagihan,
             'jumlah' => 100000,
-            'metode' => 'offline'
+            'metode' => 'offline',
         ]);
-        return compact('admin','jt','siswa','tagihan');
+
+        return compact('admin', 'jt', 'siswa', 'tagihan');
     }
 
     protected function buildTagihanValidPayload(array $overrides = []): array
@@ -770,6 +805,7 @@ abstract class TestCase extends BaseTestCase
         $jt = $overrides['jt'] ?? \App\Models\JenisTagihan::factory()->create();
         $kelas = $overrides['kelas'] ?? \App\Models\Kelas::factory()->create();
         $kategori = $overrides['kategori'] ?? \App\Models\Kategori::factory()->create();
+
         return [
             'jenis_tagihan_id' => $jt->id,
             'jenjang' => 'MI',
@@ -787,6 +823,7 @@ abstract class TestCase extends BaseTestCase
     {
         $p = $this->buildTagihanValidPayload();
         $p['jenjang'] = 'INVALID';
+
         return $p;
     }
 

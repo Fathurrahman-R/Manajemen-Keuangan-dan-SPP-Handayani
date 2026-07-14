@@ -33,6 +33,7 @@ class TagihanController extends Controller
     {
         $this->siblingDetectionService = $siblingDetectionService;
     }
+
     /**
      * Get tagihan data grouped by siswa with pagination at the siswa level.
      */
@@ -55,14 +56,14 @@ class TagihanController extends Controller
 
         $query = Siswa::query()
             ->whereHas('tagihan', function ($q) use ($tahunAjaranId, $allPeriods) {
-                if (!$allPeriods) {
+                if (! $allPeriods) {
                     $q->where('tahun_ajaran_id', $tahunAjaranId);
                 }
             })
             ->where('branch_id', $user->branch_id);
 
         // Non-admin users can only see their own data
-        if (!$user->hasAnyRole(['superadmin', 'admin'])) {
+        if (! $user->hasAnyRole(['superadmin', 'admin'])) {
             $query->where('nis', $user->siswa?->nis ?? $user->username);
         }
 
@@ -71,7 +72,7 @@ class TagihanController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('nama', 'like', "%{$search}%")
-                  ->orWhere('nis', 'like', "%{$search}%");
+                    ->orWhere('nis', 'like', "%{$search}%");
             });
         }
 
@@ -98,7 +99,7 @@ class TagihanController extends Controller
         if ($status) {
             $query->whereHas('tagihan', function ($q) use ($status, $tahunAjaranId, $allPeriods) {
                 $q->where('status', $status);
-                if (!$allPeriods) {
+                if (! $allPeriods) {
                     $q->where('tahun_ajaran_id', $tahunAjaranId);
                 }
             });
@@ -129,7 +130,7 @@ class TagihanController extends Controller
         $siswaList->load(['kelas']);
         $siswaList->each(function ($siswa) use ($tahunAjaranId, $allPeriods) {
             $tagihanQuery = $siswa->tagihan();
-            if (!$allPeriods) {
+            if (! $allPeriods) {
                 $tagihanQuery->where('tahun_ajaran_id', $tahunAjaranId);
             }
             $siswa->setRelation('tagihan', $tagihanQuery->with('jenis_tagihan')->get());
@@ -159,41 +160,45 @@ class TagihanController extends Controller
 
         $query = Tagihan::query()
             ->with([
-                'siswa' => function ($q) { $q->select(['id','nis','nama','jenjang','kelas_id','kategori_id']); },
-                'jenis_tagihan' => function ($q) { $q->select(['id','nama','jatuh_tempo','jumlah']); },
+                'siswa' => function ($q) {
+                    $q->select(['id', 'nis', 'nama', 'jenjang', 'kelas_id', 'kategori_id']);
+                },
+                'jenis_tagihan' => function ($q) {
+                    $q->select(['id', 'nama', 'jatuh_tempo', 'jumlah']);
+                },
             ])
-            ->select(['kode_tagihan','jenis_tagihan_id','nis','tmp','status','branch_id','tahun_ajaran_id'])
+            ->select(['kode_tagihan', 'jenis_tagihan_id', 'nis', 'tmp', 'status', 'branch_id', 'tahun_ajaran_id'])
             ->where('branch_id', $user->branch_id);
 
-        if (!$allPeriods) {
+        if (! $allPeriods) {
             $query->where('tahun_ajaran_id', $tahunAjaranId);
         }
 
-        if (!$user->hasAnyRole(['superadmin', 'admin'])) {
-            $query->whereHas('siswa', fn($q) => $q->where('nis', $user->siswa?->nis ?? $user->username));
+        if (! $user->hasAnyRole(['superadmin', 'admin'])) {
+            $query->whereHas('siswa', fn ($q) => $q->where('nis', $user->siswa?->nis ?? $user->username));
         }
 
         $search = request('search');
         if ($search) {
-            $query->where(function($q) use ($search) {
-                $q->where('kode_tagihan','like',"%{$search}%")
-                  ->orWhereHas('siswa', function($qs) use ($search){
-                      $qs->where('nama','like',"%{$search}%")
-                         ->orWhere('nis','like',"%{$search}%");
-                  });
+            $query->where(function ($q) use ($search) {
+                $q->where('kode_tagihan', 'like', "%{$search}%")
+                    ->orWhereHas('siswa', function ($qs) use ($search) {
+                        $qs->where('nama', 'like', "%{$search}%")
+                            ->orWhere('nis', 'like', "%{$search}%");
+                    });
             });
         }
         $jenjang = request('jenjang');
         if ($jenjang) {
-            $query->where(function($q) use ($jenjang) {
-                $q->whereHas('siswa',function($qs) use ($jenjang){
-                    $qs->where('jenjang',$jenjang);
+            $query->where(function ($q) use ($jenjang) {
+                $q->whereHas('siswa', function ($qs) use ($jenjang) {
+                    $qs->where('jenjang', $jenjang);
                 });
             });
         }
         $status = request('status');
         if ($status) {
-            $query->where('status',$status);
+            $query->where('status', $status);
         }
 
         $this->applySorting(
@@ -203,7 +208,8 @@ class TagihanController extends Controller
             'desc'
         );
 
-        $tagihan = $query->paginate(request('per_page',30));
+        $tagihan = $query->paginate(request('per_page', 30));
+
         return TagihanResource::collection($tagihan);
     }
 
@@ -211,14 +217,15 @@ class TagihanController extends Controller
     public function get(string $kode_tagihan)
     {
         $tagihan = Tagihan::with([
-            'siswa' => fn($q) => $q->select(['id','nis','nama','jenjang','kelas_id','kategori_id']),
-            'jenis_tagihan' => fn($q) => $q->select(['id','nama','jatuh_tempo','jumlah']),
-        ])->select(['kode_tagihan','jenis_tagihan_id','nis','tmp','status'])->find($kode_tagihan);
-        if (!$tagihan) {
+            'siswa' => fn ($q) => $q->select(['id', 'nis', 'nama', 'jenjang', 'kelas_id', 'kategori_id']),
+            'jenis_tagihan' => fn ($q) => $q->select(['id', 'nama', 'jatuh_tempo', 'jumlah']),
+        ])->select(['kode_tagihan', 'jenis_tagihan_id', 'nis', 'tmp', 'status'])->find($kode_tagihan);
+        if (! $tagihan) {
             throw new HttpResponseException(response([
-                'errors' => ['message' => ['tagihan tidak ditemukan.']]
-            ],404));
+                'errors' => ['message' => ['tagihan tidak ditemukan.']],
+            ], 404));
         }
+
         return (new TagihanResource($tagihan))->response()->setStatusCode(200);
     }
 
@@ -230,34 +237,34 @@ class TagihanController extends Controller
 
         // Resolve tahun_ajaran_id: auto-assign Periode_Aktif if not provided
         $tahunAjaranId = $request->input('tahun_ajaran_id');
-        if (!$tahunAjaranId) {
+        if (! $tahunAjaranId) {
             $periodeAktif = TahunAjaran::getAktif($user->branch_id);
-            if (!$periodeAktif) {
+            if (! $periodeAktif) {
                 throw new HttpResponseException(response([
-                    'errors' => ['tahun_ajaran_id' => ['Periode aktif harus diatur terlebih dahulu.']]
+                    'errors' => ['tahun_ajaran_id' => ['Periode aktif harus diatur terlebih dahulu.']],
                 ], 422));
             }
             $tahunAjaranId = $periodeAktif->id;
         } else {
             // Validate branch ownership of provided tahun_ajaran_id
             $tahunAjaran = TahunAjaran::find($tahunAjaranId);
-            if (!$tahunAjaran || $tahunAjaran->branch_id !== $user->branch_id) {
+            if (! $tahunAjaran || $tahunAjaran->branch_id !== $user->branch_id) {
                 throw new HttpResponseException(response([
-                    'errors' => ['tahun_ajaran_id' => ['Tahun ajaran tidak ditemukan atau bukan milik branch Anda.']]
+                    'errors' => ['tahun_ajaran_id' => ['Tahun ajaran tidak ditemukan atau bukan milik branch Anda.']],
                 ], 422));
             }
         }
 
-        $siswa = Siswa::query()->select(['id','nis'])
-            ->where('kelas_id',$data['kelas_id'])
-            ->where('jenjang',$data['jenjang'])
-            ->where('kategori_id',$data['kategori_id'])
+        $siswa = Siswa::query()->select(['id', 'nis'])
+            ->where('kelas_id', $data['kelas_id'])
+            ->where('jenjang', $data['jenjang'])
+            ->where('kategori_id', $data['kategori_id'])
             ->where('branch_id', $user->branch_id)
             ->get();
         if ($siswa->isEmpty()) {
             throw new HttpResponseException(response([
-                'errors' => ['message' => ['siswa tidak ditemukan.']]
-            ],404));
+                'errors' => ['message' => ['siswa tidak ditemukan.']],
+            ], 404));
         }
         $created = collect();
         foreach ($siswa as $s) {
@@ -269,14 +276,15 @@ class TagihanController extends Controller
                 'tahun_ajaran_id' => $tahunAjaranId,
             ]);
             $freshTagihan = $t->fresh([
-                'siswa' => fn($q) => $q->select(['id','nis','nama','jenjang','kelas_id','kategori_id']),
-                'jenis_tagihan' => fn($q) => $q->select(['id','nama','jatuh_tempo','jumlah']),
+                'siswa' => fn ($q) => $q->select(['id', 'nis', 'nama', 'jenjang', 'kelas_id', 'kategori_id']),
+                'jenis_tagihan' => fn ($q) => $q->select(['id', 'nama', 'jatuh_tempo', 'jumlah']),
             ]);
             $created->push($freshTagihan);
 
             // Dispatch email notification event
             TagihanCreated::dispatch(collect([$freshTagihan]), $s);
         }
+
         return TagihanResource::collection($created)->response()->setStatusCode(201);
     }
 
@@ -284,16 +292,17 @@ class TagihanController extends Controller
     public function update(Request $request, string $kode_tagihan)
     {
         $tagihan = Tagihan::find($kode_tagihan);
-        if (!$tagihan) {
+        if (! $tagihan) {
             throw new HttpResponseException(response([
-                'errors' => ['message' => ['tagihan tidak ditemukan.']]
-            ],404));
+                'errors' => ['message' => ['tagihan tidak ditemukan.']],
+            ], 404));
         }
         $tagihan->update(['jenis_tagihan_id' => $request['jenis_tagihan_id']]);
         $tagihan->load([
-            'siswa' => fn($q) => $q->select(['id','nis','nama','jenjang','kelas_id','kategori_id']),
-            'jenis_tagihan' => fn($q) => $q->select(['id','nama','jatuh_tempo','jumlah']),
+            'siswa' => fn ($q) => $q->select(['id', 'nis', 'nama', 'jenjang', 'kelas_id', 'kategori_id']),
+            'jenis_tagihan' => fn ($q) => $q->select(['id', 'nama', 'jatuh_tempo', 'jumlah']),
         ]);
+
         return (new TagihanResource($tagihan))->response()->setStatusCode(200);
     }
 
@@ -301,41 +310,43 @@ class TagihanController extends Controller
     public function delete(string $kode_tagihan)
     {
         $tagihan = Tagihan::query()->find($kode_tagihan);
-        if (!$tagihan) {
+        if (! $tagihan) {
             throw new HttpResponseException(response([
-                'errors' => ['message' => ['tagihan tidak ditemukan.']]
-            ],404));
+                'errors' => ['message' => ['tagihan tidak ditemukan.']],
+            ], 404));
         }
 
         // Explicitly check for associated pembayaran records
         if ($tagihan->pembayaran()->exists()) {
             throw new HttpResponseException(response([
-                'errors' => ['message' => ['tagihan sudah dibayar dan tidak dapat dihapus.']]
-            ],409));
+                'errors' => ['message' => ['tagihan sudah dibayar dan tidak dapat dihapus.']],
+            ], 409));
         }
 
         try {
             $tagihan->delete();
         } catch (QueryException|Throwable $e) {
             throw new HttpResponseException(response([
-                'errors' => ['message' => ['tagihan sudah dibayar dan tidak dapat dihapus.']]
-            ],409));
+                'errors' => ['message' => ['tagihan sudah dibayar dan tidak dapat dihapus.']],
+            ], 409));
         }
+
         return response(['data' => true])->setStatusCode(200);
     }
 
     #[HeaderParameter('Authorization')]
     public static function lunas(BayarLunasRequest $request, string $kode_tagihan)
     {
-        $tagihan = Tagihan::with(['siswa','jenis_tagihan'])->find($kode_tagihan);
-        if (!$tagihan) {
+        $tagihan = Tagihan::with(['siswa', 'jenis_tagihan'])->find($kode_tagihan);
+        if (! $tagihan) {
             throw new HttpResponseException(response([
-                'errors' => ['message' => ['tagihan tidak ditemukan.']]
-            ],404));
+                'errors' => ['message' => ['tagihan tidak ditemukan.']],
+            ], 404));
         }
         $sisa = $tagihan->jenis_tagihan->jumlah - $tagihan->tmp;
-        $jumlah = when($tagihan->status=='Belum Lunas', $sisa, $tagihan->jenis_tagihan->jumlah);
-        $tagihan->update(['status' => 'Lunas','tmp' => $tagihan->jenis_tagihan->jumlah]);
+        $jumlah = when($tagihan->status == 'Belum Lunas', $sisa, $tagihan->jenis_tagihan->jumlah);
+        $tagihan->update(['status' => 'Lunas', 'tmp' => $tagihan->jenis_tagihan->jumlah]);
+
         return $jumlah;
     }
 
@@ -343,22 +354,22 @@ class TagihanController extends Controller
     public static function bayar(BayarTidakLunasRequest $request, string $kode_tagihan)
     {
         $data = $request->validated();
-        $tagihan = Tagihan::with(['siswa','jenis_tagihan'])->find($kode_tagihan);
-        if (!$tagihan) {
+        $tagihan = Tagihan::with(['siswa', 'jenis_tagihan'])->find($kode_tagihan);
+        if (! $tagihan) {
             throw new HttpResponseException(response([
-                'errors' => ['message' => ['tagihan tidak ditemukan.']]
-            ],404));
+                'errors' => ['message' => ['tagihan tidak ditemukan.']],
+            ], 404));
         }
         $jumlah_tagihan = $tagihan->jenis_tagihan->jumlah;
         if ($jumlah_tagihan < $data['jumlah']) {
             throw new HttpResponseException(response([
-                'errors' => ['message' => ['jumlah bayar tidak boleh melebihi jumlah tagihan.']]
-            ],400));
+                'errors' => ['message' => ['jumlah bayar tidak boleh melebihi jumlah tagihan.']],
+            ], 400));
         }
         $jumlah = $data['jumlah'] == null ? $data['jumlah'] : $tagihan->tmp + $data['jumlah'];
         $tagihan->update([
             'tmp' => $jumlah,
-            'status' => $jumlah_tagihan == $jumlah ? 'Lunas' : 'Belum Lunas'
+            'status' => $jumlah_tagihan == $jumlah ? 'Lunas' : 'Belum Lunas',
         ]);
     }
 
@@ -374,17 +385,17 @@ class TagihanController extends Controller
         $user = Auth::user();
 
         // 1. Check if user has a siswa_id (is a siswa account)
-        if (!$user->siswa_id) {
+        if (! $user->siswa_id) {
             return response()->json([
-                'errors' => ['message' => ['Akun ini bukan akun siswa.']]
+                'errors' => ['message' => ['Akun ini bukan akun siswa.']],
             ], 403);
         }
 
         // 2. Find the Siswa record for the authenticated user
         $siswa = Siswa::find($user->siswa_id);
-        if (!$siswa) {
+        if (! $siswa) {
             return response()->json([
-                'errors' => ['message' => ['Data siswa tidak ditemukan.']]
+                'errors' => ['message' => ['Data siswa tidak ditemukan.']],
             ], 404);
         }
 
@@ -401,9 +412,9 @@ class TagihanController extends Controller
             // Validate: must be self or a detected sibling
             $validIds = $siblings->pluck('id')->push($siswa->id)->toArray();
 
-            if (!in_array($requestedSiswaId, $validIds)) {
+            if (! in_array($requestedSiswaId, $validIds)) {
                 return response()->json([
-                    'errors' => ['message' => ['Anda tidak memiliki akses ke data siswa ini.']]
+                    'errors' => ['message' => ['Anda tidak memiliki akses ke data siswa ini.']],
                 ], 403);
             }
 
@@ -434,7 +445,7 @@ class TagihanController extends Controller
                 'siblings' => $siblingList,
                 'selected_siswa_id' => $selectedSiswaId,
                 'selected_siswa_nama' => $selectedSiswa->nama,
-            ]
+            ],
         ]);
     }
 
@@ -461,31 +472,30 @@ class TagihanController extends Controller
 
         $query = Tagihan::query()
             ->with([
-                'siswa' => fn($q) => $q->select(['id', 'nis', 'nama', 'jenjang', 'kelas_id'])->with('kelas'),
-                'jenis_tagihan' => fn($q) => $q->select(['id', 'nama', 'jatuh_tempo', 'jumlah']),
+                'siswa' => fn ($q) => $q->select(['id', 'nis', 'nama', 'jenjang', 'kelas_id'])->with('kelas'),
+                'jenis_tagihan' => fn ($q) => $q->select(['id', 'nama', 'jatuh_tempo', 'jumlah']),
             ])
             ->where('branch_id', $user->branch_id);
 
-        if ($tahunAjaranId && !$allPeriods) {
+        if ($tahunAjaranId && ! $allPeriods) {
             $query->where('tahun_ajaran_id', $tahunAjaranId);
         }
 
         if ($jenjang = $request->input('jenjang')) {
-            $query->whereHas('siswa', fn($q) => $q->where('jenjang', $jenjang));
+            $query->whereHas('siswa', fn ($q) => $q->where('jenjang', $jenjang));
         }
 
         if ($kelasId = $request->input('kelas_id')) {
-            $query->whereHas('siswa', fn($q) => $q->where('kelas_id', (int) $kelasId));
+            $query->whereHas('siswa', fn ($q) => $q->where('kelas_id', (int) $kelasId));
         }
 
         if ($kategoriId = $request->input('kategori_id')) {
-            $query->whereHas('siswa', fn($q) => $q->where('kategori_id', (int) $kategoriId));
+            $query->whereHas('siswa', fn ($q) => $q->where('kategori_id', (int) $kategoriId));
         }
 
         if ($search = $request->input('search')) {
-            $query->whereHas('siswa', fn($q) =>
-                $q->where('nama', 'like', "%{$search}%")
-                  ->orWhere('nis', 'like', "%{$search}%")
+            $query->whereHas('siswa', fn ($q) => $q->where('nama', 'like', "%{$search}%")
+                ->orWhere('nis', 'like', "%{$search}%")
             );
         }
 
@@ -495,32 +505,32 @@ class TagihanController extends Controller
         }
 
         if ($from = $request->input('jatuh_tempo_from')) {
-            $query->whereHas('jenis_tagihan', fn($q) => $q->whereDate('jatuh_tempo', '>=', $from));
+            $query->whereHas('jenis_tagihan', fn ($q) => $q->whereDate('jatuh_tempo', '>=', $from));
         }
         if ($to = $request->input('jatuh_tempo_to')) {
-            $query->whereHas('jenis_tagihan', fn($q) => $q->whereDate('jatuh_tempo', '<=', $to));
+            $query->whereHas('jenis_tagihan', fn ($q) => $q->whereDate('jatuh_tempo', '<=', $to));
         }
 
-        $tagihans = $query->get()->sortBy(function($t) {
-            return ($t->siswa->nama ?? 'ZZZ') . '-' . $t->kode_tagihan;
+        $tagihans = $query->get()->sortBy(function ($t) {
+            return ($t->siswa->nama ?? 'ZZZ').'-'.$t->kode_tagihan;
         });
 
         $groupedRows = [];
         foreach ($tagihans as $t) {
             $nis = $t->siswa->nis ?? '-';
             // Use a unique key combining nis and nama to handle duplicate NIS or empty NIS
-            $key = $nis . '-' . ($t->siswa->nama ?? '-');
-            
-            if (!isset($groupedRows[$key])) {
+            $key = $nis.'-'.($t->siswa->nama ?? '-');
+
+            if (! isset($groupedRows[$key])) {
                 $groupedRows[$key] = [
-                    'nama'           => $t->siswa->nama ?? '-',
-                    'nis'            => $nis,
-                    'jenjang'        => $t->siswa->jenjang ?? '-',
-                    'kelas'          => $t->siswa->kelas->nama ?? '-',
-                    'tagihans'       => [],
-                    'total_jumlah'   => 0,
+                    'nama' => $t->siswa->nama ?? '-',
+                    'nis' => $nis,
+                    'jenjang' => $t->siswa->jenjang ?? '-',
+                    'kelas' => $t->siswa->kelas->nama ?? '-',
+                    'tagihans' => [],
+                    'total_jumlah' => 0,
                     'total_terbayar' => 0,
-                    'total_sisa'     => 0,
+                    'total_sisa' => 0,
                 ];
             }
 
@@ -529,15 +539,15 @@ class TagihanController extends Controller
             $sisa = max($jumlah - $tmp, 0);
 
             $groupedRows[$key]['tagihans'][] = [
-                'kode_tagihan'   => $t->kode_tagihan,
-                'jenis_tagihan'  => $t->jenis_tagihan->nama ?? '-',
-                'jatuh_tempo'    => $t->jenis_tagihan->jatuh_tempo
+                'kode_tagihan' => $t->kode_tagihan,
+                'jenis_tagihan' => $t->jenis_tagihan->nama ?? '-',
+                'jatuh_tempo' => $t->jenis_tagihan->jatuh_tempo
                     ? \Carbon\Carbon::parse($t->jenis_tagihan->jatuh_tempo)->format('d/m/Y')
                     : '-',
-                'status'         => $t->status,
-                'jumlah'         => $jumlah,
-                'tmp'            => $tmp,
-                'sisa'           => $sisa,
+                'status' => $t->status,
+                'jumlah' => $jumlah,
+                'tmp' => $tmp,
+                'sisa' => $sisa,
             ];
 
             $groupedRows[$key]['total_jumlah'] += $jumlah;
@@ -553,14 +563,14 @@ class TagihanController extends Controller
                 : 'Semua Periode');
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('Laporan.tagihan-pdf', [
-            'groupedRows'  => array_values($groupedRows),
-            'branchName'   => $branchName,
-            'periode'      => $periode,
-            'jenjang'      => $request->input('jenjang'),
+            'groupedRows' => array_values($groupedRows),
+            'branchName' => $branchName,
+            'periode' => $periode,
+            'jenjang' => $request->input('jenjang'),
             'statusFilter' => $statuses,
         ])->setPaper('A4', 'landscape');
 
-        return $pdf->download('laporan-tagihan-' . now()->format('Ymd-His') . '.pdf');
+        return $pdf->download('laporan-tagihan-'.now()->format('Ymd-His').'.pdf');
     }
 
     /**
@@ -588,16 +598,18 @@ class TagihanController extends Controller
         if ($tahunAjaranId) {
             // Validate branch ownership
             $tahunAjaran = TahunAjaran::find($tahunAjaranId);
-            if (!$tahunAjaran || $tahunAjaran->branch_id !== $user->branch_id) {
+            if (! $tahunAjaran || $tahunAjaran->branch_id !== $user->branch_id) {
                 throw new HttpResponseException(response([
-                    'errors' => ['tahun_ajaran_id' => ['Tahun ajaran tidak ditemukan atau bukan milik branch Anda.']]
+                    'errors' => ['tahun_ajaran_id' => ['Tahun ajaran tidak ditemukan atau bukan milik branch Anda.']],
                 ], 422));
             }
+
             return (int) $tahunAjaranId;
         }
 
         // Default to Periode_Aktif
         $periodeAktif = TahunAjaran::getAktif($user->branch_id);
+
         return $periodeAktif?->id;
     }
 }

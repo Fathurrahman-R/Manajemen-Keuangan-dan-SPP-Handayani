@@ -12,7 +12,7 @@ class AkunSiswaServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new AkunSiswaService();
+        $this->service = new AkunSiswaService;
     }
 
     public function test_generate_default_password_formats_date_as_ddmmyyyy(): void

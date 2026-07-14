@@ -19,11 +19,10 @@ trait Sortable
     /**
      * Apply sorting to an Eloquent query based on request parameters.
      *
-     * @param Builder $query The Eloquent query builder instance
-     * @param array $allowedColumns Whitelist of columns that can be sorted
-     * @param string $defaultColumn Default sort column if none specified
-     * @param string $defaultDirection Default sort direction if none specified
-     * @return Builder
+     * @param  Builder  $query  The Eloquent query builder instance
+     * @param  array  $allowedColumns  Whitelist of columns that can be sorted
+     * @param  string  $defaultColumn  Default sort column if none specified
+     * @param  string  $defaultDirection  Default sort direction if none specified
      */
     protected function applySorting(
         Builder $query,
@@ -35,7 +34,7 @@ trait Sortable
         $sortDirection = strtolower(request('direction', $defaultDirection));
 
         // Validate direction
-        if (!in_array($sortDirection, ['asc', 'desc'])) {
+        if (! in_array($sortDirection, ['asc', 'desc'])) {
             $sortDirection = $defaultDirection;
         }
 

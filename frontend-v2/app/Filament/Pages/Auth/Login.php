@@ -2,40 +2,45 @@
 
 namespace App\Filament\Pages\Auth;
 
+use App\Helpers\PermissionHelper;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
-use App\Filament\Pages\Auth\LoginResponse;
-
-use Filament\Facades\Filament;
 use Filament\Auth\Pages\Login as PagesLogin;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Schema;
-use Illuminate\Support\HtmlString;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Http\Client\ConnectionException;
-use SensitiveParameter;
-use Filament\Notifications\Notification;
+use Illuminate\Support\HtmlString;
 use Illuminate\Validation\ValidationException;
+use SensitiveParameter;
 
 class Login extends PagesLogin
 {
-
     public function mount(): void
     {
         $token = session()->get('data.token');
 
-        if (!is_null($token)) {
-            $roles = session()->get('data.roles', []);
-
-            if (in_array('siswa', $roles)) {
-                $this->redirect('/' . config('handayani.portal.path', 'portal'));
+        if (! is_null($token)) {
+            // Superadmin dan admin: redirect ke dashboard
+            if (in_array('superadmin', session()->get('data.roles', []))) {
+                $this->redirect(filament()->getUrl().'/dashboard-page');
 
                 return;
             }
 
-            $this->redirect(filament()->getUrl() . '/dashboard-page');
+            // User dengan portal-access: redirect ke portal
+            if (PermissionHelper::hasResource('portal-access')) {
+                $this->redirect('/'.config('handayani.portal.path', 'portal'));
+
+                return;
+            }
+
+            // Default fallback: redirect ke dashboard
+            $this->redirect(filament()->getUrl().'/dashboard-page');
 
             return;
         }
@@ -68,7 +73,7 @@ class Login extends PagesLogin
 
             $credentials = $this->getCredentialsFromFormData($data);
 
-            $response = Http::post(env('API_URL') . '/login', $credentials);
+            $response = Http::post(env('API_URL').'/login', $credentials);
 
             if ($response->serverError()) {
                 Notification::make()
@@ -98,12 +103,15 @@ class Login extends PagesLogin
                 Filament::auth()->loginUsingId($responseData['id']);
 
                 // Redirect to change password page if must_change_password is true
-                if (!empty($responseData['must_change_password'])) {
-                    if (in_array('siswa', $responseData['roles'])) {
-                        $this->redirect('/' . config('handayani.portal.path', 'portal') . '/change-password');
+                if (! empty($responseData['must_change_password'])) {
+                    if (in_array('superadmin', session()->get('data.roles', []))) {
+                        $this->redirect(filament()->getUrl().'/change-password');
+                    } elseif (PermissionHelper::hasResource('portal-access')) {
+                        $this->redirect('/'.config('handayani.portal.path', 'portal').'/change-password');
                     } else {
-                        $this->redirect(filament()->getUrl() . '/change-password');
+                        $this->redirect(filament()->getUrl().'/change-password');
                     }
+
                     return null;
                 }
 
@@ -120,7 +128,7 @@ class Login extends PagesLogin
                     ->send();
 
                 throw ValidationException::withMessages([
-                    'data.username' => $message
+                    'data.username' => $message,
                 ]);
             }
 

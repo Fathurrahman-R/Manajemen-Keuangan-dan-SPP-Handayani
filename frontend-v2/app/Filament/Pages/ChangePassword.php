@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Helpers\PermissionHelper;
 use App\Services\ApiService;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -32,7 +33,7 @@ class ChangePassword extends Page implements HasForms
     public function mount(): void
     {
         // Only allow access if must_change_password is true
-        if (!session()->get('data.must_change_password', false)) {
+        if (! session()->get('data.must_change_password', false)) {
             $this->redirectToMainPage();
         }
 
@@ -48,7 +49,7 @@ class ChangePassword extends Page implements HasForms
             ->components([
                 Section::make('Pengaturan Email')
                     ->description('Anda wajib mengatur dan memverifikasi email terlebih dahulu sebelum mengubah password.')
-                    ->visible(fn () => $this->isFirstTimeUser && !$this->isEmailVerified)
+                    ->visible(fn () => $this->isFirstTimeUser && ! $this->isEmailVerified)
                     ->schema([
                         TextInput::make('email')
                             ->label('Alamat Email')
@@ -67,7 +68,7 @@ class ChangePassword extends Page implements HasForms
                             ->length(6)
                             ->extraInputAttributes(['inputmode' => 'numeric']),
                     ]),
-                    
+
                 Section::make('Ubah Password')
                     ->description('Anda harus mengubah password sebelum melanjutkan. Silakan masukkan password baru Anda.')
                     ->visible(fn () => $this->isEmailVerified)
@@ -109,11 +110,12 @@ class ChangePassword extends Page implements HasForms
                 ->title('Email harus diisi')
                 ->danger()
                 ->send();
+
             return;
         }
 
         $response = ApiService::client()->post('/users/send-verification-otp', [
-            'email' => $state['email']
+            'email' => $state['email'],
         ]);
 
         if ($response->successful()) {
@@ -141,7 +143,7 @@ class ChangePassword extends Page implements HasForms
     {
         $state = $this->form->getState();
 
-        if ($this->isFirstTimeUser && !$this->isEmailVerified) {
+        if ($this->isFirstTimeUser && ! $this->isEmailVerified) {
             $response = ApiService::client()->post('/users/verify-email-otp', [
                 'email' => $state['email'] ?? null,
                 'otp' => $state['otp'] ?? null,
@@ -149,10 +151,10 @@ class ChangePassword extends Page implements HasForms
 
             if ($response->successful()) {
                 $this->isEmailVerified = true;
-                
+
                 // Refresh form schema and layout
                 $this->form->fill();
-                
+
                 Notification::make()
                     ->title('Email berhasil diverifikasi!')
                     ->body('Sekarang silakan ubah password Anda.')
@@ -171,6 +173,7 @@ class ChangePassword extends Page implements HasForms
                     ->body($message)
                     ->send();
             }
+
             return;
         }
 
@@ -221,12 +224,10 @@ class ChangePassword extends Page implements HasForms
 
     protected function redirectToMainPage(): void
     {
-        $roles = session()->get('data.roles', []);
-
-        if (in_array('siswa', $roles)) {
-            $this->redirect('/' . config('handayani.portal.path', 'portal'));
+        if (PermissionHelper::hasResource('portal-access')) {
+            $this->redirect('/'.config('handayani.portal.path', 'portal'));
         } else {
-            $this->redirect(filament()->getUrl() . '/dashboard-page');
+            $this->redirect(filament()->getUrl().'/dashboard-page');
         }
     }
 }

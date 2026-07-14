@@ -25,9 +25,9 @@
                     <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                         <x-heroicon-o-envelope class="h-4 w-4" />
                         <span>Email Siswa: {{ $currentEmail }}</span>
-                        @if(in_array('siswa', $roles ?? []) && !$emailVerified)
+                        @if(in_array('siswa', (array)session()->get('data.roles', [])) && !$emailVerified)
                             <span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10 dark:bg-red-900/30 dark:text-red-400 dark:ring-red-400/20">Belum Diverifikasi</span>
-                        @elseif(in_array('siswa', $roles ?? []))
+                        @elseif(in_array('siswa', (array)session()->get('data.roles', [])))
                             <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/30 dark:text-green-400 dark:ring-green-400/20">Terverifikasi</span>
                         @endif
                     </div>
@@ -38,7 +38,7 @@
                     </div>
                 @endif
 
-                @if(in_array('siswa', $roles ?? []))
+                @if(in_array('siswa', (array)session()->get('data.roles', [])))
                     @if($ayahEmail)
                         <div class="text-sm text-gray-600 dark:text-gray-400">
                             <div class="flex flex-wrap items-center gap-2">
@@ -306,3 +306,5 @@
         @endif
     </div>
 </x-filament-panels::page>
+
+

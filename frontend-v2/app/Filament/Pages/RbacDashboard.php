@@ -13,9 +13,12 @@ use Filament\Schemas\Schema;
 
 class RbacDashboard extends Page
 {
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-shield-check';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-shield-check';
+
     protected static ?string $title = 'RBAC Dashboard';
+
     protected static ?string $navigationLabel = 'Manajemen RBAC';
+
     protected static ?int $navigationSort = 0;
 
     protected string $view = 'filament.pages.rbac-dashboard';
@@ -24,17 +27,22 @@ class RbacDashboard extends Page
 
     /** @var array<int, array{id: int, name: string, permissions: string[]}> */
     public array $rolesList = [];
+
     public ?int $selectedRoleId = null;
+
     public array $selectedRolePerms = [];
+
     public array $allPerms = [];
 
     public static function canAccess(): bool
     {
-        return PermissionHelper::hasResource('rbac.view');
+        return PermissionHelper::hasResource('rbac');
     }
 
     public function mount(): void
     {
+        abort_if(! PermissionHelper::hasResource('rbac'), 403);
+
         $this->reloadAll();
     }
 
@@ -59,7 +67,7 @@ class RbacDashboard extends Page
     public function toggleRolePerm(string $permName): void
     {
         if (in_array($permName, $this->selectedRolePerms)) {
-            $this->selectedRolePerms = array_values(array_filter($this->selectedRolePerms, fn($p) => $p !== $permName));
+            $this->selectedRolePerms = array_values(array_filter($this->selectedRolePerms, fn ($p) => $p !== $permName));
         } else {
             $this->selectedRolePerms[] = $permName;
         }
@@ -67,7 +75,9 @@ class RbacDashboard extends Page
 
     public function saveRolePerms(): void
     {
-        if (!$this->selectedRoleId) return;
+        if (! $this->selectedRoleId) {
+            return;
+        }
         ApiService::client()->put("/rbac/roles/{$this->selectedRoleId}/permissions", [
             'permissions' => $this->selectedRolePerms,
         ]);
@@ -136,9 +146,9 @@ Semua entitas keamanan (halaman, tombol, API endpoint) diidentifikasi oleh **res
 **Alur Akses:**
 
 1. **Login** → Frontend panggil `GET /api/rbac/user-resources`, backend balikin daftar `resource_key` yang user punya (berdasarkan permission-role).
-2. **Simpan di Session** → `PermissionHelper::init()` simpan daftar resource_key ke `session(\'data.resources\')`.
+2. **Simpan di Session** → Cache frontend simpan daftar resource_key ke `session(\'data.resources\')` otomatis saat login.
 3. **Cek Visibilitas UI** → `PermissionHelper::hasResource(\'siswa.create\')` cukup baca session, zero query.
-4. **Cek Middleware** → `CheckFilamentPagePermission` baca semua aturan aktif di `page_permissions` dan cek `hasResource()`.
+4. **Cek Proteksi** → Halaman dilindungi oleh `PermissionHelper::hasResource()` di `mount()` dan `shouldRegisterNavigation()`. Backend endpoint dilindungi oleh middleware `endpoint.permission:xxx`.
 5. **Cek Backend** → Route backend pakai middleware `resource:resource_key` (future) atau `can()` di controller.
 
 **Superadmin Bypass:** Gate::before memberi superadmin akses penuh. `PermissionHelper::hasResource()` selalu return `true` untuk superadmin.
@@ -154,7 +164,7 @@ Semua entitas keamanan (halaman, tombol, API endpoint) diidentifikasi oleh **res
                                 ['<code>page_permissions</code> (DB)', 'Database', 'Satu tabel untuk resource registry + page security'],
                                 ['<code>permission_endpoints</code> (DB)', 'Database', 'Mapping endpoint API ke permission (independen)'],
                                 ['<code>PermissionHelper</code>', '<code>frontend-v2/app/Helpers/</code>', 'Helper untuk hasResource() di UI'],
-                                ['<code>CheckFilamentPagePermission</code>', '<code>frontend-v2/Http/Middleware/</code>', 'Middleware proteksi halaman Filament'],
+                                ['<code>PermissionHelper</code>', '<code>frontend-v2/app/Helpers/</code>', 'Helper hasResource() untuk proteksi halaman + endpoint'],
                                 ['<code>RbacDashboard</code>', 'frontend-v2 (halaman ini)', 'UI manajemen permission, role, resource, endpoint'],
                             ])),
                     ]),
@@ -264,7 +274,7 @@ public static function canAccess(): bool
 }
 ```
 
-**Cara kerja middleware CheckFilamentPagePermission:**
+**Cara kerja proteksi halaman (via PermissionHelper + mount()):**
 
 1. Middleware membaca **semua aturan aktif** dari tabel `page_permissions`.
 2. Untuk setiap aturan, cek apakah user punya `resource_key` tersebut via `hasResource()`.
@@ -595,12 +605,12 @@ NavigationItem::make(\'Absensi Online\')
 Semua method di atas memiliki superadmin bypass — jika user memiliki role `superadmin`, return `true` tanpa perlu cek database.
 
 **Session Cache:**
-Saat login, `PermissionHelper::init()` dipanggil — memanggil `GET /api/rbac/user-resources` dan menyimpan hasilnya di `session(\'data.resources\')`. Semua pengecekan `hasResource()` hanya membaca session, tanpa query database.
+Saat login, frontend memanggil `GET /api/rbac/user-resources` dan menyimpan hasilnya di `session(data.resources)`. Semua pengecekan `hasResource()` hanya membaca session, tanpa query database.
 
-**Migrasi dari `has()` ke `hasResource()`:**
-- `PermissionHelper::has(\'view-siswa\')` → `PermissionHelper::hasResource(\'siswa\')`
-- `PermissionHelper::has(\'create-siswa\')` → `PermissionHelper::hasResource(\'siswa.create\')`
-- Resource key didaftarkan di tabel `page_permissions` (tab Resource & Page Registry).
+**Method UTAMA — `hasResource()`:**
+- `PermissionHelper::hasResource(siswa)` → cek akses resource key `siswa`
+- `PermissionHelper::hasResource(siswa.create)` → cek akses resource key `siswa.create`
+- Resource key didaftarkan di tabel `page_permissions` (tab **Resource & Page Registry**).
                             ')),
                     ]),
 
@@ -679,11 +689,11 @@ Agar fleksibel. Resource key di page_permissions (`siswa.create`) bisa berbeda d
 5. Di kode frontend: gunakan `PermissionHelper::hasResource(\'resource-key\')`.
 6. Di kode backend: gunakan `$request->user()->can(\'nama-permission\')`.
 
-**Q: Middleware CheckFilamentPagePermission cara kerjanya bagaimana?**
+**Q: Proteksi halaman Filament cara kerjanya bagaimana?**
 Middleware membaca **semua aturan aktif** dari `page_permissions`. Untuk setiap aturan, cek `hasResource(resource_key)`. Aturan pertama yang cocok (user punya resource) → izinkan. Jika tidak ada yang cocok → 403 Forbidden.
 
 **Q: Kenapa saya bisa akses halaman Filament meskipun belum assign permission?**
-Kemungkinan: (1) Anda login sebagai superadmin (bypass total). (2) Middleware `CheckFilamentPagePermission` tidak terdaftar di route group. (3) Tidak ada aturan di `page_permissions` yang aktif.
+Kemungkinan: (1) Anda login sebagai superadmin (bypass total). (2) `PermissionHelper::hasResource()` mengembalikan true. (3) `mount()` atau `shouldRegisterNavigation()` tidak diimplementasikan. Proteksi sekarang via mount() gate + backend EndpointPermission, bukan middleware global.
 
 **Q: Bagaimana dengan DynamicPermissionMiddleware yang lama?**
 Sudah dinonaktifkan. Tidak ada lagi middleware berbasis method+path di backend. Proteksi endpoint dilakukan via `can()` di controller. Di masa depan akan ada middleware `resource:resource_key`.
@@ -714,11 +724,9 @@ Sudah dinonaktifkan. Tidak ada lagi middleware berbasis method+path di backend. 
                             ->label('Frontend Checklist')
                             ->html()
                             ->default($this->md('
-1. *(Opsional)* Daftarkan route pattern di UI tab Page Security
-2. Gunakan `PermissionHelper::has()` untuk proteksi komponen
-3. Gunakan `PermissionHelper::hasResource()` untuk feature gates
-4. Assign permission ke role di tab Assign Role
-5. Test sebagai user non-superadmin
+1. Daftarkan resource key dan pattern proteksi di tab **Resource & Page Registry**
+2. Gunakan `PermissionHelper::hasResource()` untuk proteksi komponen (halaman, tombol, navigasi)
+3. Assign permission ke role di tab **Assign Role**
                             ')),
 
                         TextEntry::make('_summary_warning')
@@ -732,8 +740,8 @@ Sudah dinonaktifkan. Tidak ada lagi middleware berbasis method+path di backend. 
                                     <li>Permission baru cukup daftar via UI — <strong>tanpa deploy ulang</strong>.</li>
                                     <li>Setiap permission baru harus di-<strong>assign ke role</strong> via Assign Role.</li>
                                     <li>Permission yang bersifat permanen sebaiknya <strong>ada di <code>App\Enum\Permission</code></strong> agar konsisten saat di-seed ulang.</li>
-                                    <li>Proteksi halaman & endpoint <strong>cukup daftarkan di UI</strong> — tanpa kode PHP.</li>
-                                    <li>Gunakan <code>PermissionHelper::has()</code> untuk kontrol tampilan komponen — jangan hanya andalkan middleware.</li>
+                                    <li>Proteksi halaman cukup daftarkan di tab **Resource & Page Registry** — tanpa kode PHP.</li>
+                                    <li>Gunakan <code>PermissionHelper::hasResource()</code> untuk kontrol tampilan komponen — jangan hanya andalkan middleware.</li>
                                 </ul>
                             </div>'),
                     ]),
@@ -755,7 +763,8 @@ Sudah dinonaktifkan. Tidak ada lagi middleware berbasis method+path di backend. 
             }
             $html .= '</tr>';
         }
-        return $html . '</table>';
+
+        return $html.'</table>';
     }
 
     /**
@@ -769,9 +778,10 @@ Sudah dinonaktifkan. Tidak ada lagi middleware berbasis method+path di backend. 
 
         // Convert markdown code blocks ```...``` to <pre><code>
         $text = preg_replace_callback('/```(\w*)\n(.*?)```/s', function ($m) {
-            $lang = $m[1] ? ' class="language-' . htmlspecialchars($m[1]) . '"' : '';
+            $lang = $m[1] ? ' class="language-'.htmlspecialchars($m[1]).'"' : '';
+
             // We already escaped, need to re-allow certain chars inside code blocks
-            return '<pre' . $lang . '><code>' . $m[2] . '</code></pre>';
+            return '<pre'.$lang.'><code>'.$m[2].'</code></pre>';
         }, $text);
 
         // Convert **text** to <strong>
@@ -790,7 +800,8 @@ Sudah dinonaktifkan. Tidak ada lagi middleware berbasis method+path di backend. 
             $para = trim($para);
             // Skip if it's already a block element
             if (str_starts_with($para, '<pre') || str_starts_with($para, '<table') || str_starts_with($para, '<ul') || str_starts_with($para, '<div')) {
-                $html .= $para . "\n";
+                $html .= $para."\n";
+
                 continue;
             }
             // Convert single newlines to <br> within paragraphs
@@ -798,9 +809,9 @@ Sudah dinonaktifkan. Tidak ada lagi middleware berbasis method+path di backend. 
 
             // Check if it's a list item
             if (preg_match('/^\d+\.\s/', $para) || str_starts_with(ltrim($para), '- ')) {
-                $html .= $para . "\n";
+                $html .= $para."\n";
             } else {
-                $html .= '<p class="text-sm text-gray-600 dark:text-gray-400 mb-2">' . $para . '</p>';
+                $html .= '<p class="text-sm text-gray-600 dark:text-gray-400 mb-2">'.$para.'</p>';
             }
         }
 
@@ -810,9 +821,10 @@ Sudah dinonaktifkan. Tidak ada lagi middleware berbasis method+path di backend. 
             $lis = '';
             foreach ($items as $item) {
                 $content = preg_replace('/^\d+\.\s/', '', trim($item));
-                $lis .= '<li>' . $content . '</li>';
+                $lis .= '<li>'.$content.'</li>';
             }
-            return '<ol class="list-decimal pl-5 space-y-1 text-sm text-gray-600 dark:text-gray-400">' . $lis . '</ol>';
+
+            return '<ol class="list-decimal pl-5 space-y-1 text-sm text-gray-600 dark:text-gray-400">'.$lis.'</ol>';
         }, $html);
 
         // Convert dashes to unordered lists
@@ -823,9 +835,10 @@ Sudah dinonaktifkan. Tidak ada lagi middleware berbasis method+path di backend. 
                 if ($i === 0) {
                     $item = preg_replace('/^- /', '', $item);
                 }
-                $lis .= '<li>' . trim($item) . '</li>';
+                $lis .= '<li>'.trim($item).'</li>';
             }
-            return '<ul class="list-disc pl-5 space-y-1 text-sm text-gray-600 dark:text-gray-400">' . $lis . '</ul>';
+
+            return '<ul class="list-disc pl-5 space-y-1 text-sm text-gray-600 dark:text-gray-400">'.$lis.'</ul>';
         }, $html);
 
         return $html;
@@ -837,10 +850,11 @@ Sudah dinonaktifkan. Tidak ada lagi middleware berbasis method+path di backend. 
     private function codeBlock(string $code): string
     {
         $code = trim($code);
+
         // Use filament's default code styling
         return '<pre class="p-4 rounded-lg overflow-x-auto text-xs leading-relaxed"
             style="background: #1e293b; color: #e2e8f0; font-family: \'JetBrains Mono\', \'Fira Code\', monospace;">'
-            . htmlspecialchars($code, ENT_QUOTES, 'UTF-8', false) .
+            .htmlspecialchars($code, ENT_QUOTES, 'UTF-8', false).
             '</pre>';
     }
 }

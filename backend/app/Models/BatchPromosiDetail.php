@@ -10,9 +10,13 @@ class BatchPromosiDetail extends Model
     use HasFactory;
 
     protected $table = 'batch_promosi_details';
+
     protected $primaryKey = 'id';
+
     protected $keyType = 'int';
+
     public $incrementing = true;
+
     public $timestamps = true;
 
     protected $fillable = [

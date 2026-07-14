@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Helpers\PermissionHelper;
 use Filament\Pages\Page;
 use UnitEnum;
 
@@ -9,7 +10,7 @@ class TransaksiTagihan extends Page
 {
     protected string $view = 'filament.pages.transaksi-tagihan';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Transaksi';
+    protected static string|UnitEnum|null $navigationGroup = 'Transaksi';
 
     protected static ?string $navigationLabel = 'Tagihan';
 
@@ -26,16 +27,13 @@ class TransaksiTagihan extends Page
 
     public function mount(): void
     {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        if (!in_array('view-tagihan', $permissions)) {
-            abort(403);
-        }
+        abort_if(! PermissionHelper::hasResource('tagihan'), 403);
 
         $this->activeJenjang = request()->query('jenjang', 'KB');
     }
 
     public function getTitle(): string
     {
-        return 'Tagihan - ' . ($this->activeJenjang ?: 'Semua');
+        return 'Tagihan - '.($this->activeJenjang ?: 'Semua');
     }
 }

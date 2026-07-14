@@ -8,6 +8,7 @@ use Filament\Forms\Components\Select;
 trait HasPeriodFilter
 {
     public ?int $selectedTahunAjaranId = null;
+
     public array $tahunAjaranOptions = [];
 
     /**
@@ -22,7 +23,6 @@ trait HasPeriodFilter
      * supaya kelas seperti DashboardPage bisa override default value
      * (PHP melarang property override dengan default berbeda di trait).
      */
-
     public function mountHasPeriodFilter(?bool $allowAllPeriodsOption = null): void
     {
         // Resolusi default: parameter > property pemakai > true.
@@ -54,7 +54,7 @@ trait HasPeriodFilter
         }
 
         // Validate session value still exists in available options
-        if ($this->selectedTahunAjaranId && !$this->isValidOption($this->selectedTahunAjaranId)) {
+        if ($this->selectedTahunAjaranId && ! $this->isValidOption($this->selectedTahunAjaranId)) {
             $this->selectedTahunAjaranId = $allow ? null : $this->getAktifId();
             session()->forget('selected_tahun_ajaran_id');
         }
@@ -115,7 +115,8 @@ trait HasPeriodFilter
     {
         return collect($this->tahunAjaranOptions)
             ->mapWithKeys(function ($option) {
-                $label = $option['nama'] . ($option['status'] === 'Aktif' ? ' (Aktif)' : ' (Historis)');
+                $label = $option['nama'].($option['status'] === 'Aktif' ? ' (Aktif)' : ' (Historis)');
+
                 return [(int) $option['id'] => $label];
             })
             ->toArray();
@@ -128,6 +129,7 @@ trait HasPeriodFilter
                 return (int) $option['id'];
             }
         }
+
         return null;
     }
 
@@ -146,20 +148,25 @@ trait HasPeriodFilter
         foreach ($this->tahunAjaranOptions as $option) {
             if ((int) $option['id'] === $this->selectedTahunAjaranId) {
                 $badge = $option['status'] === 'Aktif' ? ' (Aktif)' : ' (Historis)';
-                return $option['nama'] . $badge;
+
+                return $option['nama'].$badge;
             }
         }
+
         return 'Pilih Periode';
     }
 
     private function isValidOption(?int $id): bool
     {
-        if ($id === null) return false;
+        if ($id === null) {
+            return false;
+        }
         foreach ($this->tahunAjaranOptions as $option) {
             if ((int) $option['id'] === $id) {
                 return true;
             }
         }
+
         return false;
     }
 }

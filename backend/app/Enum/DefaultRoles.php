@@ -2,10 +2,11 @@
 
 namespace App\Enum;
 
-enum DefaultRoles:string
+enum DefaultRoles: string
 {
     case SUPERADMIN = 'superadmin';
+    case DEVELOPER = 'developer';
+    case KEPALA_YAYASAN = 'kepala-yayasan';
     case ADMIN = 'admin';
-    case USER = 'user';
     case SISWA = 'siswa';
 }

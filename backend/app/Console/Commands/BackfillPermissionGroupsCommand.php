@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use App\Constant\Permissions;
 use App\Enum\Permission as PermissionEnum;
-use App\Http\Controllers\RoleController;
+use App\Http\Controllers\RbacController;
 use Illuminate\Console\Command;
 use Spatie\Permission\Models\Permission;
 
@@ -21,24 +21,24 @@ class BackfillPermissionGroupsCommand extends Command
 
         // From constant groups
         $groupDefs = [
-            'Users'              => Permissions::USERS_PERMISSIONS,
-            'Siswa'              => Permissions::SISWA_PERMISSIONS,
-            'Kelas'              => Permissions::KELAS_PERMISSIONS,
-            'Kategori'           => Permissions::KATEGORI_PERMISSIONS,
-            'Pembayaran'         => Permissions::PEMBAYARAN_PERMISSIONS,
-            'Jenis Tagihan'      => Permissions::JENIS_TAGIHAN_PERMISSIONS,
-            'Tagihan'            => Permissions::TAGIHAN_PERMISSIONS,
-            'Pengeluaran'        => Permissions::PENGELUARAN_PERMISSIONS,
-            'Approval Workflow'  => Permissions::APPROVAL_WORKFLOW_PERMISSIONS,
-            'Laporan'            => Permissions::LAPORAN_PERMISSIONS,
-            'Tahun Ajaran'       => Permissions::TAHUN_AJARAN_PERMISSIONS,
-            'Kenaikan Kelas'     => Permissions::KENAIKAN_KELAS_PERMISSIONS,
-            'Akun Siswa'         => Permissions::AKUN_SISWA_PERMISSIONS,
-            'Import Export'      => Permissions::IMPORT_EXPORT_PERMISSIONS,
-            'Dashboard'          => Permissions::DASHBOARD_PERMISSIONS,
-            'Branch'             => Permissions::BRANCH_PERMISSIONS,
-            'Midtrans (Admin)'   => Permissions::MIDTRANS_PERMISSIONS,
-            'Pengaturan'         => Permissions::SETTING_PERMISSIONS,
+            'Users' => Permissions::USERS_PERMISSIONS,
+            'Siswa' => Permissions::SISWA_PERMISSIONS,
+            'Kelas' => Permissions::KELAS_PERMISSIONS,
+            'Kategori' => Permissions::KATEGORI_PERMISSIONS,
+            'Pembayaran' => Permissions::PEMBAYARAN_PERMISSIONS,
+            'Jenis Tagihan' => Permissions::JENIS_TAGIHAN_PERMISSIONS,
+            'Tagihan' => Permissions::TAGIHAN_PERMISSIONS,
+            'Pengeluaran' => Permissions::PENGELUARAN_PERMISSIONS,
+            'Approval Workflow' => Permissions::APPROVAL_WORKFLOW_PERMISSIONS,
+            'Laporan' => Permissions::LAPORAN_PERMISSIONS,
+            'Tahun Ajaran' => Permissions::TAHUN_AJARAN_PERMISSIONS,
+            'Kenaikan Kelas' => Permissions::KENAIKAN_KELAS_PERMISSIONS,
+            'Akun Siswa' => Permissions::AKUN_SISWA_PERMISSIONS,
+            'Import Export' => Permissions::IMPORT_EXPORT_PERMISSIONS,
+            'Dashboard' => Permissions::DASHBOARD_PERMISSIONS,
+            'Branch' => Permissions::BRANCH_PERMISSIONS,
+            'Midtrans (Admin)' => Permissions::MIDTRANS_PERMISSIONS,
+            'Pengaturan' => Permissions::SETTING_PERMISSIONS,
         ];
 
         foreach ($groupDefs as $label => $group) {
@@ -73,7 +73,7 @@ class BackfillPermissionGroupsCommand extends Command
             PermissionEnum::PAY_TAGIHAN_ONLINE,
         ];
         foreach ($siswaPerms as $perm) {
-            if (!isset($map[$perm->value])) {
+            if (! isset($map[$perm->value])) {
                 $map[$perm->value] = 'Siswa & Wali';
             }
         }
@@ -114,14 +114,14 @@ class BackfillPermissionGroupsCommand extends Command
         $this->info("Selesai. {$audienceCount} permission di-set audience-nya.\n");
 
         // ── Now backfill label ──
-        $roleCtrl = new RoleController;
-        $refl = new \ReflectionMethod($roleCtrl, 'humanizePermission');
+        $rbacCtrl = new RbacController;
+        $refl = new \ReflectionMethod($rbacCtrl, 'humanizePermission');
         $refl->setAccessible(true);
 
         $allPerms = Permission::whereNull('label')->get();
         $labelCount = 0;
         foreach ($allPerms as $perm) {
-            $label = $refl->invoke($roleCtrl, $perm->name);
+            $label = $refl->invoke($rbacCtrl, $perm->name);
             $perm->update(['label' => $label]);
             $this->line("  {$perm->name} → {$label}");
             $labelCount++;

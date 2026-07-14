@@ -3,8 +3,8 @@
 namespace App\Filament\Pages\Auth;
 
 use App\Services\ApiService;
-use Illuminate\Http\RedirectResponse;
 use Filament\Auth\Http\Responses\Contracts\LogoutResponse as Responsable;
+use Illuminate\Http\RedirectResponse;
 
 class LogoutResponse implements Responsable
 {

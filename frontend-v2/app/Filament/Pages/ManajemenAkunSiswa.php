@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Helpers\PermissionHelper;
 use App\Services\ApiService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -20,8 +21,8 @@ use Filament\Tables\Table;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use UnitEnum;
 use Livewire\Attributes\Url;
+use UnitEnum;
 
 /**
  * Halaman Manajemen Akun Siswa.
@@ -45,6 +46,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
     protected string $view = 'filament.pages.manajemen-akun-siswa';
 
     public const TAB_TERDAFTAR = 'terdaftar';
+
     public const TAB_BELUM_TERDAFTAR = 'belum-terdaftar';
 
     #[Url(as: 'tab')]
@@ -52,25 +54,21 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
 
     public static function shouldRegisterNavigation(): bool
     {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        return in_array('view-akun-siswa', $permissions);
+        return PermissionHelper::hasResource('akun-siswa');
     }
 
     public function mount(): void
     {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        if (!in_array('view-akun-siswa', $permissions)) {
-            abort(403);
-        }
+        abort_if(! PermissionHelper::hasResource('akun-siswa'), 403);
 
-        if (!in_array($this->tab, [self::TAB_TERDAFTAR, self::TAB_BELUM_TERDAFTAR], true)) {
+        if (! in_array($this->tab, [self::TAB_TERDAFTAR, self::TAB_BELUM_TERDAFTAR], true)) {
             $this->tab = self::TAB_TERDAFTAR;
         }
     }
 
     public function setTab(string $tab): void
     {
-        if (!in_array($tab, [self::TAB_TERDAFTAR, self::TAB_BELUM_TERDAFTAR], true)) {
+        if (! in_array($tab, [self::TAB_TERDAFTAR, self::TAB_BELUM_TERDAFTAR], true)) {
             return;
         }
 
@@ -101,25 +99,24 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
     {
         return $table
             ->records(
-                fn(?string $search, int $page, int $recordsPerPage, array $filters = []): LengthAwarePaginator
-                    => $this->fetchRegistered($search, $page, $recordsPerPage, $filters),
+                fn (?string $search, int $page, int $recordsPerPage, array $filters = []): LengthAwarePaginator => $this->fetchRegistered($search, $page, $recordsPerPage, $filters),
             )
             ->columns([
                 TextColumn::make('name')
                     ->label('Nama')
                     ->sortable()
                     ->searchable()
-                    ->state(fn(array $record): string => $record['name'] ?? $record['siswa']['nama'] ?? '-'),
+                    ->state(fn (array $record): string => $record['name'] ?? $record['siswa']['nama'] ?? '-'),
                 TextColumn::make('username')
                     ->label('Username')
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('kelas')
                     ->label('Kelas')
-                    ->state(fn(array $record): string => $record['siswa']['kelas']['nama'] ?? '-'),
+                    ->state(fn (array $record): string => $record['siswa']['kelas']['nama'] ?? '-'),
                 TextColumn::make('jenjang')
                     ->label('Jenjang')
-                    ->state(fn(array $record): string => $record['siswa']['jenjang'] ?? '-'),
+                    ->state(fn (array $record): string => $record['siswa']['jenjang'] ?? '-'),
                 IconColumn::make('is_active')
                     ->label('Aktif')
                     ->boolean()
@@ -127,7 +124,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                     ->falseIcon('heroicon-o-x-circle')
                     ->trueColor('success')
                     ->falseColor('danger')
-                    ->state(fn(array $record): bool => $record['is_active'] ?? false),
+                    ->state(fn (array $record): bool => $record['is_active'] ?? false),
             ])
             ->filters([
                 SelectFilter::make('jenjang')
@@ -135,28 +132,31 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                     ->options(['KB' => 'KB', 'TK' => 'TK', 'MI' => 'MI']),
                 SelectFilter::make('kelas')
                     ->label('Kelas')
-                    ->options(fn() => $this->kelasOptionsForRegistered()),
+                    ->options(fn () => $this->kelasOptionsForRegistered()),
             ])
             ->bulkActions([
                 BulkAction::make('toggleActive')
                     ->label('Toggle Status Aktif')
+                    ->visible(fn (): bool => PermissionHelper::hasResource('akun-siswa.toggle-active'))
                     ->icon('heroicon-o-arrow-path')
                     ->requiresConfirmation()
                     ->modalHeading('Toggle Status Aktif')
                     ->modalDescription('Apakah Anda yakin ingin mengubah status aktif akun yang dipilih?')
-                    ->action(fn(Collection $records) => $this->bulkToggleActive($records))
+                    ->action(fn (Collection $records) => $this->bulkToggleActive($records))
                     ->deselectRecordsAfterCompletion(),
                 BulkAction::make('resetPassword')
                     ->label('Reset Password')
+                    ->visible(fn (): bool => PermissionHelper::hasResource('akun-siswa.reset-password'))
                     ->icon('heroicon-o-key')
                     ->color('warning')
                     ->requiresConfirmation()
                     ->modalHeading('Reset Password')
                     ->modalDescription('Apakah Anda yakin ingin mereset password akun yang dipilih ke default (tanggal lahir DDMMYYYY)?')
-                    ->action(fn(Collection $records) => $this->bulkResetPassword($records))
+                    ->action(fn (Collection $records) => $this->bulkResetPassword($records))
                     ->deselectRecordsAfterCompletion(),
                 BulkAction::make('viewCredentials')
                     ->label('Lihat Kredensial')
+                    ->visible(fn (): bool => PermissionHelper::hasResource('akun-siswa.view-credentials'))
                     ->icon('heroicon-o-eye')
                     ->color('info')
                     ->modalHeading('Kredensial Akun Siswa')
@@ -171,11 +171,12 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
 
                         return view('livewire.partials.credentials-modal', [
                             'credentials' => $credentials,
-                            'key' => 'creds-' . md5(implode(',', $ids)),
+                            'key' => 'creds-'.md5(implode(',', $ids)),
                         ]);
                     }),
                 BulkAction::make('printPdf')
                     ->label('Cetak PDF')
+                    ->visible(fn (): bool => PermissionHelper::hasResource('akun-siswa.print'))
                     ->icon('heroicon-o-printer')
                     ->color('success')
                     ->action(function (Collection $records) {
@@ -185,17 +186,18 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                             ->withHeaders(['Accept' => 'application/pdf'])
                             ->get('/akun-siswa/credentials-pdf', ['ids' => implode(',', $ids)]);
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             Notification::make()
                                 ->title('Gagal mencetak PDF')
                                 ->body('Tidak dapat mengambil data kredensial dari server.')
                                 ->danger()
                                 ->send();
+
                             return null;
                         }
 
                         $body = $response->body();
-                        $filename = 'kredensial-akun-siswa-' . now()->format('Ymd-His') . '.pdf';
+                        $filename = 'kredensial-akun-siswa-'.now()->format('Ymd-His').'.pdf';
 
                         return response()->streamDownload(function () use ($body) {
                             echo $body;
@@ -207,6 +209,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
             ])
             ->recordActions([
                 Action::make('resetPassword')
+                    ->visible(fn (): bool => PermissionHelper::hasResource('akun-siswa.reset-password'))
                     ->tooltip('Reset Password')
                     ->icon('heroicon-s-key')
                     ->iconButton()
@@ -216,15 +219,17 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                     ->modalDescription('Apakah Anda yakin ingin mereset password akun ini ke default (tanggal lahir DDMMYYYY)?')
                     ->modalSubmitActionLabel('Reset')
                     ->action(function ($record): void {
-                        $response = ApiService::client()->post('/akun-siswa/' . $record['id'] . '/reset-password');
+                        $response = ApiService::client()->post('/akun-siswa/'.$record['id'].'/reset-password');
 
                         if ($response->status() === 404) {
                             Notification::make()->title('Gagal')->body('Akun tidak ditemukan.')->danger()->send();
+
                             return;
                         }
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             Notification::make()->title('Gagal')->body('Terjadi kesalahan pada server.')->danger()->send();
+
                             return;
                         }
 
@@ -234,28 +239,31 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                             ->success()
                             ->send();
                     })
-                    ->after(fn() => $this->resetTable()),
+                    ->after(fn () => $this->resetTable()),
                 Action::make('toggleActive')
-                    ->tooltip(fn($record) => ($record['is_active'] ?? false) ? 'Nonaktifkan' : 'Aktifkan')
-                    ->icon(fn($record) => ($record['is_active'] ?? false) ? 'heroicon-s-x-circle' : 'heroicon-s-check-circle')
+                    ->visible(fn ($record): bool => PermissionHelper::hasResource('akun-siswa.toggle-active'))
+                    ->tooltip(fn ($record) => ($record['is_active'] ?? false) ? 'Nonaktifkan' : 'Aktifkan')
+                    ->icon(fn ($record) => ($record['is_active'] ?? false) ? 'heroicon-s-x-circle' : 'heroicon-s-check-circle')
                     ->iconButton()
-                    ->color(fn($record) => ($record['is_active'] ?? false) ? 'danger' : 'success')
+                    ->color(fn ($record) => ($record['is_active'] ?? false) ? 'danger' : 'success')
                     ->requiresConfirmation()
-                    ->modalHeading(fn($record) => ($record['is_active'] ?? false) ? 'Nonaktifkan Akun' : 'Aktifkan Akun')
-                    ->modalDescription(fn($record) => ($record['is_active'] ?? false)
+                    ->modalHeading(fn ($record) => ($record['is_active'] ?? false) ? 'Nonaktifkan Akun' : 'Aktifkan Akun')
+                    ->modalDescription(fn ($record) => ($record['is_active'] ?? false)
                         ? 'Apakah Anda yakin ingin menonaktifkan akun ini?'
                         : 'Apakah Anda yakin ingin mengaktifkan akun ini?')
                     ->modalSubmitActionLabel('Ya')
                     ->action(function ($record): void {
-                        $response = ApiService::client()->patch('/akun-siswa/' . $record['id'] . '/toggle-active');
+                        $response = ApiService::client()->patch('/akun-siswa/'.$record['id'].'/toggle-active');
 
                         if ($response->status() === 404) {
                             Notification::make()->title('Gagal')->body('Akun tidak ditemukan.')->danger()->send();
+
                             return;
                         }
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             Notification::make()->title('Gagal')->body('Terjadi kesalahan pada server.')->danger()->send();
+
                             return;
                         }
 
@@ -264,7 +272,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
 
                         Notification::make()->title('Berhasil')->body("Akun berhasil {$status}.")->success()->send();
                     })
-                    ->after(fn() => $this->resetTable()),
+                    ->after(fn () => $this->resetTable()),
             ])
             ->headerActions([])
             ->deferLoading()
@@ -282,26 +290,26 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
         try {
             $response = ApiService::client()->get('/akun-siswa', ['per_page' => 200]);
 
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 return new LengthAwarePaginator([], 0, $recordsPerPage, $page);
             }
 
             $collection = collect($response->json('data') ?? []);
 
-            if (!empty($filters['jenjang']['value'] ?? null)) {
+            if (! empty($filters['jenjang']['value'] ?? null)) {
                 $jenjang = $filters['jenjang']['value'];
-                $collection = $collection->filter(fn(array $r) => ($r['siswa']['jenjang'] ?? '') === $jenjang);
+                $collection = $collection->filter(fn (array $r) => ($r['siswa']['jenjang'] ?? '') === $jenjang);
             }
 
-            if (!empty($filters['kelas']['value'] ?? null)) {
+            if (! empty($filters['kelas']['value'] ?? null)) {
                 $kelas = $filters['kelas']['value'];
-                $collection = $collection->filter(fn(array $r) => ($r['siswa']['kelas']['nama'] ?? '') === $kelas);
+                $collection = $collection->filter(fn (array $r) => ($r['siswa']['kelas']['nama'] ?? '') === $kelas);
             }
 
             if (filled($search)) {
                 $needle = Str::lower($search);
                 $collection = $collection->filter(
-                    fn(array $r): bool => str_contains(Str::lower($r['name'] ?? ''), $needle)
+                    fn (array $r): bool => str_contains(Str::lower($r['name'] ?? ''), $needle)
                         || str_contains(Str::lower($r['username'] ?? ''), $needle)
                         || str_contains(Str::lower($r['siswa']['nama'] ?? ''), $needle)
                         || str_contains(Str::lower($r['siswa']['jenjang'] ?? ''), $needle)
@@ -322,16 +330,16 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
     {
         try {
             $response = ApiService::client()->get('/akun-siswa', ['per_page' => 200]);
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 return [];
             }
 
             return collect($response->json('data') ?? [])
-                ->map(fn($r) => $r['siswa']['kelas']['nama'] ?? null)
+                ->map(fn ($r) => $r['siswa']['kelas']['nama'] ?? null)
                 ->filter()
                 ->unique()
                 ->sort()
-                ->mapWithKeys(fn($kelas) => [$kelas => $kelas])
+                ->mapWithKeys(fn ($kelas) => [$kelas => $kelas])
                 ->toArray();
         } catch (\Throwable $e) {
             return [];
@@ -344,7 +352,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
         $fail = 0;
 
         foreach ($records as $r) {
-            $response = ApiService::client()->patch('/akun-siswa/' . $r['id'] . '/toggle-active');
+            $response = ApiService::client()->patch('/akun-siswa/'.$r['id'].'/toggle-active');
             $response->ok() ? $success++ : $fail++;
         }
 
@@ -364,7 +372,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
         $fail = 0;
 
         foreach ($records as $r) {
-            $response = ApiService::client()->post('/akun-siswa/' . $r['id'] . '/reset-password');
+            $response = ApiService::client()->post('/akun-siswa/'.$r['id'].'/reset-password');
             $response->ok() ? $success++ : $fail++;
         }
 
@@ -384,8 +392,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
     {
         return $table
             ->records(
-                fn(?string $search, int $page, int $recordsPerPage, array $filters = []): LengthAwarePaginator
-                    => $this->fetchUnregistered($search, $page, $recordsPerPage, $filters),
+                fn (?string $search, int $page, int $recordsPerPage, array $filters = []): LengthAwarePaginator => $this->fetchUnregistered($search, $page, $recordsPerPage, $filters),
             )
             ->columns([
                 TextColumn::make('nis')->label('NIS')->searchable()->sortable(),
@@ -393,7 +400,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                 TextColumn::make('jenjang')->label('Jenjang')->sortable(),
                 TextColumn::make('kelas_nama')
                     ->label('Kelas')
-                    ->state(fn(array $record): string => $record['kelas']['nama'] ?? $record['kelas_nama'] ?? '-'),
+                    ->state(fn (array $record): string => $record['kelas']['nama'] ?? $record['kelas_nama'] ?? '-'),
             ])
             ->filters([
                 SelectFilter::make('jenjang')
@@ -401,17 +408,18 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                     ->options(['KB' => 'KB', 'TK' => 'TK', 'MI' => 'MI']),
                 SelectFilter::make('kelas')
                     ->label('Kelas')
-                    ->options(fn() => $this->kelasOptionsForUnregistered()),
+                    ->options(fn () => $this->kelasOptionsForUnregistered()),
             ])
             ->bulkActions([
                 BulkAction::make('buatAkun')
                     ->label('Buat Akun')
+                    ->visible(fn (): bool => PermissionHelper::hasResource('akun-siswa.generate'))
                     ->icon('heroicon-o-user-plus')
                     ->color('primary')
                     ->requiresConfirmation()
                     ->modalHeading('Buat Akun Siswa')
-                    ->modalDescription(fn(Collection $records) => "Apakah Anda yakin ingin membuat akun untuk {$records->count()} siswa yang dipilih?")
-                    ->action(fn(Collection $records) => $this->bulkCreateAccounts($records))
+                    ->modalDescription(fn (Collection $records) => "Apakah Anda yakin ingin membuat akun untuk {$records->count()} siswa yang dipilih?")
+                    ->action(fn (Collection $records) => $this->bulkCreateAccounts($records))
                     ->deselectRecordsAfterCompletion(),
             ])
             ->deferLoading()
@@ -429,27 +437,27 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
         try {
             $params = ['per_page' => 200];
 
-            if (!empty($filters['jenjang']['value'] ?? null)) {
+            if (! empty($filters['jenjang']['value'] ?? null)) {
                 $params['jenjang'] = $filters['jenjang']['value'];
             }
 
             $response = ApiService::client()->get('/akun-siswa/unregistered', $params);
 
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 return new LengthAwarePaginator([], 0, $recordsPerPage, $page);
             }
 
             $collection = collect($response->json('data') ?? []);
 
-            if (!empty($filters['kelas']['value'] ?? null)) {
+            if (! empty($filters['kelas']['value'] ?? null)) {
                 $kelas = $filters['kelas']['value'];
-                $collection = $collection->filter(fn(array $r) => ($r['kelas']['nama'] ?? '') === $kelas);
+                $collection = $collection->filter(fn (array $r) => ($r['kelas']['nama'] ?? '') === $kelas);
             }
 
             if (filled($search)) {
                 $needle = Str::lower($search);
                 $collection = $collection->filter(
-                    fn(array $r): bool => str_contains(Str::lower($r['nis'] ?? ''), $needle)
+                    fn (array $r): bool => str_contains(Str::lower($r['nis'] ?? ''), $needle)
                         || str_contains(Str::lower($r['nama'] ?? ''), $needle)
                         || str_contains(Str::lower($r['jenjang'] ?? ''), $needle)
                         || str_contains(Str::lower($r['kelas']['nama'] ?? ''), $needle)
@@ -462,6 +470,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
             return new LengthAwarePaginator($items, $total, $recordsPerPage, $page);
         } catch (\Throwable $e) {
             Notification::make()->title('Gagal memuat data siswa')->danger()->send();
+
             return new LengthAwarePaginator([], 0, $recordsPerPage, $page);
         }
     }
@@ -470,16 +479,16 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
     {
         try {
             $response = ApiService::client()->get('/akun-siswa/unregistered', ['per_page' => 100]);
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 return [];
             }
 
             return collect($response->json('data') ?? [])
-                ->map(fn($r) => $r['kelas']['nama'] ?? null)
+                ->map(fn ($r) => $r['kelas']['nama'] ?? null)
                 ->filter()
                 ->unique()
                 ->sort()
-                ->mapWithKeys(fn($kelas) => [$kelas => $kelas])
+                ->mapWithKeys(fn ($kelas) => [$kelas => $kelas])
                 ->toArray();
         } catch (\Throwable $e) {
             return [];
@@ -492,6 +501,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
 
         if (empty($ids)) {
             Notification::make()->title('Pilih minimal satu siswa untuk membuat akun.')->warning()->send();
+
             return;
         }
 
@@ -511,10 +521,10 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                         ->send();
                 }
 
-                if (!empty($errors)) {
+                if (! empty($errors)) {
                     Notification::make()
                         ->title('Sebagian Gagal')
-                        ->body(count($errors) . ' akun gagal dibuat.')
+                        ->body(count($errors).' akun gagal dibuat.')
                         ->warning()
                         ->send();
                 }

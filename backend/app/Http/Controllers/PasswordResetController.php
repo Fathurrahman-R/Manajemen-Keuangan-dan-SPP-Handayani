@@ -36,7 +36,7 @@ class PasswordResetController extends Controller
     {
         $resetToken = $this->passwordResetService->validateToken($token);
 
-        if (!$resetToken) {
+        if (! $resetToken) {
             return response()->json([
                 'valid' => false,
                 'message' => 'Token tidak valid atau sudah kadaluarsa.',
@@ -64,7 +64,7 @@ class PasswordResetController extends Controller
             $request->input('password')
         );
 
-        if (!$success) {
+        if (! $success) {
             return response()->json([
                 'message' => 'Token tidak valid atau sudah kadaluarsa.',
             ], 422);

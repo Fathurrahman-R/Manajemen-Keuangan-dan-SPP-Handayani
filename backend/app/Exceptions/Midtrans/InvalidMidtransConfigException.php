@@ -5,6 +5,7 @@ namespace App\Exceptions\Midtrans;
 class InvalidMidtransConfigException extends MidtransException
 {
     public string $errorCode = 'INVALID_MIDTRANS_CONFIG';
+
     public int $httpStatus = 500;
 
     public function __construct(string $variableName, mixed $value)

@@ -11,7 +11,7 @@ class EmailOptOutController extends Controller
     {
         $optOut = EmailOptOut::where('token', $token)->first();
 
-        if (!$optOut) {
+        if (! $optOut) {
             abort(404, 'Link tidak valid atau sudah kadaluarsa.');
         }
 
@@ -26,14 +26,14 @@ class EmailOptOutController extends Controller
     {
         $optOut = EmailOptOut::where('token', $token)->first();
 
-        if (!$optOut) {
+        if (! $optOut) {
             abort(404, 'Link tidak valid atau sudah kadaluarsa.');
         }
 
         $type = $request->input('type', 'all');
         $validTypes = ['tagihan_baru', 'reminder', 'kwitansi', 'overdue', 'all'];
 
-        if (!in_array($type, $validTypes)) {
+        if (! in_array($type, $validTypes)) {
             $type = 'all';
         }
 

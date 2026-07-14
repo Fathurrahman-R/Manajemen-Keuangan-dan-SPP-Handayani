@@ -14,7 +14,7 @@ class StatusMapperTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->mapper = new StatusMapper();
+        $this->mapper = new StatusMapper;
     }
 
     #[DataProvider('statusMappingProvider')]

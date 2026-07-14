@@ -225,7 +225,7 @@ class DashboardController extends Controller
                 ->where('branch_id', $branchId)
                 ->first();
 
-            if (!$siswa) {
+            if (! $siswa) {
                 return response()->json([
                     'message' => 'Anda tidak memiliki akses ke data siswa ini.',
                 ], 403);
@@ -240,7 +240,7 @@ class DashboardController extends Controller
             }
 
             // For wali users, verify the siswa is their child
-            if (!$user->siswa_id && $user->hasRole('wali')) {
+            if (! $user->siswa_id && $user->hasRole('wali')) {
                 $isChild = Siswa::where('id', $siswaId)
                     ->where('branch_id', $branchId)
                     ->whereHas('wali', function ($q) use ($user) {
@@ -248,7 +248,7 @@ class DashboardController extends Controller
                     })
                     ->exists();
 
-                if (!$isChild) {
+                if (! $isChild) {
                     return response()->json([
                         'message' => 'Anda tidak memiliki akses ke data siswa ini.',
                     ], 403);
@@ -267,7 +267,7 @@ class DashboardController extends Controller
                     ->orderBy('nis', 'asc')
                     ->first();
 
-                if (!$firstChild) {
+                if (! $firstChild) {
                     return response()->json([
                         'data' => [
                             'total_tagihan' => 0,
@@ -283,7 +283,7 @@ class DashboardController extends Controller
             }
         }
 
-        if (!isset($siswaId) || !$siswaId) {
+        if (! isset($siswaId) || ! $siswaId) {
             return response()->json([
                 'data' => [
                     'total_tagihan' => 0,

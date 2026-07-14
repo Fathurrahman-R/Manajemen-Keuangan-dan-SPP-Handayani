@@ -5,6 +5,7 @@ namespace App\Exceptions\Midtrans;
 class MidtransNotConfiguredException extends MidtransException
 {
     public string $errorCode = 'MIDTRANS_NOT_CONFIGURED';
+
     public int $httpStatus = 503;
 
     public function __construct()

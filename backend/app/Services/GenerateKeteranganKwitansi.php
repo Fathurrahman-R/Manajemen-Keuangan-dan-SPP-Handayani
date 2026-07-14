@@ -29,6 +29,7 @@ class GenerateKeteranganKwitansi
             ->translatedFormat('F Y'); // contoh: "Maret"
 
         $keterangan = "{$nama_tagihan} {$nama_siswa} {$bulan}";
+
         return $keterangan;
     }
 }

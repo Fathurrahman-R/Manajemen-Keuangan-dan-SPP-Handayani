@@ -17,9 +17,9 @@ class JenisTagihanFactory extends Factory
     public function definition(): array
     {
         return [
-            'nama'=>$this->faker->randomElement(['Pendaftaran Ulang','SPP Januari','SPP Februari','SPP Maret']),
-            'jatuh_tempo'=>$this->faker->date(),
-            'jumlah'=>$this->faker->numberBetween(50000,100000),
+            'nama' => $this->faker->randomElement(['Pendaftaran Ulang', 'SPP Januari', 'SPP Februari', 'SPP Maret']),
+            'jatuh_tempo' => $this->faker->date(),
+            'jumlah' => $this->faker->numberBetween(50000, 100000),
         ];
     }
 }

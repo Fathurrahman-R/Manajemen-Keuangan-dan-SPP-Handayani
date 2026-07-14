@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Wali;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class WaliSeeder extends Seeder
@@ -16,10 +15,10 @@ class WaliSeeder extends Seeder
         Wali::create([
             'id' => 1,
             'nama' => 'Wali',
-            'pekerjaan'=>'Wiraswasta',
-            'alamat'=>'Pontianak',
-            'no_hp'=>'081122334455',
-            'keterangan'=>''
+            'pekerjaan' => 'Wiraswasta',
+            'alamat' => 'Pontianak',
+            'no_hp' => '081122334455',
+            'keterangan' => '',
         ]);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Portal\Pages;
 
+use App\Helpers\PermissionHelper;
 use BackedEnum;
 use Filament\Pages\Page;
 
@@ -27,7 +28,7 @@ class PortalTagihanPage extends Page
     public function mount(): void
     {
         $roles = session()->get('data.roles', []);
-        if (!in_array('siswa', $roles) && !in_array('wali', $roles)) {
+        if (! PermissionHelper::hasResource('portal-access')) {
             abort(403);
         }
     }

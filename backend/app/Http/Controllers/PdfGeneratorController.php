@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\KasResource;
 use App\Models\AppSetting;
 use App\Models\Pembayaran;
 use App\Models\Pengeluaran;
@@ -20,14 +19,14 @@ class PdfGeneratorController extends Controller
     public function get(string $kode_pembayaran)
     {
         $appSetting = AppSetting::query()->first();
-        if (!$appSetting) {
+        if (! $appSetting) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
                     'message' => [
-                        'informasi sekolah tidak ditemukan! mohon untuk mengisi informasi sekolah terlebih dahulu.'
-                    ]
-                ]
-            ],404));
+                        'informasi sekolah tidak ditemukan! mohon untuk mengisi informasi sekolah terlebih dahulu.',
+                    ],
+                ],
+            ], 404));
         }
         // Ambil resource kwitansi sebagai array data sederhana
         $resource = PembayaranController::kwitansi($kode_pembayaran); // KwitansiResource
@@ -40,24 +39,25 @@ class PdfGeneratorController extends Controller
             // Absolute filesystem path DomPDF can read
             $logo = Storage::disk('public')->path($logoRelative);
         }
-        if (!$logo) {
+        if (! $logo) {
             $logo = public_path('favicon.ico');
         }
 
         // Gabungkan ke payload view (blade mengharapkan variabel terpisah)
         $viewData = [
             'kode_pembayaran' => $data['kode_pembayaran'],
-            'setting'   => $data['setting'] ?? [],
-            'tanggal'   => $data['tanggal'] ?? null,
-            'pembayar'  => $data['pembayar'] ?? null,
-            'jumlah'    => $data['jumlah'] ?? 0,
-            'untuk'     => $data['untuk'] ?? '-',
-            'sejumlah'  => $data['sejumlah'] ?? '-',
-            'logo'      => $logo,
+            'setting' => $data['setting'] ?? [],
+            'tanggal' => $data['tanggal'] ?? null,
+            'pembayar' => $data['pembayar'] ?? null,
+            'jumlah' => $data['jumlah'] ?? 0,
+            'untuk' => $data['untuk'] ?? '-',
+            'sejumlah' => $data['sejumlah'] ?? '-',
+            'logo' => $logo,
         ];
 
         $pdf = Pdf::loadView('kwitansi', $viewData)
-        ->setPaper('A6', 'landscape');
+            ->setPaper('A6', 'landscape');
+
         return $pdf->stream("kwitansi-{$kode_pembayaran}.pdf");
     }
 
@@ -79,13 +79,14 @@ class PdfGeneratorController extends Controller
         $keteranganByTanggal = $this->buildKeteranganByTanggal($branchId, $start, $end);
 
         $viewData = [
-            'rows'  => $kas,
+            'rows' => $kas,
             'bulan' => $bulan,
             'tahun' => $tahun,
             'keterangan' => $keteranganByTanggal,
         ];
         $pdf = Pdf::loadView('Laporan.kas-harian', $viewData)
             ->setPaper('A4', 'landscape');
+
         return $pdf->stream("Kas harian {$request->bulan}.pdf");
     }
 
@@ -99,12 +100,13 @@ class PdfGeneratorController extends Controller
         $catatanByBulan = $this->buildCatatanByBulan($branchId, $tahun);
 
         $viewData = [
-            'rows'  => $rekap,
+            'rows' => $rekap,
             'tahun' => $tahun,
             'catatan' => $catatanByBulan,
         ];
         $pdf = Pdf::loadView('Laporan.rekap-bulanan', $viewData)
             ->setPaper('A4', 'landscape');
+
         return $pdf->stream("Rekap Bulanan {$request->tahun}.pdf");
     }
 

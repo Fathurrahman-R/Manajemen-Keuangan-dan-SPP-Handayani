@@ -2,18 +2,17 @@
 
 namespace App\Livewire;
 
+use App\Helpers\PermissionHelper;
 use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
-use Illuminate\Http\Client\ConnectionException;
-use Livewire\Component;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
-use Filament\Actions\BulkAction;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Support\Enums\Alignment;
@@ -23,20 +22,15 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
+use Livewire\Component;
 
 class UserManagement extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
     use HandlesApiErrors;
-
-    protected function hasPermission(string $permission): bool
-    {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        return in_array($permission, $permissions);
-    }
+    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     protected function getBranchOptions(): array
     {
@@ -44,16 +38,16 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
         $users = $response->collect('data');
 
         return $users
-            ->filter(fn(array $user): bool => isset($user['branch']['id'], $user['branch']['location']))
+            ->filter(fn (array $user): bool => isset($user['branch']['id'], $user['branch']['location']))
             ->pluck('branch')
             ->unique('id')
-            ->mapWithKeys(fn(array $branch): array => [$branch['id'] => $branch['location']])
+            ->mapWithKeys(fn (array $branch): array => [$branch['id'] => $branch['location']])
             ->toArray();
     }
 
     protected function getRoleOptions(): array
     {
-        $response = ApiService::client()->get('/roles');
+        $response = ApiService::client()->get('/rbac/roles');
         $roles = $response->collect('data');
 
         return $roles
@@ -80,13 +74,13 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                 ->helperText('Wajib diisi. User akan diminta verifikasi email saat login pertama kali.'),
             Select::make('branch_id')
                 ->label('Cabang')
-                ->options(fn(): array => $this->getBranchOptions())
+                ->options(fn (): array => $this->getBranchOptions())
                 ->required()
                 ->searchable(),
             CheckboxList::make('roles')
                 ->label('Role')
-                ->options(fn(): array => collect($this->getRoleOptions())
-                    ->reject(fn($label, $key) => $key === 'superadmin')
+                ->options(fn (): array => collect($this->getRoleOptions())
+                    ->reject(fn ($label, $key) => $key === 'superadmin')
                     ->toArray())
                 ->required()
                 ->columns(2),
@@ -123,7 +117,7 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                             $params['search'] = $search;
                         }
 
-                        if (!empty($filters['role']['value'])) {
+                        if (! empty($filters['role']['value'])) {
                             $params['role'] = $filters['role']['value'];
                         }
 
@@ -134,8 +128,9 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
 
                         $response = ApiService::client()->get('/users', $params);
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             $this->handleApiError($response);
+
                             return new LengthAwarePaginator([], 0, $recordsPerPage, $page);
                         }
 
@@ -145,9 +140,11 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                         return new LengthAwarePaginator($data, $total, $recordsPerPage, $page);
                     } catch (ConnectionException $e) {
                         $this->notifyConnectionError();
+
                         return new LengthAwarePaginator([], 0, $recordsPerPage, $page);
                     } catch (\Throwable $e) {
                         $this->notifyUnexpectedError();
+
                         return new LengthAwarePaginator([], 0, $recordsPerPage, $page);
                     }
                 },
@@ -181,6 +178,7 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                         if (isset($record['roles']) && is_array($record['roles'])) {
                             return implode(', ', $record['roles']);
                         }
+
                         return '-';
                     }),
                 \Filament\Tables\Columns\IconColumn::make('is_active')
@@ -202,7 +200,7 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
             ->filters([
                 SelectFilter::make('role')
                     ->label('Role')
-                    ->options(fn(): array => $this->getRoleOptions()),
+                    ->options(fn (): array => $this->getRoleOptions()),
             ])
             ->paginated([5, 10, 25, 50])
             ->defaultPaginationPageOption(10)
@@ -218,20 +216,20 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                     ->color('warning')
                     ->modalHeading('Ubah User')
                     ->modalWidth('2xl')
-                    ->visible(fn(): bool => $this->hasPermission('update-user'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('user-management.update'))
                     ->modalFooterActions(function (Action $action) {
                         return [
                             $action->getModalSubmitAction()
                                 ->label('Simpan')
                                 ->color('primary')
                                 ->extraAttributes([
-                                    'class' => 'text-white font-semibold'
+                                    'class' => 'text-white font-semibold',
                                 ]),
                             $action->getModalCancelAction()->label('Batal'),
                         ];
                     })
                     ->modalFooterActionsAlignment(Alignment::End)
-                    ->fillForm(fn(array $record): array => [
+                    ->fillForm(fn (array $record): array => [
                         'username' => $record['username'] ?? '',
                         'name' => $record['name'] ?? '',
                         'email' => $record['email'] ?? '',
@@ -250,12 +248,12 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                         ];
 
                         // Only include password if it's not empty
-                        if (!empty($data['password'])) {
+                        if (! empty($data['password'])) {
                             $payload['password'] = $data['password'];
                         }
 
                         $response = ApiService::client()
-                            ->put('/users/' . $record['id'], $payload);
+                            ->put('/users/'.$record['id'], $payload);
 
                         if ($response->status() === 404) {
                             Notification::make()
@@ -263,6 +261,7 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                                 ->body('User tidak ditemukan.')
                                 ->danger()
                                 ->send();
+
                             return;
                         }
 
@@ -282,15 +281,17 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                                 ->body($errorMessage)
                                 ->danger()
                                 ->send();
+
                             return;
                         }
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             Notification::make()
                                 ->title('Gagal')
                                 ->body('Terjadi kesalahan pada server.')
                                 ->danger()
                                 ->send();
+
                             return;
                         }
 
@@ -303,22 +304,23 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                         $this->resetTable();
                     }),
                 Action::make('toggleActive')
-                    ->tooltip(fn($record) => ($record['is_active'] ?? false) ? 'Nonaktifkan' : 'Aktifkan')
-                    ->icon(fn($record) => ($record['is_active'] ?? false) ? 'heroicon-s-x-circle' : 'heroicon-s-check-circle')
+                    ->tooltip(fn ($record) => ($record['is_active'] ?? false) ? 'Nonaktifkan' : 'Aktifkan')
+                    ->icon(fn ($record) => ($record['is_active'] ?? false) ? 'heroicon-s-x-circle' : 'heroicon-s-check-circle')
                     ->iconButton()
-                    ->color(fn($record) => ($record['is_active'] ?? false) ? 'danger' : 'success')
-                    ->visible(fn(): bool => $this->hasPermission('update-user'))
+                    ->color(fn ($record) => ($record['is_active'] ?? false) ? 'danger' : 'success')
+                    ->visible(fn (): bool => PermissionHelper::hasResource('user-management.update'))
                     ->requiresConfirmation()
-                    ->modalHeading(fn($record) => ($record['is_active'] ?? false) ? 'Nonaktifkan User' : 'Aktifkan User')
-                    ->modalDescription(fn($record) => ($record['is_active'] ?? false)
+                    ->modalHeading(fn ($record) => ($record['is_active'] ?? false) ? 'Nonaktifkan User' : 'Aktifkan User')
+                    ->modalDescription(fn ($record) => ($record['is_active'] ?? false)
                         ? 'User yang dinonaktifkan tidak akan bisa login. Token aktif akan dicabut.'
                         : 'User akan diaktifkan kembali dan bisa login.')
                     ->modalSubmitActionLabel('Ya')
                     ->action(function ($record): void {
-                        $response = ApiService::client()->patch('/users/' . $record['id'] . '/toggle-active');
+                        $response = ApiService::client()->patch('/users/'.$record['id'].'/toggle-active');
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             Notification::make()->title('Gagal')->body('Terjadi kesalahan pada server.')->danger()->send();
+
                             return;
                         }
 
@@ -326,21 +328,21 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                         $status = ($data['is_active'] ?? false) ? 'diaktifkan' : 'dinonaktifkan';
                         Notification::make()->title('Berhasil')->body("User berhasil {$status}.")->success()->send();
                     })
-                    ->after(fn() => $this->resetTable()),
+                    ->after(fn () => $this->resetTable()),
                 Action::make('delete')
                     ->tooltip('Hapus User')
                     ->icon('heroicon-s-trash')
                     ->iconButton()
                     ->color('danger')
-                    ->visible(fn($record): bool => $this->hasPermission('delete-user')
-                        && !in_array('superadmin', $record['roles'] ?? []))
+                    ->visible(fn ($record): bool => PermissionHelper::hasResource('user-management.delete')
+                        && ! in_array('superadmin', $record['roles'] ?? []))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus User')
                     ->modalDescription('Apakah Anda yakin ingin menghapus user ini?')
                     ->modalSubmitActionLabel('Hapus')
                     ->action(function ($record): void {
                         $response = ApiService::client()
-                            ->delete('/users/' . $record['id']);
+                            ->delete('/users/'.$record['id']);
 
                         if ($response->status() === 404) {
                             Notification::make()
@@ -348,15 +350,17 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                                 ->body('User tidak ditemukan.')
                                 ->danger()
                                 ->send();
+
                             return;
                         }
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             Notification::make()
                                 ->title('Gagal')
                                 ->body('Terjadi kesalahan pada server.')
                                 ->danger()
                                 ->send();
+
                             return;
                         }
 
@@ -374,7 +378,7 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                     ->label('Hapus Terpilih')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
-                    ->visible(fn(): bool => in_array('delete-user', session()->get('data.permissions', [])))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('user-management.delete'))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus User Terpilih')
                     ->modalDescription('Apakah kamu yakin ingin menghapus semua user yang dipilih?')
@@ -383,7 +387,7 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                         $success = 0;
                         $failed = 0;
                         foreach ($records as $record) {
-                            $response = ApiService::client()->delete('/users/' . $record['id']);
+                            $response = ApiService::client()->delete('/users/'.$record['id']);
                             $response->ok() ? $success++ : $failed++;
                         }
                         if ($failed > 0) {
@@ -402,14 +406,14 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                     ->button()
                     ->modalHeading('Tambah User')
                     ->modalWidth('2xl')
-                    ->visible(fn(): bool => $this->hasPermission('create-user'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('user-management.create'))
                     ->modalFooterActions(function (Action $action) {
                         return [
                             $action->getModalSubmitAction()
                                 ->label('Simpan')
                                 ->color('primary')
                                 ->extraAttributes([
-                                    'class' => 'text-white font-semibold'
+                                    'class' => 'text-white font-semibold',
                                 ]),
                             $action->getModalCancelAction()->label('Batal'),
                         ];
@@ -444,15 +448,17 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                                 ->body($errorMessage)
                                 ->danger()
                                 ->send();
+
                             return;
                         }
 
-                        if (!$response->ok() && $response->status() !== 201) {
+                        if (! $response->ok() && $response->status() !== 201) {
                             Notification::make()
                                 ->title('Gagal')
                                 ->body('Terjadi kesalahan pada server.')
                                 ->danger()
                                 ->send();
+
                             return;
                         }
 

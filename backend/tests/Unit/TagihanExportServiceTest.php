@@ -4,8 +4,8 @@ namespace Tests\Unit;
 
 use App\Models\Branch;
 use App\Models\JenisTagihan;
-use App\Models\Kelas;
 use App\Models\Kategori;
+use App\Models\Kelas;
 use App\Models\Siswa;
 use App\Models\SiswaKelas;
 use App\Models\Tagihan;
@@ -21,17 +21,23 @@ class TagihanExportServiceTest extends TestCase
     use RefreshDatabase;
 
     private TagihanExportService $service;
+
     private Branch $branch;
+
     private TahunAjaran $tahunAjaran;
+
     private Kelas $kelas;
+
     private Kategori $kategori;
+
     private Wali $wali;
+
     private JenisTagihan $jenisTagihan;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new TagihanExportService();
+        $this->service = new TagihanExportService;
 
         $this->branch = Branch::factory()->create();
         $this->tahunAjaran = TahunAjaran::factory()->aktif()->create(['branch_id' => $this->branch->id]);

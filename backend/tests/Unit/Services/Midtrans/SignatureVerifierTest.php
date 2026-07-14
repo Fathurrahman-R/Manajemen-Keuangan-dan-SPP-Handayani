@@ -12,7 +12,7 @@ class SignatureVerifierTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->verifier = new SignatureVerifier();
+        $this->verifier = new SignatureVerifier;
     }
 
     public function test_compute_returns_sha512_of_concatenated_values(): void
@@ -22,7 +22,7 @@ class SignatureVerifierTest extends TestCase
         $grossAmount = '54000.00';
         $serverKey = 'SB-Mid-server-abc123';
 
-        $expected = hash('sha512', $orderId . $statusCode . $grossAmount . $serverKey);
+        $expected = hash('sha512', $orderId.$statusCode.$grossAmount.$serverKey);
         $actual = $this->verifier->compute($orderId, $statusCode, $grossAmount, $serverKey);
 
         $this->assertSame($expected, $actual);
@@ -36,7 +36,7 @@ class SignatureVerifierTest extends TestCase
         $statusCode = '200';
         $grossAmount = '54000.00';
 
-        $validSignature = hash('sha512', $orderId . $statusCode . $grossAmount . $serverKey);
+        $validSignature = hash('sha512', $orderId.$statusCode.$grossAmount.$serverKey);
 
         $payload = [
             'order_id' => $orderId,
@@ -83,7 +83,7 @@ class SignatureVerifierTest extends TestCase
         $statusCode = '200';
         $grossAmount = '54000.00';
 
-        $validSignature = hash('sha512', $orderId . $statusCode . $grossAmount . $serverKey);
+        $validSignature = hash('sha512', $orderId.$statusCode.$grossAmount.$serverKey);
 
         // Tamper the gross_amount
         $payload = [

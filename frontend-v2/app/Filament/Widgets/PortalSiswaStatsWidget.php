@@ -14,6 +14,7 @@ class PortalSiswaStatsWidget extends BaseWidget
     protected static ?int $sort = 1;
 
     public ?int $selectedSiswaId = null;
+
     public ?int $selectedTahunAjaranId = null;
 
     protected function getStats(): array
@@ -44,15 +45,15 @@ class PortalSiswaStatsWidget extends BaseWidget
         $totalTunggakan = (int) ($data['total_tunggakan'] ?? 0);
 
         return [
-            Stat::make('Total Tagihan', 'Rp ' . number_format($totalTagihan, 0, ',', '.'))
+            Stat::make('Total Tagihan', 'Rp '.number_format($totalTagihan, 0, ',', '.'))
                 ->description('Seluruh tagihan')
                 ->descriptionIcon('heroicon-m-document-text')
                 ->color('primary'),
-            Stat::make('Total Terbayar', 'Rp ' . number_format($totalTerbayar, 0, ',', '.'))
+            Stat::make('Total Terbayar', 'Rp '.number_format($totalTerbayar, 0, ',', '.'))
                 ->description('Sudah dibayar')
                 ->descriptionIcon('heroicon-m-check-circle')
                 ->color('success'),
-            Stat::make('Total Tunggakan', 'Rp ' . number_format($totalTunggakan, 0, ',', '.'))
+            Stat::make('Total Tunggakan', 'Rp '.number_format($totalTunggakan, 0, ',', '.'))
                 ->description('Belum dibayar')
                 ->descriptionIcon('heroicon-m-exclamation-triangle')
                 ->color($totalTunggakan > 0 ? 'danger' : 'gray'),

@@ -34,7 +34,7 @@ class TahunAjaranFactory extends Factory
      */
     public function aktif(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'status' => 'Aktif',
         ]);
     }

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Helpers\PermissionHelper;
 use Filament\Pages\Page;
 use UnitEnum;
 
@@ -9,7 +10,7 @@ class DataMasterKelas extends Page
 {
     protected string $view = 'filament.pages.data-master-kelas';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Data Master';
+    protected static string|UnitEnum|null $navigationGroup = 'Data Master';
 
     protected static ?string $navigationLabel = 'Kelas';
 
@@ -26,10 +27,7 @@ class DataMasterKelas extends Page
 
     public function mount(): void
     {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        if (!in_array('view-kelas', $permissions)) {
-            abort(403);
-        }
+        abort_if(! PermissionHelper::hasResource('kelas'), 403);
 
         $this->activeJenjang = request()->query('jenjang', 'KB');
     }

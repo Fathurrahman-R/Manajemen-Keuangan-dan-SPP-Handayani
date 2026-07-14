@@ -18,6 +18,7 @@ class ProcessImportJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
     public int $timeout = 300; // 5 minutes
 
     public function __construct(
@@ -32,14 +33,16 @@ class ProcessImportJob implements ShouldQueue
     {
         $cached = Cache::get("import_preview:{$this->previewId}");
 
-        if (!$cached) {
+        if (! $cached) {
             $this->markFailed('Sesi preview telah kedaluwarsa.');
+
             return;
         }
 
         $periodeAktif = TahunAjaran::getAktif($this->branchId);
-        if (!$periodeAktif) {
+        if (! $periodeAktif) {
             $this->markFailed('Periode aktif belum diatur untuk cabang ini.');
+
             return;
         }
 

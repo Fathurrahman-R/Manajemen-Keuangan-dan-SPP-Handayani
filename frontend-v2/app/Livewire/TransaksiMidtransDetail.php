@@ -5,8 +5,6 @@ namespace App\Livewire;
 use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\MidtransApi;
 use App\Services\MidtransApiException;
-use Illuminate\Http\Client\ConnectionException;
-use Livewire\Component;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -14,11 +12,13 @@ use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Client\ConnectionException;
+use Livewire\Component;
 
 class TransaksiMidtransDetail extends Component implements HasActions, HasSchemas
 {
-    use InteractsWithActions, InteractsWithSchemas;
     use HandlesApiErrors;
+    use InteractsWithActions, InteractsWithSchemas;
 
     public string $orderId;
 
@@ -78,7 +78,7 @@ class TransaksiMidtransDetail extends Component implements HasActions, HasSchema
     protected function maskSensitiveFields(array $data): array
     {
         foreach ($this->maskedFields as $field) {
-            if (isset($data[$field]) && !empty($data[$field])) {
+            if (isset($data[$field]) && ! empty($data[$field])) {
                 $data[$field] = '***';
             }
         }
@@ -86,7 +86,7 @@ class TransaksiMidtransDetail extends Component implements HasActions, HasSchema
         // Also mask in nested raw response if present
         if (isset($data['last_raw_response']) && is_array($data['last_raw_response'])) {
             foreach ($this->maskedFields as $field) {
-                if (isset($data['last_raw_response'][$field]) && !empty($data['last_raw_response'][$field])) {
+                if (isset($data['last_raw_response'][$field]) && ! empty($data['last_raw_response'][$field])) {
                     $data['last_raw_response'][$field] = '***';
                 }
             }
@@ -105,7 +105,7 @@ class TransaksiMidtransDetail extends Component implements HasActions, HasSchema
         }
 
         // Truncate to snippet length
-        $snippet = mb_strlen($payload) > 120 ? mb_substr($payload, 0, 120) . '...' : $payload;
+        $snippet = mb_strlen($payload) > 120 ? mb_substr($payload, 0, 120).'...' : $payload;
 
         // Mask any remaining sensitive values in snippet
         $snippet = preg_replace('/"(signature_key|server_key)"\s*:\s*"[^"]*"/', '"$1": "***"', $snippet);
@@ -123,7 +123,7 @@ class TransaksiMidtransDetail extends Component implements HasActions, HasSchema
             ->modalHeading('Sinkronisasi Status Transaksi')
             ->modalDescription('Apakah Anda yakin ingin melakukan sinkronisasi status transaksi ini dengan Midtrans?')
             ->modalSubmitActionLabel('Ya, Sinkronisasi')
-            ->visible(fn(): bool => ($this->transaction['status'] ?? '') === 'pending')
+            ->visible(fn (): bool => ($this->transaction['status'] ?? '') === 'pending')
             ->action(function (): void {
                 try {
                     MidtransApi::sync($this->orderId);
@@ -168,7 +168,7 @@ class TransaksiMidtransDetail extends Component implements HasActions, HasSchema
             return [];
         }
 
-        return collect($this->logs)->map(fn(array $log) => [
+        return collect($this->logs)->map(fn (array $log) => [
             'direction' => match ($log['direction'] ?? '') {
                 'outbound_charge' => 'Outbound (Charge)',
                 'outbound_status' => 'Outbound (Status)',

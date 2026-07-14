@@ -22,7 +22,7 @@ class UserRequest extends FormRequest
                 'email' => [
                     'required', 'email', 'max:255',
                     Rule::unique('users', 'email')
-                        ->where(fn($q) => $q->where('branch_id', $this->input('branch_id'))),
+                        ->where(fn ($q) => $q->where('branch_id', $this->input('branch_id'))),
                 ],
                 'name' => 'nullable|string|max:255',
                 'password' => 'sometimes|string|min:8|max:100',
@@ -43,7 +43,7 @@ class UserRequest extends FormRequest
                 'sometimes', 'nullable', 'email', 'max:255',
                 Rule::unique('users', 'email')
                     ->ignore($userId)
-                    ->where(fn($q) => $q->where('branch_id', $this->input('branch_id'))),
+                    ->where(fn ($q) => $q->where('branch_id', $this->input('branch_id'))),
             ],
             'name' => 'sometimes|nullable|string|max:255',
             'password' => 'sometimes|string|min:8|max:100',

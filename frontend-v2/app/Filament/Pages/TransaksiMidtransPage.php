@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Helpers\PermissionHelper;
 use Filament\Pages\Page;
 
 class TransaksiMidtransPage extends Page
@@ -18,18 +19,16 @@ class TransaksiMidtransPage extends Page
 
     public static function canAccess(): bool
     {
-        if (!config('handayani.features.midtrans_enabled')) {
+        if (! config('handayani.features.midtrans_enabled')) {
             return false;
         }
 
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-
-        return in_array('view-midtrans-transactions', $permissions);
+        return PermissionHelper::hasResource('midtrans');
     }
 
     public static function shouldRegisterNavigation(): bool
     {
-        if (!config('handayani.features.midtrans_enabled')) {
+        if (! config('handayani.features.midtrans_enabled')) {
             return false;
         }
 
@@ -38,13 +37,10 @@ class TransaksiMidtransPage extends Page
 
     public function mount(): void
     {
-        if (!config('handayani.features.midtrans_enabled')) {
+        if (! config('handayani.features.midtrans_enabled')) {
             abort(404);
         }
 
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        if (!in_array('view-midtrans-transactions', $permissions)) {
-            abort(403);
-        }
+        abort_if(! PermissionHelper::hasResource('midtrans'), 403);
     }
 }

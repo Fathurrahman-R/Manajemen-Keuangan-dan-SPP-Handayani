@@ -21,9 +21,9 @@ class SiswaExportService
     /**
      * Export siswa data to file (sync) or dispatch queue job (async).
      *
-     * @param array $filters Filter parameters (jenjang, kelas_id, status, tahun_ajaran_id)
-     * @param string $format Export format: 'xlsx' or 'csv'
-     * @param int $branchId Branch ID scope
+     * @param  array  $filters  Filter parameters (jenjang, kelas_id, status, tahun_ajaran_id)
+     * @param  string  $format  Export format: 'xlsx' or 'csv'
+     * @param  int  $branchId  Branch ID scope
      * @return BinaryFileResponse|array Returns file response if sync, or job reference array if queued
      */
     public function export(array $filters, string $format, int $branchId): BinaryFileResponse|array
@@ -59,7 +59,7 @@ class SiswaExportService
         // Determine which tahun_ajaran to use for kelas resolution
         $tahunAjaranId = $filters['tahun_ajaran_id'] ?? null;
 
-        if (!$tahunAjaranId) {
+        if (! $tahunAjaranId) {
             $periodeAktif = TahunAjaran::getAktif($branchId);
             $tahunAjaranId = $periodeAktif?->id;
         }
@@ -72,23 +72,23 @@ class SiswaExportService
             });
 
             // Filter by kelas_id from siswa_kelas if specified
-            if (!empty($filters['kelas_id'])) {
+            if (! empty($filters['kelas_id'])) {
                 $query->where('siswa_kelas.kelas_id', $filters['kelas_id']);
             }
         } else {
             // Fallback: use the kelas_id directly on siswa table
-            if (!empty($filters['kelas_id'])) {
+            if (! empty($filters['kelas_id'])) {
                 $query->where('siswas.kelas_id', $filters['kelas_id']);
             }
         }
 
         // Apply jenjang filter
-        if (!empty($filters['jenjang'])) {
+        if (! empty($filters['jenjang'])) {
             $query->where('siswas.jenjang', $filters['jenjang']);
         }
 
         // Apply status filter
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('siswas.status', $filters['status']);
         }
 
@@ -111,13 +111,13 @@ class SiswaExportService
         $query = $this->buildQuery($filters, $branchId);
         $tahunAjaranId = $filters['tahun_ajaran_id'] ?? null;
 
-        if (!$tahunAjaranId) {
+        if (! $tahunAjaranId) {
             $periodeAktif = TahunAjaran::getAktif($branchId);
             $tahunAjaranId = $periodeAktif?->id;
         }
 
         $export = new SiswaExport($query, $tahunAjaranId);
-        $fileName = 'export_siswa_' . now()->format('Y-m-d_His') . '.' . $format;
+        $fileName = 'export_siswa_'.now()->format('Y-m-d_His').'.'.$format;
 
         return Excel::download($export, $fileName);
     }

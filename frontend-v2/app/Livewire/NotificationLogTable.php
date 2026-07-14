@@ -2,11 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Helpers\PermissionHelper;
 use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
-use Illuminate\Http\Client\ConnectionException;
-use Livewire\Component;
-use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -16,16 +14,18 @@ use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Collection;
+use Livewire\Component;
 
 class NotificationLogTable extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable, HandlesApiErrors;
+    use HandlesApiErrors, InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     public string $filterType = '';
+
     public string $filterStatus = '';
 
     public function table(Table $table): Table
@@ -45,8 +45,9 @@ class NotificationLogTable extends Component implements HasActions, HasSchemas, 
 
                         $response = ApiService::client()->get('/notification-logs', $params);
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             $this->handleApiError($response);
+
                             return [];
                         }
 
@@ -66,9 +67,11 @@ class NotificationLogTable extends Component implements HasActions, HasSchemas, 
                         return $data->values()->toArray();
                     } catch (ConnectionException $e) {
                         $this->notifyConnectionError();
+
                         return [];
                     } catch (\Throwable $e) {
                         $this->notifyUnexpectedError();
+
                         return [];
                     }
                 }
@@ -77,7 +80,7 @@ class NotificationLogTable extends Component implements HasActions, HasSchemas, 
                 TextColumn::make('created_at')
                     ->label('Waktu')
                     ->sortable()
-                    ->formatStateUsing(fn(?string $state) => $state
+                    ->formatStateUsing(fn (?string $state) => $state
                         ? \Carbon\Carbon::parse($state)->format('d/m/Y H:i')
                         : '-'
                     ),
@@ -85,14 +88,14 @@ class NotificationLogTable extends Component implements HasActions, HasSchemas, 
                     ->label('Tipe')
                     ->sortable()
                     ->badge()
-                    ->formatStateUsing(fn(?string $state) => match ($state) {
+                    ->formatStateUsing(fn (?string $state) => match ($state) {
                         'tagihan_baru' => 'Tagihan Baru',
                         'kwitansi' => 'Kwitansi',
                         'reminder' => 'Pengingat',
                         'overdue' => 'Jatuh Tempo',
                         default => $state ?? '-',
                     })
-                    ->color(fn(?string $state) => match ($state) {
+                    ->color(fn (?string $state) => match ($state) {
                         'tagihan_baru' => 'primary',
                         'kwitansi' => 'success',
                         'reminder' => 'warning',
@@ -103,22 +106,22 @@ class NotificationLogTable extends Component implements HasActions, HasSchemas, 
                     ->label('Kode Tagihan')
                     ->sortable()
                     ->copyable()
-                    ->formatStateUsing(fn($state) => $state ?? '-'),
+                    ->formatStateUsing(fn ($state) => $state ?? '-'),
                 TextColumn::make('recipient_email')
                     ->label('Email Tujuan')
                     ->sortable()
-                    ->formatStateUsing(fn(?string $state) => filled($state) ? $state : '(tidak ada)'),
+                    ->formatStateUsing(fn (?string $state) => filled($state) ? $state : '(tidak ada)'),
                 TextColumn::make('status')
                     ->label('Status')
                     ->sortable()
                     ->badge()
-                    ->color(fn(?string $state) => match ($state) {
+                    ->color(fn (?string $state) => match ($state) {
                         'sent' => 'success',
                         'failed' => 'danger',
                         'skipped' => 'warning',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn(?string $state) => match ($state) {
+                    ->formatStateUsing(fn (?string $state) => match ($state) {
                         'sent' => 'Terkirim',
                         'failed' => 'Gagal',
                         'skipped' => 'Dilewati',
@@ -127,7 +130,7 @@ class NotificationLogTable extends Component implements HasActions, HasSchemas, 
                 TextColumn::make('reason')
                     ->label('Alasan')
                     ->sortable()
-                    ->formatStateUsing(fn(?string $state) => match ($state) {
+                    ->formatStateUsing(fn (?string $state) => match ($state) {
                         'no_email_available' => 'Email belum diatur',
                         'invalid_email' => 'Email tidak valid',
                         'opted_out' => 'Berhenti langganan',
@@ -148,6 +151,7 @@ class NotificationLogTable extends Component implements HasActions, HasSchemas, 
             ->bulkActions([
                 BulkAction::make('retry')
                     ->label('Kirim Ulang Terpilih')
+                    ->visible(fn (): bool => PermissionHelper::hasResource('notification-logs.retry'))
                     ->icon('heroicon-o-arrow-path')
                     ->color('primary')
                     ->requiresConfirmation()
@@ -162,6 +166,7 @@ class NotificationLogTable extends Component implements HasActions, HasSchemas, 
                                 ->title('Tidak ada log yang dipilih')
                                 ->warning()
                                 ->send();
+
                             return;
                         }
 

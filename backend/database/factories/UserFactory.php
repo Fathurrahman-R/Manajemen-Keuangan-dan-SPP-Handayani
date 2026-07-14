@@ -16,8 +16,8 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'username'  => 'admin',
-            'password'  => Hash::make('password'),
+            'username' => 'admin',
+            'password' => Hash::make('password'),
             'branch_id' => Branch::factory(),
         ];
     }

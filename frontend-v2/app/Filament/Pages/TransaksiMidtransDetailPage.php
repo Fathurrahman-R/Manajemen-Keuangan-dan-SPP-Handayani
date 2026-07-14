@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Helpers\PermissionHelper;
 use Filament\Pages\Page;
 
 class TransaksiMidtransDetailPage extends Page
@@ -18,25 +19,20 @@ class TransaksiMidtransDetailPage extends Page
 
     public static function canAccess(): bool
     {
-        if (!config('handayani.features.midtrans_enabled')) {
+        if (! config('handayani.features.midtrans_enabled')) {
             return false;
         }
 
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-
-        return in_array('view-midtrans-transactions', $permissions);
+        return PermissionHelper::hasResource('midtrans');
     }
 
     public function mount(string $orderId): void
     {
-        if (!config('handayani.features.midtrans_enabled')) {
+        if (! config('handayani.features.midtrans_enabled')) {
             abort(404);
         }
 
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        if (!in_array('view-midtrans-transactions', $permissions)) {
-            abort(403);
-        }
+        abort_if(! PermissionHelper::hasResource('midtrans'), 403);
 
         $this->orderId = $orderId;
     }
@@ -45,7 +41,7 @@ class TransaksiMidtransDetailPage extends Page
     {
         return [
             url('transaksi-midtrans') => 'Transaksi Midtrans',
-            '' => 'Detail - ' . $this->orderId,
+            '' => 'Detail - '.$this->orderId,
         ];
     }
 }

@@ -28,7 +28,7 @@ class SyncPermissionsCommand extends Command
     {
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        $enumNames = collect(Permission::cases())->map(fn($p) => $p->value);
+        $enumNames = collect(Permission::cases())->map(fn ($p) => $p->value);
 
         $created = 0;
         foreach ($enumNames as $name) {
@@ -58,25 +58,45 @@ class SyncPermissionsCommand extends Command
         Role::firstOrCreate(['name' => DefaultRoles::SUPERADMIN->value]);
         $this->info('Role superadmin: bypass via Gate::before (tanpa explicit permission).');
 
+        $developer = Role::firstOrCreate(['name' => DefaultRoles::DEVELOPER->value]);
+        $developerPermissions = collect(PermissionBinding::DEV_PERMISSIONS)
+            ->flatten()
+            ->map(fn ($p) => $p->value)
+            ->unique()
+            ->values()
+            ->all();
+        $developer->syncPermissions($developerPermissions);
+        $this->info('Role developer: '.count($developerPermissions).' permission.');
+
+        $yayasan = Role::firstOrCreate(['name' => DefaultRoles::KEPALA_YAYASAN->value]);
+        $yayasanPermissions = collect(PermissionBinding::KEPALA_YAYASAN_PERMISSIONS)
+            ->flatten()
+            ->map(fn ($p) => $p->value)
+            ->unique()
+            ->values()
+            ->all();
+        $yayasan->syncPermissions($yayasanPermissions);
+        $this->info('Role kepala-yayasan: '.count($yayasanPermissions).' permission.');
+
         $admin = Role::firstOrCreate(['name' => DefaultRoles::ADMIN->value]);
         $adminPermissions = collect(PermissionBinding::ADMIN_PERMISSIONS)
             ->flatten()
-            ->map(fn($p) => $p->value)
-            ->filter(fn($p) => $p !== Permission::UPDATE_MIDTRANS_CONFIG->value)
+            ->map(fn ($p) => $p->value)
+            ->unique()
             ->values()
             ->all();
         $admin->syncPermissions($adminPermissions);
-        $this->info('Role admin: ' . count($adminPermissions) . ' permission.');
+        $this->info('Role admin: '.count($adminPermissions).' permission.');
 
         $siswa = Role::firstOrCreate(['name' => DefaultRoles::SISWA->value]);
-        $siswaPermissions = [
-            Permission::VIEW_TAGIHAN_SISWA->value,
-            Permission::VIEW_OWN_BILLING->value,
-            Permission::PAY_TAGIHAN_ONLINE->value,
-            Permission::PRINT_KWITANSI->value,
-        ];
+        $siswaPermissions = collect(PermissionBinding::SISWA_PERMISSIONS)
+            ->flatten()
+            ->map(fn ($p) => $p->value)
+            ->unique()
+            ->values()
+            ->all();
         $siswa->syncPermissions($siswaPermissions);
-        $this->info('Role siswa: ' . count($siswaPermissions) . ' permission.');
+        $this->info('Role siswa: '.count($siswaPermissions).' permission.');
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
         $this->info('Permission cache di-clear.');

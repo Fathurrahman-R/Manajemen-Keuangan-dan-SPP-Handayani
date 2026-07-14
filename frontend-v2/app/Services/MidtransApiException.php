@@ -12,7 +12,7 @@ class MidtransApiException extends Exception
         public readonly int $httpStatus = 500,
     ) {
         $message = $errorCode
-            ? __('midtrans.' . $errorCode, [], 'id')
+            ? __('midtrans.'.$errorCode, [], 'id')
             : 'Unknown Midtrans API error';
 
         parent::__construct($message, $httpStatus);
@@ -23,8 +23,8 @@ class MidtransApiException extends Exception
      */
     public function getUserMessage(): string
     {
-        if ($this->errorCode && trans()->has('midtrans.' . $this->errorCode, 'id')) {
-            return __('midtrans.' . $this->errorCode, [], 'id');
+        if ($this->errorCode && trans()->has('midtrans.'.$this->errorCode, 'id')) {
+            return __('midtrans.'.$this->errorCode, [], 'id');
         }
 
         return $this->getMessage();

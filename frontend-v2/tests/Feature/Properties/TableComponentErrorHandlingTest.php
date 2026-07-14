@@ -95,7 +95,7 @@ function setupHttpMockForFailure(string $failureType): void
  */
 function createComponentInstance(string $componentClass): object
 {
-    $component = new $componentClass();
+    $component = new $componentClass;
 
     // Set default public properties that some components need
     if (property_exists($component, 'activeTab')) {
@@ -147,8 +147,8 @@ function extractAndInvokeRecordsClosure(object $component, string $failureType, 
     $property->setAccessible(true);
     $recordsClosure = $property->getValue($configuredTable);
 
-    if (!$recordsClosure instanceof \Closure) {
-        throw new \RuntimeException('records() did not return a Closure for ' . get_class($component));
+    if (! $recordsClosure instanceof \Closure) {
+        throw new \RuntimeException('records() did not return a Closure for '.get_class($component));
     }
 
     // NOW set up the failure mock
@@ -157,7 +157,7 @@ function extractAndInvokeRecordsClosure(object $component, string $failureType, 
     // Determine the signature type and invoke accordingly
     $closureReflection = new \ReflectionFunction($recordsClosure);
     $params = $closureReflection->getParameters();
-    $paramNames = array_map(fn($p) => $p->getName(), $params);
+    $paramNames = array_map(fn ($p) => $p->getName(), $params);
 
     // Build arguments based on actual parameter names
     $args = [];
@@ -206,7 +206,7 @@ test('Property 1: Table component records() always returns empty on any API fail
             Generator\elements(...TABLE_COMPONENTS),
             Generator\elements(...FAILURE_TYPES),
             Generator\suchThat(
-                fn($s) => is_string($s) && strlen($s) <= 100,
+                fn ($s) => is_string($s) && strlen($s) <= 100,
                 Generator\oneOf(
                     Generator\constant(''),
                     Generator\string(),

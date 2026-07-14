@@ -2,42 +2,53 @@
 
 namespace Database\Seeders;
 
-use App\Enum\DefaultRoles;
+use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $user = User::create([
-            'username' => 'admin123',
-            'name' => 'Admin',
-            'password' => Hash::make('admin123'),
-            'branch_id' => 1
+        $mainBranch = Branch::first();
+        if (! $mainBranch) {
+            return;
+        }
+
+        $password = Hash::make('!handayani123');
+
+        $superadmin = User::firstOrCreate(['username' => 'superadmin'], [
+            'email' => 'superadmin@handayani.com',
+            'name' => 'Superadmin',
+            'password' => $password,
+            'branch_id' => $mainBranch->id,
         ]);
-        $user->assignRole('superadmin');
-        // Pastikan role admin sudah ada sebelum di-assign
-        // $adminRole = Role::firstOrCreate(
-        //     ['name' => DefaultRoles::ADMIN->value, 'guard_name' => 'web']
-        // );
+        $superadmin->assignRole('superadmin');
 
-        // $users = [
-        //     ['username' => 'handayaniselpa',   'token' => 'test',  'branch_id' => 1],
-        //     ['username' => 'handayanideskap',  'token' => 'test2', 'branch_id' => 2],
-        //     ['username' => 'handayanisiantan', 'token' => 'test3', 'branch_id' => 3],
-        // ];
+        $developer = User::firstOrCreate(['username' => 'developer'], [
+            'email' => 'developer@handayani.com',
+            'name' => 'Developer',
+            'password' => $password,
+            'branch_id' => $mainBranch->id,
+        ]);
+        $developer->assignRole('developer');
 
-        // foreach ($users as $data) {
-        //     $user = User::create([
-        //         'username'  => $data['username'],
-        //         'password'  => Hash::make('admin123'),
-        //         'token'     => $data['token'],
-        //         'branch_id' => $data['branch_id'],
-        //     ]);
-        //     $user->assignRole($adminRole);
-        // }
+        $yayasan = User::firstOrCreate(['username' => 'yayasan'], [
+            'email' => 'yayasan@handayani.com',
+            'name' => 'Kepala Yayasan',
+            'password' => $password,
+            'branch_id' => $mainBranch->id,
+        ]);
+        $yayasan->assignRole('kepala-yayasan');
+
+        foreach (Branch::all() as $branch) {
+            $admin = User::firstOrCreate(['username' => 'admin_'.strtolower(str_replace(' ', '_', $branch->location))], [
+                'name' => 'Admin '.$branch->location,
+                'password' => $password,
+                'branch_id' => $branch->id,
+            ]);
+            $admin->assignRole('admin');
+        }
     }
 }

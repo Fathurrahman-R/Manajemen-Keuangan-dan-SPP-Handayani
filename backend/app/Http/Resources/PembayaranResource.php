@@ -15,13 +15,13 @@ class PembayaranResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'kode_pembayaran'=>$this->kode_pembayaran,
-            'kode_tagihan'=>TagihanResource::make($this->whenLoaded('tagihan')),
-            'tanggal'=>$this->tanggal,
-            'metode'=>$this->metode,
-            'jumlah'=>$this->jumlah,
-            'pembayar'=>$this->pembayar,
-            'branch_id'=>$this->branch_id
+            'kode_pembayaran' => $this->kode_pembayaran,
+            'kode_tagihan' => TagihanResource::make($this->whenLoaded('tagihan')),
+            'tanggal' => $this->tanggal,
+            'metode' => $this->metode,
+            'jumlah' => $this->jumlah,
+            'pembayar' => $this->pembayar,
+            'branch_id' => $this->branch_id,
         ];
     }
 }

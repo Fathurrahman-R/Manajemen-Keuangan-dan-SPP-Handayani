@@ -161,7 +161,7 @@
 
                                 {{-- Row 3: Action buttons --}}
                                 <div class="flex items-center gap-2 mt-2">
-                                    @if(in_array('print-kwitansi', session()->get('data.permissions', [])))
+                                    @if(\App\Helpers\PermissionHelper::hasResource('pembayaran.print'))
                                         <button
                                             type="button"
                                             wire:click="downloadKwitansi('{{ $pembayaran['kode_pembayaran'] }}')"
@@ -253,3 +253,4 @@
     </script>
     @endscript
 </div>
+

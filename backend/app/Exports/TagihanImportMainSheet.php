@@ -41,8 +41,8 @@ class TagihanImportMainSheet implements FromArray, WithHeadings, WithStyles, Wit
     public function styles(Worksheet $sheet): array
     {
         // Apply dropdown validation for jenis_tagihan (column C)
-        if (!empty($this->jenisTagihanNames)) {
-            $optionString = '"' . implode(',', $this->jenisTagihanNames) . '"';
+        if (! empty($this->jenisTagihanNames)) {
+            $optionString = '"'.implode(',', $this->jenisTagihanNames).'"';
 
             for ($row = 2; $row <= 101; $row++) {
                 $cell = $sheet->getCell("C{$row}");

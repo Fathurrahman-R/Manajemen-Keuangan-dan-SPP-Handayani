@@ -10,9 +10,13 @@ class SiswaKelas extends Model
     use HasFactory;
 
     protected $table = 'siswa_kelas';
+
     protected $primaryKey = 'id';
+
     protected $keyType = 'int';
+
     public $incrementing = true;
+
     public $timestamps = true;
 
     protected $fillable = [

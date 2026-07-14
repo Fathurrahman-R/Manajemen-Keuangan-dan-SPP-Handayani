@@ -24,21 +24,21 @@ class UserUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'password' => ['nullable', 'max:100']
+            'password' => ['nullable', 'max:100'],
         ];
     }
 
-//    public function messages(): array
-//    {
-//        return [
-//            'password.max' => 'Password maksimal 100 karakter.'
-//        ];
-//    }
+    //    public function messages(): array
+    //    {
+    //        return [
+    //            'password.max' => 'Password maksimal 100 karakter.'
+    //        ];
+    //    }
 
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response([
-            "errors" => $validator->getMessageBag()
-        ],400));
+            'errors' => $validator->getMessageBag(),
+        ], 400));
     }
 }

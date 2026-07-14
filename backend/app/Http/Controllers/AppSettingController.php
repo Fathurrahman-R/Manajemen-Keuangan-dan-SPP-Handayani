@@ -7,7 +7,6 @@ use App\Http\Resources\AppSettingResource;
 use App\Models\AppSetting;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
@@ -18,8 +17,8 @@ class AppSettingController extends Controller
     {
         $setting = AppSetting::query()
             ->where('branch_id', Auth::user()->branch_id)->first();
-//        $setting->logo = asset('storage') . '/' . $setting->logo;
-        if (!$setting) {
+        //        $setting->logo = asset('storage') . '/' . $setting->logo;
+        if (! $setting) {
             throw new HttpResponseException(response([
                 'errors' => [
                     'message' => [
@@ -39,8 +38,8 @@ class AppSettingController extends Controller
 
         // Ambil atau buat record settings tunggal
         $setting = AppSetting::findOrFail($id);
-        if (!$setting) {
-            $setting = new AppSetting();
+        if (! $setting) {
+            $setting = new AppSetting;
         }
 
         // Update field non-file

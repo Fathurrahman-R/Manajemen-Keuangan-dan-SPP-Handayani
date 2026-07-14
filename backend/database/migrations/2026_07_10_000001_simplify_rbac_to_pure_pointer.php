@@ -8,8 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // page_permissions: drop route_pattern (method/path_pattern already removed from permission_endpoints)
+        // Drop the old composite unique index first, then drop the column
         Schema::table('page_permissions', function (Blueprint $table) {
+            // Drop the unique constraint that references route_pattern
+            $table->dropUnique(['route_pattern', 'permission_name']);
+            // Now safe to drop the column
             $table->dropColumn('route_pattern');
         });
     }
@@ -18,6 +21,7 @@ return new class extends Migration
     {
         Schema::table('page_permissions', function (Blueprint $table) {
             $table->string('route_pattern')->nullable()->after('id');
+            $table->unique(['route_pattern', 'permission_name']);
         });
     }
 };

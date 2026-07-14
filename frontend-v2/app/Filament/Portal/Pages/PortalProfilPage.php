@@ -2,6 +2,7 @@
 
 namespace App\Filament\Portal\Pages;
 
+use App\Helpers\PermissionHelper;
 use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
 use BackedEnum;
@@ -15,7 +16,7 @@ use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Illuminate\Http\Client\ConnectionException;
 
-class PortalProfilPage extends Page implements HasForms, HasSchemas
+class PortalProfilPage extends Page implements HasForms
 {
     use HandlesApiErrors;
     use InteractsWithForms, InteractsWithSchemas {
@@ -41,54 +42,73 @@ class PortalProfilPage extends Page implements HasForms, HasSchemas
 
     // User info
     public ?string $username = null;
+
     public ?string $currentEmail = null;
+
     public ?array $roles = [];
+
     public ?string $branchLocation = null;
 
     public ?string $ayahEmail = null;
+
     public ?string $ibuEmail = null;
+
     public ?string $waliEmail = null;
+
     public bool $emailVerified = false;
+
     public bool $ayahEmailVerified = false;
+
     public bool $ibuEmailVerified = false;
+
     public bool $waliEmailVerified = false;
 
     // Parent OTP modal state
     public ?string $parentOtpType = null;
+
     public string $parentOtp = '';
+
     public bool $showParentOtpModal = false;
 
     // Email form
     public ?string $email = '';
+
     public string $current_password_for_email = '';
 
     // Password form
     public string $current_password = '';
+
     public string $new_password = '';
+
     public string $new_password_confirmation = '';
 
     // Notification form
     public bool $notif_tagihan_baru = false;
+
     public bool $notif_reminder = false;
+
     public bool $notif_kwitansi = false;
+
     public bool $notif_overdue = false;
 
     // Siswa detail (read-only)
     public ?array $siswaDetail = [];
+
     public ?string $siswaJenjang = null;
 
     public function mount(): void
     {
         $roles = session()->get('data.roles', []);
-        if (!in_array('siswa', $roles) && !in_array('wali', $roles)) {
+        if (! PermissionHelper::hasResource('portal-access')) {
             abort(403);
         }
 
         try {
             $response = ApiService::client()->get('/users/current');
 
-            if (!$response->ok()) {
+            if (! $response->ok()) {
                 $this->handleApiError($response);
+
                 return;
             }
 
@@ -98,17 +118,17 @@ class PortalProfilPage extends Page implements HasForms, HasSchemas
             $this->username = $userData['username'] ?? null;
             $this->roles = $userData['roles'] ?? [];
             $this->branchLocation = $userData['branch']['location'] ?? null;
-            $this->emailVerified = !empty($userData['email_verified_at']);
+            $this->emailVerified = ! empty($userData['email_verified_at']);
 
             if (isset($userData['siswa'])) {
                 $this->ayahEmail = $userData['siswa']['ayah']['email'] ?? null;
                 $this->ibuEmail = $userData['siswa']['ibu']['email'] ?? null;
                 $this->waliEmail = $userData['siswa']['wali']['email'] ?? null;
-                $this->ayahEmailVerified = !empty($userData['siswa']['ayah']['email_verified_at']);
-                $this->ibuEmailVerified = !empty($userData['siswa']['ibu']['email_verified_at']);
-                $this->waliEmailVerified = !empty($userData['siswa']['wali']['email_verified_at']);
+                $this->ayahEmailVerified = ! empty($userData['siswa']['ayah']['email_verified_at']);
+                $this->ibuEmailVerified = ! empty($userData['siswa']['ibu']['email_verified_at']);
+                $this->waliEmailVerified = ! empty($userData['siswa']['wali']['email_verified_at']);
             }
-            
+
             // Fetch notification preferences if email is set
             if ($this->currentEmail) {
                 $notifResponse = ApiService::client()->get('/users/current/notification-preferences');
@@ -216,7 +236,7 @@ class PortalProfilPage extends Page implements HasForms, HasSchemas
             if ($response->ok()) {
                 $this->currentEmail = $this->email;
                 $this->current_password_for_email = '';
-                
+
                 // Fetch default preferences on email set if it was previously unset
                 $notifResponse = ApiService::client()->get('/users/current/notification-preferences');
                 if ($notifResponse->ok()) {
@@ -270,8 +290,9 @@ class PortalProfilPage extends Page implements HasForms, HasSchemas
 
     public function updateNotificationPreferences(): void
     {
-        if (!$this->currentEmail) {
+        if (! $this->currentEmail) {
             Notification::make()->title('Email belum diatur')->danger()->send();
+
             return;
         }
 
@@ -313,7 +334,7 @@ class PortalProfilPage extends Page implements HasForms, HasSchemas
                     'wali' => 'Wali',
                 };
                 Notification::make()
-                    ->title('OTP berhasil dikirim ke email ' . $label)
+                    ->title('OTP berhasil dikirim ke email '.$label)
                     ->success()
                     ->send();
             } else {
@@ -365,7 +386,7 @@ class PortalProfilPage extends Page implements HasForms, HasSchemas
                     'wali' => 'Wali',
                 };
                 Notification::make()
-                    ->title('Email ' . $label . ' berhasil diverifikasi!')
+                    ->title('Email '.$label.' berhasil diverifikasi!')
                     ->success()
                     ->send();
 

@@ -33,7 +33,7 @@ class RetentionRequest extends FormRequest
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response([
-            "errors" => $validator->getMessageBag()
+            'errors' => $validator->getMessageBag(),
         ], 422));
     }
 }

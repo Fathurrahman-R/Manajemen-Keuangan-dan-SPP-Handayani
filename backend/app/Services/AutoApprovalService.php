@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\ApprovalLog;
 use App\Models\BranchApprovalSetting;
 use App\Models\PengeluaranRequest;
-use App\Models\User;
 
 class AutoApprovalService
 {
@@ -13,7 +12,7 @@ class AutoApprovalService
     {
         $settings = BranchApprovalSetting::where('branch_id', $request->branch_id)->first();
 
-        if (!$settings) {
+        if (! $settings) {
             return false;
         }
 

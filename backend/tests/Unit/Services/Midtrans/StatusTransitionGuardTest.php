@@ -14,7 +14,7 @@ class StatusTransitionGuardTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->guard = new StatusTransitionGuard();
+        $this->guard = new StatusTransitionGuard;
     }
 
     #[DataProvider('allowedTransitionsProvider')]

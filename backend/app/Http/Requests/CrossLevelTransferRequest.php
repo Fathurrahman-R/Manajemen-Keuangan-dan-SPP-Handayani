@@ -27,17 +27,17 @@ class CrossLevelTransferRequest extends FormRequest
             'siswa_id' => [
                 'required',
                 'integer',
-                'exists:siswas,id'
+                'exists:siswas,id',
             ],
             'target_kelas_id' => [
                 'required',
                 'integer',
-                'exists:kelas,id'
+                'exists:kelas,id',
             ],
             'tahun_ajaran_id' => [
                 'required',
                 'integer',
-                'exists:tahun_ajarans,id'
+                'exists:tahun_ajarans,id',
             ],
         ];
     }
@@ -45,7 +45,7 @@ class CrossLevelTransferRequest extends FormRequest
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response([
-            "errors" => $validator->getMessageBag()
+            'errors' => $validator->getMessageBag(),
         ], 422));
     }
 }

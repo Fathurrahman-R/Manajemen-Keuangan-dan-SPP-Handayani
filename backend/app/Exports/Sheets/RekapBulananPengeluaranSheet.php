@@ -36,7 +36,7 @@ class RekapBulananPengeluaranSheet implements FromQuery, WithHeadings, WithMappi
     }
 
     /**
-     * @param \App\Models\Pengeluaran $pengeluaran
+     * @param  \App\Models\Pengeluaran  $pengeluaran
      */
     public function map($pengeluaran): array
     {

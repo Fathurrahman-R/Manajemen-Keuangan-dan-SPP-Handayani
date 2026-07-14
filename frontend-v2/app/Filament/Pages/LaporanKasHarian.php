@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Helpers\PermissionHelper;
 use Filament\Pages\Page;
 use UnitEnum;
 
@@ -9,7 +10,7 @@ class LaporanKasHarian extends Page
 {
     protected string $view = 'filament.pages.laporan-kas-harian';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Laporan';
+    protected static string|UnitEnum|null $navigationGroup = 'Laporan';
 
     protected static ?string $navigationLabel = 'Kas Harian';
 
@@ -19,15 +20,11 @@ class LaporanKasHarian extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        return in_array('view-kas-harian', $permissions);
+        return PermissionHelper::hasResource('kas-harian');
     }
 
     public function mount(): void
     {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        if (!in_array('view-kas-harian', $permissions)) {
-            abort(403);
-        }
+        abort_if(! PermissionHelper::hasResource('kas-harian'), 403);
     }
 }
