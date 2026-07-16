@@ -43,7 +43,7 @@ class PengeluaranRequestController extends Controller
 
         if (! $allPeriods && $tahunAjaranId !== null && $tahunAjaranId !== '') {
             $ta = \App\Models\TahunAjaran::where('id', (int) $tahunAjaranId)
-                ->where('branch_id', $branchId)
+
                 ->first();
             if ($ta) {
                 $query->whereBetween('tanggal_kebutuhan', [$ta->tanggal_mulai, $ta->tanggal_selesai]);

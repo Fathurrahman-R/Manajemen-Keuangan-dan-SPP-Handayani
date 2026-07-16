@@ -20,11 +20,11 @@ class UserManagement extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return PermissionHelper::hasResource('user-management');
+        return PermissionHelper::hasResource('users.view');
     }
 
     public function mount(): void
     {
-        abort_if(! PermissionHelper::hasResource('user-management'), 403);
+        abort_if(! PermissionHelper::hasResource('users.view'), 403);
     }
 }

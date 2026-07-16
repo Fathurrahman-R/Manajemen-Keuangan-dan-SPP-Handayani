@@ -27,7 +27,7 @@ class TransaksiTagihan extends Page
 
     public function mount(): void
     {
-        abort_if(! PermissionHelper::hasResource('tagihan'), 403);
+        abort_if(! PermissionHelper::hasResource('tagihan.view'), 403);
 
         $this->activeJenjang = request()->query('jenjang', 'KB');
     }

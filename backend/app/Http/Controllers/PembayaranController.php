@@ -36,8 +36,8 @@ class PembayaranController extends Controller
         $user = Auth::user();
 
         $query = \App\Models\Siswa::query()
-            ->whereHas('tagihan.pembayaran')
-            ->where('branch_id', $user->branch_id);
+            ->where('branch_id', $user->branch_id)
+            ->whereHas('tagihan.pembayaran');
 
         if ($user && ! $user->hasAnyRole(['superadmin', 'admin'])) {
             $query->where('nis', $user->siswa?->nis ?? $user->username);
@@ -134,7 +134,8 @@ class PembayaranController extends Controller
                     $q->select(['id', 'nis', 'nama', 'jenjang', 'kelas_id', 'kategori_id']);
                 },
             ])
-            ->where('branch_id', Auth::user()->branch_id)
+
+            ->where('branch_id', $user->branch_id)
             ->select(['kode_pembayaran', 'kode_tagihan', 'tanggal', 'metode', 'jumlah', 'pembayar']);
 
         if ($user && ! $user->hasAnyRole(['superadmin', 'admin'])) {
@@ -248,7 +249,7 @@ class PembayaranController extends Controller
             'tagihan.jenis_tagihan' => function ($q) {
                 $q->select(['id', 'jumlah']);
             },
-        ])->select(['kode_pembayaran', 'kode_tagihan', 'jumlah', 'metode'])->find($kode_pembayaran);
+        ])->where('branch_id', Auth::user()->branch_id)->select(['kode_pembayaran', 'kode_tagihan', 'jumlah', 'metode'])->find($kode_pembayaran);
 
         if (! $pembayaran || ! $pembayaran->tagihan) {
             throw new HttpResponseException(response([
@@ -361,6 +362,7 @@ class PembayaranController extends Controller
     public static function kwitansi(string $kode_pembayaran)
     {
         $pembayaran = Pembayaran::with(['tagihan'])
+            ->where('branch_id', Auth::user()->branch_id)
             ->find($kode_pembayaran);
         if (! $pembayaran) {
             throw new HttpResponseException(response([
@@ -402,7 +404,7 @@ class PembayaranController extends Controller
                 'tagihan' => fn ($q) => $q->with(['jenis_tagihan'])->select(['kode_tagihan', 'nis', 'jenis_tagihan_id', 'tmp', 'status']),
                 'tagihan.siswa' => fn ($q) => $q->select(['id', 'nis', 'nama']),
             ])
-            ->where('branch_id', $user->branch_id)
+
             ->whereHas('tagihan', fn ($q) => $q->where('nis', $siswa->nis))
             ->select(['kode_pembayaran', 'kode_tagihan', 'tanggal', 'metode', 'jumlah', 'pembayar']);
 

@@ -148,13 +148,14 @@ class PermissionMetadataSeeder extends Seeder
         'read-branch' => ['label' => 'Detail Cabang',                  'group' => 'Cabang',                'audience' => null],
         'update-branch' => ['label' => 'Ubah Cabang',                    'group' => 'Cabang',                'audience' => null],
         'delete-branch' => ['label' => 'Hapus Cabang',                   'group' => 'Cabang',                'audience' => null],
+        'view-all-branches' => ['label' => 'Akses Lintas Cabang',        'group' => 'Cabang',                'audience' => null],
 
         // ── Midtrans ──
         'view-midtrans-transactions' => ['label' => 'Lihat Transaksi Midtrans',       'group' => 'Midtrans',              'audience' => null],
         'sync-midtrans-transactions' => ['label' => 'Sinkron Transaksi Midtrans',     'group' => 'Midtrans',              'audience' => null],
         'view-midtrans-config' => ['label' => 'Lihat Konfigurasi Midtrans',     'group' => 'Midtrans',              'audience' => null],
         'update-midtrans-config' => ['label' => 'Ubah Konfigurasi Midtrans',      'group' => 'Midtrans',              'audience' => null],
-        'pay-tagihan-online' => ['label' => 'Bayar Tagihan Online',           'group' => 'Midtrans',              'audience' => 'siswa'],
+        'pay-tagihan-online' => ['label' => 'Bayar Tagihan Online',           'group' => 'Tagihan & Pembayaran',              'audience' => 'siswa'],
 
         // ── Notifikasi ──
         'view-notification-setting' => ['label' => 'Lihat Pengaturan Notifikasi',    'group' => 'Notifikasi',            'audience' => null],

@@ -20,11 +20,11 @@ class TransaksiJenisTagihan extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return PermissionHelper::hasResource('jenis-tagihan');
+        return PermissionHelper::hasResource('jenis-tagihan.view');
     }
 
     public function mount(): void
     {
-        abort_if(! PermissionHelper::hasResource('jenis-tagihan'), 403);
+        abort_if(! PermissionHelper::hasResource('jenis-tagihan.view'), 403);
     }
 }

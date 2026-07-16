@@ -32,6 +32,7 @@ class Permissions
         'read' => Permission::READ_BRANCH,
         'update' => Permission::UPDATE_BRANCH,
         'delete' => Permission::DELETE_BRANCH,
+        'view-all' => Permission::VIEW_ALL_BRANCHES,
     ];
 
     public const SISWA_PERMISSIONS = [

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class NotificationLog extends Model
 {
-    protected $table = 'notification_logs';
+        protected $table = 'notification_logs';
 
     protected $fillable = [
         'branch_id',

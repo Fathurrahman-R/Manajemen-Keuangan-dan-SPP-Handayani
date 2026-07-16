@@ -97,6 +97,7 @@ class Login extends PagesLogin
                 session()->put('data.roles', $responseData['roles']);
                 session()->put('data.id', $responseData['id']);
                 session()->put('data.username', $responseData['username']);
+                session()->put('data.user.branch_id', $responseData['branch_id'] ?? null);
                 session()->put('data.must_change_password', $responseData['must_change_password'] ?? false);
 
                 // Login ke Laravel Auth agar Filament mengenali user (untuk user menu)

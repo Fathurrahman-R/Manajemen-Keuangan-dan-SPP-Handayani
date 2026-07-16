@@ -22,11 +22,11 @@ class NotificationSettingsPage extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return PermissionHelper::hasResource('notification-setting');
+        return PermissionHelper::hasResource('notification-setting.view');
     }
 
     public function mount(): void
     {
-        abort_if(! PermissionHelper::hasResource('notification-setting'), 403);
+        abort_if(! PermissionHelper::hasResource('notification-setting.view'), 403);
     }
 }

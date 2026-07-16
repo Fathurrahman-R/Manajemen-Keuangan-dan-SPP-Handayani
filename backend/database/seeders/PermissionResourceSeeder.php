@@ -144,6 +144,7 @@ class PermissionResourceSeeder extends Seeder
             ['key' => 'branch.read',         'group' => null,         'perm' => 'read-branch'],
             ['key' => 'branch.update',       'group' => null,         'perm' => 'update-branch'],
             ['key' => 'branch.delete',       'group' => null,         'perm' => 'delete-branch'],
+            ['key' => 'ui.branch_switcher.view', 'group' => null, 'perm' => 'view-all-branches'],
 
             ['key' => 'notification-setting.view', 'group' => 'pengaturan', 'perm' => 'view-notification-setting'],
             ['key' => 'notification-setting.update', 'group' => null,  'perm' => 'update-notification-setting'],
@@ -153,6 +154,7 @@ class PermissionResourceSeeder extends Seeder
 
             // RBAC
             ['key' => 'rbac',                'group' => 'pengaturan', 'perm' => 'manage-rbac'],
+            ['key' => 'rbac.toggle',                'group' => 'pengaturan', 'perm' => 'toggle-active'],
             ['key' => 'permission.view',     'group' => null,         'perm' => 'view-permissions'],
             ['key' => 'permission.create',   'group' => null,         'perm' => 'create-permission'],
             ['key' => 'permission.update',   'group' => null,         'perm' => 'update-permission'],

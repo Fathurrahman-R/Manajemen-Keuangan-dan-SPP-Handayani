@@ -27,7 +27,7 @@ class DataMasterKelas extends Page
 
     public function mount(): void
     {
-        abort_if(! PermissionHelper::hasResource('kelas'), 403);
+        abort_if(! PermissionHelper::hasResource('kelas.view'), 403);
 
         $this->activeJenjang = request()->query('jenjang', 'KB');
     }

@@ -116,7 +116,7 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                     ->color('info')
                     ->visible(fn ($record) => in_array($record['status'], ['draft', 'rejected'])
                         && ($record['requester_id'] ?? null) == session()->get('data.id')
-                        && PermissionHelper::hasResource('pengeluaran.request'))
+                        && PermissionHelper::hasResource('pengeluaran.create'))
                     ->requiresConfirmation()
                     ->action(function ($record) {
                         $response = ApiService::client()->post("/pengeluaran-request/{$record['id']}/submit");
@@ -239,7 +239,7 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                     ->label('Buat Request')
                     ->icon('heroicon-o-plus')
                     ->color('primary')
-                    ->visible(fn () => PermissionHelper::hasResource('pengeluaran.request'))
+                    ->visible(fn () => PermissionHelper::hasResource('pengeluaran.create'))
                     ->schema([
                         TextInput::make('uraian')->label('Uraian')->required()->maxLength(255),
                         TextInput::make('jumlah')->label('Jumlah (Rp)')->numeric()->required()->minValue(1),

@@ -222,7 +222,7 @@ class DashboardController extends Controller
         if ($siswaId) {
             // Verify the siswa belongs to this user (wali access control)
             $siswa = Siswa::where('id', $siswaId)
-                ->where('branch_id', $branchId)
+
                 ->first();
 
             if (! $siswa) {
@@ -242,7 +242,7 @@ class DashboardController extends Controller
             // For wali users, verify the siswa is their child
             if (! $user->siswa_id && $user->hasRole('wali')) {
                 $isChild = Siswa::where('id', $siswaId)
-                    ->where('branch_id', $branchId)
+
                     ->whereHas('wali', function ($q) use ($user) {
                         $q->where('user_id', $user->id);
                     })

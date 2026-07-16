@@ -43,7 +43,7 @@ Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']
 Route::get('/unsubscribe/{token}', [EmailOptOutController::class, 'show']);
 Route::post('/unsubscribe/{token}', [EmailOptOutController::class, 'update']);
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'active.branch'])->group(function () {
     Route::delete('/logout', [AuthController::class, 'logout']);
     Route::get('/users/current', [UserController::class, 'get']);
     Route::patch('/users/current', [UserController::class, 'updateCurrent']);
@@ -303,6 +303,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Branch routes
     Route::prefix('/branches')->group(function () {
+        Route::get('/switcher-options', [BranchController::class, 'index'])->middleware('endpoint.permission:api.branch.switch');
         Route::get('/', [BranchController::class, 'index'])->middleware('endpoint.permission:branch.view');
         Route::post('/', [BranchController::class, 'store'])->middleware('endpoint.permission:branch.create');
         Route::get('/{id}', [BranchController::class, 'show'])->middleware('endpoint.permission:branch.read');
@@ -341,7 +342,7 @@ Route::middleware('auth:sanctum')->group(function () {
 // ──────────────────────────────────────────────────────────────
 Route::post('/midtrans/notification', [MidtransNotificationController::class, 'handle']);
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'active.branch'])->group(function () {
     // Portal Siswa - Midtrans
     Route::group(['middleware' => 'endpoint.permission:midtrans.pay'], function () {
         Route::get('/midtrans/fee-channels', [MidtransTransactionController::class, 'feeChannels']);

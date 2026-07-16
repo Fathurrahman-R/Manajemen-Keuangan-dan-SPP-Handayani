@@ -20,11 +20,11 @@ class BranchManagement extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return PermissionHelper::hasResource('branch');
+        return PermissionHelper::hasResource('branch.view');
     }
 
     public function mount(): void
     {
-        abort_if(! PermissionHelper::hasResource('branch'), 403);
+        abort_if(! PermissionHelper::hasResource('branch.view'), 403);
     }
 }

@@ -105,15 +105,29 @@ class NotificationSettings extends Component implements HasForms
 
         // Convert reminder_days_before tags to integer array
         $reminderDays = [];
-        if (! empty($state['reminder_days_before']) && is_array($state['reminder_days_before'])) {
-            $reminderDays = array_values(
-                array_filter(
-                    array_map('intval', $state['reminder_days_before']),
-                    fn ($v) => $v > 0 && $v <= 30
-                )
-            );
-            sort($reminderDays);
-            $reminderDays = array_reverse($reminderDays);
+        $rawReminderDays = $state['reminder_days_before'] ?? [];
+        
+        if (is_string($rawReminderDays)) {
+            $decoded = json_decode($rawReminderDays, true);
+            $rawReminderDays = is_array($decoded) ? $decoded : explode(',', $rawReminderDays);
+        }
+
+        if (is_array($rawReminderDays) && !empty($rawReminderDays)) {
+            foreach ($rawReminderDays as $v) {
+                // Strip all non-numeric characters (e.g. if user types 'H-7' or '7 hari')
+                $val = intval(preg_replace('/[^0-9]/', '', (string) $v));
+                if ($val > 0 && $val <= 90) {
+                    $reminderDays[] = $val;
+                }
+            }
+        }
+
+        // Default fallback if somehow empty but reminder is enabled, or to pass min:1
+        if (empty($reminderDays)) {
+            $reminderDays = [7, 3, 1];
+        } else {
+            $reminderDays = array_unique($reminderDays);
+            rsort($reminderDays);
         }
 
         $payload = [

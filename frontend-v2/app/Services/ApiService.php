@@ -16,10 +16,16 @@ class ApiService
     public static function client(): PendingRequest
     {
         $token = session()->get('data.token');
-
-        return Http::withHeaders([
+        
+        $headers = [
             'Authorization' => 'Bearer '.$token,
             'Accept' => 'application/json',
-        ])->baseUrl(env('API_URL'));
+        ];
+
+        if (session()->has('active_branch_id')) {
+            $headers['X-Branch-Id'] = session('active_branch_id');
+        }
+
+        return Http::withHeaders($headers)->baseUrl(env('API_URL'));
     }
 }

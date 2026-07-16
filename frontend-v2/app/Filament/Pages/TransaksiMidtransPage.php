@@ -23,7 +23,7 @@ class TransaksiMidtransPage extends Page
             return false;
         }
 
-        return PermissionHelper::hasResource('midtrans');
+        return PermissionHelper::hasResource('midtrans.admin');
     }
 
     public static function shouldRegisterNavigation(): bool
@@ -41,6 +41,6 @@ class TransaksiMidtransPage extends Page
             abort(404);
         }
 
-        abort_if(! PermissionHelper::hasResource('midtrans'), 403);
+        abort_if(! PermissionHelper::hasResource('midtrans.admin'), 403);
     }
 }

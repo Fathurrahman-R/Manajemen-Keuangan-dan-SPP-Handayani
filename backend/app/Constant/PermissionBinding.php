@@ -30,6 +30,8 @@ class PermissionBinding
         Permissions::NOTIFICATION_PERMISSIONS['view'],
         Permissions::NOTIFICATION_PERMISSIONS['update'],
         Permissions::AUTO_APPROVE_PERMISSIONS,
+        Permissions::RBAC_MANAGEMENT_PERMISSIONS['manage'],
+        Permissions::ROLE_PERMISSIONS
     ];
 
     public const ADMIN_PERMISSIONS = [

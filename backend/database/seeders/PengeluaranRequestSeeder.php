@@ -3,7 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\Branch;
+use App\Models\Pengeluaran;
 use App\Models\PengeluaranRequest;
+use App\Models\TahunAjaran;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -37,8 +39,10 @@ class PengeluaranRequestSeeder extends Seeder
                 continue;
             }
 
+            $aktiveTahunAjaran = TahunAjaran::getAktif($branch->id);
+
             foreach ($requests as $data) {
-                PengeluaranRequest::create([
+                $pengeluaranRequest = PengeluaranRequest::create([
                     'uraian' => $data['uraian'],
                     'jumlah' => $data['jumlah'],
                     'tanggal_kebutuhan' => now()->subDays($data['days_ago'])->format('Y-m-d'),
@@ -47,6 +51,19 @@ class PengeluaranRequestSeeder extends Seeder
                     'requester_id' => $adminForBranch->id,
                     'branch_id' => $branch->id,
                 ]);
+
+                // Saat status disbursed, buat record Pengeluaran yang terkait
+                // agar konsisten dengan apa yang dilakukan WorkflowService::disburse().
+                if ($data['status'] === 'disbursed') {
+                    Pengeluaran::create([
+                        'tanggal' => now()->subDays($data['days_ago'])->format('Y-m-d'),
+                        'uraian' => $data['uraian'],
+                        'jumlah' => $data['jumlah'],
+                        'branch_id' => $branch->id,
+                        'tahun_ajaran_id' => $aktiveTahunAjaran?->id,
+                        'pengeluaran_request_id' => $pengeluaranRequest->id,
+                    ]);
+                }
             }
         }
     }

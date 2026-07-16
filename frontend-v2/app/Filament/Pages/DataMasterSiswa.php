@@ -27,7 +27,7 @@ class DataMasterSiswa extends Page
 
     public function mount(): void
     {
-        abort_if(! PermissionHelper::hasResource('siswa'), 403);
+        abort_if(! PermissionHelper::hasResource('siswa.view'), 403);
 
         // Read jenjang from query parameter
         $this->activeJenjang = request()->query('jenjang', 'KB');

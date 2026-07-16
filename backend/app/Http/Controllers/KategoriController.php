@@ -15,7 +15,8 @@ class KategoriController extends Controller
     public function index()
     {
         $kategori = Kategori::query()
-            ->where('branch_id', Auth::user()->branch_id)->get();
+            ->where('kategoris.branch_id', Auth::user()->branch_id)
+            ->get();
 
         // Return koleksi (bisa kosong) tanpa error
         return KategoriResource::collection($kategori);
@@ -27,7 +28,7 @@ class KategoriController extends Controller
         $data = $request->validated();
         $namaUp = strtoupper($data['nama']);
         $exists = Kategori::query()
-            ->where('branch_id', Auth::user()->branch_id)
+
             ->whereRaw('UPPER(nama) = ?', [$namaUp])->exists();
         if ($exists) {
             throw new HttpResponseException(response([

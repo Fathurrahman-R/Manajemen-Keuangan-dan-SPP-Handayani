@@ -103,6 +103,7 @@ enum Permission: string
     case READ_BRANCH = 'read-branch';
     case UPDATE_BRANCH = 'update-branch';
     case DELETE_BRANCH = 'delete-branch';
+    case VIEW_ALL_BRANCHES = 'view-all-branches';
 
     // midtrans permissions
     case PAY_TAGIHAN_ONLINE = 'pay-tagihan-online';

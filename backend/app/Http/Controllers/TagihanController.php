@@ -55,12 +55,12 @@ class TagihanController extends Controller
         $allPeriods = $tahunAjaranId === 'all';
 
         $query = Siswa::query()
+            ->where('branch_id', $user->branch_id)
             ->whereHas('tagihan', function ($q) use ($tahunAjaranId, $allPeriods) {
                 if (! $allPeriods) {
                     $q->where('tahun_ajaran_id', $tahunAjaranId);
                 }
-            })
-            ->where('branch_id', $user->branch_id);
+            });
 
         // Non-admin users can only see their own data
         if (! $user->hasAnyRole(['superadmin', 'admin'])) {
@@ -167,8 +167,8 @@ class TagihanController extends Controller
                     $q->select(['id', 'nama', 'jatuh_tempo', 'jumlah']);
                 },
             ])
-            ->select(['kode_tagihan', 'jenis_tagihan_id', 'nis', 'tmp', 'status', 'branch_id', 'tahun_ajaran_id'])
-            ->where('branch_id', $user->branch_id);
+            ->where('branch_id', $user->branch_id)
+            ->select(['kode_tagihan', 'jenis_tagihan_id', 'nis', 'tmp', 'status', 'branch_id', 'tahun_ajaran_id']);
 
         if (! $allPeriods) {
             $query->where('tahun_ajaran_id', $tahunAjaranId);
@@ -219,7 +219,7 @@ class TagihanController extends Controller
         $tagihan = Tagihan::with([
             'siswa' => fn ($q) => $q->select(['id', 'nis', 'nama', 'jenjang', 'kelas_id', 'kategori_id']),
             'jenis_tagihan' => fn ($q) => $q->select(['id', 'nama', 'jatuh_tempo', 'jumlah']),
-        ])->select(['kode_tagihan', 'jenis_tagihan_id', 'nis', 'tmp', 'status'])->find($kode_tagihan);
+        ])->where('branch_id', Auth::user()->branch_id)->select(['kode_tagihan', 'jenis_tagihan_id', 'nis', 'tmp', 'status'])->find($kode_tagihan);
         if (! $tagihan) {
             throw new HttpResponseException(response([
                 'errors' => ['message' => ['tagihan tidak ditemukan.']],
@@ -259,7 +259,7 @@ class TagihanController extends Controller
             ->where('kelas_id', $data['kelas_id'])
             ->where('jenjang', $data['jenjang'])
             ->where('kategori_id', $data['kategori_id'])
-            ->where('branch_id', $user->branch_id)
+
             ->get();
         if ($siswa->isEmpty()) {
             throw new HttpResponseException(response([
@@ -291,7 +291,7 @@ class TagihanController extends Controller
     #[HeaderParameter('Authorization')]
     public function update(Request $request, string $kode_tagihan)
     {
-        $tagihan = Tagihan::find($kode_tagihan);
+        $tagihan = Tagihan::where('branch_id', Auth::user()->branch_id)->find($kode_tagihan);
         if (! $tagihan) {
             throw new HttpResponseException(response([
                 'errors' => ['message' => ['tagihan tidak ditemukan.']],
@@ -309,7 +309,7 @@ class TagihanController extends Controller
     #[HeaderParameter('Authorization')]
     public function delete(string $kode_tagihan)
     {
-        $tagihan = Tagihan::query()->find($kode_tagihan);
+        $tagihan = Tagihan::query()->where('branch_id', Auth::user()->branch_id)->find($kode_tagihan);
         if (! $tagihan) {
             throw new HttpResponseException(response([
                 'errors' => ['message' => ['tagihan tidak ditemukan.']],
@@ -337,7 +337,7 @@ class TagihanController extends Controller
     #[HeaderParameter('Authorization')]
     public static function lunas(BayarLunasRequest $request, string $kode_tagihan)
     {
-        $tagihan = Tagihan::with(['siswa', 'jenis_tagihan'])->find($kode_tagihan);
+        $tagihan = Tagihan::with(['siswa', 'jenis_tagihan'])->where('branch_id', Auth::user()->branch_id)->find($kode_tagihan);
         if (! $tagihan) {
             throw new HttpResponseException(response([
                 'errors' => ['message' => ['tagihan tidak ditemukan.']],
@@ -354,7 +354,7 @@ class TagihanController extends Controller
     public static function bayar(BayarTidakLunasRequest $request, string $kode_tagihan)
     {
         $data = $request->validated();
-        $tagihan = Tagihan::with(['siswa', 'jenis_tagihan'])->find($kode_tagihan);
+        $tagihan = Tagihan::with(['siswa', 'jenis_tagihan'])->where('branch_id', Auth::user()->branch_id)->find($kode_tagihan);
         if (! $tagihan) {
             throw new HttpResponseException(response([
                 'errors' => ['message' => ['tagihan tidak ditemukan.']],
@@ -471,11 +471,11 @@ class TagihanController extends Controller
         $allPeriods = $tahunAjaranId === 'all';
 
         $query = Tagihan::query()
+            ->where('branch_id', $user->branch_id)
             ->with([
                 'siswa' => fn ($q) => $q->select(['id', 'nis', 'nama', 'jenjang', 'kelas_id'])->with('kelas'),
                 'jenis_tagihan' => fn ($q) => $q->select(['id', 'nama', 'jatuh_tempo', 'jumlah']),
-            ])
-            ->where('branch_id', $user->branch_id);
+            ]);
 
         if ($tahunAjaranId && ! $allPeriods) {
             $query->where('tahun_ajaran_id', $tahunAjaranId);

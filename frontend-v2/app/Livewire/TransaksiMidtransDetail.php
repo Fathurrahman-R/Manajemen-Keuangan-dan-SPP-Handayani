@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Helpers\PermissionHelper;
 use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\MidtransApi;
 use App\Services\MidtransApiException;
@@ -123,7 +124,7 @@ class TransaksiMidtransDetail extends Component implements HasActions, HasSchema
             ->modalHeading('Sinkronisasi Status Transaksi')
             ->modalDescription('Apakah Anda yakin ingin melakukan sinkronisasi status transaksi ini dengan Midtrans?')
             ->modalSubmitActionLabel('Ya, Sinkronisasi')
-            ->visible(fn (): bool => ($this->transaction['status'] ?? '') === 'pending')
+            ->visible(fn (): bool => ($this->transaction['status'] ?? '') === 'pending' || PermissionHelper::hasResource('midtrans.sync'))
             ->action(function (): void {
                 try {
                     MidtransApi::sync($this->orderId);

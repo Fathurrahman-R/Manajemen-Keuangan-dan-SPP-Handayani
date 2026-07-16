@@ -23,11 +23,11 @@ class DataMasterCategory extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return PermissionHelper::hasResource('kategori');
+        return PermissionHelper::hasResource('kategori.view');
     }
 
     public function mount(): void
     {
-        abort_if(! PermissionHelper::hasResource('kategori'), 403);
+        abort_if(! PermissionHelper::hasResource('kategori.view'), 403);
     }
 }

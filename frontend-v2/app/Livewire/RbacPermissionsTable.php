@@ -85,7 +85,7 @@ class RbacPermissionsTable extends Component implements HasActions, HasSchemas, 
             ->headerActions([
                 CreateAction::make('create')
                     ->label('Permission Baru')
-                    ->visible(fn () => PermissionHelper::hasResource('rbac.create'))
+                    ->visible(fn () => PermissionHelper::hasResource('permission.create'))
                     ->form([
                         TextInput::make('name')->label('Nama Permission')->rules(['required', 'string', 'max:255'])->placeholder('contoh: view-laporan-keuangan'),
                         TextInput::make('label')->label('Label Tampilan')->placeholder('Lihat Laporan Keuangan')->hint('Akan ditampilkan di checkbox pada Role Management'),
@@ -103,7 +103,7 @@ class RbacPermissionsTable extends Component implements HasActions, HasSchemas, 
             ])
             ->actions([
                 Action::make('edit')
-                    ->visible(fn () => PermissionHelper::hasResource('rbac.edit'))
+                    ->visible(fn () => PermissionHelper::hasResource('permission.update'))
                     ->form([
                         TextInput::make('name')->label('Nama Permission')->rules(['required', 'string']),
                         TextInput::make('label')->label('Label Tampilan')->placeholder('Lihat Laporan Keuangan'),
@@ -127,7 +127,7 @@ class RbacPermissionsTable extends Component implements HasActions, HasSchemas, 
                     }),
                 Action::make('hapus')
                     ->color('danger')
-                    ->visible(fn () => PermissionHelper::hasResource('rbac.delete'))
+                    ->visible(fn () => PermissionHelper::hasResource('permission.delete'))
                     ->action(function (array $record): void {
                         $r = ApiService::client()->delete("/rbac/permissions/{$record['id']}");
                         if (! $r->successful()) {

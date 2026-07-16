@@ -137,6 +137,7 @@ class PermissionEndpointSeeder extends Seeder
         ['branch.read',          'read-branch',               'Branch',    'Melihat detail cabang'],
         ['branch.update',          'update-branch',               'Branch',    'Mengubah cabang'],
         ['branch.delete',          'delete-branch',               'Branch',    'Menghapus cabang'],
+        ['api.branch.switch',      'view-all-branches',           'Branch',    'Mengganti konteks cabang'],
 
         // ── Midtrans ──
         ['midtrans.admin',         'view-midtrans-transactions',  'Midtrans',  'Admin transaksi Midtrans'],

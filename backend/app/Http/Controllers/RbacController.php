@@ -307,48 +307,11 @@ class RbacController extends Controller
     {
         // ── Hardcoded group definitions ──
         $adminGroups = [
-            //            'Users' => \App\Constant\Permissions::USERS_PERMISSIONS,
-            //            'Siswa' => \App\Constant\Permissions::SISWA_PERMISSIONS,
-            //            'Kelas' => \App\Constant\Permissions::KELAS_PERMISSIONS,
-            //            'Kategori' => \App\Constant\Permissions::KATEGORI_PERMISSIONS,
-            //            'Pembayaran' => \App\Constant\Permissions::PEMBAYARAN_PERMISSIONS,
-            //            'Jenis Tagihan' => \App\Constant\Permissions::JENIS_TAGIHAN_PERMISSIONS,
-            //            'Tagihan' => \App\Constant\Permissions::TAGIHAN_PERMISSIONS,
-            //            'Pengeluaran' => \App\Constant\Permissions::PENGELUARAN_PERMISSIONS,
-            //            'Approval Workflow' => \App\Constant\Permissions::APPROVAL_WORKFLOW_PERMISSIONS,
-            //            'Laporan' => \App\Constant\Permissions::LAPORAN_PERMISSIONS,
-            //            'Tahun Ajaran' => \App\Constant\Permissions::TAHUN_AJARAN_PERMISSIONS,
-            //            'Kenaikan Kelas' => \App\Constant\Permissions::KENAIKAN_KELAS_PERMISSIONS,
-            //            'Akun Siswa' => \App\Constant\Permissions::AKUN_SISWA_PERMISSIONS,
-            //            'Import Export' => \App\Constant\Permissions::IMPORT_EXPORT_PERMISSIONS,
-            //            'Dashboard' => [
-            //                'view' => \App\Enum\Permission::VIEW_DASHBOARD,
-            //            ],
-            //            'Branch' => \App\Constant\Permissions::BRANCH_PERMISSIONS,
-            //            'Midtrans (Admin)' => [
-            //                'view-transactions' => \App\Enum\Permission::VIEW_MIDTRANS_TRX,
-            //                'sync-transactions' => \App\Enum\Permission::SYNC_MIDTRANS_TRX,
-            //                'view-config' => \App\Enum\Permission::VIEW_MIDTRANS_CONFIG,
-            //                'update-config' => \App\Enum\Permission::UPDATE_MIDTRANS_CONFIG,
-            //            ],
-            //            'Pengaturan' => \App\Constant\Permissions::SETTING_PERMISSIONS,
+
         ];
 
         $rbacGroup = [
-            //            \App\Enum\Permission::VIEW_ROLES,
-            //            \App\Enum\Permission::CREATE_ROLE,
-            //            \App\Enum\Permission::UPDATE_ROLE,
-            //            \App\Enum\Permission::DELETE_ROLE,
-            //            \App\Enum\Permission::ATTACH_ROLE,
-            //            \App\Enum\Permission::DETACH_ROLE,
-            //            \App\Enum\Permission::VIEW_PERMISSIONS,
-            //            \App\Enum\Permission::ATTACH_PERMISSIONS,
-            //            \App\Enum\Permission::DETACH_PERMISSIONS,
-            //            \App\Enum\Permission::VIEW_PERMISSION,
-            //            \App\Enum\Permission::CREATE_PERMISSION,
-            //            \App\Enum\Permission::EDIT_PERMISSION,
-            //            \App\Enum\Permission::DELETE_PERMISSION,
-            //            \App\Enum\Permission::ASSIGN_PERMISSION,
+
         ];
 
         // ── Build the default section (audience = null) ──
@@ -356,25 +319,18 @@ class RbacController extends Controller
         foreach ($adminGroups as $label => $constant) {
             $defaultGroups[$label] = $this->flattenPermissionGroup($constant);
         }
-        //        $defaultGroups['Roles & Permissions'] = array_map(
-        //            fn (\App\Enum\Permission $p) => [
-        //                'name' => $p->value,
-        //                'label' => $this->humanizePermission($p->value),
-        //            ],
-        //            $rbacGroup,
-        //        );
 
         $siswaHardcoded = [
-            'Tagihan & Pembayaran' => array_map(
-                fn (\App\Enum\Permission $p) => [
-                    'name' => $p->value,
-                    'label' => $this->humanizePermission($p->value),
-                ],
-                [
-                    \App\Enum\Permission::VIEW_OWN_BILLING,
-                    \App\Enum\Permission::PAY_TAGIHAN_ONLINE,
-                ],
-            ),
+//            'Tagihan & Pembayaran' => array_map(
+//                fn (\App\Enum\Permission $p) => [
+//                    'name' => $p->value,
+//                    'label' => $this->humanizePermission($p->value),
+//                ],
+//                [
+//                    \App\Enum\Permission::VIEW_OWN_BILLING,
+//                    \App\Enum\Permission::PAY_TAGIHAN_ONLINE,
+//                ],
+//            ),
         ];
 
         // ── Collect all hardcoded names so we don't double-add ──
@@ -451,7 +407,7 @@ class RbacController extends Controller
             'data' => [
                 'audiences' => $audiences,
                 ...$defaultGroups,
-                'Siswa Portal' => $siswaHardcoded['Tagihan & Pembayaran'],
+//                'Siswa Portal' => $siswaHardcoded['Tagihan & Pembayaran'],
             ],
         ]);
     }
@@ -654,7 +610,15 @@ class RbacController extends Controller
             ->whereIn('permission_name', $userPermNames)
             ->pluck('resource_key');
 
-        return response()->json(['data' => $resources]);
+        return response()->json([
+            'data' => $resources,
+            'debug' => [
+                'user_id' => $user->id,
+                'user_username' => $user->username,
+                'user_branch' => $user->branch_id,
+                'perms' => $userPermNames
+            ]
+        ]);
     }
 
     public function userGroups(Request $request): JsonResponse

@@ -182,7 +182,7 @@ class SiswaController extends Controller
     public function update(SiswaRequest $request, string $jenjang, string $id)
     {
         $data = $request->validated();
-        $siswa = Siswa::where('id', $id)->first();
+        $siswa = Siswa::where('id', $id)->where('branch_id', Auth::user()->branch_id)->first();
         if (! $siswa || strtoupper($siswa->jenjang) !== strtoupper($jenjang)) {
             throw new HttpResponseException(response([
                 'errors' => ['message' => ['siswa tidak ditemukan.']],
@@ -251,7 +251,7 @@ class SiswaController extends Controller
     #[HeaderParameter('Authorization')]
     public function get(string $jenjang, string $id)
     {
-        $siswa = Siswa::where('jenjang', strtoupper($jenjang))->find($id);
+        $siswa = Siswa::where('jenjang', strtoupper($jenjang))->where('branch_id', Auth::user()->branch_id)->find($id);
         if (! $siswa) {
             throw new HttpResponseException(response([
                 'errors' => ['message' => ['siswa tidak ditemukan.']],
@@ -264,7 +264,7 @@ class SiswaController extends Controller
     #[HeaderParameter('Authorization')]
     public function delete(string $jenjang, string $id)
     {
-        $siswa = Siswa::where('id', $id)->where('jenjang', $jenjang)->first();
+        $siswa = Siswa::where('id', $id)->where('jenjang', $jenjang)->where('branch_id', Auth::user()->branch_id)->first();
         if (! $siswa) {
             throw new HttpResponseException(response([
                 'errors' => ['message' => ['siswa tidak ditemukan.']],

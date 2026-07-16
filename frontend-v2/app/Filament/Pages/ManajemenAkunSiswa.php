@@ -54,12 +54,12 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
 
     public static function shouldRegisterNavigation(): bool
     {
-        return PermissionHelper::hasResource('akun-siswa');
+        return PermissionHelper::hasResource('akun-siswa.view');
     }
 
     public function mount(): void
     {
-        abort_if(! PermissionHelper::hasResource('akun-siswa'), 403);
+        abort_if(! PermissionHelper::hasResource('akun-siswa.view'), 403);
 
         if (! in_array($this->tab, [self::TAB_TERDAFTAR, self::TAB_BELUM_TERDAFTAR], true)) {
             $this->tab = self::TAB_TERDAFTAR;

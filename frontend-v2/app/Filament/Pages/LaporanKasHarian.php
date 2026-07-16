@@ -20,11 +20,11 @@ class LaporanKasHarian extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return PermissionHelper::hasResource('kas-harian');
+        return PermissionHelper::hasResource('laporan.kas');
     }
 
     public function mount(): void
     {
-        abort_if(! PermissionHelper::hasResource('kas-harian'), 403);
+        abort_if(! PermissionHelper::hasResource('laporan.kas'), 403);
     }
 }

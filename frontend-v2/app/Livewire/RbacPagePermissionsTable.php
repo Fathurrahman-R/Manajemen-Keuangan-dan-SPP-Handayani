@@ -83,6 +83,7 @@ class RbacPagePermissionsTable extends Component implements HasActions, HasSchem
                 TextColumn::make('description')->label('Deskripsi')->limit(40)->placeholder('-')->searchable()->toggleable(),
                 ToggleColumn::make('is_active')
                     ->label('Aktif')
+                    ->disabled(fn () => !PermissionHelper::hasResource('rbac.toggle'))
                     ->updateStateUsing(function ($state, $record): ?bool {
                         $r = ApiService::client()->put("/rbac/page-permissions/{$record['id']}", [
                             'is_active' => $state,
@@ -110,7 +111,7 @@ class RbacPagePermissionsTable extends Component implements HasActions, HasSchem
             ->headerActions([
                 CreateAction::make('create')
                     ->label('Tambah Resource')
-                    ->visible(fn () => PermissionHelper::hasResource('rbac.create'))
+                    ->visible(fn () => PermissionHelper::hasResource('resource-registry.create'))
                     ->form([
                         TextInput::make('resource_key')
                             ->label('Resource Key')
@@ -143,7 +144,7 @@ class RbacPagePermissionsTable extends Component implements HasActions, HasSchem
             ])
             ->actions([
                 Action::make('edit')
-                    ->visible(fn () => PermissionHelper::hasResource('rbac.edit'))
+                    ->visible(fn () => PermissionHelper::hasResource('resource-registry.update'))
                     ->form([
                         TextInput::make('resource_key')
                             ->label('Resource Key')
@@ -175,7 +176,7 @@ class RbacPagePermissionsTable extends Component implements HasActions, HasSchem
                     }),
                 Action::make('hapus')
                     ->color('danger')
-                    ->visible(fn () => PermissionHelper::hasResource('rbac.delete'))
+                    ->visible(fn () => PermissionHelper::hasResource('resource-registry.delete'))
                     ->action(function (array $record): void {
                         $r = ApiService::client()->delete("/rbac/page-permissions/{$record['id']}");
                         if (! $r->successful()) {

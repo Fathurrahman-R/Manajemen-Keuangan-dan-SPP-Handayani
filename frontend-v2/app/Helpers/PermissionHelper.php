@@ -87,9 +87,11 @@ class PermissionHelper
             if ($r->successful()) {
                 self::$userResources = $r->json()['data'] ?? [];
             } else {
+                \Illuminate\Support\Facades\Log::error('RBAC API failed with status ' . $r->status(), ['response' => $r->body()]);
                 self::$userResources = [];
             }
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('RBAC API threw exception: ' . $e->getMessage());
             self::$userResources = [];
         }
 

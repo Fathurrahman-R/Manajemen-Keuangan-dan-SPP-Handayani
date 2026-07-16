@@ -21,11 +21,20 @@ class TahunAjaranSeeder extends Seeder
             ]);
 
             TahunAjaran::firstOrCreate([
-                'nama' => '2024/2025',
+                'nama' => '2025/2026',
                 'branch_id' => $branch->id,
             ], [
-                'tanggal_mulai' => '2024-07-01',
-                'tanggal_selesai' => '2025-06-30',
+                'tanggal_mulai' => '2025-07-01',
+                'tanggal_selesai' => '2026-06-30',
+                'status' => 'Non-Aktif',
+            ]);
+
+            TahunAjaran::firstOrCreate([
+                'nama' => '2026/2027',
+                'branch_id' => $branch->id,
+            ], [
+                'tanggal_mulai' => '2026-07-01',
+                'tanggal_selesai' => '2027-06-30',
                 'status' => 'Aktif',
             ]);
         }

@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\URL;
 
 class ExportJob extends Model
 {
-    protected $table = 'export_jobs';
+        protected $table = 'export_jobs';
 
     protected $fillable = [
         'job_reference',

@@ -88,6 +88,7 @@ class AuthController extends Controller
                 'expires_at' => $token->accessToken->expires_at->toISOString(),
                 'permissions' => $abilities,
                 'roles' => $user->getRoleNames()->toArray(),
+                'branch_id' => $user->branch_id,
                 'must_change_password' => $user->must_change_password,
             ],
         ]);

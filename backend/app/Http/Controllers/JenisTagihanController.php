@@ -26,8 +26,7 @@ class JenisTagihanController extends Controller
             return JenisTagihanResource::collection(collect());
         }
 
-        $query = JenisTagihan::query()
-            ->where('branch_id', $user->branch_id);
+        $query = JenisTagihan::query()->where('branch_id', $user->branch_id);
 
         if ($tahunAjaranId !== 'all') {
             $query->where('tahun_ajaran_id', $tahunAjaranId);
@@ -81,7 +80,7 @@ class JenisTagihanController extends Controller
     #[HeaderParameter('Authorization')]
     public function get(string $id)
     {
-        $jt = JenisTagihan::query()->find($id);
+        $jt = JenisTagihan::query()->where('branch_id', Auth::user()->branch_id)->find($id);
         if (! $jt) {
             throw new HttpResponseException(response([
                 'errors' => [
@@ -96,7 +95,7 @@ class JenisTagihanController extends Controller
     #[HeaderParameter('Authorization')]
     public function update(JenisTagihanRequest $request, string $id)
     {
-        $jt = JenisTagihan::query()->find($id);
+        $jt = JenisTagihan::query()->where('branch_id', Auth::user()->branch_id)->find($id);
         if (! $jt) {
             throw new HttpResponseException(response([
                 'errors' => [
@@ -121,7 +120,7 @@ class JenisTagihanController extends Controller
     #[HeaderParameter('Authorization')]
     public function delete(string $id)
     {
-        $jt = JenisTagihan::query()->find($id);
+        $jt = JenisTagihan::query()->where('branch_id', Auth::user()->branch_id)->find($id);
         if (! $jt) {
             throw new HttpResponseException(response([
                 'errors' => [

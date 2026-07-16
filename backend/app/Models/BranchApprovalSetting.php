@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class BranchApprovalSetting extends Model
 {
-    protected $fillable = [
+        protected $fillable = [
         'branch_id',
         'auto_approval_enabled',
         'auto_approval_threshold',

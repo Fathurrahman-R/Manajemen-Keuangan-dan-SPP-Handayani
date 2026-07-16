@@ -107,7 +107,7 @@ class TahunAjaranManagement extends Component implements HasActions, HasSchemas,
                         ->tooltip('Aktifkan Tahun Ajaran')
                         ->color('success')
                         ->hidden(fn (array $record): bool => $record['status'] === 'Aktif')
-                        ->visible(fn (): bool => PermissionHelper::hasResource('tahun-ajaran.update'))
+                        ->visible(fn (): bool => PermissionHelper::hasResource('tahun-ajaran.toggle'))
                         ->requiresConfirmation()
                         ->modalHeading('Aktifkan Tahun Ajaran')
                         ->modalDescription('Apakah kamu yakin ingin mengaktifkan tahun ajaran ini? Tahun ajaran lain akan dinonaktifkan.')

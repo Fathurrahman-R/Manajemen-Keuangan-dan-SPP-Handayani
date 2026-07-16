@@ -127,8 +127,10 @@ class FrontendPolishTestSeeder extends Seeder
             ['uraian' => 'Pembelian spidol whiteboard', 'jumlah' => 85000, 'status' => 'draft', 'days_ago' => 0],
         ];
 
+        $aktiveTahunAjaran = \App\Models\TahunAjaran::getAktif($branch->id);
+
         foreach ($requests as $data) {
-            PengeluaranRequest::create([
+            $pengeluaranRequest = PengeluaranRequest::create([
                 'uraian' => $data['uraian'],
                 'jumlah' => $data['jumlah'],
                 'tanggal_kebutuhan' => now()->addDays(rand(1, 14))->format('Y-m-d'),
@@ -137,6 +139,18 @@ class FrontendPolishTestSeeder extends Seeder
                 'requester_id' => $admin->id,
                 'branch_id' => $branch->id,
             ]);
+
+            // Saat status disbursed, buat record Pengeluaran yang terkait.
+            if ($data['status'] === 'disbursed') {
+                \App\Models\Pengeluaran::create([
+                    'tanggal' => now()->subDays($data['days_ago'])->format('Y-m-d'),
+                    'uraian' => $data['uraian'],
+                    'jumlah' => $data['jumlah'],
+                    'branch_id' => $branch->id,
+                    'tahun_ajaran_id' => $aktiveTahunAjaran?->id,
+                    'pengeluaran_request_id' => $pengeluaranRequest->id,
+                ]);
+            }
         }
 
         $this->command->info('  → 6 pengeluaran requests created (mixed statuses)');

@@ -37,9 +37,7 @@ class ParentSearchController extends Controller
         $branchId = Auth::user()->branch_id;
         $search = $request->query('search');
 
-        $query = $model::whereHas('siswa', function ($q) use ($branchId) {
-            $q->where('branch_id', $branchId);
-        });
+        $query = $model::whereHas('siswa', function ($q) {});
 
         if ($search) {
             $query->where('nama', 'like', '%'.$search.'%');

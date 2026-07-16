@@ -23,7 +23,7 @@ class TransaksiMidtransDetailPage extends Page
             return false;
         }
 
-        return PermissionHelper::hasResource('midtrans');
+        return PermissionHelper::hasResource('midtrans.admin');
     }
 
     public function mount(string $orderId): void
@@ -32,7 +32,7 @@ class TransaksiMidtransDetailPage extends Page
             abort(404);
         }
 
-        abort_if(! PermissionHelper::hasResource('midtrans'), 403);
+        abort_if(! PermissionHelper::hasResource('midtrans.admin'), 403);
 
         $this->orderId = $orderId;
     }

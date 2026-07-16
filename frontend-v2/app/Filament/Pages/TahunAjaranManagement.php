@@ -20,11 +20,11 @@ class TahunAjaranManagement extends Page
 
     public static function canAccess(): bool
     {
-        return PermissionHelper::hasResource('tahun-ajaran');
+        return PermissionHelper::hasResource('tahun-ajaran.view');
     }
 
     public function mount(): void
     {
-        abort_if(! PermissionHelper::hasResource('tahun-ajaran'), 403);
+        abort_if(! PermissionHelper::hasResource('tahun-ajaran.view'), 403);
     }
 }

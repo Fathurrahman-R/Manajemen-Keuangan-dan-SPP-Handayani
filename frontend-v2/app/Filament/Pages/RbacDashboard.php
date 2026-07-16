@@ -43,6 +43,18 @@ class RbacDashboard extends Page
     {
         abort_if(! PermissionHelper::hasResource('rbac'), 403);
 
+        if (PermissionHelper::hasResource('permission.view')) {
+            $this->activeTab = 'permissions';
+        } elseif (PermissionHelper::hasResource('role.view')) {
+            $this->activeTab = 'roles';
+        } elseif (PermissionHelper::hasResource('endpoint-mapping.view')) {
+            $this->activeTab = 'endpoints';
+        } elseif (PermissionHelper::hasResource('resource-registry.view')) {
+            $this->activeTab = 'resources';
+        } else {
+            $this->activeTab = 'guide';
+        }
+
         $this->reloadAll();
     }
 

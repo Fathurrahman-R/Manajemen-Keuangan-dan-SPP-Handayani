@@ -186,7 +186,7 @@ class KenaikanKelasController extends Controller
         $branchId = Auth::user()->branch_id;
 
         $batch = BatchPromosi::where('id', $id)
-            ->where('branch_id', $branchId)
+
             ->first();
 
         if (! $batch) {

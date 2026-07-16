@@ -21,6 +21,7 @@ class KasController extends Controller
     {
         $bulan = $request->bulan;
         $tahun = $request->tahun;
+        $branchId = Auth::user()->branch_id;
 
         // Validasi parameter
         if (! $bulan || ! $tahun) {
@@ -56,14 +57,14 @@ class KasController extends Controller
         |--------------------------------------------------------------------------
         */
         $pemasukan = Pembayaran::query()->selectRaw('DATE(tanggal) as tanggal, SUM(jumlah) as total')
-            ->where('branch_id', Auth::user()->branch_id)
+            ->where('branch_id', $branchId)
             ->whereBetween('tanggal', [$start, $end])
             ->groupBy('tanggal')
             ->get()
             ->keyBy('tanggal');
 
-        $pengeluaran = Pengeluaran::selectRaw('DATE(tanggal) as tanggal, SUM(jumlah) as total')
-            ->where('branch_id', Auth::user()->branch_id)
+        $pengeluaran = Pengeluaran::query()->selectRaw('DATE(tanggal) as tanggal, SUM(jumlah) as total')
+            ->where('branch_id', $branchId)
             ->whereBetween('tanggal', [$start, $end])
             ->groupBy('tanggal')
             ->get()
@@ -79,14 +80,6 @@ class KasController extends Controller
             $pengeluaran->keys()->toArray()
         ))->unique()->sort();
 
-        //        if ($dates->isEmpty()) {
-        //            throw new HttpResponseException(response()->json([
-        //                'errors' => [
-        //                    'message' => ['Data tidak ditemukan untuk filter yang diberikan.']
-        //                ]
-        //            ], 404));
-        //        }
-
         /*
         |--------------------------------------------------------------------------
         | 3) Loop tanggal → hitung saldo GLOBAL sampai tanggal itu
@@ -99,13 +92,13 @@ class KasController extends Controller
             (float) $masuk = $pemasukan[$tanggal]->total ?? 0;
             (float) $keluar = $pengeluaran[$tanggal]->total ?? 0;
 
-            // ❗ SALDO GLOBAL — sesuai buku kas
+            // ❗ SALDO GLOBAL — sesuai buku kas (per cabang)
             (float) $saldoGlobal =
                 Pembayaran::query()
-                    ->where('branch_id', Auth::user()->branch_id)
+                    ->where('branch_id', $branchId)
                     ->whereDate('tanggal', '<=', $tanggal)->sum('jumlah')
                 - Pengeluaran::query()
-                    ->where('branch_id', Auth::user()->branch_id)
+                    ->where('branch_id', $branchId)
                     ->whereDate('tanggal', '<=', $tanggal)->sum('jumlah');
 
             $kas[] = (object) [
@@ -131,6 +124,7 @@ class KasController extends Controller
     public function rekapBulanan(Request $request)
     {
         $tahun = $request->tahun;
+        $branchId = Auth::user()->branch_id;
 
         if (! $tahun) {
             throw new HttpResponseException(response()->json([
@@ -154,7 +148,7 @@ class KasController extends Controller
         */
         $pemasukan = Pembayaran::query()
             ->selectRaw("DATE_FORMAT(tanggal, '%Y-%m') as bulan, SUM(jumlah) as total")
-            ->where('branch_id', Auth::user()->branch_id)
+            ->where('branch_id', $branchId)
             ->whereYear('tanggal', $tahun)
             ->groupBy('bulan')
             ->get()
@@ -162,7 +156,7 @@ class KasController extends Controller
 
         $pengeluaran = Pengeluaran::query()
             ->selectRaw("DATE_FORMAT(tanggal, '%Y-%m') as bulan, SUM(jumlah) as total")
-            ->where('branch_id', Auth::user()->branch_id)
+            ->where('branch_id', $branchId)
             ->whereYear('tanggal', $tahun)
             ->groupBy('bulan')
             ->get()
@@ -177,14 +171,6 @@ class KasController extends Controller
             $pemasukan->keys()->toArray(),
             $pengeluaran->keys()->toArray()
         ))->unique()->sort();
-
-        //        if ($months->isEmpty()) {
-        //            throw new HttpResponseException(response()->json([
-        //                'errors' => [
-        //                    'message' => ['Data tidak ditemukan untuk filter yang diberikan.']
-        //                ]
-        //            ], 404));
-        //        }
 
         /*
         |--------------------------------------------------------------------------
@@ -201,13 +187,13 @@ class KasController extends Controller
             // Ambil tanggal terakhir bulan tsb
             $lastDate = \Carbon\Carbon::parse("$bulan-01")->endOfMonth()->format('Y-m-d');
 
-            // ❗ SALDO GLOBAL SAMPAI AKHIR BULAN
+            // ❗ SALDO GLOBAL SAMPAI AKHIR BULAN (per cabang)
             $saldoGlobal =
                 Pembayaran::query()
-                    ->where('branch_id', Auth::user()->branch_id)
+                    ->where('branch_id', $branchId)
                     ->whereDate('tanggal', '<=', $lastDate)->sum('jumlah')
                 - Pengeluaran::query()
-                    ->where('branch_id', Auth::user()->branch_id)
+                    ->where('branch_id', $branchId)
                     ->whereDate('tanggal', '<=', $lastDate)->sum('jumlah');
 
             $kas[] = (object) [

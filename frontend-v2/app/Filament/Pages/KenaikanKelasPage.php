@@ -22,11 +22,11 @@ class KenaikanKelasPage extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return PermissionHelper::hasResource('kenaikan-kelas');
+        return PermissionHelper::hasResource('kenaikan-kelas.view');
     }
 
     public function mount(): void
     {
-        abort_if(! PermissionHelper::hasResource('kenaikan-kelas'), 403);
+        abort_if(! PermissionHelper::hasResource('kenaikan-kelas.view'), 403);
     }
 }

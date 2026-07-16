@@ -25,6 +25,6 @@ class TransaksiPembayaran extends Page
 
     public function mount(): void
     {
-        abort_if(! PermissionHelper::hasResource('pembayaran'), 403);
+        abort_if(! PermissionHelper::hasResource('pembayaran.view'), 403);
     }
 }

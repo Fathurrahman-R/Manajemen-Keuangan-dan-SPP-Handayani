@@ -20,11 +20,11 @@ class LaporanRekapBulanan extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return PermissionHelper::hasResource('rekap-bulanan');
+        return PermissionHelper::hasResource('laporan.rekap');
     }
 
     public function mount(): void
     {
-        abort_if(! PermissionHelper::hasResource('rekap-bulanan'), 403);
+        abort_if(! PermissionHelper::hasResource('laporan.rekap'), 403);
     }
 }

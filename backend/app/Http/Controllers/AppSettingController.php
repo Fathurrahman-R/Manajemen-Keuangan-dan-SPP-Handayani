@@ -16,16 +16,21 @@ class AppSettingController extends Controller
     public static function get()
     {
         $setting = AppSetting::query()
-            ->where('branch_id', Auth::user()->branch_id)->first();
-        //        $setting->logo = asset('storage') . '/' . $setting->logo;
+            ->where('branch_id', Auth::user()->branch_id)
+            ->first();
+
         if (! $setting) {
-            throw new HttpResponseException(response([
-                'errors' => [
-                    'message' => [
-                        'setting tidak ditemukan.',
-                    ],
-                ],
-            ], 404));
+            $setting = AppSetting::create([
+                'branch_id' => Auth::user()->branch_id,
+                'nama_sekolah' => 'Sekolah Cabang Baru',
+                'alamat' => '-',
+                'lokasi' => '-',
+                'email' => '-',
+                'telepon' => '-',
+                'kepala_sekolah' => '-',
+                'bendahara' => '-',
+                'kode_pos' => '-',
+            ]);
         }
 
         return new AppSettingResource($setting);

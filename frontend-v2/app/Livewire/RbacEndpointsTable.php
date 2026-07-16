@@ -80,6 +80,7 @@ class RbacEndpointsTable extends Component implements HasActions, HasSchemas, Ha
                 TextColumn::make('description')->label('Deskripsi')->limit(40)->placeholder('-')->searchable(),
                 ToggleColumn::make('is_active')
                     ->label('Aktif')
+                    ->disabled(fn () => !PermissionHelper::hasResource('rbac.toggle'))
                     ->updateStateUsing(function ($state, $record): ?bool {
                         $r = ApiService::client()->put("/rbac/endpoints/{$record['id']}", [
                             'is_active' => $state,
@@ -107,7 +108,7 @@ class RbacEndpointsTable extends Component implements HasActions, HasSchemas, Ha
             ->headerActions([
                 CreateAction::make('create')
                     ->label('Tambah Endpoint')
-                    ->visible(fn (): bool => PermissionHelper::hasResource('rbac.create'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('endpoint-mapping.create'))
                     ->form([
                         \Filament\Forms\Components\TextInput::make('resource_key')
                             ->label('Resource Key')
@@ -139,7 +140,7 @@ class RbacEndpointsTable extends Component implements HasActions, HasSchemas, Ha
             ])
             ->actions([
                 Action::make('edit')
-                    ->visible(fn (): bool => PermissionHelper::hasResource('rbac.edit'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('endpoint-mapping.update'))
                     ->form([
                         \Filament\Forms\Components\TextInput::make('resource_key')
                             ->label('Resource Key')
@@ -170,7 +171,7 @@ class RbacEndpointsTable extends Component implements HasActions, HasSchemas, Ha
                     }),
                 Action::make('hapus')
                     ->color('danger')
-                    ->visible(fn (): bool => PermissionHelper::hasResource('rbac.delete'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('endpoint-mapping.delete'))
                     ->action(function (array $record): void {
                         $r = ApiService::client()->delete("/rbac/endpoints/{$record['id']}");
                         if (! $r->successful()) {

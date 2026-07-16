@@ -39,7 +39,7 @@ class Settings extends Page
 
     public function mount()
     {
-        abort_if(! PermissionHelper::hasResource('app-setting'), 403);
+        abort_if(! PermissionHelper::hasResource('pengaturan.view'), 403);
 
         $this->loadSetting();
     }

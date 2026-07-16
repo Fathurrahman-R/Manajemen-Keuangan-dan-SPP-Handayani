@@ -27,7 +27,7 @@ class AkunSiswaController extends Controller
         $branchId = Auth::user()->branch_id;
 
         $users = User::role('siswa')
-            ->where('branch_id', $branchId)
+
             ->with('siswa.kelas');
 
         $this->applySorting($users, ['username', 'name', 'created_at'], 'username', 'asc');
@@ -80,7 +80,7 @@ class AkunSiswaController extends Controller
             'siswa_ids.*' => 'integer|exists:siswas,id',
         ])['siswa_ids'];
 
-        $siswaList = Siswa::where('branch_id', $branchId)->whereIn('id', $siswaIds)->get();
+        $siswaList = Siswa::whereIn('id', $siswaIds)->get();
 
         if ($siswaList->isEmpty()) {
             return response()->json(['errors' => ['siswa_ids' => ['Tidak ada siswa yang valid.']]], 422);
@@ -97,7 +97,7 @@ class AkunSiswaController extends Controller
     public function resetPassword(int $id): JsonResponse
     {
         $branchId = Auth::user()->branch_id;
-        $user = User::role('siswa')->where('branch_id', $branchId)->where('id', $id)->first();
+        $user = User::role('siswa')->where('id', $id)->first();
 
         if (! $user) {
             return response()->json(['errors' => ['message' => ['Akun tidak ditemukan.']]], 404);
@@ -114,7 +114,7 @@ class AkunSiswaController extends Controller
     public function toggleActive(int $id): JsonResponse
     {
         $branchId = Auth::user()->branch_id;
-        $user = User::role('siswa')->where('branch_id', $branchId)->where('id', $id)->first();
+        $user = User::role('siswa')->where('id', $id)->first();
 
         if (! $user) {
             return response()->json(['errors' => ['message' => ['Akun tidak ditemukan.']]], 404);
@@ -138,7 +138,7 @@ class AkunSiswaController extends Controller
         }
 
         $users = User::role('siswa')
-            ->where('branch_id', $branchId)
+
             ->whereIn('id', $userIds)
             ->with('siswa')
             ->get();
@@ -166,7 +166,7 @@ class AkunSiswaController extends Controller
         }
 
         $users = User::role('siswa')
-            ->where('branch_id', $branchId)
+
             ->whereIn('id', $userIds)
             ->with('siswa')
             ->get();

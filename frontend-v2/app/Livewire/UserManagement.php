@@ -216,7 +216,7 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                     ->color('warning')
                     ->modalHeading('Ubah User')
                     ->modalWidth('2xl')
-                    ->visible(fn (): bool => PermissionHelper::hasResource('user-management.update'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('users.update'))
                     ->modalFooterActions(function (Action $action) {
                         return [
                             $action->getModalSubmitAction()
@@ -308,7 +308,7 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                     ->icon(fn ($record) => ($record['is_active'] ?? false) ? 'heroicon-s-x-circle' : 'heroicon-s-check-circle')
                     ->iconButton()
                     ->color(fn ($record) => ($record['is_active'] ?? false) ? 'danger' : 'success')
-                    ->visible(fn (): bool => PermissionHelper::hasResource('user-management.update'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('users.toggle'))
                     ->requiresConfirmation()
                     ->modalHeading(fn ($record) => ($record['is_active'] ?? false) ? 'Nonaktifkan User' : 'Aktifkan User')
                     ->modalDescription(fn ($record) => ($record['is_active'] ?? false)
@@ -334,7 +334,7 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                     ->icon('heroicon-s-trash')
                     ->iconButton()
                     ->color('danger')
-                    ->visible(fn ($record): bool => PermissionHelper::hasResource('user-management.delete')
+                    ->visible(fn ($record): bool => PermissionHelper::hasResource('users.delete')
                         && ! in_array('superadmin', $record['roles'] ?? []))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus User')
@@ -378,7 +378,7 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                     ->label('Hapus Terpilih')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
-                    ->visible(fn (): bool => PermissionHelper::hasResource('user-management.delete'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('users.delete'))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus User Terpilih')
                     ->modalDescription('Apakah kamu yakin ingin menghapus semua user yang dipilih?')
@@ -406,7 +406,7 @@ class UserManagement extends Component implements HasActions, HasSchemas, HasTab
                     ->button()
                     ->modalHeading('Tambah User')
                     ->modalWidth('2xl')
-                    ->visible(fn (): bool => PermissionHelper::hasResource('user-management.create'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('users.create'))
                     ->modalFooterActions(function (Action $action) {
                         return [
                             $action->getModalSubmitAction()

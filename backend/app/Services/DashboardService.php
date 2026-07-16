@@ -190,11 +190,7 @@ class DashboardService
 
                 if ($tahunAjaran) {
                     $pembayaranQuery->where('tagihans.tahun_ajaran_id', $tahunAjaranId);
-
-                    $pengeluaranQuery->whereBetween('tanggal', [
-                        $tahunAjaran->tanggal_mulai,
-                        $tahunAjaran->tanggal_selesai,
-                    ]);
+                    $pengeluaranQuery->where('tahun_ajaran_id', $tahunAjaranId);
                 }
             }
 
@@ -366,7 +362,7 @@ class DashboardService
                         DB::raw('SUM(jumlah) as total')
                     )
                         ->where('branch_id', $branchId)
-                        ->whereBetween('tanggal', [$tahunAjaran->tanggal_mulai, $tahunAjaran->tanggal_selesai])
+                        ->where('tahun_ajaran_id', $tahunAjaranId)
                         ->groupBy(DB::raw('MONTH(tanggal)'))
                         ->pluck('total', 'bulan')
                         ->toArray();

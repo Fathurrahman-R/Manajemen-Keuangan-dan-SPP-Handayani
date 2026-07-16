@@ -71,7 +71,7 @@ class KelasController extends Controller
         $level = $data['level'] ?? null;
         if ($level !== null) {
             $levelExists = Kelas::where('jenjang', $jenjangUp)
-                ->where('branch_id', $branchId)
+                ->where('kelas.branch_id', $branchId)
                 ->where('level', $level)
                 ->exists();
             if ($levelExists) {
@@ -137,7 +137,7 @@ class KelasController extends Controller
         $level = array_key_exists('level', $data) ? $data['level'] : $kelas->level;
         if ($level !== null) {
             $levelExists = Kelas::where('jenjang', $jenjangUp)
-                ->where('branch_id', $branchId)
+                ->where('kelas.branch_id', $branchId)
                 ->where('level', $level)
                 ->where('id', '<>', $kelas->id)
                 ->exists();
