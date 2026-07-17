@@ -1,0 +1,233 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - navigation "Navigasi utama" [ref=e3]:
+      - link [ref=e4] [cursor=pointer]:
+        - /url: "#beranda"
+        - img "Logo Handayani" [ref=e5]
+        - text: Handayani
+      - list [ref=e6]:
+        - listitem [ref=e7]:
+          - link "Beranda" [ref=e8] [cursor=pointer]:
+            - /url: "#beranda"
+        - listitem [ref=e9]:
+          - link "Tentang" [ref=e10] [cursor=pointer]:
+            - /url: "#tentang"
+        - listitem [ref=e11]:
+          - link "Jenjang" [ref=e12] [cursor=pointer]:
+            - /url: "#jenjang"
+        - listitem [ref=e13]:
+          - link "SPP" [ref=e14] [cursor=pointer]:
+            - /url: "#spp"
+        - listitem [ref=e15]:
+          - link "Kontak" [ref=e16] [cursor=pointer]:
+            - /url: "#kontak"
+      - link "Portal SPP" [ref=e18] [cursor=pointer]:
+        - /url: /login
+      - button [ref=e22]
+    - list [ref=e28]:
+      - listitem [ref=e29]:
+        - link "Beranda" [ref=e30] [cursor=pointer]:
+          - /url: "#beranda"
+      - listitem [ref=e31]:
+        - link "Tentang" [ref=e32] [cursor=pointer]:
+          - /url: "#tentang"
+      - listitem [ref=e33]:
+        - link "Jenjang" [ref=e34] [cursor=pointer]:
+          - /url: "#jenjang"
+      - listitem [ref=e35]:
+        - link "SPP" [ref=e36] [cursor=pointer]:
+          - /url: "#spp"
+      - listitem [ref=e37]:
+        - link "Kontak" [ref=e38] [cursor=pointer]:
+          - /url: "#kontak"
+      - listitem [ref=e39]:
+        - link "Portal SPP" [ref=e40] [cursor=pointer]:
+          - /url: /login
+  - generic [ref=e44]:
+    - generic [ref=e49]:
+      - button "Gambar sebelumnya" [ref=e50]
+      - button "Gambar selanjutnya" [ref=e52]
+    - generic [ref=e55]:
+      - heading "Lembaga Pendidikan Anak Handayani" [level=1] [ref=e56]
+      - paragraph [ref=e57]: Membentuk Generasi Berilmu dan Berakhlak. Tiga jenjang pendidikan terpadu — KB/PAUD, TK, dan Madrasah Ibtidaiyah — dalam satu lingkungan yang aman dan berkualitas.
+      - generic [ref=e58]:
+        - link "Kenali Kami" [ref=e59] [cursor=pointer]:
+          - /url: "#tentang"
+        - link "Portal Pembayaran SPP" [ref=e62] [cursor=pointer]:
+          - /url: /login
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - term [ref=e68]: "3"
+          - definition [ref=e69]: Jenjang Terpadu
+        - generic [ref=e70]:
+          - term [ref=e71]: 20+
+          - definition [ref=e72]: Tahun Berdiri
+        - generic [ref=e73]:
+          - term [ref=e74]: 100%
+          - definition [ref=e75]: Kurikulum Nasional
+  - generic [ref=e77]:
+    - generic [ref=e78]:
+      - text: Tentang Kami
+      - heading "Lembaga pendidikan Islam yang fokus pada ilmu, adab, dan masa depan." [level=2] [ref=e79]
+    - generic [ref=e80]:
+      - generic [ref=e81]:
+        - heading "Misi" [level=3] [ref=e82]
+        - paragraph [ref=e83]: Menyelenggarakan pendidikan terpadu berbasis nilai Islam, kurikulum nasional, dan pengembangan karakter — untuk membentuk peserta didik yang berilmu, mandiri, dan berakhlak mulia.
+      - generic [ref=e84]:
+        - heading "Visi" [level=3] [ref=e85]
+        - paragraph [ref=e86]: Menjadi yayasan pendidikan Islam rujukan yang melahirkan generasi cerdas spiritual, intelektual, dan sosial — siap berkontribusi bagi umat dan bangsa.
+    - generic [ref=e87]:
+      - heading "Nilai Institusional" [level=3] [ref=e89]
+      - list [ref=e90]:
+        - listitem [ref=e91]:
+          - text: "01"
+          - heading "Integritas" [level=4] [ref=e92]
+          - paragraph [ref=e93]: Kejujuran, amanah, dan tanggung jawab menjadi pondasi setiap pendidik dan peserta didik.
+        - listitem [ref=e94]:
+          - text: "02"
+          - heading "Profesionalisme" [level=4] [ref=e95]
+          - paragraph [ref=e96]: Tenaga pendidik kompeten dengan kurikulum nasional terstandar dan pengembangan berkelanjutan.
+        - listitem [ref=e97]:
+          - text: "03"
+          - heading "Keteladanan" [level=4] [ref=e98]
+          - paragraph [ref=e99]: Mengutamakan akhlak Qur'ani dalam keseharian, dari guru ke murid, dari sekolah ke keluarga.
+  - generic [ref=e101]:
+    - generic [ref=e102]:
+      - text: Jenjang Pendidikan
+      - heading "Tiga jenjang. Satu lingkungan pendidikan yang utuh." [level=2] [ref=e103]
+      - paragraph [ref=e104]: Setiap jenjang dirancang berkesinambungan — peserta didik tumbuh dalam ekosistem yang konsisten dari usia dini hingga akhir sekolah dasar.
+    - generic [ref=e105]:
+      - article [ref=e107]:
+        - generic [ref=e108]: KB/PAUD Usia 2 – 4 Tahun
+        - heading "Kelompok Bermain & PAUD" [level=3] [ref=e109]
+        - paragraph [ref=e110]: Tahap awal pengenalan dunia belajar melalui bermain, stimulasi motorik, dan pembiasaan adab harian.
+        - list [ref=e111]:
+          - listitem [ref=e112]: Sensory & motorik halus
+          - listitem [ref=e116]: Pengenalan huruf hijaiyah
+          - listitem [ref=e120]: Doa-doa pendek harian
+          - listitem [ref=e124]: Sosial-emosional
+        - link "Info pendaftaran" [ref=e128] [cursor=pointer]:
+          - /url: "#kontak"
+      - article [ref=e133]:
+        - generic [ref=e134]: TK Usia 4 – 6 Tahun
+        - heading "Taman Kanak-Kanak" [level=3] [ref=e135]
+        - paragraph [ref=e136]: Penguatan kesiapan sekolah dasar dengan metode eksploratif berbasis Kurikulum Merdeka dan nilai Islam.
+        - list [ref=e137]:
+          - listitem [ref=e138]: Calistung ceria
+          - listitem [ref=e142]: Tahfidz Juz 30
+          - listitem [ref=e146]: Bahasa Inggris dasar
+          - listitem [ref=e150]: Outbound & manasik
+        - link "Info pendaftaran" [ref=e154] [cursor=pointer]:
+          - /url: "#kontak"
+      - article [ref=e159]:
+        - generic [ref=e160]: MI Usia 6 – 12 Tahun
+        - heading "Madrasah Ibtidaiyah" [level=3] [ref=e161]
+        - paragraph [ref=e162]: Pendidikan dasar Islam terpadu yang mengintegrasikan kurikulum nasional, tahfidz, dan literasi digital.
+        - list [ref=e163]:
+          - listitem [ref=e164]: Kurikulum Nasional + IT
+          - listitem [ref=e168]: Tahfidz terstruktur
+          - listitem [ref=e172]: Sains bilingual
+          - listitem [ref=e176]: Ekstrakurikuler pilihan
+        - link "Info pendaftaran" [ref=e180] [cursor=pointer]:
+          - /url: "#kontak"
+  - generic [ref=e190]:
+    - generic [ref=e191]:
+      - text: Layanan Orang Tua
+      - heading "Portal Pembayaran SPP" [level=2] [ref=e192]
+      - paragraph [ref=e193]: Lakukan pembayaran SPP kapan saja melalui portal resmi Yayasan Handayani. Riwayat transparan, konfirmasi otomatis, dan terlindungi enkripsi end-to-end.
+      - generic [ref=e194]:
+        - link "Masuk Portal SPP" [ref=e195] [cursor=pointer]:
+          - /url: /login
+        - link "Butuh bantuan?" [ref=e198] [cursor=pointer]:
+          - /url: "#kontak"
+    - list [ref=e200]:
+      - listitem [ref=e201]:
+        - generic [ref=e206]:
+          - paragraph [ref=e207]: Terverifikasi
+          - paragraph [ref=e208]: Akun siswa diverifikasi langsung oleh admin yayasan.
+      - listitem [ref=e209]:
+        - generic [ref=e213]:
+          - paragraph [ref=e214]: Real-time
+          - paragraph [ref=e215]: Status pembayaran tersinkron seketika.
+      - listitem [ref=e216]:
+        - generic [ref=e221]:
+          - paragraph [ref=e222]: Aman SSL
+          - paragraph [ref=e223]: Enkripsi industri standar untuk setiap transaksi.
+  - generic [ref=e226]:
+    - generic [ref=e227]:
+      - text: Kontak
+      - heading "Kunjungi atau hubungi kami." [level=2] [ref=e228]
+      - paragraph [ref=e229]: Admin Yayasan siap membantu pertanyaan seputar pendaftaran, kurikulum, dan layanan SPP setiap hari kerja, pukul 07.30 – 15.30 WIB.
+      - list [ref=e230]:
+        - listitem [ref=e231]:
+          - generic [ref=e236]:
+            - paragraph [ref=e237]: Alamat
+            - paragraph [ref=e238]: Jl. Selat Panjang No.357, Siantan Hulu, Kec. Pontianak Utara, Kota Pontianak, Kalimantan Barat 78243
+        - listitem [ref=e239]:
+          - generic [ref=e243]:
+            - paragraph [ref=e244]: Telepon
+            - link "(021) 1234-5678" [ref=e245] [cursor=pointer]:
+              - /url: tel:(021) 1234-5678
+        - listitem [ref=e246]:
+          - generic [ref=e251]:
+            - paragraph [ref=e252]: Email
+            - link "info@handayani.sch.id" [ref=e253] [cursor=pointer]:
+              - /url: mailto:info@handayani.sch.id
+      - link "Chat via WhatsApp" [ref=e254] [cursor=pointer]:
+        - /url: https://wa.me/6281234567890?text=Assalamualaikum%2C+saya+ingin+bertanya+tentang+pendaftaran+di+Yayasan+Handayani.
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - button "Marker" [ref=e257] [cursor=pointer]
+            - button "Marker" [ref=e258] [cursor=pointer]
+          - generic:
+            - tooltip [ref=e259] [cursor=pointer]:
+              - generic [ref=e260]:
+                - text: Handayani Selat PanjangJl. Selat Panjang No.357, Siantan Hulu, Kec. Pontianak Utara, Kota Pontianak, Kalimantan Barat 78243
+                - link "📍 Buka di Google Maps →" [ref=e261]:
+                  - /url: https://www.google.com/maps/search/?api=1&query=-0.014364764835697236,109.37711186637458
+            - tooltip [ref=e262] [cursor=pointer]:
+              - generic [ref=e263]:
+                - text: Handayani Dharma PutraSiantan Hilir, Kec. Pontianak Utara, Kota Pontianak, Kalimantan Barat 78243
+                - link "📍 Buka di Google Maps →" [ref=e264]:
+                  - /url: https://www.google.com/maps/search/?api=1&query=-0.004116262359607635,109.3426550308674
+        - generic:
+          - generic:
+            - generic [ref=e265]:
+              - button "Zoom in" [disabled] [ref=e266]: +
+              - button "Zoom out" [ref=e267] [cursor=pointer]: −
+            - link "⌖" [ref=e269] [cursor=pointer]:
+              - /url: "#"
+          - generic [ref=e270]:
+            - link "Leaflet" [ref=e271] [cursor=pointer]:
+              - /url: https://leafletjs.com
+            - text: "| ©"
+            - link "OpenStreetMap" [ref=e276] [cursor=pointer]:
+              - /url: http://www.openstreetmap.org/copyright
+  - contentinfo [ref=e277]:
+    - generic [ref=e278]:
+      - generic [ref=e279]:
+        - generic [ref=e280]:
+          - generic [ref=e281]:
+            - img "Logo Handayani" [ref=e282]
+            - text: Handayani
+          - paragraph [ref=e283]: Lembaga Pendidikan Anak Handayani. Membentuk Generasi Berilmu dan Berakhlak.
+        - generic [ref=e284]:
+          - list [ref=e285]:
+            - listitem [ref=e286]:
+              - link "Tentang" [ref=e287] [cursor=pointer]:
+                - /url: "#tentang"
+            - listitem [ref=e288]:
+              - link "Jenjang" [ref=e289] [cursor=pointer]:
+                - /url: "#jenjang"
+            - listitem [ref=e290]:
+              - link "Portal SPP" [ref=e291] [cursor=pointer]:
+                - /url: "#spp"
+            - listitem [ref=e292]:
+              - link "Kontak" [ref=e293] [cursor=pointer]:
+                - /url: "#kontak"
+          - paragraph [ref=e294]: Jl. Selat Panjang No.357, Siantan Hulu, Kec. Pontianak Utara, Kota Pontianak, Kalimantan Barat 78243
+      - generic [ref=e295]:
+        - paragraph [ref=e296]: © 2026 Lembaga Pendidikan Anak Handayani. Semua hak dilindungi.
+        - paragraph [ref=e297]: Dibangun dengan amanah.
