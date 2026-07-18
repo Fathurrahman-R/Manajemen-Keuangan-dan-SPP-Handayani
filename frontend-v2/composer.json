@@ -11,6 +11,7 @@
         "kristiansnts/filament-api-login": "^1.0",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
+        "predis/predis": "^3.5",
         "rappasoft/laravel-livewire-tables": "^3.7",
         "wire-elements/modal": "^3.0",
         "wireui/phosphoricons": "^2.4"

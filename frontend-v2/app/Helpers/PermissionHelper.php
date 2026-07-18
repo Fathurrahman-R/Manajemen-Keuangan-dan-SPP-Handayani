@@ -83,15 +83,16 @@ class PermissionHelper
         }
 
         try {
-            $r = ApiService::client()->get('/rbac/user-resources');
-            if ($r->successful()) {
-                self::$userResources = $r->json()['data'] ?? [];
-            } else {
-                \Illuminate\Support\Facades\Log::error('RBAC API failed with status ' . $r->status(), ['response' => $r->body()]);
+            $data = ApiService::cachedGet('/rbac/user-resources', [], (int) config('handayani.cache.rbac_ttl', 60));
+
+            if ($data === null) {
+                \Illuminate\Support\Facades\Log::error('RBAC API failed for /rbac/user-resources');
                 self::$userResources = [];
+            } else {
+                self::$userResources = $data;
             }
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('RBAC API threw exception: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('RBAC API threw exception: '.$e->getMessage());
             self::$userResources = [];
         }
 
@@ -100,7 +101,7 @@ class PermissionHelper
 
     /**
      * Get grouped resources accessible to the current user.
-     * Data di-cache per request.
+     * Data di-cache per request (statis) + Redis (lintas request, lihat ApiService::cachedGet()).
      */
     public static function getUserGroups(): array
     {
@@ -109,12 +110,8 @@ class PermissionHelper
         }
 
         try {
-            $r = ApiService::client()->get('/rbac/user-groups');
-            if ($r->successful()) {
-                self::$userGroups = $r->json()['data'] ?? [];
-            } else {
-                self::$userGroups = [];
-            }
+            $data = ApiService::cachedGet('/rbac/user-groups', [], (int) config('handayani.cache.rbac_ttl', 60));
+            self::$userGroups = $data ?? [];
         } catch (\Exception $e) {
             self::$userGroups = [];
         }
@@ -144,55 +141,5 @@ class PermissionHelper
     protected static function isSuperadmin(): bool
     {
         return in_array('superadmin', session()->get('data.roles', []));
-    }
-
-    /**
-     * Permission mappings for jenjang visibility via resource_key.
-     */
-    protected static array $jenjangPermissions = [
-        'KB' => 'view-jenjang-kb',
-        'TK' => 'view-jenjang-tk',
-        'MI' => 'view-jenjang-mi',
-    ];
-
-    /**
-     * Check if the user can view a specific jenjang.
-     * Superadmin bypass: always returns true.
-     * Menggunakan hasResource() untuk konsistensi RBAC dinamis.
-     */
-    public static function canViewJenjang(string $jenjang): bool
-    {
-        if (self::isSuperadmin()) {
-            return true;
-        }
-
-        // Jika user tidak punya satupun permission jenjang,
-        // maka TIDAK ada jenjang yang bisa diakses (strict mode)
-        $hasAnyJenjangPerm = false;
-        foreach (self::$jenjangPermissions as $perm) {
-            if (self::hasResource($perm)) {
-                $hasAnyJenjangPerm = true;
-                break;
-            }
-        }
-
-        if (! $hasAnyJenjangPerm) {
-            return false;
-        }
-
-        $requiredPerm = self::$jenjangPermissions[$jenjang] ?? null;
-
-        return $requiredPerm && self::hasResource($requiredPerm);
-    }
-
-    /**
-     * Get the list of jenjang values visible to the current user.
-     */
-    public static function visibleJenjang(): array
-    {
-        return array_values(array_filter(
-            array_keys(self::$jenjangPermissions),
-            fn (string $jenjang) => self::canViewJenjang($jenjang)
-        ));
     }
 }

@@ -37,6 +37,7 @@ class PengeluaranRequest extends FormRequest
             'jumlah' => [
                 $requiredOrSometimes,
                 'numeric',
+                'min:1',
                 'regex:/^\d{1,11}(\.\d{1,2})?$/',
             ],
             'tahun_ajaran_id' => [

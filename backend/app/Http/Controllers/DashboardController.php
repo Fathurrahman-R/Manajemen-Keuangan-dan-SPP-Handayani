@@ -15,6 +15,40 @@ class DashboardController extends Controller
     ) {}
 
     /**
+     * Combined dashboard payload — bundles every admin widget's data into one
+     * response. Each underlying DashboardService method still hits its own
+     * `Cache::remember()` (see DashboardService), so this doesn't change what's
+     * cached, only how many HTTP round-trips (and Laravel bootstraps) the
+     * frontend needs to render the dashboard: 1 instead of 9.
+     */
+    public function overview(Request $request): JsonResponse
+    {
+        $request->validate([
+            'tahun_ajaran_id' => 'nullable|integer|exists:tahun_ajarans,id',
+            'all_periods' => 'nullable|boolean',
+        ]);
+
+        $branchId = $request->user()->branch_id;
+        $allPeriods = (bool) $request->boolean('all_periods');
+        $tahunAjaranId = $allPeriods ? null : $request->input('tahun_ajaran_id');
+
+        return response()->json([
+            'data' => [
+                'all_time_summary' => $this->dashboardService->getAllTimeSummary($branchId),
+                'summary' => $this->dashboardService->getSummary($branchId, $tahunAjaranId, $allPeriods),
+                'kas_summary' => $this->dashboardService->getKasSummary($branchId, $tahunAjaranId),
+                'chart_pembayaran_bulanan' => $this->dashboardService->getChartPembayaranBulanan($branchId, $tahunAjaranId, $allPeriods),
+                'chart_kas_bulanan' => $this->dashboardService->getChartKasBulanan($branchId, $tahunAjaranId, $allPeriods),
+                'chart_tunggakan_jenjang' => $this->dashboardService->getChartTunggakanJenjang($branchId, $tahunAjaranId, $allPeriods),
+                'chart_status_tagihan' => $this->dashboardService->getChartStatusTagihan($branchId, $tahunAjaranId, $allPeriods),
+                'top_tunggakan' => $this->dashboardService->getTopTunggakan($branchId, $tahunAjaranId, $allPeriods),
+                'tagihan_jatuh_tempo' => $this->dashboardService->getTagihanJatuhTempo($branchId, $tahunAjaranId, $allPeriods),
+                'pembayaran_terbaru' => $this->dashboardService->getPembayaranTerbaru($branchId, $tahunAjaranId, $allPeriods),
+            ],
+        ]);
+    }
+
+    /**
      * Get dashboard summary KPI.
      */
     public function summary(Request $request): JsonResponse

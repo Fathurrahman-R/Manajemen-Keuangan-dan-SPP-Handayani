@@ -23,9 +23,7 @@ class DashboardKasStatsWidget extends BaseWidget
             : ['all_periods' => true];
 
         try {
-            $response = ApiService::client()->get('/dashboard/kas-summary', $params);
-
-            $data = $response->ok() ? ($response->json('data') ?? []) : [];
+            $data = ApiService::dashboardOverviewSlice('kas_summary', $params) ?? [];
         } catch (\Throwable $e) {
             $data = [];
         }

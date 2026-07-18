@@ -113,6 +113,7 @@ class RekapBulanan extends Component implements HasActions, HasSchemas, HasTable
                         TextInput::make('tahun')
                             ->label('Tahun')
                             ->numeric()
+                            ->minValue(2000)
                             ->maxValue(Carbon::now()->year()),
                     ]),
             ])
@@ -178,6 +179,8 @@ class RekapBulanan extends Component implements HasActions, HasSchemas, HasTable
                             ->label('Tahun')
                             ->numeric()
                             ->default(now()->year)
+                            ->minValue(2000)
+                            ->maxValue(now()->year + 1)
                             ->required(),
                     ])
                     ->action(function (array $data) {

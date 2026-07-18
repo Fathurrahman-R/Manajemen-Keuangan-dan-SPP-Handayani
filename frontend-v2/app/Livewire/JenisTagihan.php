@@ -113,7 +113,8 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                         TextInput::make('jumlah')
                             ->label('Jumlah')
                             ->numeric()
-                            ->required(),
+                            ->required()
+                            ->minValue(1),
                     ])
                     ->action(function (array $data, $record): void {
                         $response = ApiService::client()
@@ -223,7 +224,8 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                         TextInput::make('jumlah')
                             ->label('Jumlah')
                             ->numeric()
-                            ->required(),
+                            ->required()
+                            ->minValue(1),
                     ])
                     ->action(function (array $data, $record): void {
                         $response = ApiService::client()

@@ -28,13 +28,11 @@ class TunggakanJenjangChart extends ChartWidget
             : ['all_periods' => true];
 
         try {
-            $response = ApiService::client()->get('/dashboard/charts/tunggakan-jenjang', $params);
+            $data = ApiService::dashboardOverviewSlice('chart_tunggakan_jenjang', $params);
 
-            if (! $response->ok()) {
+            if ($data === null) {
                 return ['datasets' => [], 'labels' => []];
             }
-
-            $data = $response->json('data') ?? [];
         } catch (\Throwable $e) {
             return ['datasets' => [], 'labels' => []];
         }

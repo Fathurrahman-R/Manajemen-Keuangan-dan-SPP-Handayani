@@ -161,7 +161,7 @@
 
                                 {{-- Row 3: Action buttons --}}
                                 <div class="flex items-center gap-2 mt-2">
-                                    @if(\App\Helpers\PermissionHelper::hasResource('pembayaran.print'))
+                                    @if(\App\Helpers\PermissionHelper::hasResource('pembayaran.kwitansi'))
                                         <button
                                             type="button"
                                             wire:click="downloadKwitansi('{{ $pembayaran['kode_pembayaran'] }}')"

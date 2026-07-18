@@ -34,8 +34,7 @@ class PortalSiswaStatsWidget extends BaseWidget
         }
 
         try {
-            $response = ApiService::client()->get('/dashboard/siswa', $params);
-            $data = $response->ok() ? ($response->json('data') ?? []) : [];
+            $data = ApiService::cachedGet('/dashboard/siswa', $params) ?? [];
         } catch (\Throwable $e) {
             $data = [];
         }

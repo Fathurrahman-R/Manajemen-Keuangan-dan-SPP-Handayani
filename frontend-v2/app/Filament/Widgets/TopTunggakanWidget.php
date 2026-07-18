@@ -28,13 +28,11 @@ class TopTunggakanWidget extends BaseWidget
                     : ['all_periods' => true];
 
                 try {
-                    $response = ApiService::client()->get('/dashboard/top-tunggakan', $params);
+                    $data = ApiService::dashboardOverviewSlice('top_tunggakan', $params);
 
-                    if (! $response->ok()) {
+                    if ($data === null) {
                         return collect([]);
                     }
-
-                    $data = $response->json('data') ?? [];
                 } catch (\Throwable $e) {
                     $data = [];
                 }

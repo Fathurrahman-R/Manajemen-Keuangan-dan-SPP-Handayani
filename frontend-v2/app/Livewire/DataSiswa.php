@@ -168,12 +168,9 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                 SelectFilter::make('kelas')
                     ->label('Kelas')
                     ->options(function () {
-                        $response = ApiService::client()->get('/kelas/'.$this->activeTab);
-                        if (! $response->ok()) {
-                            return [];
-                        }
+                        $data = ApiService::cachedGet('/kelas/'.$this->activeTab, [], (int) config('handayani.cache.master_data_ttl', 300));
 
-                        return collect($response->json('data') ?? [])
+                        return collect($data ?? [])
                             ->mapWithKeys(fn ($item) => [$item['id'] => $item['nama']])
                             ->toArray();
                     }),
@@ -303,20 +300,11 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kelas')
                                                 ->options(function () {
-                                                    $response = ApiService::client()
-                                                        ->get('/kelas/'.$this->activeTab);
+                                                    $data = ApiService::cachedGet('/kelas/'.$this->activeTab, [], (int) config('handayani.cache.master_data_ttl', 300));
 
-                                                    if (! $response->ok()) {
-                                                        return [];
-                                                    }
-
-                                                    $data = $response->json();
-
-                                                    $options = collect($data['data'])->mapWithKeys(function ($item) {
+                                                    return collect($data ?? [])->mapWithKeys(function ($item) {
                                                         return [$item['id'] => $item['nama']];
                                                     })->toArray();
-
-                                                    return $options;
                                                 })
                                                 ->required(),
                                             Select::make('kategori_id')
@@ -324,20 +312,11 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kategori')
                                                 ->options(function () {
-                                                    $response = ApiService::client()
-                                                        ->get('/kategori');
+                                                    $data = ApiService::cachedGet('/kategori', [], (int) config('handayani.cache.master_data_ttl', 300));
 
-                                                    if (! $response->ok()) {
-                                                        return [];
-                                                    }
-
-                                                    $data = $response->json();
-
-                                                    $options = collect($data['data'])->mapWithKeys(function ($item) {
+                                                    return collect($data ?? [])->mapWithKeys(function ($item) {
                                                         return [$item['id'] => $item['nama']];
                                                     })->toArray();
-
-                                                    return $options;
                                                 })
                                                 ->required(),
                                         ]),
@@ -364,6 +343,8 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                             TextInput::make('tahun_diterima')
                                                 ->label('Tahun Diterima')
                                                 ->numeric()
+                                                ->minValue(2000)
+                                                ->maxValue((int) date('Y') + 1)
                                                 ->required(),
                                         ]),
                                     Textarea::make('keterangan')
@@ -525,20 +506,11 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kelas')
                                                 ->options(function () {
-                                                    $response = ApiService::client()
-                                                        ->get('/kelas/'.$this->activeTab);
+                                                    $data = ApiService::cachedGet('/kelas/'.$this->activeTab, [], (int) config('handayani.cache.master_data_ttl', 300));
 
-                                                    if (! $response->ok()) {
-                                                        return [];
-                                                    }
-
-                                                    $data = $response->json();
-
-                                                    $options = collect($data['data'])->mapWithKeys(function ($item) {
+                                                    return collect($data ?? [])->mapWithKeys(function ($item) {
                                                         return [$item['id'] => $item['nama']];
                                                     })->toArray();
-
-                                                    return $options;
                                                 })
                                                 ->required(),
                                             Select::make('kategori_id')
@@ -546,20 +518,11 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kategori')
                                                 ->options(function () {
-                                                    $response = ApiService::client()
-                                                        ->get('/kategori');
+                                                    $data = ApiService::cachedGet('/kategori', [], (int) config('handayani.cache.master_data_ttl', 300));
 
-                                                    if (! $response->ok()) {
-                                                        return [];
-                                                    }
-
-                                                    $data = $response->json();
-
-                                                    $options = collect($data['data'])->mapWithKeys(function ($item) {
+                                                    return collect($data ?? [])->mapWithKeys(function ($item) {
                                                         return [$item['id'] => $item['nama']];
                                                     })->toArray();
-
-                                                    return $options;
                                                 })
                                                 ->required(),
                                         ]),
@@ -788,20 +751,11 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kelas')
                                                 ->options(function () {
-                                                    $response = ApiService::client()
-                                                        ->get('/kelas/'.$this->activeTab);
+                                                    $data = ApiService::cachedGet('/kelas/'.$this->activeTab, [], (int) config('handayani.cache.master_data_ttl', 300));
 
-                                                    if (! $response->ok()) {
-                                                        return [];
-                                                    }
-
-                                                    $data = $response->json();
-
-                                                    $options = collect($data['data'])->mapWithKeys(function ($item) {
+                                                    return collect($data ?? [])->mapWithKeys(function ($item) {
                                                         return [$item['id'] => $item['nama']];
                                                     })->toArray();
-
-                                                    return $options;
                                                 })
                                                 ->required()
                                                 ->validationMessages([
@@ -812,20 +766,11 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kategori')
                                                 ->options(function () {
-                                                    $response = ApiService::client()
-                                                        ->get('/kategori');
+                                                    $data = ApiService::cachedGet('/kategori', [], (int) config('handayani.cache.master_data_ttl', 300));
 
-                                                    if (! $response->ok()) {
-                                                        return [];
-                                                    }
-
-                                                    $data = $response->json();
-
-                                                    $options = collect($data['data'])->mapWithKeys(function ($item) {
+                                                    return collect($data ?? [])->mapWithKeys(function ($item) {
                                                         return [$item['id'] => $item['nama']];
                                                     })->toArray();
-
-                                                    return $options;
                                                 })
                                                 ->required()
                                                 ->validationMessages([
@@ -864,6 +809,8 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                             TextInput::make('tahun_diterima')
                                                 ->label('Tahun Diterima')
                                                 ->numeric()
+                                                ->minValue(2000)
+                                                ->maxValue((int) date('Y') + 1)
                                                 ->required()
                                                 ->validationMessages([
                                                     'required' => 'Tahun Diterima Tidak Boleh Kosong',
@@ -1119,20 +1066,11 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kelas')
                                                 ->options(function () {
-                                                    $response = ApiService::client()
-                                                        ->get('/kelas/'.$this->activeTab);
+                                                    $data = ApiService::cachedGet('/kelas/'.$this->activeTab, [], (int) config('handayani.cache.master_data_ttl', 300));
 
-                                                    if (! $response->ok()) {
-                                                        return [];
-                                                    }
-
-                                                    $data = $response->json();
-
-                                                    $options = collect($data['data'])->mapWithKeys(function ($item) {
+                                                    return collect($data ?? [])->mapWithKeys(function ($item) {
                                                         return [$item['id'] => $item['nama']];
                                                     })->toArray();
-
-                                                    return $options;
                                                 })
                                                 ->required()
                                                 ->validationMessages([
@@ -1143,20 +1081,11 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kategori')
                                                 ->options(function () {
-                                                    $response = ApiService::client()
-                                                        ->get('/kategori');
+                                                    $data = ApiService::cachedGet('/kategori', [], (int) config('handayani.cache.master_data_ttl', 300));
 
-                                                    if (! $response->ok()) {
-                                                        return [];
-                                                    }
-
-                                                    $data = $response->json();
-
-                                                    $options = collect($data['data'])->mapWithKeys(function ($item) {
+                                                    return collect($data ?? [])->mapWithKeys(function ($item) {
                                                         return [$item['id'] => $item['nama']];
                                                     })->toArray();
-
-                                                    return $options;
                                                 })
                                                 ->required()
                                                 ->validationMessages([

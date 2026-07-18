@@ -35,10 +35,20 @@ class TagihanRequest extends FormRequest
             ],
             'kelas_id' => [
                 'required',
+                'array',
+                'min:1',
+            ],
+            'kelas_id.*' => [
+                'integer',
                 'exists:kelas,id',
             ],
             'kategori_id' => [
                 'required',
+                'array',
+                'min:1',
+            ],
+            'kategori_id.*' => [
+                'integer',
                 'exists:kategoris,id',
             ],
         ];

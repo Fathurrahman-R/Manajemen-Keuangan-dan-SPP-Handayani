@@ -136,7 +136,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
             ->recordActions([
                 Action::make('detail')
                     ->label('Detail')
-                    ->visible(fn (): bool => PermissionHelper::hasResource('kenaikan-kelas.view-detail'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('kenaikan-kelas.detail'))
                     ->icon('heroicon-o-eye')
                     ->iconButton()
                     ->tooltip('Lihat Detail')

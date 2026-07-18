@@ -28,13 +28,11 @@ class PembayaranBulananChart extends ChartWidget
             : ['all_periods' => true];
 
         try {
-            $response = ApiService::client()->get('/dashboard/charts/pembayaran-bulanan', $params);
+            $data = ApiService::dashboardOverviewSlice('chart_pembayaran_bulanan', $params);
 
-            if (! $response->ok()) {
+            if ($data === null) {
                 return ['datasets' => [], 'labels' => []];
             }
-
-            $data = $response->json('data') ?? [];
         } catch (\Throwable $e) {
             return ['datasets' => [], 'labels' => []];
         }

@@ -68,6 +68,7 @@ Route::middleware(['auth:sanctum', 'active.branch'])->group(function () {
     Route::prefix('/dashboard')->group(function () {
         // Admin dashboard endpoints — require view-dashboard permission
         Route::group(['middleware' => 'endpoint.permission:dashboard'], function () {
+            Route::get('/overview', [DashboardController::class, 'overview']);
             Route::get('/summary', [DashboardController::class, 'summary']);
             Route::get('/all-time-summary', [DashboardController::class, 'allTimeSummary']);
             Route::get('/kas-summary', [DashboardController::class, 'kasSummary']);

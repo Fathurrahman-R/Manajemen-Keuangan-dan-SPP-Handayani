@@ -49,4 +49,25 @@ return [
         // Midtrans client key (public, safe for frontend usage)
         'client_key' => env('MIDTRANS_CLIENT_KEY'),
     ],
+
+    'cache' => [
+        // TTL (detik) cache respons API dashboard. Lihat App\Services\ApiService::cachedGet().
+        // Widget dashboard poll tiap 5s (Filament CanPoll default); TTL menentukan
+        // seberapa sering polling itu benar-benar memicu request baru ke backend.
+        'dashboard_ttl' => (int) env('DASHBOARD_CACHE_TTL', 60),
+
+        // TTL (detik) cache /rbac/user-resources & /rbac/user-groups (PermissionHelper).
+        // Dipanggil di SETIAP navigasi halaman (cek akses nav/aksi) — tanpa cache ini,
+        // dua request ~470ms tiap panggilan jadi biaya tetap tiap pindah halaman,
+        // di luar biaya data spesifik halaman itu sendiri.
+        'rbac_ttl' => (int) env('RBAC_CACHE_TTL', 60),
+
+        // TTL (detik) cache opsi dropdown master data (kelas, kategori, jenis-tagihan,
+        // rbac/permissions). Data ini di-refetch berulang tiap modal/wizard step yang
+        // beda dibuka (mis. DataSiswa punya 5x panggilan /kelas/{jenjang} identik di
+        // form create/edit/wizard yang berbeda) padahal isinya sama & jarang berubah —
+        // TTL lebih panjang dari dashboard karena resiko staleness jauh lebih rendah
+        // (bukan permukaan CRUD utama, cuma opsi pilihan).
+        'master_data_ttl' => (int) env('MASTER_DATA_CACHE_TTL', 300),
+    ],
 ];

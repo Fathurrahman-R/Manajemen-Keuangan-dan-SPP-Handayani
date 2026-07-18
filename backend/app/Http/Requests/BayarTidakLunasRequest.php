@@ -28,6 +28,7 @@ class BayarTidakLunasRequest extends FormRequest
             'jumlah' => [
                 'required',
                 'numeric',
+                'min:1',
                 'regex:/^\d{1,11}(\.\d{1,2})?$/',
             ],
             'metode' => [

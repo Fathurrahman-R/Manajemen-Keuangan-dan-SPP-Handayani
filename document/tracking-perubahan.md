@@ -1,10 +1,10 @@
 # Tracking Perubahan Sistem
 
-**Rentang commit:** `37ff85a9` (Merge PR #10 dev-fio) → `743799c` (HEAD, branch `v3-last-project`)
-**Periode:** 29 April 2026 – 17 Juli 2026
-**Jumlah commit:** 37 commit
+**Rentang commit:** `37ff85a9` (Merge PR #10 dev-fio) → `de22f75` (HEAD, branch `v3-last-project`) + perubahan sesi berjalan yang belum di-commit (lihat Bagian 8)
+**Periode:** 29 April 2026 – 18 Juli 2026
+**Jumlah commit:** 43 commit (37 commit lama + 6 commit baru: `872f983`, `ae0501b`, `82a2a1f`, `57d732a`, `3ed89b4`, `de22f75`)
 
-> Catatan metodologi: analisis dilakukan lewat `git log`/`git diff` pada rentang di atas, dikecualikan `graphify-out/`, lockfile (`composer.lock`, `package-lock.json`), dan artefak build. Diff mentah menunjukkan ~623 file berubah pada `backend/` dan `frontend-v2/` (di luar folder yang dikecualikan), sebagian besar merupakan penambahan modul baru.
+> Catatan metodologi: analisis dilakukan lewat `git log`/`git diff` pada rentang di atas, dikecualikan `graphify-out/`, lockfile (`composer.lock`, `package-lock.json`), dan artefak build. Diff mentah menunjukkan ~623 file berubah pada `backend/` dan `frontend-v2/` (di luar folder yang dikecualikan), sebagian besar merupakan penambahan modul baru. Bagian 8 & 9 didokumentasikan sebagai lampiran menyusul goal `/goal` tanggal 18 Juli 2026 ("update dokumen tracking + track perubahan sejak `37ff85a9` + komparasi visual database/ERD").
 
 ---
 
@@ -229,9 +229,248 @@ Perubahan mekanisme (bukan sekadar daftar permission): sistem berpindah dari rol
 
 ---
 
+## 8. Perubahan Setelah `743799c` (6 commit baru + sesi berjalan belum commit)
+
+### 8.1 Commit `872f983` — Fix resource key + dokumentasi
+- **Fix bug**: sinkronisasi ulang `resource_key` yang tidak konsisten (lanjutan dari `81c268a`/`6cad146`) — menyentuh `Settings.php` dan `PortalRiwayatPembayaranPage.php`.
+- **Fix bug**: `MidtransInitiationService` — perbaikan pada pembentukan payload/fee (12 baris berubah), `backend/config/midtrans.php` disesuaikan.
+- **Test case baru**: `backend/tests/Feature/KwitansiPdfServiceTest.php` (76 baris) — cakupan uji baru untuk `KwitansiPdfService`.
+- **Dokumentasi**: update `.env.example` (backend & frontend-v2) untuk variabel konfigurasi terbaru.
+
+### 8.2 Commit `de22f75` — Sinkronisasi resource key + tunneling frontend
+- **Fix bug lanjutan resource key**: `Permission.php` (+5 baris), `PermissionResourceSeeder.php` (+4 baris), `PermissionHelper.php`, `RoleManagement.php`, `ManajemenAkunSiswa.php`, `PengeluaranRequestPage.php`, `KenaikanKelas.php`, `HasImportExport.php`, view `pembayaran-card-view.blade.php` — merapikan resource key yang belum sinkron di berbagai halaman/aksi.
+- **Setup tunneling frontend**: `frontend-v2/bootstrap/app.php` (+6/-1 baris) — kemungkinan `trustProxies`/middleware untuk mendukung akses via ngrok/tunnel (konsisten dengan catatan sesi sebelumnya soal debug ngrok mobile payment).
+- Commit `ae0501b`/`82a2a1f`/`57d732a`/`3ed89b4` hanya menyentuh `.gitignore` dan file tracking Git (`frontend-v2/artisan` mode-only, penghapusan `.idea/`/`.claude/settings.json` dari tracking) — tidak ada perubahan kode aplikasi.
+
+### 8.3 Sesi Berjalan — Belum Di-*commit* (working tree per 18 Juli 2026)
+
+> Catatan: bagian ini mendokumentasikan pekerjaan yang sudah selesai secara fungsional dan terverifikasi di environment dev, tapi **belum di-`git commit`** pada saat dokumen ini ditulis. `git status` menunjukkan 43 file modified + 1 file baru (`frontend-v2/boost.json`).
+
+**a. Fitur baru — Tagihan mendukung seleksi multi-kelas & multi-kategori sekaligus**
+> ⚠️ Status vs proposal TA: penyempurnaan fitur "Pembuatan tagihan SPP" yang sudah sesuai rencana — proposal tidak merinci granularitas seleksi, jadi ini peningkatan UX di dalam scope, bukan penyimpangan.
+
+- `backend/app/Http/Requests/TagihanRequest.php` — `kelas_id`/`kategori_id` diubah dari scalar `exists:` menjadi `array|min:1` + validasi per-elemen (`kelas_id.*`/`kategori_id.*` → `integer|exists:...`).
+- `backend/app/Http/Controllers/TagihanController.php` — query pencarian siswa target diubah dari `where()` tunggal menjadi `whereIn()` untuk kedua kolom, sehingga satu request bisa membuat tagihan untuk siswa di kombinasi (kelas manapun dari yang dipilih) × (kategori manapun dari yang dipilih).
+- `frontend-v2/app/Livewire/TagihanCardView.php` — form modal "Tambah Tagihan": `Select::make('kelas_id')` dan `kategori_id` ditambah `->multiple()` + helper text; opsi dropdown tetap memakai cache master-data (`ApiService::cachedGet()`).
+- `backend/tests/Feature/TagihanTest.php` — payload test lama disesuaikan ke format array; ditambah `test_create_tagihan_multi_kelas_kategori_success` (4 kombinasi kelas×kategori → 4 tagihan, siswa di luar seleksi tidak ikut terbuat) dan `test_create_tagihan_requires_at_least_one_kelas_and_kategori` (array kosong → HTTP 400).
+- Diverifikasi langsung ke backend dev (curl): kombinasi kelas [3,4] × kategori [Yatim,Piatu] menghasilkan tepat 6 tagihan, dicocokkan independen lewat query siswa manual (bukan lewat kode yang sama, untuk hindari bias verifikasi). Validasi array kosong/format lama/id tidak valid seluruhnya ditolak HTTP 400 dengan pesan Indonesia. UI multi-select diverifikasi via browser (Playwright) — chip terpisah per kelas terpilih.
+
+**b. Perbaikan test infrastructure**
+- `backend/tests/TestCase.php::setUp()` — urutan `DB::delete()` pada cleanup antar-test diperbaiki: tabel anak (FK dependent seperti `tagihans`, `jenis_tagihans`, `pengeluarans`) kini dihapus sebelum tabel induk (`users`, `branches`) yang menjadi target FK-nya. Bug pre-existing (dikonfirmasi via `git stash`) yang membuat seluruh `TagihanTest.php` gagal karena FK constraint violation saat `delete from branches` dijalankan lebih dulu.
+- Diketahui namun **tidak diperbaiki** (di luar scope): kolom `users.token` sudah di-drop oleh migrasi `2026_05_02_010000_remove_token_column_from_users_table.php`, tapi `UserFactory` dan banyak test masih insert/reference `token` — root cause rot test-infrastructure yang lebih dalam dan lebih luas dari fitur ini.
+
+**c. Validasi input & bugfix render pesan error**
+- Penambahan `min:1` pada field nominal uang di `BayarTidakLunasRequest`, `JenisTagihanRequest`, `PengeluaranRequest` (backend) — mencegah nilai 0/negatif lolos validasi.
+- Frontend: field `minValue()` diubah menjadi `rules()` custom di `TagihanSiswa`/`TagihanCardView` (Filament) — sebelumnya pesan validasi custom tidak pernah tampil karena Filament hanya menjalankan validasi browser native untuk `minValue()`, bukan pesan Indonesia yang di-set.
+
+**d. Performa — Redis cache & OPcache**
+> ⚠️ Status vs proposal TA: di luar rencana — proposal tidak menyebut kebutuhan caching/optimasi performa; ini perbaikan operasional murni.
+
+- `frontend-v2/app/Services/ApiService.php` — method baru `cachedGet()` (cache-aside via Redis, TTL dikonfigurasi lewat `config('handayani.cache.*')`), `bustDashboardCache()` (invalidasi versi), `dashboardOverviewSlice()`.
+- `backend/app/Http/Controllers/DashboardController.php` — endpoint baru `overview()` (`GET /dashboard/overview`) menggabungkan 9 endpoint dashboard terpisah menjadi satu response, mengurangi round-trip HTTP dari 9x menjadi 1x.
+- Redis dijalankan via Docker (`handayani-redis`, `predis/predis` — client pure-PHP, tidak butuh ekstensi C), `frontend-v2/.env`: `CACHE_STORE=redis`, `REDIS_CLIENT=predis`, `REDIS_CACHE_DB=1`.
+- **Temuan terbesar**: PHP OPcache ternyata **nonaktif total** di environment dev Windows (`C:\php\php-8.4.18-Win32-vs17-x64\php.ini`) — diaktifkan (`opcache.enable=1`, `opcache.max_accelerated_files=65407`, `opcache.validate_timestamps=1`, `opcache.revalidate_freq=0`). Kombinasi Redis cache + endpoint merge + OPcache membawa waktu render dashboard dari ~8 detik menjadi ~700ms.
+- Dropdown master-data (kelas/kategori/jenis-tagihan) di-cache app-wide via `ApiService::cachedGet()`, TTL dikonfigurasi di `frontend-v2/config/handayani.php` (`handayani.cache.master_data_ttl`, default 300 detik).
+
+**e. Pembersihan kode mati — permission "jenjang"**
+- Permission berbasis `resource_key` untuk jenjang (3 permission: enum + seeder) dihapus dari `backend/app/Enum/Permission.php` dan `PermissionResourceSeeder.php` — dikonfirmasi tidak pernah benar-benar dipanggil di manapun (kode mati peninggalan iterasi RBAC sebelumnya). Method terkait di `frontend-v2/app/Helpers/PermissionHelper.php` dan 3 test di `tests/Unit/PermissionHelperTest.php` ikut dihapus.
+
+**f. Penghapusan tab "Panduan" RBAC Dashboard**
+- `frontend-v2/app/Filament/Pages/RbacDashboard.php` kehilangan ~770 baris (method-method dokumentasi/guide statis) dan `rbac-dashboard.blade.php` kehilangan tab "Panduan". Konten dipindah utuh menjadi bagian baru "RBAC — Panduan Developer" di `README.md` (+507 baris) — dokumentasi tetap ada, hanya berpindah dari UI runtime ke dokumen developer.
+
+---
+
+## 9. Komparasi Visual Database (ERD): Baseline (`37ff85a9`) vs Saat Ini
+
+Baseline diverifikasi dari migrasi bertanggal sebelum 29 April 2026 (s.d. `2025_12_28_120848_alter_users_new_column_branch_id.php`). Skema saat ini = baseline + seluruh migrasi baru di Bagian 2 (tidak ada migrasi yang dihapus/`down()`-dijalankan — pertumbuhan murni aditif kecuali kolom `users.role`/`users.token` yang di-drop, lihat Bagian 7).
+
+### 9.1 ERD Baseline (14 tabel)
+
+```mermaid
+erDiagram
+    BRANCHES ||--o{ USERS : "1 cabang punya banyak user"
+    BRANCHES ||--o{ SISWAS : "1 cabang punya banyak siswa"
+    BRANCHES ||--o{ KELAS : ""
+    BRANCHES ||--o{ KATEGORIS : ""
+    BRANCHES ||--o{ JENIS_TAGIHANS : ""
+    BRANCHES ||--o{ APP_SETTINGS : ""
+    BRANCHES ||--o{ PEMBAYARANS : ""
+    BRANCHES ||--o{ PENGELUARANS : ""
+    BRANCHES ||--o{ TAGIHANS : ""
+
+    AYAH ||--o{ SISWAS : "ayah_id"
+    IBU ||--o{ SISWAS : "ibu_id"
+    WALIS ||--o{ SISWAS : "wali_id"
+    KELAS ||--o{ SISWAS : "kelas_id"
+    KATEGORIS ||--o{ SISWAS : "kategori_id"
+
+    SISWAS ||--o{ TAGIHANS : "nis (bukan siswas.id)"
+    JENIS_TAGIHANS ||--o{ TAGIHANS : "jenis_tagihan_id"
+    TAGIHANS ||--o{ PEMBAYARANS : "kode_tagihan"
+
+    USERS {
+        bigint id PK
+        string username
+        string role "default user"
+        string token "unique, nullable"
+    }
+    SISWAS {
+        bigint id PK
+        string nis UK
+        string nisn UK
+        bigint ayah_id FK
+        bigint ibu_id FK
+        bigint wali_id FK
+        bigint kelas_id FK
+        bigint kategori_id FK
+        enum status "Aktif/Lulus/Pindah/Keluar"
+    }
+    TAGIHANS {
+        char kode_tagihan PK
+        bigint jenis_tagihan_id FK
+        string nis FK "unique"
+        enum status "Lunas/Belum Lunas/Belum Dibayar"
+    }
+    PEMBAYARANS {
+        char kode_pembayaran PK
+        char kode_tagihan FK
+        enum metode "offline saja"
+    }
+    APP_SETTINGS {
+        bigint id PK
+        string nama_sekolah
+        bigint branch_id FK
+    }
+    PENGELUARANS {
+        bigint id PK
+        text uraian
+        decimal jumlah
+    }
+```
+
+Sesi baseline: 1 role string sederhana di `users.role`, tanpa RBAC granular, tanpa tahun ajaran (siswa hanya punya 1 `kelas_id` tetap), tanpa payment gateway (`pembayarans.metode` cuma `offline`), tanpa approval workflow, tanpa notifikasi, tanpa import/export.
+
+### 9.2 ERD Saat Ini — hanya modul baru (tabel lama tidak diulang, lihat 9.1)
+
+```mermaid
+erDiagram
+    %% RBAC dinamis (spatie/laravel-permission + resource_key)
+    PERMISSIONS ||--o{ ROLE_HAS_PERMISSIONS : ""
+    ROLES ||--o{ ROLE_HAS_PERMISSIONS : ""
+    ROLES ||--o{ MODEL_HAS_ROLES : ""
+    PERMISSIONS ||--o{ MODEL_HAS_PERMISSIONS : ""
+    PERMISSIONS ||--o{ PERMISSION_ENDPOINTS : "permission_id (nullable)"
+    PERMISSIONS ||--o{ PAGE_PERMISSIONS : "permission_id (nullable, resource_key)"
+    USERS ||--o{ PERSONAL_ACCESS_TOKENS : "Sanctum"
+    USERS ||--o{ PASSWORD_RESET_TOKENS : "email"
+
+    %% Tahun ajaran & kenaikan kelas
+    BRANCHES ||--o{ TAHUN_AJARANS : ""
+    TAHUN_AJARANS ||--o{ TAGIHANS : "tahun_ajaran_id"
+    TAHUN_AJARANS ||--o{ JENIS_TAGIHANS : "tahun_ajaran_id (NOT NULL)"
+    SISWAS ||--o{ SISWA_KELAS : "histori kelas per tahun ajaran"
+    KELAS ||--o{ SISWA_KELAS : ""
+    TAHUN_AJARANS ||--o{ SISWA_KELAS : ""
+    BRANCHES ||--o{ BATCH_PROMOSIS : ""
+    TAHUN_AJARANS ||--o{ BATCH_PROMOSIS : "source & target"
+    USERS ||--o{ BATCH_PROMOSIS : "processed_by"
+    BATCH_PROMOSIS ||--o{ BATCH_PROMOSI_DETAILS : ""
+    SISWAS ||--o{ BATCH_PROMOSI_DETAILS : ""
+    KELAS ||--o{ BATCH_PROMOSI_DETAILS : "source & target kelas"
+
+    %% Akun siswa (users.siswa_id)
+    SISWAS ||--o| USERS : "siswa_id (akun portal)"
+
+    %% Approval pengeluaran & notifikasi
+    USERS ||--o{ PENGELUARAN_REQUESTS : "requester_id"
+    BRANCHES ||--o{ PENGELUARAN_REQUESTS : ""
+    PENGELUARAN_REQUESTS ||--o{ PENGELUARANS : "pengeluaran_request_id"
+    PENGELUARAN_REQUESTS ||--o{ APPROVAL_LOGS : ""
+    USERS ||--o{ APPROVAL_LOGS : ""
+    BRANCHES ||--o| BRANCH_APPROVAL_SETTINGS : "1:1 auto-approve config"
+    USERS ||--o{ NOTIFICATIONS : ""
+    BRANCHES ||--o| NOTIFICATION_SETTINGS : "1:1"
+    BRANCHES ||--o{ NOTIFICATION_LOGS : ""
+
+    %% Import/export
+    USERS ||--o{ IMPORT_BATCHES : ""
+    BRANCHES ||--o{ IMPORT_BATCHES : ""
+    USERS ||--o{ EXPORT_JOBS : ""
+    BRANCHES ||--o{ EXPORT_JOBS : ""
+
+    %% Midtrans
+    TAGIHANS ||--o{ MIDTRANS_TRANSACTIONS : "kode_tagihan"
+    USERS ||--o{ MIDTRANS_TRANSACTIONS : "initiator_user_id"
+    MIDTRANS_TRANSACTIONS ||--o{ MIDTRANS_TRANSACTION_LOGS : ""
+    MIDTRANS_TRANSACTIONS ||--o| PEMBAYARANS : "kolom midtrans_* di pembayarans"
+
+    PAGE_PERMISSIONS {
+        bigint id PK
+        string resource_key UK "pointer murni, pasca simplify_rbac"
+        bigint permission_id FK
+    }
+    SISWA_KELAS {
+        bigint id PK
+        bigint siswa_id FK
+        bigint kelas_id FK
+        bigint tahun_ajaran_id FK
+    }
+    BATCH_PROMOSIS {
+        bigint id PK
+        bigint source_tahun_ajaran_id FK
+        bigint target_tahun_ajaran_id FK
+        bigint processed_by FK
+        bigint branch_id FK
+    }
+    PENGELUARAN_REQUESTS {
+        bigint id PK
+        bigint requester_id FK
+        bigint branch_id FK
+        string status "submit/approve/reject/disburse"
+    }
+    MIDTRANS_TRANSACTIONS {
+        bigint id PK
+        char kode_tagihan FK
+        bigint initiator_user_id FK
+        json batch_items "dukungan bayar banyak tagihan"
+    }
+    USERS {
+        bigint id PK
+        bigint siswa_id FK "nullable, akun portal siswa"
+        bigint branch_id FK
+        boolean is_active
+        boolean must_change_password
+        timestamp email_verified_at
+        string email UK
+    }
+```
+
+### 9.3 Ringkasan Diff Skema (kuantitatif)
+
+| Aspek | Baseline (`37ff85a9`) | Saat ini (HEAD `de22f75`) |
+|---|---|---|
+| Jumlah tabel aplikasi (di luar tabel framework Laravel: `sessions`, `cache`, `jobs`, dll) | 14 | ~35 |
+| Mekanisme akses | 1 kolom `users.role` (string) | Spatie RBAC + `resource_key` dinamis (5 tabel: `permissions`, `roles`, `model_has_*`, `permission_endpoints`, `page_permissions`) |
+| Auth token | `users.token` (kolom custom, unique, nullable) | Sanctum `personal_access_tokens` (kolom `token` lama di-drop) |
+| Riwayat kelas siswa | Tidak ada — `siswas.kelas_id` statis | `siswa_kelas` (histori per `tahun_ajaran_id`) + `batch_promosis`/`batch_promosi_details` |
+| Metode pembayaran | `offline` saja | `offline` + `online_midtrans`, 3 tabel baru (`midtrans_transactions`, `_logs`, kolom di `pembayarans`) |
+| Approval pengeluaran | Tidak ada — `pengeluarans` langsung tercatat | `pengeluaran_requests` → `approval_logs` (submit→approve/reject→disburse) + `branch_approval_settings` (auto-approve) |
+| Notifikasi | Tidak ada | 5 tabel (`notifications`, `notification_settings`, `notification_logs`, `email_opt_outs`, `notification_sent_records`) |
+| Import/export | Tidak ada | `import_batches`, `export_jobs` + kolom `batch_reference` di `siswas`/`tagihans` |
+| Verifikasi email & keamanan akun | Tidak ada | `email_verified_at` (users + tabel ortu), `password_reset_tokens`, kolom `is_active`/`must_change_password` di `users` |
+| Multi-cabang | Sudah ada (`branches` + FK di 9 tabel) | Tidak berubah struktural, hanya bertambah FK `branch_id` di tabel-tabel baru |
+
+---
+
 ## Lampiran: Daftar Lengkap Commit (37ff85a9..HEAD)
 
 ```
+de22f75 - Update .gitignore - Sinkronisasi resource key - Setup tunneling frontend
+3ed89b4 Update .gitignore
+57d732a Update .gitignore
+82a2a1f Update .gitignore
+ae0501b Upadate .gitignore
+872f983 - Update .env.example - Fix resource key yang tidak sinkron - Test case baru - Dokumentasi
 743799c Clear unnecessary files/folders and graphify project
 9da3f2e Clear unused folder and file
 c5799ae Testing modul 1 dan 2

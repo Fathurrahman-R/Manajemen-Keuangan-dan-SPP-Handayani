@@ -26,7 +26,7 @@ class JenisTagihanRequest extends FormRequest
         return [
             'nama' => ['required', 'string', 'min:3', 'max:100'],
             'jatuh_tempo' => ['required', 'date', 'date_format:Y-m-d'],
-            'jumlah' => ['required', 'numeric', 'regex:/^\d{1,11}(\.\d{1,2})?$/'],
+            'jumlah' => ['required', 'numeric', 'min:1', 'regex:/^\d{1,11}(\.\d{1,2})?$/'],
         ];
     }
 

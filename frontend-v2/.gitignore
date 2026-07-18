@@ -26,3 +26,4 @@ Thumbs.db
 /resources/views/vendor/**/*
 
 .env-default
+/.junie/

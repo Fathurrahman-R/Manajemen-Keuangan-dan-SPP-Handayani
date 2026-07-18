@@ -17,8 +17,7 @@ class DashboardAllTimeStatsWidget extends BaseWidget
     protected function getStats(): array
     {
         try {
-            $response = ApiService::client()->get('/dashboard/all-time-summary');
-            $data = $response->ok() ? ($response->json('data') ?? []) : [];
+            $data = ApiService::dashboardOverviewSlice('all_time_summary') ?? [];
         } catch (\Throwable $e) {
             $data = [];
         }
