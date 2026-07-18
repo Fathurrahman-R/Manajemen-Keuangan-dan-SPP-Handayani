@@ -312,11 +312,6 @@ class UserController extends Controller
     public function verifyEmailOtp(Request $request): JsonResponse
     {
         $user = Auth::user();
-        if (! $user->must_change_password) {
-            throw new HttpResponseException(response()->json([
-                'errors' => ['message' => ['Invalid action.']],
-            ], 403));
-        }
 
         $request->validate([
             'email' => 'required|email|max:255',

@@ -15,7 +15,7 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 
-class EditProfile extends Page implements HasActions, HasForms, HasSchemas
+class EditProfile extends Page implements HasActions, HasForms
 {
     use InteractsWithActions, InteractsWithForms, InteractsWithSchemas {
         InteractsWithForms::getCachedSchemas insteadof InteractsWithSchemas;

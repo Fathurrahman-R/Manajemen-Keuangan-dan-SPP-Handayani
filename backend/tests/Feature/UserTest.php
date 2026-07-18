@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Database\Seeders\UserSeeder;
+use Illuminate\Support\Facades\Cache;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 use function PHPUnit\Framework\assertNotNull;
@@ -258,6 +260,35 @@ class UserTest extends TestCase
                     ],
                 ],
             ]);
+    }
+
+    public function test_verify_email_otp_success_for_admin_not_forced_password_change()
+    {
+        // Admin biasa yang sudah pernah ganti password (must_change_password = false),
+        // memperbarui email lewat halaman profil, lalu verifikasi dengan OTP benar.
+        $admin = User::factory()->admin()->create([
+            'must_change_password' => false,
+        ]);
+        Sanctum::actingAs($admin, $admin->getAllPermissions()->pluck('name')->toArray());
+        $email = 'admin-baru@example.com';
+
+        $this->postJson('api/users/send-verification-otp', [
+            'email' => $email,
+        ])->assertStatus(200);
+
+        $otp = Cache::get('email_otp_'.$admin->id.'_'.$email);
+        self::assertNotNull($otp);
+
+        $this->postJson('api/users/verify-email-otp', [
+            'email' => $email,
+            'otp' => $otp,
+        ])->assertStatus(200)
+            ->assertJson([
+                'data' => true,
+            ]);
+
+        self::assertEquals($email, $admin->refresh()->email);
+        self::assertNotNull($admin->email_verified_at);
     }
 
     public function test_logout_success()
