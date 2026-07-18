@@ -1,1 +1,0 @@
-Monorepo hosting a Laravel billing API plus two frontend apps (Filament admin/portal and React SPA) that share one database schema and Midtrans payment integration.

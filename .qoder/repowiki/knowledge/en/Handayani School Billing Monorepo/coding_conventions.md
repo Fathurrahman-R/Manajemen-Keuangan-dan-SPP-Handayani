@@ -1,4 +1,0 @@
-- Domain entities are modeled as Eloquent Models in `backend/app/Models` with matching migration files under `backend/database/migrations`.
-- Feature work is tracked per-topic under `.kiro/specs/<feature>/` containing requirements.md, design.md, tasks.md, and .config.kiro.
-- RBAC permissions are declared as enum values in `backend/app/Enum/Permission.php` and bound to roles via `backend/app/Constant/PermissionBinding.php`.
-- Both Laravel apps keep their own `.env`, `composer.json`, `phpunit.xml`, and `artisan`, treating them as independent deployments sharing only the database.

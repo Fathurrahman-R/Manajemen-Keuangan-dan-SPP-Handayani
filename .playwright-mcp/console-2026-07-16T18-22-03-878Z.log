@@ -1,2 +1,0 @@
-[    5024ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://[::1]:5173/resources/css/filament/admin/theme.css:0
-[    5026ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://[::1]:5173/@vite/client:0
