@@ -143,7 +143,7 @@ class PortalRiwayatPembayaranPage extends Page implements HasActions, HasSchemas
                     ->iconButton()
                     ->color('primary')
                     ->visible(fn (array $record): bool => ! ($record['is_pending'] ?? false)
-                        && PermissionHelper::hasResource('pembayaran.print'))
+                        && PermissionHelper::hasResource('pembayaran.kwitansi'))
                     ->action(function (array $record) {
                         return $this->downloadKwitansi($record['kode_pembayaran']);
                     }),

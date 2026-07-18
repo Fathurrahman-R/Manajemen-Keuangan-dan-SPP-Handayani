@@ -134,7 +134,7 @@ class Settings extends Page
                 ->icon('heroicon-o-pencil-square')
                 ->label('Ubah')
                 ->color('primary')
-                ->visible(fn (): bool => PermissionHelper::hasResource('app-setting.update'))
+                ->visible(fn (): bool => PermissionHelper::hasResource('pengaturan.update'))
                 ->modal()
                 ->fillForm(fn (): array => $this->setting === null ? [] : [
                     'id' => $this->setting['id'],

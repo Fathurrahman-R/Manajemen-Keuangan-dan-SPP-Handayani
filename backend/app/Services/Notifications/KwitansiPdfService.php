@@ -3,7 +3,7 @@
 namespace App\Services\Notifications;
 
 use App\Http\Controllers\PdfGeneratorController;
-use App\Http\Controllers\PembayaranController;
+use App\Http\Resources\KwitansiResource;
 use App\Models\Pembayaran;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -12,8 +12,14 @@ use Barryvdh\DomPDF\Facade\Pdf;
  *
  * Penting: PDF yang dilampirkan ke email HARUS sama dengan PDF yang
  * dihasilkan oleh tombol "Cetak Kwitansi" di admin panel (lihat
- * PdfGeneratorController::get). Service ini mereuse logika yang sama
- * supaya tidak ada divergensi antara PDF email dan PDF admin/portal.
+ * PdfGeneratorController::get). Service ini mereuse KwitansiResource yang
+ * sama supaya tidak ada divergensi antara PDF email dan PDF admin/portal.
+ *
+ * Dibuat langsung dari KwitansiResource ($pembayaran), BUKAN lewat
+ * PembayaranController::kwitansi() -- controller itu me-refetch pembayaran
+ * dengan scope Auth::user()->branch_id, yang selalu null di sini karena
+ * KwitansiPembayaranNotification adalah queued job (dieksekusi queue
+ * worker tanpa user yang login), menyebabkan attachment PDF gagal senyap.
  */
 class KwitansiPdfService
 {
@@ -22,9 +28,7 @@ class KwitansiPdfService
      */
     public function generate(Pembayaran $pembayaran): string
     {
-        // Reuse KwitansiResource lewat PembayaranController::kwitansi()
-        // sehingga payload identik dengan endpoint admin.
-        $resource = PembayaranController::kwitansi($pembayaran->kode_pembayaran);
+        $resource = new KwitansiResource($pembayaran);
         $data = $resource->toArray(request());
 
         // Resolve logo absolute path from public disk; fallback to public favicon
