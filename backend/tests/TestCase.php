@@ -22,19 +22,22 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
         // Reset Spatie permission cache agar role antar test tidak bocor
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        // Urutan penting: hapus tabel anak (FK dependents) sebelum tabel induk
+        // (branches, users) — kalau kebalik, DELETE parent kena FK constraint
+        // violation selama masih ada child row (tagihans -> jenis_tagihans/branches, dst).
         DB::delete('delete from model_has_roles');
         DB::delete('delete from role_has_permissions');
         DB::delete('delete from roles');
-        DB::delete('delete from users');
-        DB::delete('delete from branches');
         DB::delete('delete from pembayarans');
         DB::delete('delete from tagihans');
         DB::delete('delete from jenis_tagihans');
         DB::delete('delete from pengeluarans');
+        DB::delete('delete from users');
         DB::delete('delete from siswas');
         DB::delete('delete from kelas');
         DB::delete('delete from kategoris');
         DB::delete('delete from walis');
+        DB::delete('delete from branches');
     }
 
     /**
