@@ -93,6 +93,38 @@ php artisan serve
 
 Konfigurasi opsional (public-safe) di `frontend-v2/.env`: `HANDAYANI_MIDTRANS_ENABLED`, `MIDTRANS_CLIENT_KEY`, `MIDTRANS_SNAP_URL`, `HANDAYANI_MIDTRANS_FEE_FLAT`.
 
+## Menjalankan dengan Docker
+
+Alternatif dari setup manual di atas — satu `docker compose up` menghidupkan seluruh stack dev: `backend` (port 8080), `frontend-v2` (port 8000) + Vite dev server (port 5173), MariaDB, Redis, queue worker, scheduler, dan tunnel ngrok. Source code di-bind-mount, jadi edit langsung kepakai (live reload) sama seperti dev manual.
+
+```bash
+cp .env.example .env        # isi NGROK_AUTHTOKEN (https://dashboard.ngrok.com/get-started/your-authtoken)
+docker compose up --build
+```
+
+Yang perlu disiapkan lebih dulu: `backend/.env` dan `frontend-v2/.env` (copy dari `.env.example` masing-masing seperti biasa) — nilai `DB_HOST`, `REDIS_HOST`, `API_URL`, `CACHE_STORE` di dalamnya **otomatis di-override** oleh `docker-compose.yml` supaya mengarah ke service Docker (`mysql`, `redis`, `backend`), jadi tidak perlu diedit manual.
+
+Setelah `up`, container `backend` otomatis `composer install` (kalau perlu), `migrate --seed`, dan sinkron RBAC lewat seeder (`RoleAndPermissionSeeder`, `PermissionResourceSeeder`, `PermissionMetadataSeeder`, `PermissionEndpointSeeder`) — tunggu sampai statusnya `healthy` (`docker compose ps`) sebelum akses.
+
+| Akses | URL |
+|---|---|
+| Frontend (admin panel/portal) | `http://localhost:8000` |
+| Backend API | `http://localhost:8080/api` |
+| ngrok inspector (lihat URL publik) | `http://localhost:4040` |
+| MariaDB (buat HeidiSQL native Windows) | `127.0.0.1:3306`, user `root`, password sesuai `MYSQL_ROOT_PASSWORD` di root `.env` |
+| Mailpit (tangkap semua email dev, ganti Mailtrap) | `http://localhost:8025` — SMTP di `mailpit:1025` (sudah otomatis jadi `MAIL_HOST` container backend) |
+
+Perintah harian yang berguna:
+
+```bash
+docker compose logs -f backend-queue        # pantau job notifikasi/import-export
+docker compose logs -f backend-scheduler    # pantau schedule:work
+docker compose exec backend php artisan migrate:status
+docker compose exec backend php artisan test
+docker compose down                         # stop semua service (data DB tetap ada di volume)
+docker compose down -v                      # stop + hapus volume (DB/vendor/node_modules reset total)
+```
+
 ## Testing
 
 Framework test berbeda per aplikasi:
@@ -140,14 +172,13 @@ php artisan schedule:work         # dev — jalankan scheduler terus-menerus di 
 php artisan schedule:run          # prod — dipanggil oleh cron sekali per menit (lihat setup cron di bawah)
 ```
 
-**RBAC & permission sync** — jalankan tiap kali menambah/mengubah/menghapus case di `App\Enum\Permission`:
+**RBAC & permission sync** — tidak ada command `permissions:sync*` lagi, semua sinkronisasi lewat seeder (idempotent, `firstOrCreate`/`updateOrCreate`). Jalankan tiap kali menambah/mengubah/menghapus case di `App\Enum\Permission` atau mapping endpoint:
 
 ```bash
-php artisan permissions:sync              # tambah permission baru dari enum
-php artisan permissions:sync --prune      # + hapus permission lama yang sudah tidak ada di enum
-php artisan permissions:sync-endpoints           # sinkron mapping endpoint → permission
-php artisan permissions:sync-endpoints --clear   # hapus semua data endpoint dulu sebelum insert ulang
-php artisan permissions:backfill-groups          # isi ulang kolom group pada page_permissions yang kosong
+php artisan db:seed --class=RoleAndPermissionSeeder     # tambah permission baru dari enum + refresh role
+php artisan db:seed --class=PermissionEndpointSeeder    # sinkron mapping resource_key → permission
+php artisan db:seed --class=PermissionMetadataSeeder    # refresh label/group/audience permission
+php artisan permissions:backfill-groups                 # isi ulang kolom group pada page_permissions yang kosong
 ```
 
 **Maintenance**
@@ -368,7 +399,7 @@ enum Permission: string
 
 ```bash
 cd backend
-php artisan permissions:sync
+php artisan db:seed --class=RoleAndPermissionSeeder
 ```
 
 ### Langkah 2: Daftarkan Resource Key
@@ -500,7 +531,7 @@ Buka tab **Assign Role**:
 
 **Urutan workflow untuk menambah fitur baru:**
 
-1. **(Via UI)** Buat permission baru di tab Permissions — atau **(Via Enum)** tambah case di `App\Enum\Permission` + `php artisan permissions:sync`.
+1. **(Via UI)** Buat permission baru di tab Permissions — atau **(Via Enum)** tambah case di `App\Enum\Permission` + `php artisan db:seed --class=RoleAndPermissionSeeder`.
 2. **(Via UI)** Daftarkan resource key di tab Resource & Page Registry.
 3. *(Opsional)* Mapping endpoint API di tab Endpoint Mapping.
 4. **(Via UI)** Assign permission ke role di tab Assign Role.
@@ -657,13 +688,13 @@ NavigationItem::make('Absensi Online')
 
 ### Workflow Seeder & Permission Sync
 
-**1. Sync Permission Enum ke Database:**
+Tidak ada command `permissions:sync*` — semua sinkronisasi permission/role/resource key/endpoint lewat seeder (`firstOrCreate`/`updateOrCreate`, aman dijalankan berulang kali).
+
+**1. Sync Permission Enum ke Database + refresh role:**
 
 ```bash
 # Dari direktori backend
-php artisan permissions:sync
-# Hapus permission yang tidak ada di enum (hati-hati!)
-php artisan permissions:sync --prune
+php artisan db:seed --class=RoleAndPermissionSeeder
 ```
 
 **2. Seed Resource Key ke page_permissions:**
@@ -674,9 +705,16 @@ php artisan db:seed --class=PermissionResourceSeeder
 
 Ini akan mengisi resource key yang sudah didefinisikan di `PermissionResourceSeeder`.
 
+**3. Seed mapping endpoint API → permission:**
+
+```bash
+php artisan db:seed --class=PermissionEndpointSeeder
+```
+
 **Kapan harus menjalankan:**
-- `permissions:sync` — setelah menambah/mengubah case di `App\Enum\Permission`.
-- `db:seed --class=PermissionResourceSeeder` — setelah deploy ulang database, atau setelah menambah resource key baru di seeder.
+- `RoleAndPermissionSeeder` — setelah menambah/mengubah/menghapus case di `App\Enum\Permission`.
+- `PermissionResourceSeeder` — setelah deploy ulang database, atau setelah menambah resource key baru di seeder.
+- `PermissionEndpointSeeder` — setelah menambah/mengubah mapping endpoint API → permission di seeder.
 
 > [!WARNING]
 > Hapus/rename permission via UI dapat menyebabkan error jika permission tersebut masih di-bind ke resource key. Sebaiknya **nonaktifkan** dulu permission via UI sebelum menghapus.
@@ -713,7 +751,7 @@ Sudah dinonaktifkan. Tidak ada lagi middleware berbasis method+path di backend. 
 
 **Backend Checklist:**
 1. Tambah case di `App\Enum\Permission`
-2. Jalankan `php artisan permissions:sync`
+2. Jalankan `php artisan db:seed --class=RoleAndPermissionSeeder`
 3. Di controller: `$request->user()->can(Permission::NAMA->value)`
 4. Routing: cukup `auth:sanctum` — tanpa middleware `dynamic.permission`
 
@@ -744,6 +782,6 @@ handayani/
 
 > [!IMPORTANT]
 > - Jalankan backend di **port `8080`** (`php artisan serve --port=8080`), bukan default `8000`.
-> - Nama permission memakai istilah **Bahasa Indonesia** (mis. `view-tagihan`, `create-pengeluaran-request`). Setelah menambah/mengubah nama case di `App\Enum\Permission`, jalankan `php artisan permissions:sync` (tambahkan `--prune` untuk menghapus permission yang sudah tidak dipakai) — jika tidak, bypass `superadmin` di `Gate::before` tetap kehilangan baris permission yang dicek middleware Spatie.
+> - Nama permission memakai istilah **Bahasa Indonesia** (mis. `view-tagihan`, `create-pengeluaran-request`). Setelah menambah/mengubah nama case di `App\Enum\Permission`, jalankan `php artisan db:seed --class=RoleAndPermissionSeeder` — jika tidak, permission barunya belum ada baris di tabel `permissions` yang dicek middleware Spatie.
 > - Relasi `Tagihan` (tagihan) ↔ `Siswa` di-join lewat kolom **`nis`**, bukan `siswa.id`. Mengubah NIS siswa berpotensi memutus tautan tagihan.
 > - Webhook Midtrans `POST /api/midtrans/notification` **sengaja publik** tanpa middleware auth — ini bukan bug, jangan "diperbaiki".

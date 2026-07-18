@@ -1,0 +1,19 @@
+version: "2"
+tunnels:
+  # ngrok free plan hanya mengalokasikan SATU ephemeral domain per agent session —
+  # dua tunnel http tanpa `domain:` eksplisit di plan gratis akan collide ke satu
+  # URL yang sama (dibuktikan lewat log: kedua tunnel dapat public_url identik,
+  # dan yang benar-benar reachable cuma salah satu). Default: cuma tunnel backend
+  # (webhook Midtrans, use-case utama — lihat README §Tunneling).
+  #
+  # Kalau butuh tunnel frontend juga (testing pembayaran mobile) DAN sudah punya
+  # ngrok paid plan dengan reserved domain tambahan, aktifkan blok frontend di
+  # bawah + isi `domain:` dengan domain reserved kamu, lalu ganti command service
+  # `ngrok` di docker-compose.yml dari `start backend` jadi `start --all`.
+  backend:
+    proto: http
+    addr: backend:8080
+  # frontend:
+  #   proto: http
+  #   addr: frontend:8000
+  #   domain: your-reserved-domain.ngrok-free.app
