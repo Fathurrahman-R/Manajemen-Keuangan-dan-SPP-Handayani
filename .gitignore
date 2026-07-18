@@ -1,6 +1,5 @@
-.claude
-.playwright-mcp
-.qoder
-.vscode
-graphify-out/
+/.vscode/
+/.qoder/
+/.playwright-mcp/
+/.claude/
 CLAUDE.md
