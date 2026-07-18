@@ -28,13 +28,11 @@ class TagihanJatuhTempoWidget extends BaseWidget
                     : ['all_periods' => true];
 
                 try {
-                    $response = ApiService::client()->get('/dashboard/tagihan-jatuh-tempo', $params);
+                    $data = ApiService::dashboardOverviewSlice('tagihan_jatuh_tempo', $params);
 
-                    if (! $response->ok()) {
+                    if ($data === null) {
                         return collect([]);
                     }
-
-                    $data = $response->json('data') ?? [];
                 } catch (\Throwable $e) {
                     $data = [];
                 }

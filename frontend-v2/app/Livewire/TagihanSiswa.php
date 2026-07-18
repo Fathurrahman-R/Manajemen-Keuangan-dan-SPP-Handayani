@@ -182,11 +182,16 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
                 TextInput::make('amount_paid')
                     ->label(__('midtrans.payment_amount', [], 'id'))
                     ->prefix('Rp')
+                    ->helperText('Minimal Rp '.number_format($minAmount, 0, ',', '.').'.')
                     ->numeric()
                     ->required()
-                    ->minValue($minAmount)
-                    ->maxValue((int) ($arguments['sisa'] ?? 0))
+                    ->rules(['min:'.$minAmount, 'max:'.(int) ($arguments['sisa'] ?? 0)])
                     ->default((int) ($arguments['sisa'] ?? 0))
+                    ->validationMessages([
+                        'required' => __('midtrans.AMOUNT_BELOW_MINIMUM', [], 'id'),
+                        'min' => __('midtrans.AMOUNT_BELOW_MINIMUM', [], 'id'),
+                        'max' => __('midtrans.AMOUNT_EXCEEDS_SISA', [], 'id'),
+                    ])
                     ->live(debounce: 300),
 
                 Select::make('payment_channel')

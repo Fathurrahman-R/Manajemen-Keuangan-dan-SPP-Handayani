@@ -113,7 +113,7 @@ class MidtransInitiationService
 
             // 9. Generate order ID and persist MidtransTransaction
             $orderId = $this->orderIdGenerator->generate($kodeTagihan);
-            $expiredAt = CarbonImmutable::now()->addHours((int) config('midtrans.expiry_hours'));
+            $expiredAt = CarbonImmutable::now()->addMinutes((int) config('midtrans.expiry_minutes'));
 
             $trx = MidtransTransaction::create([
                 'order_id' => $orderId,
@@ -180,8 +180,8 @@ class MidtransInitiationService
             // Expiry
             $expiry = [
                 'start_time' => now()->format('Y-m-d H:i:s +0700'),
-                'unit' => 'hour',
-                'duration' => 24,
+                'unit' => 'minute',
+                'duration' => (int) config('midtrans.expiry_minutes'),
             ];
 
             $snapPayload = new SnapPayload(
@@ -330,7 +330,7 @@ class MidtransInitiationService
             $this->feeService->assertGrossInvariant($amountPaid, $feeAmount, $grossAmount);
 
             $orderId = $this->orderIdGenerator->generate($primary->kode_tagihan);
-            $expiredAt = CarbonImmutable::now()->addHours((int) config('midtrans.expiry_hours'));
+            $expiredAt = CarbonImmutable::now()->addMinutes((int) config('midtrans.expiry_minutes'));
 
             $trx = MidtransTransaction::create([
                 'order_id' => $orderId,
@@ -385,8 +385,8 @@ class MidtransInitiationService
                 customerDetails: $customerDetails,
                 expiry: [
                     'start_time' => now()->format('Y-m-d H:i:s +0700'),
-                    'unit' => 'hour',
-                    'duration' => 24,
+                    'unit' => 'minute',
+                    'duration' => (int) config('midtrans.expiry_minutes'),
                 ],
                 callbacks: $this->resolveSnapCallbacks(),
                 enabledPayments: $this->resolveEnabledPayments($paymentChannel),

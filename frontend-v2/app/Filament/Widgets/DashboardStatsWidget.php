@@ -20,13 +20,11 @@ class DashboardStatsWidget extends BaseWidget
             : ['all_periods' => true];
 
         try {
-            $response = ApiService::client()->get('/dashboard/summary', $params);
+            $data = ApiService::dashboardOverviewSlice('summary', $params);
 
-            if (! $response->ok()) {
+            if ($data === null) {
                 return $this->fallbackStats();
             }
-
-            $data = $response->json('data') ?? [];
         } catch (\Throwable $e) {
             return $this->fallbackStats();
         }

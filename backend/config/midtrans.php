@@ -50,8 +50,8 @@ return [
     |                  https://midtrans.com/id/pricing
     |                Override per kanal lewat .env, mis.
     |                HANDAYANI_MIDTRANS_FEE_QRIS_PERCENT=0.7
-    | min_amount   : Minimum nominal pembayaran (Rp 10.000, asumsi A2).
-    | expiry_hours : Kadaluarsa transaksi sejak inisiasi (24 jam, asumsi A3).
+    | min_amount     : Minimum nominal pembayaran (Rp 10.000, asumsi A2).
+    | expiry_minutes : Kadaluarsa transaksi sejak inisiasi, dalam menit (default 1440 = 24 jam, asumsi A3).
     |
     */
 
@@ -98,7 +98,7 @@ return [
 
     'min_amount' => 10_000,
 
-    'expiry_hours' => 24,
+    'expiry_minutes' => 1,
 
     /*
     |--------------------------------------------------------------------------

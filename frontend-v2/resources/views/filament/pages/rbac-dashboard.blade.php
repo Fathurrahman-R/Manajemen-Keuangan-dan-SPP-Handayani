@@ -23,9 +23,6 @@
             Resource & Page Registry
         </x-filament::tabs.item>
         @endif
-        <x-filament::tabs.item wire:click="$set('activeTab', 'guide')" :active="$activeTab === 'guide'" icon="heroicon-o-book-open">
-            Panduan
-        </x-filament::tabs.item>
     </x-filament::tabs>
 
     <div class="mt-6">
@@ -37,8 +34,6 @@
             @livewire(\App\Livewire\RbacEndpointsTable::class, key('endpoints-table'))
         @elseif($activeTab === 'resources' && \App\Helpers\PermissionHelper::hasResource('resource-registry.view'))
             @livewire(\App\Livewire\RbacPagePermissionsTable::class, key('resources-table'))
-        @elseif($activeTab === 'guide')
-            {{ $this->guideSchema() }}
         @endif
     </div>
 </x-filament::page>

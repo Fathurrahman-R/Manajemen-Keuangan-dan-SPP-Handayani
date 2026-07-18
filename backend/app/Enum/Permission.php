@@ -89,11 +89,6 @@ enum Permission: string
     case VIEW_DASHBOARD = 'view-dashboard';
     case VIEW_OWN_BILLING = 'view-own-billing';
 
-    // jenjang visibility permissions
-    case VIEW_JENJANG_KB = 'view-jenjang-kb';
-    case VIEW_JENJANG_TK = 'view-jenjang-tk';
-    case VIEW_JENJANG_MI = 'view-jenjang-mi';
-
     // pengeluaran permissions
     case VIEW_PENGELUARAN = 'view-pengeluaran';
     case CREATE_PENGELUARAN = 'create-pengeluaran';

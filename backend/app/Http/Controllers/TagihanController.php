@@ -256,10 +256,9 @@ class TagihanController extends Controller
         }
 
         $siswa = Siswa::query()->select(['id', 'nis'])
-            ->where('kelas_id', $data['kelas_id'])
+            ->whereIn('kelas_id', $data['kelas_id'])
             ->where('jenjang', $data['jenjang'])
-            ->where('kategori_id', $data['kategori_id'])
-
+            ->whereIn('kategori_id', $data['kategori_id'])
             ->get();
         if ($siswa->isEmpty()) {
             throw new HttpResponseException(response([

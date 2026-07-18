@@ -443,7 +443,11 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                     ->numeric()
                     ->prefix('Rp')
                     ->required()
-                    ->minValue(1),
+                    ->rules(['min:1'])
+                    ->validationMessages([
+                        'required' => 'Jumlah bayar wajib diisi.',
+                        'min' => 'Jumlah bayar tidak boleh 0 atau kurang.',
+                    ]),
                 Select::make('metode')
                     ->label('Metode Pembayaran')
                     ->options([
@@ -671,12 +675,9 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                         $params = $tahunAjaranId
                             ? ['tahun_ajaran_id' => $tahunAjaranId]
                             : [];
-                        $response = ApiService::client()->get('/jenis-tagihan', $params);
-                        if (! $response->ok()) {
-                            return [];
-                        }
+                        $data = ApiService::cachedGet('/jenis-tagihan', $params, (int) config('handayani.cache.master_data_ttl', 300));
 
-                        return collect($response->json('data') ?? [])
+                        return collect($data ?? [])
                             ->mapWithKeys(function ($item) {
                                 $jumlah = 'Rp. '.number_format($item['jumlah'], 0, '', ',');
 
@@ -687,33 +688,31 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                     ->required(),
                 Select::make('kelas_id')
                     ->label('Kelas')
+                    ->helperText('Pilih satu atau beberapa kelas sekaligus.')
+                    ->multiple()
                     ->searchable()
                     ->searchPrompt('Cari Kelas')
                     ->options(function () {
                         if (! $this->jenjang) {
                             return [];
                         }
-                        $response = ApiService::client()->get('/kelas/'.$this->jenjang);
-                        if (! $response->ok()) {
-                            return [];
-                        }
+                        $data = ApiService::cachedGet('/kelas/'.$this->jenjang, [], (int) config('handayani.cache.master_data_ttl', 300));
 
-                        return collect($response->json('data') ?? [])
+                        return collect($data ?? [])
                             ->mapWithKeys(fn ($item) => [$item['id'] => $item['nama']])
                             ->toArray();
                     })
                     ->required(),
                 Select::make('kategori_id')
                     ->label('Kategori')
+                    ->helperText('Pilih satu atau beberapa kategori sekaligus.')
+                    ->multiple()
                     ->searchable()
                     ->searchPrompt('Cari Kategori')
                     ->options(function () {
-                        $response = ApiService::client()->get('/kategori');
-                        if (! $response->ok()) {
-                            return [];
-                        }
+                        $data = ApiService::cachedGet('/kategori', [], (int) config('handayani.cache.master_data_ttl', 300));
 
-                        return collect($response->json('data') ?? [])
+                        return collect($data ?? [])
                             ->mapWithKeys(fn ($item) => [$item['id'] => $item['nama']])
                             ->toArray();
                     })

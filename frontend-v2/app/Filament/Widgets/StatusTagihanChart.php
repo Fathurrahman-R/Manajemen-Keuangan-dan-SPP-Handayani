@@ -28,13 +28,11 @@ class StatusTagihanChart extends ChartWidget
             : ['all_periods' => true];
 
         try {
-            $response = ApiService::client()->get('/dashboard/charts/status-tagihan', $params);
+            $data = ApiService::dashboardOverviewSlice('chart_status_tagihan', $params);
 
-            if (! $response->ok()) {
+            if ($data === null) {
                 return ['datasets' => [], 'labels' => []];
             }
-
-            $data = $response->json('data') ?? [];
         } catch (\Throwable $e) {
             return ['datasets' => [], 'labels' => []];
         }

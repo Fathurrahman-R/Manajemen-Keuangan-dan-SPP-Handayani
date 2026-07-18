@@ -28,10 +28,6 @@ class PermissionResourceSeeder extends Seeder
             // ═══════════════════════════════════════
             ['key' => 'dashboard',           'group' => 'dashboard',  'perm' => 'view-dashboard'],
 
-            ['key' => 'jenjang.kb',          'group' => null,         'perm' => 'view-jenjang-kb'],
-            ['key' => 'jenjang.tk',          'group' => null,         'perm' => 'view-jenjang-tk'],
-            ['key' => 'jenjang.mi',          'group' => null,         'perm' => 'view-jenjang-mi'],
-
             // ═══════════════════════════════════════
             // AKADEMIK
             // ═══════════════════════════════════════

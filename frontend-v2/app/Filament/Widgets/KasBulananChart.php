@@ -28,13 +28,11 @@ class KasBulananChart extends ChartWidget
             : ['all_periods' => true];
 
         try {
-            $response = ApiService::client()->get('/dashboard/charts/kas-bulanan', $params);
+            $data = ApiService::dashboardOverviewSlice('chart_kas_bulanan', $params);
 
-            if (! $response->ok()) {
+            if ($data === null) {
                 return ['datasets' => [], 'labels' => []];
             }
-
-            $data = $response->json('data') ?? [];
         } catch (\Throwable $e) {
             return ['datasets' => [], 'labels' => []];
         }

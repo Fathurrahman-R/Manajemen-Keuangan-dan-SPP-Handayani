@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Helpers\PermissionHelper;
 use App\Livewire\Concerns\HasPeriodFilter;
+use App\Services\ApiService;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
@@ -39,11 +40,31 @@ class DashboardPage extends Page
         abort_if(! PermissionHelper::hasResource('dashboard'), 403);
 
         $this->mountHasPeriodFilter();
+
+        $this->prefetchWidgetData();
     }
 
     public function updatedSelectedTahunAjaranId($value): void
     {
         session(['selected_tahun_ajaran_id' => $value ? (int) $value : null]);
+
+        $this->prefetchWidgetData();
+    }
+
+    /**
+     * Warm Redis for the combined `/dashboard/overview` payload before widgets
+     * render. Every widget's own `ApiService::dashboardOverviewSlice()` call
+     * uses the SAME endpoint+params, so this single fetch is what all 9 widgets
+     * end up reading from — 1 HTTP call total instead of 9 (see
+     * DashboardController::overview()).
+     */
+    protected function prefetchWidgetData(): void
+    {
+        $params = $this->selectedTahunAjaranId
+            ? ['tahun_ajaran_id' => $this->selectedTahunAjaranId]
+            : ['all_periods' => true];
+
+        ApiService::cachedGet('/dashboard/overview', $params);
     }
 
     protected function getHeaderActions(): array
@@ -53,7 +74,14 @@ class DashboardPage extends Page
                 ->label('Refresh')
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
-                ->action(fn () => null),
+                ->action(function () {
+                    // Bump cache version so every widget's next fetch bypasses
+                    // Redis regardless of TTL, then remount the page so all
+                    // widgets re-run their getStats()/getData() immediately.
+                    ApiService::bustDashboardCache();
+
+                    $this->redirect(static::getUrl(), navigate: true);
+                }),
         ];
     }
 }

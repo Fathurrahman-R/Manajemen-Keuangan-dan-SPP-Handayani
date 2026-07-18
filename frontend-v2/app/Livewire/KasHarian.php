@@ -122,10 +122,13 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
                             ->schema([
                                 TextInput::make('bulan')
                                     ->label('Bulan')
-                                    ->numeric(),
+                                    ->numeric()
+                                    ->minValue(1)
+                                    ->maxValue(12),
                                 TextInput::make('tahun')
                                     ->label('Tahun')
                                     ->numeric()
+                                    ->minValue(2000)
                                     ->maxValue(Carbon::now()->year()),
                             ]),
                     ]),
@@ -207,6 +210,8 @@ class KasHarian extends Component implements HasActions, HasSchemas, HasTable
                             ->label('Tahun')
                             ->numeric()
                             ->default(now()->year)
+                            ->minValue(2000)
+                            ->maxValue(now()->year + 1)
                             ->required(),
                     ])
                     ->action(function (array $data) {
