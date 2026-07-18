@@ -117,6 +117,112 @@ Format kode di kedua aplikasi:
 vendor/bin/pint
 ```
 
+## Command Reference (Development & Production)
+
+### Backend (`backend/`)
+
+**Queue worker** — wajib jalan, dipakai oleh job import/export (`ProcessImportJob`, `ProcessExportJob`) dan seluruh notifikasi email (kwitansi, tagihan baru, reminder jatuh tempo, workflow pengeluaran). `QUEUE_CONNECTION=database` di `.env.example`, jadi tabel `jobs` harus sudah termigrasi (`php artisan migrate`).
+
+Notifikasi (kwitansi, tagihan baru, reminder jatuh tempo, overdue, workflow pengeluaran) di-dispatch ke queue **`notifications`**; job import/export ke queue **`default`** — worker harus dengar keduanya:
+
+```bash
+cd backend
+php artisan queue:work --queue=notifications,default            # dev
+php artisan queue:listen --queue=notifications,default          # dev alternatif — reload otomatis tiap request, lebih lambat
+```
+
+**Scheduler** — didefinisikan di `backend/routes/console.php`:
+- `notifications:send-reminders` → jalan tiap hari jam 08:00
+- `midtrans:prune-logs` → jalan tiap hari (hapus log Midtrans lewat `--days`, default lihat command)
+
+```bash
+php artisan schedule:work         # dev — jalankan scheduler terus-menerus di foreground
+php artisan schedule:run          # prod — dipanggil oleh cron sekali per menit (lihat setup cron di bawah)
+```
+
+**RBAC & permission sync** — jalankan tiap kali menambah/mengubah/menghapus case di `App\Enum\Permission`:
+
+```bash
+php artisan permissions:sync              # tambah permission baru dari enum
+php artisan permissions:sync --prune      # + hapus permission lama yang sudah tidak ada di enum
+php artisan permissions:sync-endpoints           # sinkron mapping endpoint → permission
+php artisan permissions:sync-endpoints --clear   # hapus semua data endpoint dulu sebelum insert ulang
+php artisan permissions:backfill-groups          # isi ulang kolom group pada page_permissions yang kosong
+```
+
+**Maintenance**
+
+```bash
+php artisan midtrans:prune-logs               # hapus log transaksi Midtrans lama (default retensi command)
+php artisan midtrans:prune-logs --days=180    # override jumlah hari retensi
+```
+
+**Migrasi & seeding**
+
+```bash
+php artisan migrate                # dev/staging
+php artisan migrate --seed         # dev — migrasi + seed awal (roles, permissions, resource registry, dsb)
+php artisan migrate --force        # prod — wajib --force karena APP_ENV bukan local
+php artisan db:seed --class=PermissionResourceSeeder   # re-seed resource registry saja setelah edit seeder
+```
+
+**Server**
+
+```bash
+php artisan serve --port=8080      # dev — WAJIB port 8080, frontend-v2 hardcode ke URL ini
+```
+
+Production: jalankan lewat web server (Nginx/Apache + PHP-FPM) yang mengarah ke `backend/public/index.php`, bukan `artisan serve`.
+
+### frontend-v2 (`frontend-v2/`)
+
+```bash
+cd frontend-v2
+npm install
+npm run dev             # dev — Vite dev server dengan hot reload
+npm run build            # prod — build asset final ke public/build
+
+php artisan serve                        # dev — default port 8000, aman karena bukan yang di-hardcode
+php artisan filament:optimize            # prod — cache komponen Filament (icons, components) setelah deploy
+php artisan filament:optimize-clear      # kebalikannya, dipakai saat debug/deploy ulang
+```
+
+### Cache & config (kedua aplikasi, jalankan setelah pull kode baru / sebelum deploy prod)
+
+```bash
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan event:cache
+
+# kebalikannya — wajib dipakai saat development, jangan sampai config:cache aktif di dev
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan cache:clear
+php artisan optimize:clear    # clear semua sekaligus
+```
+
+### Tunneling untuk webhook Midtrans (dev lokal)
+
+Webhook `POST /api/midtrans/notification` di `backend` **sengaja publik tanpa auth** — Midtrans butuh URL publik untuk mengirim notifikasi status pembayaran ke instance lokal. Pakai `ngrok` (atau tunnel sejenis, mis. `cloudflared`):
+
+```bash
+ngrok http 8080
+```
+
+Lalu daftarkan `https://<subdomain-acak>.ngrok-free.app/api/midtrans/notification` sebagai Payment Notification URL di dashboard Midtrans Sandbox. URL ngrok berubah tiap restart (kecuali pakai domain statis berbayar) — update ulang tiap sesi dev.
+
+### Cron setup (production)
+
+Tambahkan satu baris ini di crontab server (jalan tiap menit, Laravel scheduler sendiri yang menentukan kapan tiap job benar-benar dieksekusi):
+
+```bash
+* * * * * cd /path/ke/backend && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Untuk queue di production, jalankan `queue:work --queue=notifications,default` lewat process manager (Supervisor/systemd) — jangan pakai `nohup` manual, karena worker perlu auto-restart saat crash atau saat deploy kode baru (`php artisan queue:restart` setelah deploy agar worker load kode terbaru).
+
 ## Struktur Folder
 
 ```

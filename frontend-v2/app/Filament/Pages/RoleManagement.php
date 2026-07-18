@@ -20,11 +20,11 @@ class RoleManagement extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return PermissionHelper::hasResource('role-management');
+        return PermissionHelper::hasResource('role.view');
     }
 
     public function mount(): void
     {
-        abort_if(! PermissionHelper::hasResource('role-management'), 403);
+        abort_if(! PermissionHelper::hasResource('role.view'), 403);
     }
 }

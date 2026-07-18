@@ -150,9 +150,9 @@ class PermissionHelper
      * Permission mappings for jenjang visibility via resource_key.
      */
     protected static array $jenjangPermissions = [
-        'KB' => 'view-jenjang-kb',
-        'TK' => 'view-jenjang-tk',
-        'MI' => 'view-jenjang-mi',
+        'KB' => 'jenjang.kb',
+        'TK' => 'jenjang.tk',
+        'MI' => 'jenjang.mi',
     ];
 
     /**

@@ -26,7 +26,7 @@ class PengeluaranRequestPage extends Page
     public function mount(): void
     {
         $hasAccess = PermissionHelper::hasResource('pengeluaran.view')
-            || PermissionHelper::hasResource('pengeluaran.request')
+            || PermissionHelper::hasResource('pengeluaran.create')
             || PermissionHelper::hasResource('pengeluaran.approve')
             || PermissionHelper::hasResource('pengeluaran.disburse');
 

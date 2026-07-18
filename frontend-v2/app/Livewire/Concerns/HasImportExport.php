@@ -33,7 +33,7 @@ trait HasImportExport
             ->color('success')
             ->icon('heroicon-o-arrow-down-tray')
             ->button()
-            ->visible(fn (): bool => PermissionHelper::hasResource('import-export.export'))
+            ->visible(fn (): bool => PermissionHelper::hasResource('export-data'))
             ->modalHeading('Export Data')
             ->modalSubmitActionLabel('Export')
             ->schema($schema)
@@ -56,7 +56,7 @@ trait HasImportExport
             ->color('warning')
             ->icon('heroicon-o-arrow-up-tray')
             ->button()
-            ->visible(fn (): bool => PermissionHelper::hasResource('import-export.import'))
+            ->visible(fn (): bool => PermissionHelper::hasResource('import-data'))
             ->modalHeading('Import Data '.ucfirst($importType))
             ->modalSubmitActionLabel('Upload & Import')
             ->modalDescription('Upload file .xlsx atau .csv (maks 5MB). Download template terlebih dahulu jika belum punya.')
@@ -83,11 +83,11 @@ trait HasImportExport
     {
         $actions = [];
 
-        if (PermissionHelper::hasResource('import-export.export')) {
+        if (PermissionHelper::hasResource('export-data')) {
             $actions[] = $this->makeExportAction($type, $exportFilterSchema);
         }
 
-        if (PermissionHelper::hasResource('import-export.import')) {
+        if (PermissionHelper::hasResource('import-data')) {
             $actions[] = $this->makeDownloadTemplateAction($type);
             $actions[] = $this->makeImportAction($type);
             $actions[] = $this->makeImportHistoryAction($type);
@@ -106,7 +106,7 @@ trait HasImportExport
             ->color('gray')
             ->icon('heroicon-o-document-arrow-down')
             ->button()
-            ->visible(fn (): bool => PermissionHelper::hasResource('import-export.import'))
+            ->visible(fn (): bool => PermissionHelper::hasResource('import-data'))
             ->action(function () use ($importType) {
                 return $this->downloadImportTemplate($importType);
             });

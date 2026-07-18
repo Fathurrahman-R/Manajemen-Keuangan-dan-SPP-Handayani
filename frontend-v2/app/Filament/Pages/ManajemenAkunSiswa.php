@@ -137,7 +137,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
             ->bulkActions([
                 BulkAction::make('toggleActive')
                     ->label('Toggle Status Aktif')
-                    ->visible(fn (): bool => PermissionHelper::hasResource('akun-siswa.toggle-active'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('akun-siswa.toggle'))
                     ->icon('heroicon-o-arrow-path')
                     ->requiresConfirmation()
                     ->modalHeading('Toggle Status Aktif')
@@ -146,7 +146,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                     ->deselectRecordsAfterCompletion(),
                 BulkAction::make('resetPassword')
                     ->label('Reset Password')
-                    ->visible(fn (): bool => PermissionHelper::hasResource('akun-siswa.reset-password'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('akun-siswa.reset'))
                     ->icon('heroicon-o-key')
                     ->color('warning')
                     ->requiresConfirmation()
@@ -176,7 +176,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                     }),
                 BulkAction::make('printPdf')
                     ->label('Cetak PDF')
-                    ->visible(fn (): bool => PermissionHelper::hasResource('akun-siswa.print'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('akun-siswa.print-credentials'))
                     ->icon('heroicon-o-printer')
                     ->color('success')
                     ->action(function (Collection $records) {
@@ -209,7 +209,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
             ])
             ->recordActions([
                 Action::make('resetPassword')
-                    ->visible(fn (): bool => PermissionHelper::hasResource('akun-siswa.reset-password'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('akun-siswa.reset'))
                     ->tooltip('Reset Password')
                     ->icon('heroicon-s-key')
                     ->iconButton()
@@ -241,7 +241,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
                     })
                     ->after(fn () => $this->resetTable()),
                 Action::make('toggleActive')
-                    ->visible(fn ($record): bool => PermissionHelper::hasResource('akun-siswa.toggle-active'))
+                    ->visible(fn ($record): bool => PermissionHelper::hasResource('akun-siswa.toggle'))
                     ->tooltip(fn ($record) => ($record['is_active'] ?? false) ? 'Nonaktifkan' : 'Aktifkan')
                     ->icon(fn ($record) => ($record['is_active'] ?? false) ? 'heroicon-s-x-circle' : 'heroicon-s-check-circle')
                     ->iconButton()
@@ -413,7 +413,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
             ->bulkActions([
                 BulkAction::make('buatAkun')
                     ->label('Buat Akun')
-                    ->visible(fn (): bool => PermissionHelper::hasResource('akun-siswa.generate'))
+                    ->visible(fn (): bool => PermissionHelper::hasResource('akun-siswa.create'))
                     ->icon('heroicon-o-user-plus')
                     ->color('primary')
                     ->requiresConfirmation()
