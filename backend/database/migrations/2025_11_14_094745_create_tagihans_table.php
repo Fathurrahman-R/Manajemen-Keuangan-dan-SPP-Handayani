@@ -12,12 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('tagihans', function (Blueprint $table) {
-            $table->char('kode_tagihan',30)->primary()->nullable(false);
+            $table->char('kode_tagihan', 30)->primary()->nullable(false);
             $table->foreignId('jenis_tagihan_id')->constrained('jenis_tagihans')->onUpdate('cascade');
-            $table->string('nis',20)->unique()->nullable(false);
+            $table->string('nis', 20)->unique()->nullable(false);
             $table->foreign('nis')->references('nis')->on('siswas')->onUpdate('cascade');
-            $table->decimal('tmp',12,2)->nullable()->default(0);
-            $table->enum('status',['Lunas','Belum Lunas','Belum Dibayar'])->nullable(false)->default('Belum Dibayar');
+            $table->decimal('tmp', 12, 2)->nullable()->default(0);
+            $table->enum('status', ['Lunas', 'Belum Lunas', 'Belum Dibayar'])->nullable(false)->default('Belum Dibayar');
             $table->timestamps();
         });
     }

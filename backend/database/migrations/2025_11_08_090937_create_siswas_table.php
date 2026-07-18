@@ -13,24 +13,24 @@ return new class extends Migration
     {
         Schema::create('siswas', function (Blueprint $table) {
             $table->id();
-            $table->string('nis',20)->unique()->nullable(false);
-            $table->string('nisn',20)->unique()->nullable()->default(null);
-            $table->string('nama',100)->nullable(false);
-            $table->enum('jenis_kelamin',['Laki-laki','Perempuan'])->nullable(false);
-            $table->string('tempat_lahir',100)->nullable(false);
+            $table->string('nis', 20)->unique()->nullable(false);
+            $table->string('nisn', 20)->unique()->nullable()->default(null);
+            $table->string('nama', 100)->nullable(false);
+            $table->enum('jenis_kelamin', ['Laki-laki', 'Perempuan'])->nullable(false);
+            $table->string('tempat_lahir', 100)->nullable(false);
             $table->date('tanggal_lahir')->nullable(false);
-            $table->string('agama',50)->nullable(false);
+            $table->string('agama', 50)->nullable(false);
             $table->text('alamat')->nullable(false);
             $table->foreignId('ayah_id')->nullable()->constrained('ayah')->onUpdate('cascade')->onDelete('cascade');
             $table->foreignId('ibu_id')->nullable()->constrained('ibu')->onUpdate('cascade')->onDelete('cascade');
             $table->foreignId('wali_id')->nullable()->constrained('walis')->onUpdate('cascade');
-            $table->enum('jenjang',['TK','MI','KB'])->nullable(false);
+            $table->enum('jenjang', ['TK', 'MI', 'KB'])->nullable(false);
             $table->foreignId('kelas_id')->nullable()->constrained('kelas')->onUpdate('cascade');
             $table->foreignId('kategori_id')->nullable()->constrained('kategoris')->onUpdate('cascade');
-            $table->string('asal_sekolah',150)->nullable()->default(null);
-            $table->string('kelas_diterima',10)->nullable()->default(null);
+            $table->string('asal_sekolah', 150)->nullable()->default(null);
+            $table->string('kelas_diterima', 10)->nullable()->default(null);
             $table->year('tahun_diterima')->nullable()->default(null);
-            $table->enum('status',['Aktif','Lulus','Pindah','Keluar'])->nullable()->default('Aktif');
+            $table->enum('status', ['Aktif', 'Lulus', 'Pindah', 'Keluar'])->nullable()->default('Aktif');
             $table->text('keterangan')->nullable()->default(null);
             $table->timestamps();
         });

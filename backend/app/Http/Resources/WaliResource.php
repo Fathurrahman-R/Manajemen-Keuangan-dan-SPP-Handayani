@@ -15,15 +15,17 @@ class WaliResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'=>$this->id,
-            'nama'=>$this->nama,
-//            'agama'=>$this->agama,
-//            'jenis_kelamin'=>$this->jenis_kelamin,
-//            'pendidikan_terakhir'=>$this->pendidikan_terakhir,
-            'pekerjaan'=>$this->pekerjaan,
-            'alamat'=>$this->alamat,
-            'no_hp'=>$this->no_hp,
-            'keterangan'=>$this->keterangan
+            'id' => $this->id,
+            'nama' => $this->nama,
+            'agama' => $this->agama,
+            'jenis_kelamin' => $this->jenis_kelamin,
+            'pendidikan_terakhir' => $this->pendidikan_terakhir,
+            'pekerjaan' => $this->pekerjaan,
+            'alamat' => $this->alamat,
+            'no_hp' => $this->no_hp,
+            'keterangan' => $this->keterangan,
+            'email' => $this->email,
+            'email_verified_at' => $this->email_verified_at,
         ];
     }
 }

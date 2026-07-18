@@ -14,13 +14,14 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class TagihanFactory extends Factory
 {
     protected $model = Tagihan::class;
+
     public function definition(): array
     {
         return [
-            'kode_tagihan'=>GenerateKodeTagihan::generate(),
-            'jenis_tagihan_id'=>JenisTagihan::factory(),
-            'nis'=>Siswa::factory(),
-            'status'=>'Belum Dibayar',
+            'kode_tagihan' => GenerateKodeTagihan::generate(),
+            'jenis_tagihan_id' => JenisTagihan::factory(),
+            'nis' => Siswa::factory(),
+            'status' => 'Belum Dibayar',
         ];
     }
 }

@@ -15,10 +15,11 @@ class KelasResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'=>$this->id,
-            'jenjang'=>$this->jenjang,
-            'nama'=>$this->nama,
-            'branch_id'=>$this->branch_id
+            'id' => $this->id,
+            'jenjang' => $this->jenjang,
+            'nama' => $this->nama,
+            'level' => $this->level,
+            'branch_id' => $this->branch_id,
         ];
     }
 }

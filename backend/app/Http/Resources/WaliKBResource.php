@@ -15,8 +15,8 @@ class WaliKBResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'=>$this->id,
-            'nama'=>$this->nama
+            'id' => $this->id,
+            'nama' => $this->nama,
         ];
     }
 }

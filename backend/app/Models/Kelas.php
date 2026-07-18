@@ -8,22 +8,29 @@ use Illuminate\Database\Eloquent\Model;
 class Kelas extends Model
 {
     use HasFactory;
+
     protected $table = 'kelas';
+
     protected $primaryKey = 'id';
+
     protected $keyType = 'int';
+
     public $incrementing = true;
+
     public $timestamps = true;
 
     protected $fillable = [
         'jenjang',
         'nama',
         'branch_id',
+        'level',
     ];
 
     protected function casts(): array
     {
         return [
-            'branch_id'=>'int'
+            'branch_id' => 'int',
+            'level' => 'integer',
         ];
     }
 
@@ -31,6 +38,7 @@ class Kelas extends Model
     {
         return $this->hasMany(Siswa::class);
     }
+
     public function branch()
     {
         return $this->BelongsTo(Branch::class, 'branch_id');

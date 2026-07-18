@@ -2,12 +2,17 @@
 
 namespace App\Filament\Pages;
 
-use UnitEnum;
+use App\Helpers\PermissionHelper;
 use Filament\Pages\Page;
 
 class DetailSiswa extends Page
 {
+    public static function canAccess(): bool
+    {
+        return PermissionHelper::hasResource('siswa.view');
+    }
     public $id;
+
     public $jenjang;
 
     protected string $view = 'filament.pages.detail-siswa';
@@ -27,7 +32,8 @@ class DetailSiswa extends Page
     public function getBreadcrumbs(): array
     {
         return [
-            '/admin/data-master-siswa' => 'Data Siswa'
+            url('/data-master-siswa?jenjang='.$this->jenjang) => 'Data Siswa - '.$this->jenjang,
+            '' => 'Detail Siswa',
         ];
     }
 }

@@ -7,7 +7,6 @@ use App\Http\Resources\AppSettingResource;
 use App\Models\AppSetting;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
@@ -17,16 +16,21 @@ class AppSettingController extends Controller
     public static function get()
     {
         $setting = AppSetting::query()
-            ->where('branch_id', Auth::user()->branch_id)->first();
-//        $setting->logo = asset('storage') . '/' . $setting->logo;
-        if (!$setting) {
-            throw new HttpResponseException(response([
-                'errors' => [
-                    'message' => [
-                        'setting tidak ditemukan.',
-                    ],
-                ],
-            ], 404));
+            ->where('branch_id', Auth::user()->branch_id)
+            ->first();
+
+        if (! $setting) {
+            $setting = AppSetting::create([
+                'branch_id' => Auth::user()->branch_id,
+                'nama_sekolah' => 'Sekolah Cabang Baru',
+                'alamat' => '-',
+                'lokasi' => '-',
+                'email' => '-',
+                'telepon' => '-',
+                'kepala_sekolah' => '-',
+                'bendahara' => '-',
+                'kode_pos' => '-',
+            ]);
         }
 
         return new AppSettingResource($setting);
@@ -39,8 +43,8 @@ class AppSettingController extends Controller
 
         // Ambil atau buat record settings tunggal
         $setting = AppSetting::findOrFail($id);
-        if (!$setting) {
-            $setting = new AppSetting();
+        if (! $setting) {
+            $setting = new AppSetting;
         }
 
         // Update field non-file

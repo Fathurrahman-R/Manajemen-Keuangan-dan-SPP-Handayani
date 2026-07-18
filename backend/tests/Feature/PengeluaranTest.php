@@ -7,7 +7,7 @@ use Tests\TestCase;
 
 class PengeluaranTest extends TestCase
 {
-    public function testIndexPengeluaran()
+    public function test_index_pengeluaran()
     {
         $admin = $this->createAdminWithToken();
         Pengeluaran::factory()->count(3)->create();
@@ -23,7 +23,7 @@ class PengeluaranTest extends TestCase
             ]);
     }
 
-    public function testCreatePengeluaranSuccess()
+    public function test_create_pengeluaran_success()
     {
         $admin = $this->createAdminWithToken();
 
@@ -39,7 +39,7 @@ class PengeluaranTest extends TestCase
             ]);
     }
 
-    public function testCreatePengeluaranInvalidTanggal()
+    public function test_create_pengeluaran_invalid_tanggal()
     {
         $admin = $this->createAdminWithToken();
 
@@ -55,7 +55,7 @@ class PengeluaranTest extends TestCase
             ]);
     }
 
-    public function testCreatePengeluaranInvalidJumlah()
+    public function test_create_pengeluaran_invalid_jumlah()
     {
         $admin = $this->createAdminWithToken();
 
@@ -71,7 +71,7 @@ class PengeluaranTest extends TestCase
             ]);
     }
 
-    public function testCreatePengeluaranJumlahNotNumeric()
+    public function test_create_pengeluaran_jumlah_not_numeric()
     {
         $admin = $this->createAdminWithToken();
 
@@ -87,7 +87,7 @@ class PengeluaranTest extends TestCase
             ]);
     }
 
-    public function testCreatePengeluaranValidationFailed()
+    public function test_create_pengeluaran_validation_failed()
     {
         $admin = $this->createAdminWithToken();
 
@@ -99,12 +99,12 @@ class PengeluaranTest extends TestCase
             ]);
     }
 
-    public function testShowPengeluaranSuccess()
+    public function test_show_pengeluaran_success()
     {
         $admin = $this->createAdminWithToken();
         $pengeluaran = Pengeluaran::factory()->create();
 
-        $this->get('/api/pengeluaran/' . $pengeluaran->id, [
+        $this->get('/api/pengeluaran/'.$pengeluaran->id, [
             'Authorization' => $admin->token,
         ])->assertStatus(200)
             ->assertJson([
@@ -112,7 +112,7 @@ class PengeluaranTest extends TestCase
             ]);
     }
 
-    public function testShowPengeluaranNotFound()
+    public function test_show_pengeluaran_not_found()
     {
         $admin = $this->createAdminWithToken();
 
@@ -128,12 +128,12 @@ class PengeluaranTest extends TestCase
             ]);
     }
 
-    public function testUpdatePengeluaranSuccess()
+    public function test_update_pengeluaran_success()
     {
         $admin = $this->createAdminWithToken();
         $pengeluaran = Pengeluaran::factory()->create();
 
-        $this->put('/api/pengeluaran/' . $pengeluaran->id, [
+        $this->put('/api/pengeluaran/'.$pengeluaran->id, [
             'uraian' => 'Perubahan uraian',
         ], [
             'Authorization' => $admin->token,
@@ -143,12 +143,12 @@ class PengeluaranTest extends TestCase
             ]);
     }
 
-    public function testUpdatePengeluaranInvalidTanggal()
+    public function test_update_pengeluaran_invalid_tanggal()
     {
         $admin = $this->createAdminWithToken();
         $pengeluaran = Pengeluaran::factory()->create();
 
-        $this->put('/api/pengeluaran/' . $pengeluaran->id, [
+        $this->put('/api/pengeluaran/'.$pengeluaran->id, [
             'tanggal' => '31/12/2025',
         ], [
             'Authorization' => $admin->token,
@@ -158,12 +158,12 @@ class PengeluaranTest extends TestCase
             ]);
     }
 
-    public function testUpdatePengeluaranInvalidJumlah()
+    public function test_update_pengeluaran_invalid_jumlah()
     {
         $admin = $this->createAdminWithToken();
         $pengeluaran = Pengeluaran::factory()->create();
 
-        $this->put('/api/pengeluaran/' . $pengeluaran->id, [
+        $this->put('/api/pengeluaran/'.$pengeluaran->id, [
             'jumlah' => -10,
         ], [
             'Authorization' => $admin->token,
@@ -173,7 +173,7 @@ class PengeluaranTest extends TestCase
             ]);
     }
 
-    public function testUpdatePengeluaranNotFound()
+    public function test_update_pengeluaran_not_found()
     {
         $admin = $this->createAdminWithToken();
 
@@ -191,12 +191,12 @@ class PengeluaranTest extends TestCase
             ]);
     }
 
-    public function testDeletePengeluaranSuccess()
+    public function test_delete_pengeluaran_success()
     {
         $admin = $this->createAdminWithToken();
         $pengeluaran = Pengeluaran::factory()->create();
 
-        $this->delete(uri: '/api/pengeluaran/' . $pengeluaran->id, headers: [
+        $this->delete(uri: '/api/pengeluaran/'.$pengeluaran->id, headers: [
             'Authorization' => $admin->token,
         ])->assertStatus(200)
             ->assertJson([
@@ -207,7 +207,7 @@ class PengeluaranTest extends TestCase
             ]);
     }
 
-    public function testDeletePengeluaranNotFound()
+    public function test_delete_pengeluaran_not_found()
     {
         $admin = $this->createAdminWithToken();
 
@@ -223,7 +223,7 @@ class PengeluaranTest extends TestCase
             ]);
     }
 
-    public function testIndexPengeluaran_WithDateFilters()
+    public function test_index_pengeluaran_with_date_filters()
     {
         $admin = $this->createAdminWithToken();
         Pengeluaran::factory()->create(['tanggal' => '2025-01-01']);

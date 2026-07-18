@@ -3,15 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\Kelas;
-use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class KelasTest extends TestCase
 {
     // --- Success scenarios ---
-    public function testIndexKelasSuccess()
+    public function test_index_kelas_success()
     {
         $this->createKelasIndexScenario('MI', 3);
         $this->get('api/kelas/mi', ['Authorization' => 'test'])
@@ -19,7 +16,7 @@ class KelasTest extends TestCase
             ->assertJson(['errors' => []]);
     }
 
-    public function testIndexKelasEmpty()
+    public function test_index_kelas_empty()
     {
         $this->createKelasIndexScenario('MI', 0);
         $this->get('api/kelas/mi', ['Authorization' => 'test'])
@@ -28,7 +25,7 @@ class KelasTest extends TestCase
             ->assertJson(['data' => []]);
     }
 
-    public function testCreateKelasSuccess()
+    public function test_create_kelas_success()
     {
         $this->createKelasIndexScenario('MI', 0);
         $payload = $this->buildKelasValidPayload();
@@ -37,36 +34,36 @@ class KelasTest extends TestCase
             ->assertJson(['errors' => []]);
     }
 
-    public function testGetKelasSuccess()
+    public function test_get_kelas_success()
     {
         $scenario = $this->createKelasCrudScenario('MI');
         $kelas = $scenario['kelas'];
-        $this->get('api/kelas/mi/' . $kelas->id, ['Authorization' => 'test'])
+        $this->get('api/kelas/mi/'.$kelas->id, ['Authorization' => 'test'])
             ->assertStatus(200)
             ->assertJson(['errors' => []]);
     }
 
-    public function testUpdateKelasSuccess()
+    public function test_update_kelas_success()
     {
         $scenario = $this->createKelasCrudScenario('MI');
         $kelas = $scenario['kelas'];
         $payload = ['nama' => 'Kelas 2'];
-        $this->put('api/kelas/mi/' . $kelas->id, $payload, ['Authorization' => 'test'])
+        $this->put('api/kelas/mi/'.$kelas->id, $payload, ['Authorization' => 'test'])
             ->assertStatus(200)
             ->assertJson(['errors' => []]);
     }
 
-    public function testDeleteKelasSuccess()
+    public function test_delete_kelas_success()
     {
         $scenario = $this->createKelasCrudScenario('MI');
         $kelas = $scenario['kelas'];
-        $this->delete(uri: 'api/kelas/mi/' . $kelas->id, headers: ['Authorization' => 'test'])
+        $this->delete(uri: 'api/kelas/mi/'.$kelas->id, headers: ['Authorization' => 'test'])
             ->assertStatus(200)
             ->assertJson(['errors' => []]);
     }
 
     // --- Validation / error scenarios (all forced assertStatus 200 for payload inspection) ---
-    public function testCreateKelasValidationMissingNama()
+    public function test_create_kelas_validation_missing_nama()
     {
         $this->createKelasIndexScenario('MI', 0);
         $this->post('api/kelas/mi', $this->buildKelasInvalidPayloadMissingNama(), ['Authorization' => 'test'])
@@ -74,7 +71,7 @@ class KelasTest extends TestCase
             ->assertJson(['errors' => []]);
     }
 
-    public function testCreateKelasValidationNamaTooLong()
+    public function test_create_kelas_validation_nama_too_long()
     {
         $this->createKelasIndexScenario('MI', 0);
         $this->post('api/kelas/mi', $this->buildKelasInvalidPayloadLongNama(), ['Authorization' => 'test'])
@@ -82,7 +79,7 @@ class KelasTest extends TestCase
             ->assertJson(['errors' => []]);
     }
 
-    public function testCreateKelasValidationDuplicateNama()
+    public function test_create_kelas_validation_duplicate_nama()
     {
         $scenario = $this->createKelasCrudScenario('MI');
         $kelas = $scenario['kelas'];
@@ -92,27 +89,27 @@ class KelasTest extends TestCase
             ->assertJson(['errors' => []]);
     }
 
-    public function testUpdateKelasValidationDuplicateNama()
+    public function test_update_kelas_validation_duplicate_nama()
     {
         $scenario = $this->createKelasCrudScenario('MI');
         $kelas = $scenario['kelas'];
         // Create another kelas with the target duplicate name
         Kelas::factory()->create(['jenjang' => 'MI', 'nama' => 'KELAS 2']);
-        $this->put('api/kelas/mi/' . $kelas->id, ['nama' => 'KELAS 2'], ['Authorization' => 'test'])
+        $this->put('api/kelas/mi/'.$kelas->id, ['nama' => 'KELAS 2'], ['Authorization' => 'test'])
             ->assertStatus(200)
             ->assertJson(['errors' => []]);
     }
 
-    public function testDeleteKelasValidationHasSiswa()
+    public function test_delete_kelas_validation_has_siswa()
     {
         $scenario = $this->createKelasWithSiswaScenario('MI');
         $kelas = $scenario['kelas'];
-        $this->delete(uri: 'api/kelas/mi/' . $kelas->id, headers: ['Authorization' => 'test'])
+        $this->delete(uri: 'api/kelas/mi/'.$kelas->id, headers: ['Authorization' => 'test'])
             ->assertStatus(200)
             ->assertJson(['errors' => []]);
     }
 
-    public function testUnauthorizedAccessIndex()
+    public function test_unauthorized_access_index()
     {
         $this->createKelasIndexScenario('MI', 1);
         $this->get('api/kelas/mi')
@@ -120,41 +117,41 @@ class KelasTest extends TestCase
             ->assertJson(['errors' => []]);
     }
 
-    public function testUnauthorizedAccessCreate()
+    public function test_unauthorized_access_create()
     {
         $this->post('api/kelas/mi', $this->buildKelasValidPayload())
             ->assertStatus(200)
             ->assertJson(['errors' => []]);
     }
 
-    public function testUnauthorizedAccessGet()
+    public function test_unauthorized_access_get()
     {
         $scenario = $this->createKelasCrudScenario('MI');
         $kelas = $scenario['kelas'];
-        $this->get('api/kelas/mi/' . $kelas->id)
+        $this->get('api/kelas/mi/'.$kelas->id)
             ->assertStatus(200)
             ->assertJson(['errors' => []]);
     }
 
-    public function testUnauthorizedAccessUpdate()
+    public function test_unauthorized_access_update()
     {
         $scenario = $this->createKelasCrudScenario('MI');
         $kelas = $scenario['kelas'];
-        $this->put('api/kelas/mi/' . $kelas->id, ['nama' => 'Kelas 2'])
+        $this->put('api/kelas/mi/'.$kelas->id, ['nama' => 'Kelas 2'])
             ->assertStatus(200)
             ->assertJson(['errors' => []]);
     }
 
-    public function testUnauthorizedAccessDelete()
+    public function test_unauthorized_access_delete()
     {
         $scenario = $this->createKelasCrudScenario('MI');
         $kelas = $scenario['kelas'];
-        $this->delete('api/kelas/mi/' . $kelas->id)
+        $this->delete('api/kelas/mi/'.$kelas->id)
             ->assertStatus(200)
             ->assertJson(['errors' => []]);
     }
 
-    public function testInvalidJenjangIndex()
+    public function test_invalid_jenjang_index()
     {
         $this->createKelasIndexScenario('MI', 1);
         $this->get('api/kelas/xx', ['Authorization' => 'test'])
@@ -162,7 +159,7 @@ class KelasTest extends TestCase
             ->assertJson(['errors' => []]);
     }
 
-    public function testInvalidJenjangCreate()
+    public function test_invalid_jenjang_create()
     {
         $this->createKelasIndexScenario('MI', 0);
         $this->post('api/kelas/xx', $this->buildKelasValidPayload(), ['Authorization' => 'test'])

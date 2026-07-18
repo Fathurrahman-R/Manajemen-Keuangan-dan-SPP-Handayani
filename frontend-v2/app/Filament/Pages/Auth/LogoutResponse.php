@@ -2,15 +2,26 @@
 
 namespace App\Filament\Pages\Auth;
 
-use Illuminate\Http\RedirectResponse;
+use App\Services\ApiService;
 use Filament\Auth\Http\Responses\Contracts\LogoutResponse as Responsable;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Http\RedirectResponse;
 
 class LogoutResponse implements Responsable
 {
     public function toResponse($request): RedirectResponse
     {
-        return redirect()->intended(filament()->getUrl());
+        // Revoke the backend Sanctum token first (while session still has the token)
+        try {
+            ApiService::client()->delete('/logout');
+        } catch (\Throwable $e) {
+            // Continue even if API call fails
+        }
+
+        // Clear all session data
+        session()->flush();
+        session()->invalidate();
+        session()->regenerateToken();
+
+        return redirect()->to(filament()->getLoginUrl());
     }
 }

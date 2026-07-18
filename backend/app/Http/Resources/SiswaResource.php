@@ -35,7 +35,7 @@ class SiswaResource extends JsonResource
             'tahun_diterima' => $this->tahun_diterima,
             'status' => $this->status,
             'keterangan' => $this->keterangan,
-            'branch_id' => $this->branch_id
+            'branch_id' => $this->branch_id,
         ];
     }
 }

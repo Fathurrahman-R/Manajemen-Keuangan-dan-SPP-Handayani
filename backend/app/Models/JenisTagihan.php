@@ -11,15 +11,21 @@ class JenisTagihan extends Model
     use HasFactory;
 
     protected $table = 'jenis_tagihans';
+
     protected $primaryKey = 'id';
+
     protected $keyType = 'int';
+
     public $incrementing = true;
+
     public $timestamps = true;
+
     protected $fillable = [
         'nama',
         'jatuh_tempo',
         'jumlah',
-        'branch_id'
+        'branch_id',
+        'tahun_ajaran_id',
     ];
 
     protected function casts(): array
@@ -32,11 +38,16 @@ class JenisTagihan extends Model
 
     public function tagihan()
     {
-        return $this->hasMany(Tagihan::class,'jenis_tagihan_id','id');
+        return $this->hasMany(Tagihan::class, 'jenis_tagihan_id', 'id');
     }
+
+    public function tahunAjaran()
+    {
+        return $this->belongsTo(TahunAjaran::class, 'tahun_ajaran_id');
+    }
+
     public function branch()
     {
         return $this->BelongsTo(Branch::class, 'branch_id');
     }
-
 }

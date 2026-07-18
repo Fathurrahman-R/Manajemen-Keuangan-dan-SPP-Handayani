@@ -15,12 +15,12 @@ class TagihanSiswaResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'=>$this->id,
-            'nis'=>$this->nis,
-            'nama'=>$this->nama,
-            'jenjang'=>$this->jenjang,
-            'kelas'=>$this->whenLoaded('kelas', new KelasResource($this->kelas)),
-            'kategori'=>$this->whenLoaded('kategori', new KategoriResource($this->kategori)),
+            'id' => $this->id,
+            'nis' => $this->nis,
+            'nama' => $this->nama,
+            'jenjang' => $this->jenjang,
+            'kelas' => $this->whenLoaded('kelas', new KelasResource($this->kelas)),
+            'kategori' => $this->whenLoaded('kategori', new KategoriResource($this->kategori)),
         ];
     }
 }

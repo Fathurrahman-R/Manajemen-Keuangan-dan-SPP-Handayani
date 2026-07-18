@@ -11,17 +11,25 @@ class Ayah extends Model
     use HasFactory;
 
     protected $table = 'ayah';
+
     protected $primaryKey = 'id';
+
     protected $keyType = 'int';
+
     public $incrementing = true;
+
     public $timestamps = true;
+
     protected $fillable = [
         'nama',
         'pendidikan_terakhir',
         'pekerjaan',
+        'email',
+        'email_verified_at',
     ];
+
     protected $casts = [
-        'id' => 'integer'
+        'id' => 'integer',
     ];
 
     public function siswa()

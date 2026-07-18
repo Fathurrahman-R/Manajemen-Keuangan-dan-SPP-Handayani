@@ -1,0 +1,106 @@
+- generic [active] [ref=f5e362]:
+  - navigation [ref=f5e364]:
+    - button "Perluas menu" [ref=f5e365]
+    - link "Handayani" [ref=f5e368] [cursor=pointer]:
+      - /url: dashboard-page
+    - button "Menu pengguna" [ref=f5e12]:
+      - img "Avatar Admin Selat Panjang" [ref=f5e13]
+  - generic [ref=f5e370]:
+    - complementary [ref=f5e372]:
+      - navigation [ref=f5e373]:
+        - list [ref=f5e374]:
+          - listitem [ref=f5e375]:
+            - list [ref=f5e376]:
+              - listitem [ref=f5e377]:
+                - link "Dashboard" [ref=f5e378] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/dashboard-page
+          - listitem [ref=f5e382]:
+            - button [ref=f5e383]:
+              - text: Akademik
+              - button "Akademik" [expanded] [ref=f5e384]
+            - list [ref=f5e386]:
+              - listitem [ref=f5e387]:
+                - link "Siswa - KB" [ref=f5e388] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/data-master-siswa?jenjang=KB
+              - listitem [ref=f5e392]:
+                - link "Siswa - TK" [ref=f5e393] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/data-master-siswa?jenjang=TK
+              - listitem [ref=f5e397]:
+                - link "Siswa - MI" [ref=f5e398] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/data-master-siswa?jenjang=MI
+              - listitem [ref=f5e402]:
+                - link "Kategori" [ref=f5e403] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/data-master-category
+              - listitem [ref=f5e408]:
+                - link "Kelas - KB" [ref=f5e409] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/data-master-kelas?jenjang=KB
+              - listitem [ref=f5e413]:
+                - link "Kelas - TK" [ref=f5e414] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/data-master-kelas?jenjang=TK
+              - listitem [ref=f5e418]:
+                - link "Kelas - MI" [ref=f5e419] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/data-master-kelas?jenjang=MI
+              - listitem [ref=f5e423]:
+                - link "Tahun Ajaran" [ref=f5e424] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/tahun-ajaran-management
+              - listitem [ref=f5e428]:
+                - link "Kenaikan Kelas" [ref=f5e429] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/kenaikan-kelas
+          - listitem [ref=f5e433]:
+            - button [ref=f5e434]:
+              - text: Keuangan
+              - button "Keuangan" [expanded] [ref=f5e435]
+            - list [ref=f5e437]:
+              - listitem [ref=f5e438]:
+                - link "Jenis Tagihan" [ref=f5e439] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/transaksi-jenis-tagihan
+              - listitem [ref=f5e443]:
+                - link "Tagihan - KB" [ref=f5e444] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/transaksi-tagihan?jenjang=KB
+              - listitem [ref=f5e448]:
+                - link "Tagihan - TK" [ref=f5e449] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/transaksi-tagihan?jenjang=TK
+              - listitem [ref=f5e453]:
+                - link "Tagihan - MI" [ref=f5e454] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/transaksi-tagihan?jenjang=MI
+              - listitem [ref=f5e458]:
+                - link "Pembayaran" [ref=f5e459] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/transaksi-pembayaran
+              - listitem [ref=f5e463]:
+                - link "Pengeluaran" [ref=f5e464] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/pengeluaran-request-page
+              - listitem [ref=f5e468]:
+                - link "Transaksi Midtrans" [ref=f5e469] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/transaksi-midtrans
+          - listitem [ref=f5e473]:
+            - button [ref=f5e474]:
+              - text: Laporan
+              - button "Laporan" [expanded] [ref=f5e475]
+            - list [ref=f5e477]:
+              - listitem [ref=f5e478]:
+                - link "Kas Harian" [ref=f5e479] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/laporan-kas-harian
+              - listitem [ref=f5e483]:
+                - link "Rekap Bulanan" [ref=f5e484] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/laporan-rekap-bulanan
+          - listitem [ref=f5e488]:
+            - button [ref=f5e489]:
+              - text: Pengaturan
+              - button "Pengaturan" [expanded] [ref=f5e490]
+            - list [ref=f5e492]:
+              - listitem [ref=f5e493]:
+                - link "Manajemen Akun Siswa" [ref=f5e494] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/manajemen-akun-siswa
+              - listitem [ref=f5e498]:
+                - link "Log Notifikasi" [ref=f5e499] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/notification-log
+    - main [ref=f5e504]:
+      - generic [ref=f5e506]:
+        - heading "Data Kelas" [level=1] [ref=f5e509]
+        - generic [ref=f5e516]:
+          - button "Tambah" [ref=f5e519]
+          - generic [ref=f5e522]:
+            - text: Cari
+            - searchbox "Cari" [ref=f5e528]
+  - generic:
+    - status

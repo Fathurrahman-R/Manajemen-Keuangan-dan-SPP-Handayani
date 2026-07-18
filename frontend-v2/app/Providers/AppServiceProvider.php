@@ -2,13 +2,13 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
 use App\Filament\Pages\Auth\LoginResponse;
 use App\Filament\Pages\Auth\LogoutResponse;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse as LoginResponseContract;
 use Filament\Auth\Http\Responses\Contracts\LogoutResponse as LogoutResponseContract;
-use Filament\Support\Facades\FilamentColor;
 use Filament\Support\Colors\Color;
+use Filament\Support\Facades\FilamentColor;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {

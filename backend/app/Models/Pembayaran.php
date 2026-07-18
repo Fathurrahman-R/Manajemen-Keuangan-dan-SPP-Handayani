@@ -11,10 +11,15 @@ class Pembayaran extends Model
     use HasFactory;
 
     protected $table = 'pembayarans';
+
     protected $primaryKey = 'kode_pembayaran';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
+
     public $timestamps = true;
+
     protected $fillable = [
         'kode_pembayaran',
         'kode_tagihan',
@@ -23,6 +28,7 @@ class Pembayaran extends Model
         'jumlah',
         'pembayar',
         'branch_id',
+        'midtrans_order_id',
     ];
 
     protected function casts(): array
@@ -30,6 +36,7 @@ class Pembayaran extends Model
         return [
             'jumlah' => 'float',
             'branch_id' => 'int',
+            'metode' => 'string',
         ];
     }
 
@@ -37,8 +44,14 @@ class Pembayaran extends Model
     {
         return $this->belongsTo(Tagihan::class, 'kode_tagihan', 'kode_tagihan');
     }
+
     public function branch()
     {
         return $this->BelongsTo(Branch::class, 'branch_id');
+    }
+
+    public function midtransTransaction()
+    {
+        return $this->belongsTo(MidtransTransaction::class, 'midtrans_order_id', 'order_id');
     }
 }

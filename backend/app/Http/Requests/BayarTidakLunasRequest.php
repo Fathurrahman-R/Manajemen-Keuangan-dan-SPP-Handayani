@@ -25,39 +25,39 @@ class BayarTidakLunasRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'jumlah'=>[
+            'jumlah' => [
                 'required',
                 'numeric',
-                'regex:/^\d{1,11}(\.\d{1,2})?$/'
+                'regex:/^\d{1,11}(\.\d{1,2})?$/',
             ],
-            'metode'=>[
+            'metode' => [
                 'required',
-                'in:Tunai,Non-Tunai'
+                'in:offline,online_midtrans',
             ],
-            'pembayar'=>[
+            'pembayar' => [
                 'required',
-                'max:100'
-            ]
+                'max:100',
+            ],
         ];
     }
 
-//    public function messages(): array
-//    {
-//        return [
-//            'jumlah.required' => 'Jumlah pembayaran wajib diisi.',
-//            'jumlah.numeric' => 'Jumlah pembayaran harus berupa angka.',
-//            'jumlah.regex' => 'Format jumlah tidak valid (maks 12 digit dan 2 desimal).',
-//            'metode.required' => 'Metode pembayaran wajib diisi.',
-//            'metode.in' => 'Metode pembayaran harus Tunai atau Non-Tunai.',
-//            'pembayar.required' => 'Nama pembayar wajib diisi.',
-//            'pembayar.max' => 'Nama pembayar maksimal 100 karakter.'
-//        ];
-//    }
+    //    public function messages(): array
+    //    {
+    //        return [
+    //            'jumlah.required' => 'Jumlah pembayaran wajib diisi.',
+    //            'jumlah.numeric' => 'Jumlah pembayaran harus berupa angka.',
+    //            'jumlah.regex' => 'Format jumlah tidak valid (maks 12 digit dan 2 desimal).',
+    //            'metode.required' => 'Metode pembayaran wajib diisi.',
+    //            'metode.in' => 'Metode pembayaran harus Tunai atau Non-Tunai.',
+    //            'pembayar.required' => 'Nama pembayar wajib diisi.',
+    //            'pembayar.max' => 'Nama pembayar maksimal 100 karakter.'
+    //        ];
+    //    }
 
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response([
-            "errors" => $validator->getMessageBag()
-        ],400));
+            'errors' => $validator->getMessageBag(),
+        ], 400));
     }
 }

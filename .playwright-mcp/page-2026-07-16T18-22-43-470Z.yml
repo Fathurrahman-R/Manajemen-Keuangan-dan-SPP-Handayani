@@ -1,0 +1,178 @@
+- generic [ref=f2e1]:
+  - navigation [ref=f2e3]:
+    - button "Perluas menu" [ref=f2e4]
+    - link "Handayani" [ref=f2e7] [cursor=pointer]:
+      - /url: dashboard-page
+    - button "Menu pengguna" [ref=f2e12]:
+      - img "Avatar Admin Selat Panjang" [ref=f2e13]
+  - generic [ref=f2e14]:
+    - complementary [ref=f2e16]:
+      - navigation [ref=f2e17]:
+        - list [ref=f2e18]:
+          - listitem [ref=f2e19]:
+            - list [ref=f2e20]:
+              - listitem [ref=f2e21]:
+                - link "Dashboard" [ref=f2e22] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/dashboard-page
+          - listitem [ref=f2e26]:
+            - button [ref=f2e27]:
+              - text: Akademik
+              - button "Akademik" [expanded] [ref=f2e28]
+            - list [ref=f2e30]:
+              - listitem [ref=f2e31]:
+                - link "Siswa - KB" [ref=f2e32] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/data-master-siswa?jenjang=KB
+              - listitem [ref=f2e36]:
+                - link "Siswa - TK" [ref=f2e37] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/data-master-siswa?jenjang=TK
+              - listitem [ref=f2e41]:
+                - link "Siswa - MI" [ref=f2e42] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/data-master-siswa?jenjang=MI
+              - listitem [ref=f2e46]:
+                - link "Kategori" [ref=f2e47] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/data-master-category
+              - listitem [ref=f2e52]:
+                - link "Kelas - KB" [ref=f2e53] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/data-master-kelas?jenjang=KB
+              - listitem [ref=f2e57]:
+                - link "Kelas - TK" [ref=f2e58] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/data-master-kelas?jenjang=TK
+              - listitem [ref=f2e62]:
+                - link "Kelas - MI" [ref=f2e63] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/data-master-kelas?jenjang=MI
+              - listitem [ref=f2e67]:
+                - link "Tahun Ajaran" [ref=f2e68] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/tahun-ajaran-management
+              - listitem [ref=f2e72]:
+                - link "Kenaikan Kelas" [ref=f2e73] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/kenaikan-kelas
+          - listitem [ref=f2e77]:
+            - button [ref=f2e78]:
+              - text: Keuangan
+              - button "Keuangan" [expanded] [ref=f2e79]
+            - list [ref=f2e81]:
+              - listitem [ref=f2e82]:
+                - link "Jenis Tagihan" [ref=f2e83] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/transaksi-jenis-tagihan
+              - listitem [ref=f2e87]:
+                - link "Tagihan - KB" [ref=f2e88] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/transaksi-tagihan?jenjang=KB
+              - listitem [ref=f2e92]:
+                - link "Tagihan - TK" [ref=f2e93] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/transaksi-tagihan?jenjang=TK
+              - listitem [ref=f2e97]:
+                - link "Tagihan - MI" [ref=f2e98] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/transaksi-tagihan?jenjang=MI
+              - listitem [ref=f2e102]:
+                - link "Pembayaran" [ref=f2e103] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/transaksi-pembayaran
+              - listitem [ref=f2e107]:
+                - link "Pengeluaran" [ref=f2e108] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/pengeluaran-request-page
+              - listitem [ref=f2e112]:
+                - link "Transaksi Midtrans" [ref=f2e113] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/transaksi-midtrans
+          - listitem [ref=f2e117]:
+            - button [ref=f2e118]:
+              - text: Laporan
+              - button "Laporan" [expanded] [ref=f2e119]
+            - list [ref=f2e121]:
+              - listitem [ref=f2e122]:
+                - link "Kas Harian" [ref=f2e123] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/laporan-kas-harian
+              - listitem [ref=f2e127]:
+                - link "Rekap Bulanan" [ref=f2e128] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/laporan-rekap-bulanan
+          - listitem [ref=f2e132]:
+            - button [ref=f2e133]:
+              - text: Pengaturan
+              - button "Pengaturan" [expanded] [ref=f2e134]
+            - list [ref=f2e136]:
+              - listitem [ref=f2e137]:
+                - link "Manajemen Akun Siswa" [ref=f2e138] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/manajemen-akun-siswa
+              - listitem [ref=f2e142]:
+                - link "Log Notifikasi" [ref=f2e143] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/notification-log
+    - main [ref=f2e148]:
+      - generic [ref=f2e150]:
+        - heading "Data Kategori" [level=1] [ref=f2e153]
+        - generic [ref=f2e157]:
+          - generic [ref=f2e159]:
+            - generic [ref=f2e160]:
+              - button "Tambah" [ref=f2e163]
+              - generic [ref=f2e166]:
+                - text: Cari
+                - searchbox "Cari" [ref=f2e172]
+            - table [ref=f2e178]:
+              - rowgroup [ref=f2e179]:
+                - row [ref=f2e180]:
+                  - columnheader [ref=f2e181]:
+                    - checkbox "Buat/batalkan pilihan semua item untuk tindakan massal." [ref=f2e182]
+                  - columnheader [ref=f2e183]:
+                    - button "Nama" [ref=f2e184]
+                  - columnheader "Aksi" [ref=f2e187]
+              - rowgroup [ref=f2e188]:
+                - row [ref=f2e189]:
+                  - cell [ref=f2e190]:
+                    - checkbox "Buat/batalkan pilihan item 0 untuk tindakan massal." [ref=f2e191]
+                  - cell "Bersaudara" [ref=f2e192]
+                  - cell [ref=f2e195]:
+                    - generic [ref=f2e196]:
+                      - button "Update" [ref=f2e197]
+                      - button "Delete" [ref=f2e200]
+                - row [ref=f2e202]:
+                  - cell [ref=f2e203]:
+                    - checkbox "Buat/batalkan pilihan item 1 untuk tindakan massal." [ref=f2e204]
+                  - cell "Yatim" [ref=f2e205]
+                  - cell [ref=f2e208]:
+                    - generic [ref=f2e209]:
+                      - button "Update" [ref=f2e210]
+                      - button "Delete" [ref=f2e213]
+                - row [ref=f2e215]:
+                  - cell [ref=f2e216]:
+                    - checkbox "Buat/batalkan pilihan item 2 untuk tindakan massal." [ref=f2e217]
+                  - cell "Piatu" [ref=f2e218]
+                  - cell [ref=f2e221]:
+                    - generic [ref=f2e222]:
+                      - button "Update" [ref=f2e223]
+                      - button "Delete" [ref=f2e226]
+                - row [ref=f2e228]:
+                  - cell [ref=f2e229]:
+                    - checkbox "Buat/batalkan pilihan item 3 untuk tindakan massal." [ref=f2e230]
+                  - cell "Yatim Piatu" [ref=f2e231]
+                  - cell [ref=f2e234]:
+                    - generic [ref=f2e235]:
+                      - button "Update" [ref=f2e236]
+                      - button "Delete" [ref=f2e239]
+                - row [ref=f2e241]:
+                  - cell [ref=f2e242]:
+                    - checkbox "Buat/batalkan pilihan item 4 untuk tindakan massal." [ref=f2e243]
+                  - cell "Umum" [ref=f2e244]
+                  - cell [ref=f2e247]:
+                    - generic [ref=f2e248]:
+                      - button "Update" [ref=f2e249]
+                      - button "Delete" [ref=f2e252]
+                - row [ref=f2e254]:
+                  - cell [ref=f2e255]:
+                    - checkbox "Buat/batalkan pilihan item 5 untuk tindakan massal." [ref=f2e256]
+                  - cell "BULK TEST A" [ref=f2e257]
+                  - cell [ref=f2e260]:
+                    - generic [ref=f2e261]:
+                      - button "Update" [ref=f2e262]
+                      - button "Delete" [ref=f2e265]
+          - dialog [ref=f2e267]:
+            - generic [ref=f2e269]:
+              - generic [ref=f2e270]:
+                - button "Tutup" [ref=f2e271]
+                - heading "Tambah Kategori" [level=2] [ref=f2e274]
+              - generic [ref=f2e279]:
+                - generic [ref=f2e283]:
+                  - text: Nama Kategori
+                  - superscript [ref=f2e284]: "*"
+                - textbox "Nama Kategori*" [active] [ref=f2e288]
+              - generic [ref=f2e290]:
+                - button "Simpan" [ref=f2e291]
+                - button "Batal" [ref=f2e292]
+  - generic:
+    - status

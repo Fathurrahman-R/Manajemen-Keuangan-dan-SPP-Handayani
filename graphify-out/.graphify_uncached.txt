@@ -1,0 +1,9 @@
+D:\First Project\handayani\backend\README.md
+D:\First Project\handayani\backend\audit_results.txt
+D:\First Project\handayani\backend\public\robots.txt
+D:\First Project\handayani\frontend-v2\README.md
+D:\First Project\handayani\frontend-v2\public\robots.txt
+D:\First Project\handayani\frontend-v2\public\assets\img\default.png
+D:\First Project\handayani\frontend-v2\public\assets\img\empty-icon.svg
+D:\First Project\handayani\frontend-v2\public\images\hero-illustration.jpg
+D:\First Project\handayani\frontend-v2\public\images\logo.jpg

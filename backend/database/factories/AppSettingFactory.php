@@ -18,14 +18,14 @@ class AppSettingFactory extends Factory
     {
         return [
             'nama_sekolah' => 'Lembaga Pendidikan Handayani',
-            'lokasi'=>'Pontianak',
-            'alamat'=>$this->faker->address(),
-            'email'=>$this->faker->unique()->safeEmail(),
-            'telepon'=>$this->faker->phoneNumber(),
-            'kepala_sekolah'=>$this->faker->name(),
-            'bendahara'=>$this->faker->name(),
-            'kode_pos'=>$this->faker->postcode(),
-            'logo'=>$this->faker->imageUrl(),
+            'lokasi' => 'Pontianak',
+            'alamat' => $this->faker->address(),
+            'email' => $this->faker->unique()->safeEmail(),
+            'telepon' => $this->faker->phoneNumber(),
+            'kepala_sekolah' => $this->faker->name(),
+            'bendahara' => $this->faker->name(),
+            'kode_pos' => $this->faker->postcode(),
+            'logo' => $this->faker->imageUrl(),
         ];
     }
 }

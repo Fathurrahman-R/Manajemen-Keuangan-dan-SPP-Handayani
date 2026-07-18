@@ -1,4 +1,5 @@
-<x-filament-panels::page>
-
-    @livewire('setting', ['setting' => $this->setting])
-</x-filament-panels::page>
+<x-filament::page>
+    <div class="flex flex-col gap-y-8">
+        {{ $this->infolist }}
+    </div>
+</x-filament::page>

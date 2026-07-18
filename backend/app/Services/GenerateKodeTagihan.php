@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Tagihan;
 use Illuminate\Support\Facades\DB;
 
 class GenerateKodeTagihan
@@ -17,15 +16,15 @@ class GenerateKodeTagihan
         $prefix = "TAG-$year$month";
 
         // LOCK tabel (harus diluar transaction)
-        DB::statement("SET autocommit = 0;");
-        DB::statement("LOCK TABLES tagihans WRITE;");
+        DB::statement('SET autocommit = 0;');
+        DB::statement('LOCK TABLES tagihans WRITE;');
 
         $latest = DB::table('tagihans')
             ->where('kode_tagihan', 'like', "$prefix-%")
             ->orderBy('kode_tagihan', 'desc')
             ->first();
 
-        if (!$latest) {
+        if (! $latest) {
             $increment = 1;
         } else {
             $lastNumber = intval(substr($latest->kode_tagihan, -4));
@@ -37,8 +36,8 @@ class GenerateKodeTagihan
         $kode = "$prefix-$increment";
 
         // UNLOCK dan enable autocommit kembali
-        DB::statement("UNLOCK TABLES;");
-        DB::statement("SET autocommit = 1;");
+        DB::statement('UNLOCK TABLES;');
+        DB::statement('SET autocommit = 1;');
 
         return $kode;
     }

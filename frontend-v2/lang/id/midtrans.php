@@ -1,0 +1,40 @@
+<?php
+
+return [
+    // Error codes
+    'TAGIHAN_NOT_FOUND' => 'Tagihan tidak ditemukan.',
+    'TAGIHAN_FORBIDDEN' => 'Anda tidak memiliki akses ke tagihan ini.',
+    'TAGIHAN_SUDAH_LUNAS' => 'Tagihan sudah lunas.',
+    'AMOUNT_BELOW_MINIMUM' => 'Nominal pembayaran minimal Rp 10.000.',
+    'AMOUNT_EXCEEDS_SISA' => 'Nominal melebihi sisa tagihan.',
+    'MIDTRANS_NOT_CONFIGURED' => 'Layanan pembayaran online belum dikonfigurasi. Hubungi admin.',
+    'MIDTRANS_UNAVAILABLE' => 'Layanan pembayaran online sedang tidak tersedia. Coba lagi nanti.',
+    'MIDTRANS_STATUS_UNAVAILABLE' => 'Gagal mengambil status transaksi dari Midtrans. Coba lagi nanti.',
+    'TRANSACTION_NOT_YET_PROCESSED' => 'Transaksi belum diproses Midtrans. Siswa belum memilih kanal pembayaran di halaman Snap.',
+    'TAGIHAN_HAS_PENDING_TRANSACTION' => 'Anda memiliki pembayaran yang masih diproses untuk tagihan ini.',
+    'TAGIHAN_HAS_PENDING_TRANSACTION_CONTINUE' => 'Silakan lanjutkan pembayaran sebelumnya atau tunggu sampai kadaluarsa.',
+    'AMOUNT_MISMATCH' => 'Nominal tidak sesuai.',
+    'INVALID_SIGNATURE' => 'Verifikasi gagal.',
+    'OVERPAYMENT_BLOCKED' => 'Pembayaran melebihi sisa tagihan.',
+    'TRANSACTION_ALREADY_FINAL' => 'Transaksi sudah selesai.',
+    'CANNOT_DELETE_ONLINE_PEMBAYARAN' => 'Pembayaran online tidak dapat dihapus.',
+
+    // UI labels
+    'pay_online' => 'Bayar Online',
+    'continue_payment' => 'Lanjutkan Pembayaran',
+    'payment_amount' => 'Nominal Pembayaran',
+    'payment_channel' => 'Kanal Pembayaran',
+    'admin_fee' => 'Biaya Admin',
+    'total_payment' => 'Total Bayar ke Midtrans',
+    'confirm_payment' => 'Konfirmasi Pembayaran',
+    'cancel' => 'Batal',
+    'status_pending' => 'Menunggu Pembayaran',
+    'status_success' => 'Pembayaran Berhasil',
+    'status_failed' => 'Pembayaran Gagal',
+    'status_expired' => 'Pembayaran Kadaluarsa',
+    'status_cancelled' => 'Pembayaran Dibatalkan',
+    'check_history' => 'Cek di Riwayat Pembayaran untuk memastikan status terbaru.',
+    'download_receipt' => 'Unduh Kwitansi',
+    'badge_online' => 'Online',
+    'badge_offline' => 'Offline',
+];

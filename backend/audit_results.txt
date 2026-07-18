@@ -1,0 +1,201 @@
+Array
+(
+    [unused] => Array
+        (
+            [0] => Array
+                (
+                    [domain] => 
+                    [method] => POST
+                    [uri] => api/import-export/import/siswa/confirm
+                    [name] => 
+                    [action] => App\Http\Controllers\ImportExportController@confirmSiswa
+                    [middleware] => Array
+                        (
+                            [0] => api
+                            [1] => Illuminate\Auth\Middleware\Authenticate:sanctum
+                            [2] => App\Http\Middleware\EndpointPermission:import-data
+                        )
+
+                )
+
+            [1] => Array
+                (
+                    [domain] => 
+                    [method] => POST
+                    [uri] => api/import-export/import/siswa/upload
+                    [name] => 
+                    [action] => App\Http\Controllers\ImportExportController@uploadSiswa
+                    [middleware] => Array
+                        (
+                            [0] => api
+                            [1] => Illuminate\Auth\Middleware\Authenticate:sanctum
+                            [2] => App\Http\Middleware\EndpointPermission:import-data
+                        )
+
+                )
+
+            [2] => Array
+                (
+                    [domain] => 
+                    [method] => POST
+                    [uri] => api/import-export/import/tagihan/confirm
+                    [name] => 
+                    [action] => App\Http\Controllers\ImportExportController@confirmTagihan
+                    [middleware] => Array
+                        (
+                            [0] => api
+                            [1] => Illuminate\Auth\Middleware\Authenticate:sanctum
+                            [2] => App\Http\Middleware\EndpointPermission:import-data
+                        )
+
+                )
+
+            [3] => Array
+                (
+                    [domain] => 
+                    [method] => POST
+                    [uri] => api/import-export/import/tagihan/upload
+                    [name] => 
+                    [action] => App\Http\Controllers\ImportExportController@uploadTagihan
+                    [middleware] => Array
+                        (
+                            [0] => api
+                            [1] => Illuminate\Auth\Middleware\Authenticate:sanctum
+                            [2] => App\Http\Middleware\EndpointPermission:import-data
+                        )
+
+                )
+
+            [4] => Array
+                (
+                    [domain] => 
+                    [method] => GET|HEAD
+                    [uri] => api/import-export/import/template/siswa
+                    [name] => 
+                    [action] => App\Http\Controllers\ImportExportController@templateSiswa
+                    [middleware] => Array
+                        (
+                            [0] => api
+                            [1] => Illuminate\Auth\Middleware\Authenticate:sanctum
+                            [2] => App\Http\Middleware\EndpointPermission:import-data
+                        )
+
+                )
+
+            [5] => Array
+                (
+                    [domain] => 
+                    [method] => GET|HEAD
+                    [uri] => api/import-export/import/template/tagihan
+                    [name] => 
+                    [action] => App\Http\Controllers\ImportExportController@templateTagihan
+                    [middleware] => Array
+                        (
+                            [0] => api
+                            [1] => Illuminate\Auth\Middleware\Authenticate:sanctum
+                            [2] => App\Http\Middleware\EndpointPermission:import-data
+                        )
+
+                )
+
+            [6] => Array
+                (
+                    [domain] => 
+                    [method] => GET|HEAD
+                    [uri] => api/import-export/job/{jobId}/status
+                    [name] => 
+                    [action] => App\Http\Controllers\ImportExportController@jobStatus
+                    [middleware] => Array
+                        (
+                            [0] => api
+                            [1] => Illuminate\Auth\Middleware\Authenticate:sanctum
+                            [2] => App\Http\Middleware\EndpointPermission:import-export.job-status
+                        )
+
+                )
+
+            [7] => Array
+                (
+                    [domain] => 
+                    [method] => POST
+                    [uri] => api/kenaikan-kelas/individual-promotion
+                    [name] => 
+                    [action] => App\Http\Controllers\KenaikanKelasController@individualPromotion
+                    [middleware] => Array
+                        (
+                            [0] => api
+                            [1] => Illuminate\Auth\Middleware\Authenticate:sanctum
+                            [2] => App\Http\Middleware\EndpointPermission:kenaikan-kelas.process
+                        )
+
+                )
+
+            [8] => Array
+                (
+                    [domain] => 
+                    [method] => POST
+                    [uri] => api/midtrans/notification
+                    [name] => 
+                    [action] => App\Http\Controllers\MidtransNotificationController@handle
+                    [middleware] => Array
+                        (
+                            [0] => api
+                        )
+
+                )
+
+            [9] => Array
+                (
+                    [domain] => 
+                    [method] => POST
+                    [uri] => api/pembayaran/lunas/{kode_tagihan}
+                    [name] => 
+                    [action] => App\Http\Controllers\PembayaranController@lunas
+                    [middleware] => Array
+                        (
+                            [0] => api
+                            [1] => Illuminate\Auth\Middleware\Authenticate:sanctum
+                            [2] => App\Http\Middleware\EndpointPermission:pembayaran.create
+                        )
+
+                )
+
+            [10] => Array
+                (
+                    [domain] => 
+                    [method] => POST
+                    [uri] => api/rbac/roles/attach
+                    [name] => 
+                    [action] => App\Http\Controllers\RbacController@attachRole
+                    [middleware] => Array
+                        (
+                            [0] => api
+                            [1] => Illuminate\Auth\Middleware\Authenticate:sanctum
+                            [2] => App\Http\Middleware\EndpointPermission:rbac
+                        )
+
+                )
+
+            [11] => Array
+                (
+                    [domain] => 
+                    [method] => POST
+                    [uri] => api/rbac/roles/detach
+                    [name] => 
+                    [action] => App\Http\Controllers\RbacController@detachRole
+                    [middleware] => Array
+                        (
+                            [0] => api
+                            [1] => Illuminate\Auth\Middleware\Authenticate:sanctum
+                            [2] => App\Http\Middleware\EndpointPermission:rbac
+                        )
+
+                )
+
+        )
+
+    [duplicates] => Array
+        (
+        )
+
+)

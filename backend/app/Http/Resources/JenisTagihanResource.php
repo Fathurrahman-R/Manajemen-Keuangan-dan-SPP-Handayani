@@ -15,11 +15,11 @@ class JenisTagihanResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'=>$this->id,
-            'nama'=>$this->nama,
-            'jatuh_tempo'=>$this->jatuh_tempo,
-            'jumlah'=>$this->jumlah,
-            'branch_id'=>$this->branch_id
+            'id' => $this->id,
+            'nama' => $this->nama,
+            'jatuh_tempo' => $this->jatuh_tempo,
+            'jumlah' => $this->jumlah,
+            'branch_id' => $this->branch_id,
         ];
     }
 }

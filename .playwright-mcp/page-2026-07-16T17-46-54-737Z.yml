@@ -1,0 +1,331 @@
+- generic [active] [ref=f3e1]:
+  - navigation [ref=f3e3]:
+    - button "Perluas menu" [ref=f3e4]
+    - link "Handayani" [ref=f3e7] [cursor=pointer]:
+      - /url: dashboard-page
+    - button "Menu pengguna" [ref=f3e12]:
+      - img "Avatar Admin Selat Panjang" [ref=f3e13]
+  - generic [ref=f3e14]:
+    - complementary [ref=f3e16]:
+      - navigation [ref=f3e17]:
+        - list [ref=f3e18]:
+          - listitem [ref=f3e19]:
+            - list [ref=f3e20]:
+              - listitem [ref=f3e21]:
+                - link "Dashboard" [ref=f3e22] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/dashboard-page
+          - listitem [ref=f3e26]:
+            - button [ref=f3e27]:
+              - text: Akademik
+              - button "Akademik" [expanded] [ref=f3e28]
+            - list [ref=f3e30]:
+              - listitem [ref=f3e31]:
+                - link "Siswa - KB" [ref=f3e32] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/data-master-siswa?jenjang=KB
+              - listitem [ref=f3e36]:
+                - link "Siswa - TK" [ref=f3e37] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/data-master-siswa?jenjang=TK
+              - listitem [ref=f3e41]:
+                - link "Siswa - MI" [ref=f3e42] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/data-master-siswa?jenjang=MI
+              - listitem [ref=f3e46]:
+                - link "Kategori" [ref=f3e47] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/data-master-category
+              - listitem [ref=f3e52]:
+                - link "Kelas - KB" [ref=f3e53] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/data-master-kelas?jenjang=KB
+              - listitem [ref=f3e57]:
+                - link "Kelas - TK" [ref=f3e58] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/data-master-kelas?jenjang=TK
+              - listitem [ref=f3e62]:
+                - link "Kelas - MI" [ref=f3e63] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/data-master-kelas?jenjang=MI
+              - listitem [ref=f3e67]:
+                - link "Tahun Ajaran" [ref=f3e68] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/tahun-ajaran-management
+              - listitem [ref=f3e72]:
+                - link "Kenaikan Kelas" [ref=f3e73] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/kenaikan-kelas
+          - listitem [ref=f3e77]:
+            - button [ref=f3e78]:
+              - text: Keuangan
+              - button "Keuangan" [expanded] [ref=f3e79]
+            - list [ref=f3e81]:
+              - listitem [ref=f3e82]:
+                - link "Jenis Tagihan" [ref=f3e83] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/transaksi-jenis-tagihan
+              - listitem [ref=f3e87]:
+                - link "Tagihan - KB" [ref=f3e88] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/transaksi-tagihan?jenjang=KB
+              - listitem [ref=f3e92]:
+                - link "Tagihan - TK" [ref=f3e93] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/transaksi-tagihan?jenjang=TK
+              - listitem [ref=f3e97]:
+                - link "Tagihan - MI" [ref=f3e98] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/transaksi-tagihan?jenjang=MI
+              - listitem [ref=f3e102]:
+                - link "Pembayaran" [ref=f3e103] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/transaksi-pembayaran
+              - listitem [ref=f3e107]:
+                - link "Pengeluaran" [ref=f3e108] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/pengeluaran-request-page
+              - listitem [ref=f3e112]:
+                - link "Transaksi Midtrans" [ref=f3e113] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/transaksi-midtrans
+          - listitem [ref=f3e117]:
+            - button [ref=f3e118]:
+              - text: Laporan
+              - button "Laporan" [expanded] [ref=f3e119]
+            - list [ref=f3e121]:
+              - listitem [ref=f3e122]:
+                - link "Kas Harian" [ref=f3e123] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/laporan-kas-harian
+              - listitem [ref=f3e127]:
+                - link "Rekap Bulanan" [ref=f3e128] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/laporan-rekap-bulanan
+          - listitem [ref=f3e132]:
+            - button [ref=f3e133]:
+              - text: Pengaturan
+              - button "Pengaturan" [expanded] [ref=f3e134]
+            - list [ref=f3e136]:
+              - listitem [ref=f3e137]:
+                - link "Manajemen Akun Siswa" [ref=f3e138] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/manajemen-akun-siswa
+              - listitem [ref=f3e142]:
+                - link "Log Notifikasi" [ref=f3e143] [cursor=pointer]:
+                  - /url: http://127.0.0.1:8000/notification-log
+    - main [ref=f3e148]:
+      - generic [ref=f3e150]:
+        - generic [ref=f3e151]:
+          - heading "Dashboard" [level=1] [ref=f3e153]
+          - button "Refresh" [ref=f3e156]
+        - generic [ref=f3e160]:
+          - generic [ref=f3e161]:
+            - generic [ref=f3e163]:
+              - heading "Semua Periode" [level=2] [ref=f3e164]
+              - paragraph [ref=f3e165]: Akumulasi data lintas semua tahun ajaran
+            - generic [ref=f3e175]:
+              - generic [ref=f3e179]:
+                - generic [ref=f3e180]: Total Tagihan (Semua Periode)
+                - generic [ref=f3e181]: Rp 12.000.000
+                - generic [ref=f3e182]: Akumulasi tagihan dari semua periode
+              - generic [ref=f3e188]:
+                - generic [ref=f3e189]: Total Pemasukan (Semua Periode)
+                - generic [ref=f3e190]: Rp 3.674.000
+                - generic [ref=f3e191]: Akumulasi pemasukan dari semua periode
+              - generic [ref=f3e197]:
+                - generic [ref=f3e198]: Total Pengeluaran (Semua Periode)
+                - generic [ref=f3e199]: Rp 600.000
+                - generic [ref=f3e200]: Akumulasi pengeluaran dari semua periode
+          - generic [ref=f3e203]:
+            - generic [ref=f3e204]:
+              - generic [ref=f3e205]:
+                - heading "Periode Ini" [level=2] [ref=f3e206]
+                - paragraph [ref=f3e207]: Statistik dan grafik untuk periode terpilih
+              - generic [ref=f3e209]:
+                - text: "Periode:"
+                - combobox [ref=f3e212]:
+                  - option "2026/2027 (Aktif)" [selected]
+                  - option "2025/2026"
+                  - option "2023/2024"
+            - generic [ref=f3e215]:
+              - generic [ref=f3e223]:
+                - generic [ref=f3e227]:
+                  - generic [ref=f3e228]: Total Tagihan
+                  - generic [ref=f3e229]: Rp 12.000.000
+                  - generic [ref=f3e230]: Seluruh tagihan periode ini
+                - generic [ref=f3e236]:
+                  - generic [ref=f3e237]: Total Terbayar
+                  - generic [ref=f3e238]: Rp 3.674.000
+                  - generic [ref=f3e239]: Sudah dibayar
+                - generic [ref=f3e245]:
+                  - generic [ref=f3e246]: Total Tunggakan
+                  - generic [ref=f3e247]: Rp 8.326.000
+                  - generic [ref=f3e248]: Belum dibayar
+                - generic [ref=f3e254]:
+                  - generic [ref=f3e255]: Siswa Punya Tagihan
+                  - generic [ref=f3e256]: "20"
+                  - generic [ref=f3e257]: Siswa dengan tagihan di periode ini
+                - generic [ref=f3e263]:
+                  - generic [ref=f3e264]: Siswa Menunggak
+                  - generic [ref=f3e265]: "20"
+                  - generic [ref=f3e266]: Memiliki tunggakan
+                - generic [ref=f3e272]:
+                  - generic [ref=f3e273]: Pelunasan
+                  - generic [ref=f3e274]: 30.62%
+                  - generic [ref=f3e275]: Persentase pelunasan
+              - generic [ref=f3e285]:
+                - generic [ref=f3e289]:
+                  - generic [ref=f3e290]: Pemasukan Periode
+                  - generic [ref=f3e291]: Rp 3.674.000
+                  - generic [ref=f3e292]: Total pembayaran pada periode ini
+                - generic [ref=f3e298]:
+                  - generic [ref=f3e299]: Pengeluaran Periode
+                  - generic [ref=f3e300]: Rp 600.000
+                  - generic [ref=f3e301]: Total pengeluaran pada periode ini
+                - generic [ref=f3e307]:
+                  - generic [ref=f3e308]: Saldo Periode
+                  - generic [ref=f3e309]: Rp 3.074.000
+                  - generic [ref=f3e310]: Pemasukan dikurangi pengeluaran
+              - generic [ref=f3e313]:
+                - heading "Pembayaran per Bulan" [level=2] [ref=f3e318]
+                - heading "Pemasukan vs Pengeluaran" [level=2] [ref=f3e328]
+              - generic [ref=f3e334]:
+                - heading "Tunggakan per Jenjang" [level=2] [ref=f3e339]
+                - heading "Status Tagihan" [level=2] [ref=f3e349]
+              - generic [ref=f3e355]:
+                - generic [ref=f3e359]:
+                  - heading "Top 10 Tunggakan Terbesar" [level=2] [ref=f3e363]
+                  - table [ref=f3e365]:
+                    - rowgroup [ref=f3e366]:
+                      - row [ref=f3e367]:
+                        - columnheader "NIS" [ref=f3e368]
+                        - columnheader "Nama" [ref=f3e369]
+                        - columnheader "Kelas" [ref=f3e370]
+                        - columnheader "Jenjang" [ref=f3e371]
+                        - columnheader "Tunggakan" [ref=f3e372]
+                    - rowgroup [ref=f3e373]:
+                      - row [ref=f3e374]:
+                        - cell "000018" [ref=f3e375]
+                        - cell "Dr. Norval Flatley V" [ref=f3e378]
+                        - cell "Kelas 2" [ref=f3e381]
+                        - cell "MI" [ref=f3e384]
+                        - cell "Rp 850.000,00" [ref=f3e387]
+                      - row [ref=f3e390]:
+                        - cell "000003" [ref=f3e391]
+                        - cell "Chanelle Armstrong" [ref=f3e394]
+                        - cell "Kelas 1" [ref=f3e397]
+                        - cell "MI" [ref=f3e400]
+                        - cell "Rp 802.000,00" [ref=f3e403]
+                      - row [ref=f3e406]:
+                        - cell "000010" [ref=f3e407]
+                        - cell "Prof. Holden Kunde" [ref=f3e410]
+                        - cell "Kelas 1" [ref=f3e413]
+                        - cell "MI" [ref=f3e416]
+                        - cell "Rp 800.000,00" [ref=f3e419]
+                      - row [ref=f3e422]:
+                        - cell "000020" [ref=f3e423]
+                        - cell "Abraham Wunsch" [ref=f3e426]
+                        - cell "Kelas 3" [ref=f3e429]
+                        - cell "MI" [ref=f3e432]
+                        - cell "Rp 800.000,00" [ref=f3e435]
+                      - row [ref=f3e438]:
+                        - cell "000017" [ref=f3e439]
+                        - cell "Prof. Kareem McClure" [ref=f3e442]
+                        - cell "Kelas 2" [ref=f3e445]
+                        - cell "MI" [ref=f3e448]
+                        - cell "Rp 719.000,00" [ref=f3e451]
+                      - row [ref=f3e454]:
+                        - cell "000009" [ref=f3e455]
+                        - cell "Prof. Daron Hagenes II" [ref=f3e458]
+                        - cell "Kelas 1" [ref=f3e461]
+                        - cell "MI" [ref=f3e464]
+                        - cell "Rp 549.000,00" [ref=f3e467]
+                      - row [ref=f3e470]:
+                        - cell "000006" [ref=f3e471]
+                        - cell "Corene Bahringer" [ref=f3e474]
+                        - cell "Kelas 1" [ref=f3e477]
+                        - cell "MI" [ref=f3e480]
+                        - cell "Rp 500.000,00" [ref=f3e483]
+                      - row [ref=f3e486]:
+                        - cell "000011" [ref=f3e487]
+                        - cell "Kurt Raynor" [ref=f3e490]
+                        - cell "Kelas 1" [ref=f3e493]
+                        - cell "MI" [ref=f3e496]
+                        - cell "Rp 419.000,00" [ref=f3e499]
+                      - row [ref=f3e502]:
+                        - cell "000012" [ref=f3e503]
+                        - cell "Kristoffer Wisozk" [ref=f3e506]
+                        - cell "Kelas 2" [ref=f3e509]
+                        - cell "MI" [ref=f3e512]
+                        - cell "Rp 300.000,00" [ref=f3e515]
+                      - row [ref=f3e518]:
+                        - cell "000014" [ref=f3e519]
+                        - cell "Fatima Champlin I" [ref=f3e522]
+                        - cell "Kelas 2" [ref=f3e525]
+                        - cell "MI" [ref=f3e528]
+                        - cell "Rp 300.000,00" [ref=f3e531]
+                - generic [ref=f3e537]:
+                  - heading "Tagihan Jatuh Tempo 7 Hari" [level=2] [ref=f3e541]
+                  - table [ref=f3e543]:
+                    - rowgroup [ref=f3e544]:
+                      - row [ref=f3e545]:
+                        - columnheader "Siswa" [ref=f3e546]
+                        - columnheader "Jenis Tagihan" [ref=f3e547]
+                        - columnheader "Jatuh Tempo" [ref=f3e548]
+                        - columnheader "Jumlah" [ref=f3e549]
+                        - columnheader "Status" [ref=f3e550]
+                    - rowgroup [ref=f3e551]:
+                      - row [ref=f3e552]:
+                        - cell "Ms. Vena Kihn Jr." [ref=f3e553]
+                        - cell "SPP Bulan Ini" [ref=f3e556]
+                        - cell "20/07/2026" [ref=f3e559]
+                        - cell "Rp 150.000,00" [ref=f3e562]
+                        - cell "Belum Lunas" [ref=f3e565]
+                      - row [ref=f3e568]:
+                        - cell "Fatima Champlin I" [ref=f3e569]
+                        - cell "SPP Bulan Ini" [ref=f3e572]
+                        - cell "20/07/2026" [ref=f3e575]
+                        - cell "Rp 150.000,00" [ref=f3e578]
+                        - cell "Belum Dibayar" [ref=f3e581]
+                      - row [ref=f3e584]:
+                        - cell "Quinten Conroy PhD" [ref=f3e585]
+                        - cell "SPP Bulan Ini" [ref=f3e588]
+                        - cell "20/07/2026" [ref=f3e591]
+                        - cell "Rp 150.000,00" [ref=f3e594]
+                        - cell "Belum Dibayar" [ref=f3e597]
+                      - row [ref=f3e600]:
+                        - cell "Eleanora Thompson" [ref=f3e601]
+                        - cell "SPP Bulan Ini" [ref=f3e604]
+                        - cell "20/07/2026" [ref=f3e607]
+                        - cell "Rp 150.000,00" [ref=f3e610]
+                        - cell "Belum Lunas" [ref=f3e613]
+                - generic [ref=f3e619]:
+                  - heading "5 Pembayaran Terbaru" [level=2] [ref=f3e623]
+                  - table [ref=f3e625]:
+                    - rowgroup [ref=f3e626]:
+                      - row [ref=f3e627]:
+                        - columnheader "Kode" [ref=f3e628]
+                        - columnheader "Siswa" [ref=f3e629]
+                        - columnheader "Jenis Tagihan" [ref=f3e630]
+                        - columnheader "Tanggal" [ref=f3e631]
+                        - columnheader "Metode" [ref=f3e632]
+                        - columnheader "Jumlah" [ref=f3e633]
+                    - rowgroup [ref=f3e634]:
+                      - row [ref=f3e635]:
+                        - cell "PAY-2607-0005" [ref=f3e636]
+                        - cell "Chanelle Armstrong" [ref=f3e639]
+                        - cell "SPP 4 Bulan Lagi" [ref=f3e642]
+                        - cell "07/07/2026" [ref=f3e645]
+                        - cell "offline" [ref=f3e648]
+                        - cell "Rp 48.000,00" [ref=f3e651]
+                      - row [ref=f3e654]:
+                        - cell "PAY-2607-0001" [ref=f3e655]
+                        - cell "Ms. Vena Kihn Jr." [ref=f3e658]
+                        - cell "SPP Bulan Ini" [ref=f3e661]
+                        - cell "04/07/2026" [ref=f3e664]
+                        - cell "offline" [ref=f3e667]
+                        - cell "Rp 45.000,00" [ref=f3e670]
+                      - row [ref=f3e673]:
+                        - cell "PAY-2607-0014" [ref=f3e674]
+                        - cell "Aisha Braun" [ref=f3e677]
+                        - cell "Seragam" [ref=f3e680]
+                        - cell "02/07/2026" [ref=f3e683]
+                        - cell "offline" [ref=f3e686]
+                        - cell "Rp 263.000,00" [ref=f3e689]
+                      - row [ref=f3e692]:
+                        - cell "PAY-2607-0010" [ref=f3e693]
+                        - cell "Fabian Harvey DVM" [ref=f3e696]
+                        - cell "Pendaftaran Ulang" [ref=f3e699]
+                        - cell "26/06/2026" [ref=f3e702]
+                        - cell "offline" [ref=f3e705]
+                        - cell "Rp 500.000,00" [ref=f3e708]
+                      - row [ref=f3e711]:
+                        - cell "PAY-2607-0022" [ref=f3e712]
+                        - cell "Quinten Conroy PhD" [ref=f3e715]
+                        - cell "SPP Bulan Depan" [ref=f3e718]
+                        - cell "24/06/2026" [ref=f3e721]
+                        - cell "offline" [ref=f3e724]
+                        - cell "Rp 60.000,00" [ref=f3e727]
+  - generic:
+    - status

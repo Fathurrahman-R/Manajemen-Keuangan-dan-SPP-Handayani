@@ -2,11 +2,12 @@
 
 namespace App\Livewire;
 
-use App\Models\User;
-use Exception;
-use Illuminate\Support\Facades\Http;
-use Livewire\Component;
+use App\Helpers\PermissionHelper;
+use App\Livewire\Concerns\HandlesApiErrors;
+use App\Livewire\Concerns\HasImportExport;
+use App\Services\ApiService;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\DatePicker;
@@ -23,56 +24,113 @@ use Filament\Support\Enums\Alignment;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
-use Filament\Tables\Enums\PaginationMode;
-use Filament\Tables\Enums\RecordActionsPosition;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Livewire\Component;
 
 class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
+    use HandlesApiErrors, HasImportExport, InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
-    public $activeTab = 'TK';
+    public $activeTab = 'KB';
+
     public $perPage = 5;
+
     public $currentPage = 1;
+
     public ?int $kelasId = null;
+
+    public function mount(string $jenjang = 'KB'): void
+    {
+        $this->activeTab = $jenjang;
+    }
 
     public function table(Table $table): Table
     {
         return $table
             ->records(
-                function (?string $search, int $page, int $recordsPerPage): LengthAwarePaginator {
-                    $this->perPage = $recordsPerPage;
-                    $this->currentPage = $page;
-                    $params = [
-                        'per_page' => $this->perPage,
-                        'page' => $this->currentPage,
-                    ];
+                function (?string $search, int $page, int $recordsPerPage, array $filters = [], ?string $sortColumn = null, ?string $sortDirection = null): LengthAwarePaginator {
+                    try {
+                        $this->perPage = $recordsPerPage;
+                        $this->currentPage = $page;
+                        $params = [
+                            'per_page' => $this->perPage,
+                            'page' => $this->currentPage,
+                        ];
 
-                    if (filled($search)) {
-                        $params['search'] = $search;
+                        if (filled($search)) {
+                            $params['search'] = $search;
+                        }
+
+                        if (! empty($filters['kelas']['value'] ?? null)) {
+                            $params['kelas_id'] = $filters['kelas']['value'];
+                        } elseif (! is_null($this->kelasId)) {
+                            $params['kelas_id'] = $this->kelasId;
+                        }
+
+                        if (! empty($filters['status']['value'] ?? null)) {
+                            $params['status'] = $filters['status']['value'];
+                        }
+
+                        if (! empty($filters['jenis_kelamin']['value'] ?? null)) {
+                            $params['jenis_kelamin'] = $filters['jenis_kelamin']['value'];
+                        }
+
+                        if (! empty($filters['agama']['value'] ?? null)) {
+                            $params['agama'] = $filters['agama']['value'];
+                        }
+
+                        if (filled($sortColumn)) {
+                            $params['sort'] = $sortColumn;
+                            $params['direction'] = $sortDirection ?? 'asc';
+                        }
+
+                        $response = ApiService::client()
+                            ->get('/siswa/'.$this->activeTab, $params);
+
+                        if (! $response->ok()) {
+                            $this->handleApiError($response);
+
+                            return new LengthAwarePaginator(
+                                items: [],
+                                total: 0,
+                                perPage: $recordsPerPage,
+                                currentPage: $page,
+                            );
+                        }
+
+                        $data = $response->collect();
+
+                        return new LengthAwarePaginator(
+                            items: $data['data'] ?? [],
+                            total: $data['meta']['total'] ?? 0,
+                            perPage: $recordsPerPage,
+                            currentPage: $page,
+                        );
+                    } catch (ConnectionException $e) {
+                        $this->notifyConnectionError();
+
+                        return new LengthAwarePaginator(
+                            items: [],
+                            total: 0,
+                            perPage: $recordsPerPage,
+                            currentPage: $page,
+                        );
+                    } catch (\Throwable $e) {
+                        $this->notifyUnexpectedError();
+
+                        return new LengthAwarePaginator(
+                            items: [],
+                            total: 0,
+                            perPage: $recordsPerPage,
+                            currentPage: $page,
+                        );
                     }
-
-                    if (!is_null($this->kelasId)) {
-                        $params['kelas_id'] = $this->kelasId;
-                    }
-
-                    $response = Http::withHeaders([
-                        'Authorization' => session()->get('data')['token']
-                    ])
-                        ->get(env('API_URL') . '/siswa/' . $this->activeTab, $params)
-                        ->collect();
-
-                    return new LengthAwarePaginator(
-                        items: $response['data'] ?? [],
-                        total: $response['meta']['total'] ?? 0,
-                        perPage: $recordsPerPage,
-                        currentPage: $page,
-                    );
                 }
             )
             ->columns([
@@ -80,49 +138,91 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                 TextColumn::make('nisn')
                     ->label('NISN')
                     ->searchable()
-                    ->hidden(fn($livewire) => $livewire->activeTab !== 'MI'),
-                TextColumn::make('nama')->label('Nama')->searchable(),
+                    ->hidden(fn ($livewire) => $livewire->activeTab !== 'MI'),
+                TextColumn::make('nama')->label('Nama')->sortable()->searchable(),
                 TextColumn::make('kelas.nama')->label(__('Kelas')),
-                TextColumn::make('jenis_kelamin')->label('Jenis Kelamin')->searchable(),
-                TextColumn::make('tanggal_lahir')->label('Tanggal Lahir')->searchable(),
-                TextColumn::make('agama')->label('Agama')->searchable(),
+                TextColumn::make('jenis_kelamin')->label('Jenis Kelamin')->searchable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('tanggal_lahir')->label('Tanggal Lahir')->sortable()->searchable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('agama')->label('Agama')->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('wali.nama')
                     ->label('Nama Wali')
-                    ->visible(fn($livewire) => $livewire->activeTab !== 'MI'),
+                    ->visible(fn ($livewire) => $livewire->activeTab !== 'MI')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('ayah.nama')
                     ->label('Nama Ayah')
-                    ->state(fn(array $record) => $record['ayah']['nama'] ?? '-')
-                    ->hidden(fn($livewire) => $livewire->activeTab !== 'MI'),
+                    ->state(fn (array $record) => $record['ayah']['nama'] ?? '-')
+                    ->hidden(fn ($livewire) => $livewire->activeTab !== 'MI')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('ibu.nama')
                     ->label('Nama Ibu')
-                    ->state(fn(array $record) => $record['ibu']['nama'] ?? '-')
-                    ->hidden(fn($livewire) => $livewire->activeTab !== 'MI'),
+                    ->state(fn (array $record) => $record['ibu']['nama'] ?? '-')
+                    ->hidden(fn ($livewire) => $livewire->activeTab !== 'MI')
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->deferLoading()
             ->striped()
-            ->paginated([5, 10, 25])
-            ->defaultPaginationPageOption(5)
+            ->paginated([5, 10, 25, 50])
+            ->defaultPaginationPageOption(10)
             ->paginatedWhileReordering()
+            ->filters([
+                SelectFilter::make('kelas')
+                    ->label('Kelas')
+                    ->options(function () {
+                        $response = ApiService::client()->get('/kelas/'.$this->activeTab);
+                        if (! $response->ok()) {
+                            return [];
+                        }
+
+                        return collect($response->json('data') ?? [])
+                            ->mapWithKeys(fn ($item) => [$item['id'] => $item['nama']])
+                            ->toArray();
+                    }),
+                SelectFilter::make('status')
+                    ->options([
+                        'Aktif' => 'Aktif',
+                        'Lulus' => 'Lulus',
+                        'Pindah' => 'Pindah',
+                        'Keluar' => 'Keluar',
+                    ]),
+                SelectFilter::make('jenis_kelamin')
+                    ->label('Jenis Kelamin')
+                    ->options([
+                        'Laki-laki' => 'Laki-laki',
+                        'Perempuan' => 'Perempuan',
+                    ]),
+                SelectFilter::make('agama')
+                    ->label('Agama')
+                    ->options([
+                        'Islam' => 'Islam',
+                        'Kristen' => 'Kristen',
+                        'Katolik' => 'Katolik',
+                        'Hindu' => 'Hindu',
+                        'Buddha' => 'Buddha',
+                        'Konghucu' => 'Konghucu',
+                    ]),
+            ])
             ->emptyStateHeading('Tidak Ada Siswa')
             ->emptyStateDescription('Silahkan menambahkan siswa')
+            ->emptyStateIcon('heroicon-o-document-text')
             ->recordActions([
                 Action::make('view') // Unique name for your action
                     ->tooltip('Lihat Siswa')
                     ->icon('heroicon-s-eye') // Optional icon
                     ->iconButton()
-                    ->url(fn(array $record): string => 'detail-siswa/' . Str::lower($this->activeTab) . '/' . $record['id'])
+                    ->url(fn (array $record): string => 'detail-siswa/'.Str::lower($this->activeTab).'/'.$record['id'])
+                    ->visible(fn () => PermissionHelper::hasResource('siswa.view'))
                     ->color('gray'),
                 // Update Siswa MI
                 Action::make('update_detail') // Unique name for your action
                     ->tooltip('Ubah Siswa')
                     ->icon('heroicon-s-pencil-square') // Optional icon
                     ->iconButton()
-                    ->visible(fn($livewire) => $livewire->activeTab === 'MI')
+                    ->visible(fn ($livewire) => $livewire->activeTab === 'MI' && PermissionHelper::hasResource('siswa.update'))
                     ->color('warning')
                     ->modalHeading('Ubah Siswa')
                     ->modalSubmitAction(false)
                     ->modalCancelAction(false)
-                    ->fillForm(fn(array $record): array => [
+                    ->fillForm(fn (array $record): array => [
                         'id' => $record['id'],
                         'nis' => $record['nis'],
                         'nisn' => $record['nisn'],
@@ -145,6 +245,8 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                         'ibu_nama' => $record['ibu']['nama'] ?? null,
                         'ibu_pendidikan_terakhir' => $record['ibu']['pendidikan_terakhir'] ?? null,
                         'ibu_pekerjaan' => $record['ibu']['pekerjaan'] ?? null,
+                        'ayah_email' => $record['ayah']['email'] ?? null,
+                        'ibu_email' => $record['ibu']['email'] ?? null,
                     ])
                     ->schema([
                         Wizard::make([
@@ -179,10 +281,10 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->label('Agama')
                                                 ->options([
                                                     'Islam' => 'Islam',
-                                                    'Protestan' => 'Protestan',
+                                                    'Kristen' => 'Kristen',
                                                     'Katolik' => 'Katolik',
                                                     'Hindu' => 'Hindu',
-                                                    'Budha' => 'Budha',
+                                                    'Buddha' => 'Buddha',
                                                     'Konghucu' => 'Konghucu',
                                                 ])
                                                 ->required(),
@@ -190,7 +292,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->label('Jenis Kelamin')
                                                 ->options([
                                                     'Laki-laki' => 'Laki-laki',
-                                                    'Perempuan' => 'Perempuan'
+                                                    'Perempuan' => 'Perempuan',
                                                 ])
                                                 ->required(),
                                         ]),
@@ -201,12 +303,10 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kelas')
                                                 ->options(function () {
-                                                    $response = Http::withHeaders([
-                                                        'Authorization' => session()->get('data')['token']
-                                                    ])
-                                                        ->get(env('API_URL') . '/kelas/' . $this->activeTab);
+                                                    $response = ApiService::client()
+                                                        ->get('/kelas/'.$this->activeTab);
 
-                                                    if (!$response->ok()) {
+                                                    if (! $response->ok()) {
                                                         return [];
                                                     }
 
@@ -224,12 +324,10 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kategori')
                                                 ->options(function () {
-                                                    $response = Http::withHeaders([
-                                                        'Authorization' => session()->get('data')['token']
-                                                    ])
-                                                        ->get(env('API_URL') . '/kategori');
+                                                    $response = ApiService::client()
+                                                        ->get('/kategori');
 
-                                                    if (!$response->ok()) {
+                                                    if (! $response->ok()) {
                                                         return [];
                                                     }
 
@@ -285,6 +383,9 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                 ->schema([
                                     TextInput::make('ayah_nama')
                                         ->label('Nama Ayah'),
+                                    TextInput::make('ayah_email')
+                                        ->label('Email Ayah')
+                                        ->email(),
                                     TextInput::make('ayah_pendidikan_terakhir')
                                         ->label('Pendidikan Terakhir'),
                                     TextInput::make('ayah_pekerjaan')
@@ -295,6 +396,9 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                 ->schema([
                                     TextInput::make('ibu_nama')
                                         ->label('Nama Ibu'),
+                                    TextInput::make('ibu_email')
+                                        ->label('Email Ibu')
+                                        ->email(),
                                     TextInput::make('ibu_pendidikan_terakhir')
                                         ->label('Pendidikan Terakhir'),
                                     TextInput::make('ibu_pekerjaan')
@@ -302,30 +406,28 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                 ]),
                         ])
                             ->nextAction(
-                                fn(Action $action) => $action->label('Selanjutnya')->color('primaryMain')->extraAttributes([
-                                    'class' => 'font-semibold'
+                                fn (Action $action) => $action->label('Selanjutnya')->color('primary')->extraAttributes([
+                                    'class' => 'font-semibold',
                                 ]),
                             )
                             ->previousAction(
-                                fn(Action $action) => $action->label('Sebelumnya')
+                                fn (Action $action) => $action->label('Sebelumnya')
                             )
                             ->submitAction(
                                 Action::make('submit')
                                     ->label('Simpan')
-                                    ->color('primaryMain')
+                                    ->color('primary')
                                     ->extraAttributes([
-                                        'class' => 'font-semibold'
+                                        'class' => 'font-semibold',
                                     ])
                                     ->submit('save')
                             ),
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->put(env('API_URL') . '/siswa/' . $this->activeTab . '/' . $record['id'], $data);
+                        $response = ApiService::client()
+                            ->put('/siswa/'.$this->activeTab.'/'.$record['id'], $data);
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             Notification::make()
                                 ->title('Siswa Gagal Diubah')
                                 ->danger()
@@ -349,27 +451,27 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                     ->modalHeading('Ubah Siswa')
                     ->modalSubmitAction(false)
                     ->modalCancelAction(false)
-                    ->fillForm(fn(array $record): array => [
+                    ->fillForm(fn (array $record): array => [
                         'id' => $record['id'],
                         'nis' => $record['nis'],
                         'nama' => $record['nama'],
-                        'tempat_lahir' => $record['tempat_lahir'],
-                        'tanggal_lahir' => $record['tanggal_lahir'],
-                        'agama' => $record['agama'],
-                        'jenis_kelamin' => $record['jenis_kelamin'],
-                        'kelas_id' => $record['kelas']['id'],
-                        'kategori_id' => $record['kategori']['id'],
-                        'alamat' => $record['alamat'],
-                        'keterangan' => $record['keterangan'],
-                        'status' => $record['status'],
-                        'wali_nama' => $record['wali']['nama'],
-//                        'wali_agama' => $record['wali']['agama'],
-                        'wali_jenis_kelamin' => $record['wali']['jenis_kelamin'],
-                        'wali_pendidikan_terakhir' => $record['wali']['pendidikan_terakhir'],
-                        'wali_pekerjaan' => $record['wali']['pekerjaan'],
-                        'wali_no_hp' => $record['wali']['no_hp'],
-                        'wali_alamat' => $record['wali']['alamat'],
-                        'wali_keterangan' => $record['wali']['keterangan'],
+                        'tempat_lahir' => $record['tempat_lahir'] ?? '',
+                        'tanggal_lahir' => $record['tanggal_lahir'] ?? '',
+                        'agama' => $record['agama'] ?? '',
+                        'jenis_kelamin' => $record['jenis_kelamin'] ?? '',
+                        'kelas_id' => $record['kelas']['id'] ?? null,
+                        'kategori_id' => $record['kategori']['id'] ?? null,
+                        'alamat' => $record['alamat'] ?? '',
+                        'keterangan' => $record['keterangan'] ?? '',
+                        'status' => $record['status'] ?? '',
+                        'wali_nama' => $record['wali']['nama'] ?? '',
+                        'wali_jenis_kelamin' => $record['wali']['jenis_kelamin'] ?? '',
+                        'wali_pendidikan_terakhir' => $record['wali']['pendidikan_terakhir'] ?? '',
+                        'wali_pekerjaan' => $record['wali']['pekerjaan'] ?? '',
+                        'wali_no_hp' => $record['wali']['no_hp'] ?? '',
+                        'wali_alamat' => $record['wali']['alamat'] ?? '',
+                        'wali_keterangan' => $record['wali']['keterangan'] ?? '',
+                        'wali_email' => $record['wali']['email'] ?? null,
                     ])
                     ->schema([
                         Wizard::make([
@@ -401,10 +503,10 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->label('Agama')
                                                 ->options([
                                                     'Islam' => 'Islam',
-                                                    'Protestan' => 'Protestan',
+                                                    'Kristen' => 'Kristen',
                                                     'Katolik' => 'Katolik',
                                                     'Hindu' => 'Hindu',
-                                                    'Budha' => 'Budha',
+                                                    'Buddha' => 'Buddha',
                                                     'Konghucu' => 'Konghucu',
                                                 ])
                                                 ->required(),
@@ -412,7 +514,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->label('Jenis Kelamin')
                                                 ->options([
                                                     'Laki-laki' => 'Laki-laki',
-                                                    'Perempuan' => 'Perempuan'
+                                                    'Perempuan' => 'Perempuan',
                                                 ])
                                                 ->required(),
                                         ]),
@@ -423,12 +525,10 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kelas')
                                                 ->options(function () {
-                                                    $response = Http::withHeaders([
-                                                        'Authorization' => session()->get('data')['token']
-                                                    ])
-                                                        ->get(env('API_URL') . '/kelas/' . $this->activeTab);
+                                                    $response = ApiService::client()
+                                                        ->get('/kelas/'.$this->activeTab);
 
-                                                    if (!$response->ok()) {
+                                                    if (! $response->ok()) {
                                                         return [];
                                                     }
 
@@ -446,12 +546,10 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kategori')
                                                 ->options(function () {
-                                                    $response = Http::withHeaders([
-                                                        'Authorization' => session()->get('data')['token']
-                                                    ])
-                                                        ->get(env('API_URL') . '/kategori');
+                                                    $response = ApiService::client()
+                                                        ->get('/kategori');
 
-                                                    if (!$response->ok()) {
+                                                    if (! $response->ok()) {
                                                         return [];
                                                     }
 
@@ -486,6 +584,9 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                     TextInput::make('wali_nama')
                                         ->label('Nama Lengkap')
                                         ->required(),
+                                    TextInput::make('wali_email')
+                                        ->label('Email Wali')
+                                        ->email(),
                                     TextInput::make('wali_pekerjaan')
                                         ->label('Pekerjaan')
                                         ->required(),
@@ -500,30 +601,28 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                 ]),
                         ])
                             ->nextAction(
-                                fn(Action $action) => $action->label('Selanjutnya')->color('primaryMain')->extraAttributes([
-                                    'class' => 'font-semibold'
+                                fn (Action $action) => $action->label('Selanjutnya')->color('primary')->extraAttributes([
+                                    'class' => 'font-semibold',
                                 ]),
                             )
                             ->previousAction(
-                                fn(Action $action) => $action->label('Sebelumnya')
+                                fn (Action $action) => $action->label('Sebelumnya')
                             )
                             ->submitAction(
                                 Action::make('save')
                                     ->label('Simpan')
-                                    ->color('primaryMain')
+                                    ->color('primary')
                                     ->extraAttributes([
-                                        'class' => 'font-semibold'
+                                        'class' => 'font-semibold',
                                     ])
                                     ->submit('save'),
-                            )
+                            ),
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->put(env('API_URL') . '/siswa/' . $this->activeTab . '/' . $record['id'], $data);
+                        $response = ApiService::client()
+                            ->put('/siswa/'.$this->activeTab.'/'.$record['id'], $data);
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             Notification::make()
                                 ->title('Siswa Gagal Diubah')
                                 ->danger()
@@ -538,12 +637,13 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                     ->after(function () {
                         $this->resetTable();
                     })
-                    ->visible(fn($livewire) => $livewire->activeTab !== 'MI'),
+                    ->visible(fn ($livewire) => $livewire->activeTab !== 'MI' && PermissionHelper::hasResource('siswa.update')),
                 Action::make('delete') // Unique name for your action
                     ->tooltip('Hapus Siswa')
                     ->icon('heroicon-s-trash') // Optional icon
                     ->iconButton()
                     ->color('danger') // Optional color
+                    ->visible(fn (): bool => PermissionHelper::hasResource('siswa.delete'))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Siswa')
                     ->modalDescription('Apakah kamu yakin untuk menghapus siswa ini?')
@@ -551,12 +651,10 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                     ->modalCancelActionLabel('Batal')
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->delete(env('API_URL') . '/siswa/' . $this->activeTab . '/' . $record['id']);
+                        $response = ApiService::client()
+                            ->delete('/siswa/'.$this->activeTab.'/'.$record['id']);
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             Notification::make()
                                 ->title('Siswa Gagal Dihapus')
                                 ->danger()
@@ -570,55 +668,46 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                     })
                     ->after(function () {
                         $this->resetTable();
-                    })
+                    }),
+            ])
+            ->bulkActions([
+                BulkAction::make('bulkDelete')
+                    ->label('Hapus Terpilih')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->visible(fn (): bool => PermissionHelper::hasResource('siswa.delete'))
+                    ->requiresConfirmation()
+                    ->modalHeading('Hapus Siswa Terpilih')
+                    ->modalDescription('Apakah kamu yakin ingin menghapus semua siswa yang dipilih?')
+                    ->modalSubmitActionLabel('Ya, Hapus Semua')
+                    ->action(function (Collection $records): void {
+                        $success = 0;
+                        $failed = 0;
+                        foreach ($records as $record) {
+                            $response = ApiService::client()->delete('/siswa/'.$this->activeTab.'/'.$record['id']);
+                            $response->ok() ? $success++ : $failed++;
+                        }
+                        if ($failed > 0) {
+                            Notification::make()->title("{$success} berhasil, {$failed} gagal dihapus")->warning()->send();
+                        } else {
+                            Notification::make()->title("{$success} siswa berhasil dihapus")->success()->send();
+                        }
+                        $this->resetTable();
+                        $this->deselectAllTableRecords();
+                    }),
             ])
             ->headerActions([
-                // Kelas filter tied to active tab
-                Action::make('filter_kelas')
-                    ->label('Filter Kelas')
-                    ->color('gray')
-                    ->button()
-                    ->modalHeading('Filter Kelas')
-                    ->modalSubmitActionLabel('Terapkan')
-                    ->modalCancelActionLabel('Batal')
-                    ->schema([
-                        Select::make('kelas_id')
-                            ->label('Kelas')
-                            ->searchable()
-                            ->searchPrompt('Cari Kelas')
-                            ->options(function () {
-                                $response = Http::withHeaders([
-                                    'Authorization' => session()->get('data')['token'],
-                                ])->get(env('API_URL') . '/kelas/' . $this->activeTab);
+                // Import/Export Siswa
+                ...$this->makeImportExportActions('siswa', [
+                    Select::make('status')
+                        ->label('Status')
+                        ->options(['Aktif' => 'Aktif', 'Lulus' => 'Lulus', 'Pindah' => 'Pindah', 'Keluar' => 'Keluar']),
+                ]),
 
-                                if (!$response->ok()) {
-                                    return [];
-                                }
-
-                                $data = $response->json();
-
-                                return collect($data['data'])->mapWithKeys(fn($item) => [$item['id'] => $item['nama']])->toArray();
-                            })
-                            ->required(),
-                    ])
-                    ->action(function (array $data): void {
-                        $this->kelasId = (int) $data['kelas_id'];
-                        $this->resetTable();
-                    }),
-
-                // Clear kelas filter
-                Action::make('clear_kelas_filter')
-                    ->label('Hapus Filter Kelas')
-                    ->color('gray')
-                    ->button()
-                    ->action(function (): void {
-                        $this->kelasId = null;
-                        $this->resetTable();
-                    }),
                 // Tambah Siswa MI
                 Action::make('add_detail') // Unique name for your action
                     ->label('Tambah') // Text displayed on the button
-                    ->color('primaryMain') // Optional color
+                    ->color('primary') // Optional color
                     ->button()
                     ->modalHeading('Tambah Siswa')
                     ->modalSubmitAction(false)
@@ -632,19 +721,19 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                         ->label(__('NIS'))
                                         ->required()
                                         ->validationMessages([
-                                            'required' => 'NIS Tidak Boleh Kosong'
+                                            'required' => 'NIS Tidak Boleh Kosong',
                                         ]),
                                     TextInput::make('nisn')
                                         ->label('NISN')
                                         ->required()
                                         ->validationMessages([
-                                            'required' => 'NISN Tidak Boleh Kosong'
+                                            'required' => 'NISN Tidak Boleh Kosong',
                                         ]),
                                     TextInput::make('nama')
                                         ->label('Nama Siswa')
                                         ->required()
                                         ->validationMessages([
-                                            'required' => 'Nama Tidak Boleh Kosong'
+                                            'required' => 'Nama Tidak Boleh Kosong',
                                         ]),
                                     Grid::make(2)
                                         ->schema([
@@ -652,7 +741,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->label('Tempat Lahir')
                                                 ->required()
                                                 ->validationMessages([
-                                                    'required' => 'Tempat Lahir Tidak Boleh Kosong'
+                                                    'required' => 'Tempat Lahir Tidak Boleh Kosong',
                                                 ]),
                                             DatePicker::make('tanggal_lahir')
                                                 ->label('Tanggal Lahir')
@@ -662,7 +751,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->displayFormat('d-m-Y')
                                                 ->required()
                                                 ->validationMessages([
-                                                    'required' => 'Tanggal Lahir Tidak Boleh Kosong'
+                                                    'required' => 'Tanggal Lahir Tidak Boleh Kosong',
                                                 ]),
                                         ]),
                                     Grid::make(2)
@@ -671,25 +760,25 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->label('Agama')
                                                 ->options([
                                                     'Islam' => 'Islam',
-                                                    'Protestan' => 'Protestan',
+                                                    'Kristen' => 'Kristen',
                                                     'Katolik' => 'Katolik',
                                                     'Hindu' => 'Hindu',
-                                                    'Budha' => 'Budha',
+                                                    'Buddha' => 'Buddha',
                                                     'Konghucu' => 'Konghucu',
                                                 ])
                                                 ->required()
                                                 ->validationMessages([
-                                                    'required' => 'Agama Tidak Boleh Kosong'
+                                                    'required' => 'Agama Tidak Boleh Kosong',
                                                 ]),
                                             Select::make('jenis_kelamin')
                                                 ->label('Jenis Kelamin')
                                                 ->options([
                                                     'Laki-laki' => 'Laki-laki',
-                                                    'Perempuan' => 'Perempuan'
+                                                    'Perempuan' => 'Perempuan',
                                                 ])
                                                 ->required()
                                                 ->validationMessages([
-                                                    'required' => 'Jenis Kelamin Tidak Boleh Kosong'
+                                                    'required' => 'Jenis Kelamin Tidak Boleh Kosong',
                                                 ]),
                                         ]),
                                     Grid::make(2)
@@ -699,12 +788,10 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kelas')
                                                 ->options(function () {
-                                                    $response = Http::withHeaders([
-                                                        'Authorization' => session()->get('data')['token']
-                                                    ])
-                                                        ->get(env('API_URL') . '/kelas/' . $this->activeTab);
+                                                    $response = ApiService::client()
+                                                        ->get('/kelas/'.$this->activeTab);
 
-                                                    if (!$response->ok()) {
+                                                    if (! $response->ok()) {
                                                         return [];
                                                     }
 
@@ -718,19 +805,17 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 })
                                                 ->required()
                                                 ->validationMessages([
-                                                    'required' => 'Kelas Tidak Boleh Kosong'
+                                                    'required' => 'Kelas Tidak Boleh Kosong',
                                                 ]),
                                             Select::make('kategori_id')
                                                 ->label('Kategori')
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kategori')
                                                 ->options(function () {
-                                                    $response = Http::withHeaders([
-                                                        'Authorization' => session()->get('data')['token']
-                                                    ])
-                                                        ->get(env('API_URL') . '/kategori');
+                                                    $response = ApiService::client()
+                                                        ->get('/kategori');
 
-                                                    if (!$response->ok()) {
+                                                    if (! $response->ok()) {
                                                         return [];
                                                     }
 
@@ -744,21 +829,21 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 })
                                                 ->required()
                                                 ->validationMessages([
-                                                    'required' => 'Kategori Tidak Boleh Kosong'
+                                                    'required' => 'Kategori Tidak Boleh Kosong',
                                                 ]),
                                         ]),
                                     Textarea::make('alamat')
                                         ->label('Alamat')
                                         ->required()
                                         ->validationMessages([
-                                            'required' => 'Alamat Tidak Boleh Kosong'
+                                            'required' => 'Alamat Tidak Boleh Kosong',
                                         ]),
                                     // Asal Sekolah
                                     TextInput::make('asal_sekolah')
                                         ->label('Asal Sekolah')
                                         ->required()
                                         ->validationMessages([
-                                            'required' => 'Asal Sekolah Tidak Boleh Kosong'
+                                            'required' => 'Asal Sekolah Tidak Boleh Kosong',
                                         ]),
                                     Grid::make(2)
                                         ->schema([
@@ -774,14 +859,14 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ])
                                                 ->required()
                                                 ->validationMessages([
-                                                    'required' => 'Kelas Diterima Tidak Boleh Kosong'
+                                                    'required' => 'Kelas Diterima Tidak Boleh Kosong',
                                                 ]),
                                             TextInput::make('tahun_diterima')
                                                 ->label('Tahun Diterima')
                                                 ->numeric()
                                                 ->required()
                                                 ->validationMessages([
-                                                    'required' => 'Tahun Diterima Tidak Boleh Kosong'
+                                                    'required' => 'Tahun Diterima Tidak Boleh Kosong',
                                                 ]),
                                         ]),
                                     Textarea::make('keterangan')
@@ -796,53 +881,145 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                         ])
                                         ->required()
                                         ->validationMessages([
-                                            'required' => 'Status Tidak Boleh Kosong'
+                                            'required' => 'Status Tidak Boleh Kosong',
                                         ]),
                                 ]),
                             Step::make('Data Ayah')
                                 ->description('Informasi Detail Ayah')
                                 ->schema([
+                                    Select::make('ayah_id')
+                                        ->label('Pilih Ayah yang Sudah Ada')
+                                        ->searchable()
+                                        ->searchPrompt('Cari nama ayah...')
+                                        ->getSearchResultsUsing(function (string $search): array {
+                                            if (strlen($search) < 2) {
+                                                return [];
+                                            }
+                                            $response = ApiService::client()
+                                                ->get('/ayah', ['search' => $search]);
+                                            if (! $response->ok()) {
+                                                return [];
+                                            }
+                                            $data = $response->json('data') ?? [];
+
+                                            return collect($data)->mapWithKeys(function ($item) {
+                                                $label = $item['nama'];
+                                                if (! empty($item['pekerjaan'])) {
+                                                    $label .= ' - '.$item['pekerjaan'];
+                                                }
+
+                                                return [$item['id'] => $label];
+                                            })->toArray();
+                                        })
+                                        ->getOptionLabelUsing(function ($value) {
+                                            $response = ApiService::client()->get('/ayah/'.$value);
+
+                                            return $response->ok() ? $response->json('data.nama') : 'Terpilih';
+                                        })
+                                        ->live()
+                                        ->afterStateUpdated(function ($state, $set) {
+                                            if ($state) {
+                                                // Clear manual fields when an existing ayah is selected
+                                                $set('ayah_nama', null);
+                                                $set('ayah_pendidikan_terakhir', null);
+                                                $set('ayah_pekerjaan', null);
+                                                $set('ayah_email', null);
+                                            }
+                                        })
+                                        ->helperText('Pilih ayah yang sudah ada di sistem, atau kosongkan untuk input manual di bawah.')
+                                        ->placeholder('Ketik nama ayah untuk mencari...'),
                                     TextInput::make('ayah_nama')
-                                        ->label('Nama Ayah'),
+                                        ->label('Nama Ayah')
+                                        ->hidden(fn ($get) => filled($get('ayah_id'))),
                                     TextInput::make('ayah_pendidikan_terakhir')
-                                        ->label('Pendidikan Terakhir'),
+                                        ->label('Pendidikan Terakhir')
+                                        ->hidden(fn ($get) => filled($get('ayah_id'))),
                                     TextInput::make('ayah_pekerjaan')
-                                        ->label('Pekerjaan'),
+                                        ->label('Pekerjaan')
+                                        ->hidden(fn ($get) => filled($get('ayah_id'))),
+                                    TextInput::make('ayah_email')
+                                        ->label('Email Ayah')
+                                        ->hidden(fn ($get) => filled($get('ayah_id'))),
                                 ]),
                             Step::make('Data Ibu')
                                 ->description('Informasi Detail Ibu')
                                 ->schema([
+                                    Select::make('ibu_id')
+                                        ->label('Pilih Ibu yang Sudah Ada')
+                                        ->searchable()
+                                        ->searchPrompt('Cari nama ibu...')
+                                        ->getSearchResultsUsing(function (string $search): array {
+                                            if (strlen($search) < 2) {
+                                                return [];
+                                            }
+                                            $response = ApiService::client()
+                                                ->get('/ibu', ['search' => $search]);
+                                            if (! $response->ok()) {
+                                                return [];
+                                            }
+                                            $data = $response->json('data') ?? [];
+
+                                            return collect($data)->mapWithKeys(function ($item) {
+                                                $label = $item['nama'];
+                                                if (! empty($item['pekerjaan'])) {
+                                                    $label .= ' - '.$item['pekerjaan'];
+                                                }
+
+                                                return [$item['id'] => $label];
+                                            })->toArray();
+                                        })
+                                        ->getOptionLabelUsing(function ($value) {
+                                            $response = ApiService::client()->get('/ibu/'.$value);
+
+                                            return $response->ok() ? $response->json('data.nama') : 'Terpilih';
+                                        })
+                                        ->live()
+                                        ->afterStateUpdated(function ($state, $set) {
+                                            if ($state) {
+                                                // Clear manual fields when an existing ibu is selected
+                                                $set('ibu_nama', null);
+                                                $set('ibu_pendidikan_terakhir', null);
+                                                $set('ibu_pekerjaan', null);
+                                                $set('ibu_email', null);
+                                            }
+                                        })
+                                        ->helperText('Pilih ibu yang sudah ada di sistem, atau kosongkan untuk input manual di bawah.')
+                                        ->placeholder('Ketik nama ibu untuk mencari...'),
                                     TextInput::make('ibu_nama')
-                                        ->label('Nama Ibu'),
+                                        ->label('Nama Ibu')
+                                        ->hidden(fn ($get) => filled($get('ibu_id'))),
                                     TextInput::make('ibu_pendidikan_terakhir')
-                                        ->label('Pendidikan Terakhir'),
+                                        ->label('Pendidikan Terakhir')
+                                        ->hidden(fn ($get) => filled($get('ibu_id'))),
                                     TextInput::make('ibu_pekerjaan')
-                                        ->label('Pekerjaan'),
+                                        ->label('Pekerjaan')
+                                        ->hidden(fn ($get) => filled($get('ibu_id'))),
+                                    TextInput::make('ibu_email')
+                                        ->label('Email Ibu')
+                                        ->hidden(fn ($get) => filled($get('ibu_id'))),
                                 ]),
                         ])
                             ->nextAction(
-                                fn(Action $action) => $action->label('Selanjutnya')->color('primaryMain')->extraAttributes([
-                                    'class' => 'font-semibold'
+                                fn (Action $action) => $action->label('Selanjutnya')->color('primary')->extraAttributes([
+                                    'class' => 'font-semibold',
                                 ]),
                             )
                             ->previousAction(
-                                fn(Action $action) => $action->label('Sebelumnya')
+                                fn (Action $action) => $action->label('Sebelumnya')
                             )
                             ->submitAction(
                                 Action::make('submit')
                                     ->label('Simpan')
-                                    ->color('primaryMain')
+                                    ->color('primary')
                                     ->extraAttributes([
-                                        'class' => 'font-semibold'
+                                        'class' => 'font-semibold',
                                     ])
                                     ->submit('save')
                             ),
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->post(env('API_URL') . '/siswa/' . $this->activeTab, $data);
+                        $response = ApiService::client()
+                            ->post('/siswa/'.$this->activeTab, $data);
 
                         if ($response->status() != 201) {
                             $errors = collect($response->json('errors') ?? [])->flatten()->implode(', ');
@@ -852,16 +1029,6 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                 ->danger()
                                 ->send();
                         } else {
-                            try {
-                                User::create([
-                                    'name' =>  $data['nama'],
-                                    'username' => $data['nis'],
-                                    'password' => Hash::make($data['tanggal_lahir']),
-                                ]);
-                            } catch (\Throwable $th) {
-                                //throw $th;
-                            }
-                            
                             Notification::make()
                                 ->title('Siswa Berhasil Ditambahkan')
                                 ->success()
@@ -870,13 +1037,13 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                     })
                     ->extraAttributes([
                         'class' => 'font-semibold text-white',
-                        'id' => 'add-detail'
+                        'id' => 'add-detail',
                     ])
-                    ->visible(fn($livewire) => $livewire->activeTab === 'MI'),
+                    ->visible(fn ($livewire) => $livewire->activeTab === 'MI' && PermissionHelper::hasResource('siswa.create')),
                 // Tambah Siswa TK, KB
                 Action::make('add') // Unique name for your action
                     ->label('Tambah') // Text displayed on the button
-                    ->color('primaryMain')
+                    ->color('primary')
                     ->button()
                     ->modalHeading('Tambah Siswa')
                     ->modalSubmitAction(false)
@@ -890,13 +1057,13 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                         ->label(__('NIS'))
                                         ->required()
                                         ->validationMessages([
-                                            'required' => 'NIS Tidak Boleh Kosong'
+                                            'required' => 'NIS Tidak Boleh Kosong',
                                         ]),
                                     TextInput::make('nama')
                                         ->label('Nama Siswa')
                                         ->required()
                                         ->validationMessages([
-                                            'required' => 'Nama Siswa Tidak Boleh Kosong'
+                                            'required' => 'Nama Siswa Tidak Boleh Kosong',
                                         ]),
                                     Grid::make(2)
                                         ->schema([
@@ -904,7 +1071,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->label('Tempat Lahir')
                                                 ->required()
                                                 ->validationMessages([
-                                                    'required' => 'Tempat Lahir Tidak Boleh Kosong'
+                                                    'required' => 'Tempat Lahir Tidak Boleh Kosong',
                                                 ]),
                                             DatePicker::make('tanggal_lahir')
                                                 ->label('Tanggal Lahir')
@@ -915,7 +1082,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->maxDate(now())
                                                 ->required()
                                                 ->validationMessages([
-                                                    'required' => 'Tanggal Lahir Tidak Boleh Kosong'
+                                                    'required' => 'Tanggal Lahir Tidak Boleh Kosong',
                                                 ]),
                                         ]),
                                     Grid::make(2)
@@ -924,25 +1091,25 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->label('Agama')
                                                 ->options([
                                                     'Islam' => 'Islam',
-                                                    'Protestan' => 'Protestan',
+                                                    'Kristen' => 'Kristen',
                                                     'Katolik' => 'Katolik',
                                                     'Hindu' => 'Hindu',
-                                                    'Budha' => 'Budha',
+                                                    'Buddha' => 'Buddha',
                                                     'Konghucu' => 'Konghucu',
                                                 ])
                                                 ->required()
                                                 ->validationMessages([
-                                                    'required' => 'Agama Tidak Boleh Kosong'
+                                                    'required' => 'Agama Tidak Boleh Kosong',
                                                 ]),
                                             Select::make('jenis_kelamin')
                                                 ->label('Jenis Kelamin')
                                                 ->options([
                                                     'Laki-laki' => 'Laki-laki',
-                                                    'Perempuan' => 'Perempuan'
+                                                    'Perempuan' => 'Perempuan',
                                                 ])
                                                 ->required()
                                                 ->validationMessages([
-                                                    'required' => 'Jenis Kelamin Tidak Boleh Kosong'
+                                                    'required' => 'Jenis Kelamin Tidak Boleh Kosong',
                                                 ]),
                                         ]),
                                     Grid::make(2)
@@ -952,12 +1119,10 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kelas')
                                                 ->options(function () {
-                                                    $response = Http::withHeaders([
-                                                        'Authorization' => session()->get('data')['token']
-                                                    ])
-                                                        ->get(env('API_URL') . '/kelas/' . $this->activeTab);
+                                                    $response = ApiService::client()
+                                                        ->get('/kelas/'.$this->activeTab);
 
-                                                    if (!$response->ok()) {
+                                                    if (! $response->ok()) {
                                                         return [];
                                                     }
 
@@ -971,19 +1136,17 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 })
                                                 ->required()
                                                 ->validationMessages([
-                                                    'required' => 'Kelas Tidak Boleh Kosong'
+                                                    'required' => 'Kelas Tidak Boleh Kosong',
                                                 ]),
                                             Select::make('kategori_id')
                                                 ->label('Kategori')
                                                 ->searchable()
                                                 ->searchPrompt('Cari Kategori')
                                                 ->options(function () {
-                                                    $response = Http::withHeaders([
-                                                        'Authorization' => session()->get('data')['token']
-                                                    ])
-                                                        ->get(env('API_URL') . '/kategori');
+                                                    $response = ApiService::client()
+                                                        ->get('/kategori');
 
-                                                    if (!$response->ok()) {
+                                                    if (! $response->ok()) {
                                                         return [];
                                                     }
 
@@ -997,14 +1160,14 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                                 })
                                                 ->required()
                                                 ->validationMessages([
-                                                    'required' => 'Kategori Tidak Boleh Kosong'
+                                                    'required' => 'Kategori Tidak Boleh Kosong',
                                                 ]),
                                         ]),
                                     Textarea::make('alamat')
                                         ->label('Alamat')
                                         ->required()
                                         ->validationMessages([
-                                            'required' => 'Alamat Tidak Boleh Kosong'
+                                            'required' => 'Alamat Tidak Boleh Kosong',
                                         ]),
                                     Textarea::make('keterangan')
                                         ->label('Keterangan'),
@@ -1018,80 +1181,119 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                         ])
                                         ->required()
                                         ->validationMessages([
-                                            'required' => 'Status Tidak Boleh Kosong'
+                                            'required' => 'Status Tidak Boleh Kosong',
                                         ]),
                                 ]),
                             Step::make('Data Wali')
                                 ->description('Informasi Detail Wali')
                                 ->schema([
+                                    Select::make('wali_id')
+                                        ->label('Pilih Wali yang Sudah Ada')
+                                        ->searchable()
+                                        ->searchPrompt('Cari nama wali...')
+                                        ->getSearchResultsUsing(function (string $search): array {
+                                            if (strlen($search) < 2) {
+                                                return [];
+                                            }
+                                            $response = ApiService::client()
+                                                ->get('/wali', ['search' => $search]);
+                                            if (! $response->ok()) {
+                                                return [];
+                                            }
+                                            $data = $response->json('data') ?? [];
+
+                                            return collect($data)->mapWithKeys(function ($item) {
+                                                $label = $item['nama'];
+                                                if (! empty($item['pekerjaan'])) {
+                                                    $label .= ' - '.$item['pekerjaan'];
+                                                }
+
+                                                return [$item['id'] => $label];
+                                            })->toArray();
+                                        })
+                                        ->getOptionLabelUsing(function ($value) {
+                                            $response = ApiService::client()->get('/wali/'.$value);
+
+                                            return $response->ok() ? $response->json('data.nama') : 'Terpilih';
+                                        })
+                                        ->live()
+                                        ->afterStateUpdated(function ($state, $set) {
+                                            if ($state) {
+                                                // Clear manual fields when an existing wali is selected
+                                                $set('wali_nama', null);
+                                                $set('wali_pekerjaan', null);
+                                                $set('wali_no_hp', null);
+                                                $set('wali_alamat', null);
+                                                $set('wali_keterangan', null);
+                                                $set('wali_email', null);
+                                            }
+                                        })
+                                        ->helperText('Pilih wali yang sudah ada di sistem, atau kosongkan untuk input manual di bawah.')
+                                        ->placeholder('Ketik nama wali untuk mencari...'),
                                     TextInput::make('wali_nama')
                                         ->label('Nama Lengkap')
-                                        ->required()
+                                        ->required(fn ($get) => ! filled($get('wali_id')))
+                                        ->hidden(fn ($get) => filled($get('wali_id')))
                                         ->validationMessages([
-                                            'required' => 'Nama Tidak Boleh Kosong'
+                                            'required' => 'Nama Tidak Boleh Kosong',
                                         ]),
                                     TextInput::make('wali_pekerjaan')
                                         ->label('Pekerjaan')
-                                        ->required()
+                                        ->required(fn ($get) => ! filled($get('wali_id')))
+                                        ->hidden(fn ($get) => filled($get('wali_id')))
                                         ->validationMessages([
-                                            'required' => 'Pekerjaan Tidak Boleh Kosong'
+                                            'required' => 'Pekerjaan Tidak Boleh Kosong',
                                         ]),
                                     TextInput::make('wali_no_hp')
                                         ->label('No. HP')
-                                        ->required()
+                                        ->required(fn ($get) => ! filled($get('wali_id')))
+                                        ->hidden(fn ($get) => filled($get('wali_id')))
                                         ->validationMessages([
-                                            'required' => 'No. HP Tidak Boleh Kosong'
+                                            'required' => 'No. HP Tidak Boleh Kosong',
                                         ]),
                                     Textarea::make('wali_alamat')
                                         ->label('Alamat')
-                                        ->required()
+                                        ->required(fn ($get) => ! filled($get('wali_id')))
+                                        ->hidden(fn ($get) => filled($get('wali_id')))
                                         ->validationMessages([
-                                            'required' => 'Alamat Tidak Boleh Kosong'
+                                            'required' => 'Alamat Tidak Boleh Kosong',
                                         ]),
                                     Textarea::make('wali_keterangan')
-                                        ->label('Keterangan'),
+                                        ->label('Keterangan')
+                                        ->hidden(fn ($get) => filled($get('wali_id'))),
+                                    TextInput::make('wali_email')
+                                        ->label('Email Wali')
+                                        ->hidden(fn ($get) => filled($get('wali_id'))),
                                 ]),
                         ])
                             ->nextAction(
-                                fn(Action $action) => $action->label('Selanjutnya')->color('primaryMain')->extraAttributes([
-                                    'class' => 'font-semibold'
+                                fn (Action $action) => $action->label('Selanjutnya')->color('primary')->extraAttributes([
+                                    'class' => 'font-semibold',
                                 ]),
                             )
                             ->previousAction(
-                                fn(Action $action) => $action->label('Sebelumnya')
+                                fn (Action $action) => $action->label('Sebelumnya')
                             )
                             ->submitAction(
                                 Action::make('save')
                                     ->label('Simpan')
-                                    ->color('primaryMain')
+                                    ->color('primary')
                                     ->extraAttributes([
-                                        'class' => 'font-semibold'
+                                        'class' => 'font-semibold',
                                     ])
                                     ->submit('save'),
-                            )
+                            ),
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->post(env('API_URL') . '/siswa/' . $this->activeTab, $data);
+                        $response = ApiService::client()
+                            ->post('/siswa/'.$this->activeTab, $data);
 
-                        if (!$response->successful()) {
+                        if (! $response->successful()) {
                             Notification::make()
                                 ->title('Siswa Gagal Ditambahkan')
                                 ->danger()
                                 ->send();
                         } else {
-                            try {
-                                User::create([
-                                    'name' =>  $data['nama'],
-                                    'username' => $data['nis'],
-                                    'password' => Hash::make($data['tanggal_lahir']),
-                                ]);
-                            } catch (\Throwable $th) {
-                                //throw $th;
-                            }
-
                             Notification::make()
                                 ->title('Siswa Berhasil Ditambahkan')
                                 ->success()
@@ -1100,9 +1302,9 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                     })
                     ->extraAttributes([
                         'class' => 'font-semibold text-white',
-                        'id' => 'add'
+                        'id' => 'add',
                     ])
-                    ->visible(fn($livewire) => $livewire->activeTab !== 'MI'),
+                    ->visible(fn ($livewire) => $livewire->activeTab !== 'MI' && PermissionHelper::hasResource('siswa.create')),
             ]);
     }
 

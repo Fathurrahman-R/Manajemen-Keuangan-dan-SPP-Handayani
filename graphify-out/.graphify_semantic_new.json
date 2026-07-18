@@ -1,0 +1,635 @@
+{
+  "nodes": [
+    {
+      "id": "backend_readme_laravel_framework",
+      "label": "Laravel Framework (backend)",
+      "file_type": "concept",
+      "source_file": "D:\\First Project\\handayani\\backend\\README.md",
+      "source_location": null,
+      "source_url": "https://laravel.com",
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_v2_readme_laravel_framework",
+      "label": "Laravel Framework (frontend-v2 README, stock boilerplate)",
+      "file_type": "concept",
+      "source_file": "D:\\First Project\\handayani\\frontend-v2\\README.md",
+      "source_location": null,
+      "source_url": "https://laravel.com",
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "backend_audit_results_unused_routes_audit",
+      "label": "Unused Routes Audit Results",
+      "file_type": "document",
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "backend_app_http_controllers_importexportcontroller_confirmsiswa",
+      "label": "ImportExportController::confirmSiswa",
+      "file_type": "code",
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 11",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "backend_app_http_controllers_importexportcontroller_uploadsiswa",
+      "label": "ImportExportController::uploadSiswa",
+      "file_type": "code",
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 27",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "backend_app_http_controllers_importexportcontroller_confirmtagihan",
+      "label": "ImportExportController::confirmTagihan",
+      "file_type": "code",
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 43",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "backend_app_http_controllers_importexportcontroller_uploadtagihan",
+      "label": "ImportExportController::uploadTagihan",
+      "file_type": "code",
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 59",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "backend_app_http_controllers_importexportcontroller_templatesiswa",
+      "label": "ImportExportController::templateSiswa",
+      "file_type": "code",
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 75",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "backend_app_http_controllers_importexportcontroller_templatetagihan",
+      "label": "ImportExportController::templateTagihan",
+      "file_type": "code",
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 91",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "backend_app_http_controllers_importexportcontroller_jobstatus",
+      "label": "ImportExportController::jobStatus",
+      "file_type": "code",
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 107",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "backend_app_http_controllers_kenaikankelascontroller_individualpromotion",
+      "label": "KenaikanKelasController::individualPromotion",
+      "file_type": "code",
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 123",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "backend_app_http_controllers_midtransnotificationcontroller_handle",
+      "label": "MidtransNotificationController::handle",
+      "file_type": "code",
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 139",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "backend_app_http_controllers_pembayarancontroller_lunas",
+      "label": "PembayaranController::lunas",
+      "file_type": "code",
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 153",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "backend_app_http_controllers_rbaccontroller_attachrole",
+      "label": "RbacController::attachRole",
+      "file_type": "code",
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 169",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "backend_app_http_controllers_rbaccontroller_detachrole",
+      "label": "RbacController::detachRole",
+      "file_type": "code",
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 185",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "backend_app_http_middleware_endpointpermission_endpointpermission",
+      "label": "EndpointPermission Middleware",
+      "file_type": "code",
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 16",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "backend_audit_results_sanctum_authentication",
+      "label": "Sanctum API Authentication",
+      "file_type": "rationale",
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 15",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "backend_public_robots_allow_all_crawl_policy",
+      "label": "Backend allow-all robots crawl policy",
+      "file_type": "concept",
+      "source_file": "D:\\First Project\\handayani\\backend\\public\\robots.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_v2_public_robots_allow_all_crawl_policy",
+      "label": "Frontend-v2 allow-all robots crawl policy",
+      "file_type": "concept",
+      "source_file": "D:\\First Project\\handayani\\frontend-v2\\public\\robots.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_v2_public_assets_img_default_avatar_placeholder",
+      "label": "Default Avatar Placeholder Image",
+      "file_type": "image",
+      "source_file": "D:\\First Project\\handayani\\frontend-v2\\public\\assets\\img\\default.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_v2_public_assets_img_default_user_profile_photo",
+      "label": "User Profile Photo Concept",
+      "file_type": "concept",
+      "source_file": "D:\\First Project\\handayani\\frontend-v2\\public\\assets\\img\\default.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_v2_public_assets_img_empty_icon_illustration",
+      "label": "Empty State Illustration (empty-icon.svg)",
+      "file_type": "image",
+      "source_file": "D:\\First Project\\handayani\\frontend-v2\\public\\assets\\img\\empty-icon.svg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_v2_public_assets_img_empty_icon_embedded_raster",
+      "label": "Embedded Base64 Raster Image (image0_1076_29696)",
+      "file_type": "image",
+      "source_file": "D:\\First Project\\handayani\\frontend-v2\\public\\assets\\img\\empty-icon.svg",
+      "source_location": "defs > pattern0_1076_29696 > use #image0_1076_29696",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_v2_public_assets_img_empty_icon_empty_state",
+      "label": "Empty State UI Pattern",
+      "file_type": "concept",
+      "source_file": "D:\\First Project\\handayani\\frontend-v2\\public\\assets\\img\\empty-icon.svg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_v2_public_images_hero_illustration_hero_illustration",
+      "label": "Hero Illustration (Mosque/Madrasah Flat Design)",
+      "file_type": "image",
+      "source_file": "D:\\First Project\\handayani\\frontend-v2\\public\\images\\hero-illustration.jpg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_v2_public_images_hero_illustration_islamic_school_identity",
+      "label": "Islamic School Visual Identity",
+      "file_type": "concept",
+      "source_file": "D:\\First Project\\handayani\\frontend-v2\\public\\images\\hero-illustration.jpg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_v2_public_images_hero_illustration_landing_page_hero_section",
+      "label": "Landing Page Hero Section",
+      "file_type": "concept",
+      "source_file": "D:\\First Project\\handayani\\frontend-v2\\public\\images\\hero-illustration.jpg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_v2_public_images_hero_illustration_teal_cream_palette",
+      "label": "Teal and Cream Brand Palette",
+      "file_type": "concept",
+      "source_file": "D:\\First Project\\handayani\\frontend-v2\\public\\images\\hero-illustration.jpg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_v2_public_images_logo_logo",
+      "label": "LPA Handayani Kota Pontianak Logo",
+      "file_type": "image",
+      "source_file": "D:\\First Project\\handayani\\frontend-v2\\public\\images\\logo.jpg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_v2_public_images_logo_lembaga_pendidikan_anak_handayani",
+      "label": "Lembaga Pendidikan Anak (LPA) Handayani Kota Pontianak",
+      "file_type": "concept",
+      "source_file": "D:\\First Project\\handayani\\frontend-v2\\public\\images\\logo.jpg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "backend_audit_results_unused_routes_audit",
+      "target": "backend_app_http_controllers_importexportcontroller_confirmsiswa",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 11",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_audit_results_unused_routes_audit",
+      "target": "backend_app_http_controllers_importexportcontroller_uploadsiswa",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 27",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_audit_results_unused_routes_audit",
+      "target": "backend_app_http_controllers_importexportcontroller_confirmtagihan",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 43",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_audit_results_unused_routes_audit",
+      "target": "backend_app_http_controllers_importexportcontroller_uploadtagihan",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 59",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_audit_results_unused_routes_audit",
+      "target": "backend_app_http_controllers_importexportcontroller_templatesiswa",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 75",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_audit_results_unused_routes_audit",
+      "target": "backend_app_http_controllers_importexportcontroller_templatetagihan",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 91",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_audit_results_unused_routes_audit",
+      "target": "backend_app_http_controllers_importexportcontroller_jobstatus",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 107",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_audit_results_unused_routes_audit",
+      "target": "backend_app_http_controllers_kenaikankelascontroller_individualpromotion",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 123",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_audit_results_unused_routes_audit",
+      "target": "backend_app_http_controllers_midtransnotificationcontroller_handle",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 139",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_audit_results_unused_routes_audit",
+      "target": "backend_app_http_controllers_pembayarancontroller_lunas",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 153",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_audit_results_unused_routes_audit",
+      "target": "backend_app_http_controllers_rbaccontroller_attachrole",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 169",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_audit_results_unused_routes_audit",
+      "target": "backend_app_http_controllers_rbaccontroller_detachrole",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 185",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_audit_results_unused_routes_audit",
+      "target": "backend_app_http_middleware_endpointpermission_endpointpermission",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "line 16",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_app_http_middleware_endpointpermission_endpointpermission",
+      "target": "backend_audit_results_sanctum_authentication",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": "lines 14-17",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_readme_laravel_framework",
+      "target": "frontend_v2_readme_laravel_framework",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "D:\\First Project\\handayani\\backend\\README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "backend_public_robots_allow_all_crawl_policy",
+      "target": "frontend_v2_public_robots_allow_all_crawl_policy",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "D:\\First Project\\handayani\\backend\\public\\robots.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "backend_audit_results_unused_routes_audit",
+      "target": "backend_readme_laravel_framework",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_v2_public_assets_img_default_avatar_placeholder",
+      "target": "frontend_v2_public_assets_img_default_user_profile_photo",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "D:\\First Project\\handayani\\frontend-v2\\public\\assets\\img\\default.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_v2_public_assets_img_empty_icon_illustration",
+      "target": "frontend_v2_public_assets_img_empty_icon_embedded_raster",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\First Project\\handayani\\frontend-v2\\public\\assets\\img\\empty-icon.svg",
+      "source_location": "rect fill=url(#pattern0_1076_29696); use xlink:href=#image0_1076_29696",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_v2_public_assets_img_empty_icon_illustration",
+      "target": "frontend_v2_public_assets_img_empty_icon_empty_state",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "D:\\First Project\\handayani\\frontend-v2\\public\\assets\\img\\empty-icon.svg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_v2_public_images_hero_illustration_hero_illustration",
+      "target": "frontend_v2_public_images_hero_illustration_islamic_school_identity",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "D:\\First Project\\handayani\\frontend-v2\\public\\images\\hero-illustration.jpg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_v2_public_images_hero_illustration_hero_illustration",
+      "target": "frontend_v2_public_images_hero_illustration_landing_page_hero_section",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "D:\\First Project\\handayani\\frontend-v2\\public\\images\\hero-illustration.jpg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_v2_public_images_hero_illustration_hero_illustration",
+      "target": "frontend_v2_public_images_hero_illustration_teal_cream_palette",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "D:\\First Project\\handayani\\frontend-v2\\public\\images\\hero-illustration.jpg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_v2_public_images_hero_illustration_landing_page_hero_section",
+      "target": "frontend_v2_public_images_hero_illustration_islamic_school_identity",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.65,
+      "source_file": "D:\\First Project\\handayani\\frontend-v2\\public\\images\\hero-illustration.jpg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_v2_public_images_logo_logo",
+      "target": "frontend_v2_public_images_logo_lembaga_pendidikan_anak_handayani",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\First Project\\handayani\\frontend-v2\\public\\images\\logo.jpg",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "unused_api_routes_flagged_by_audit",
+      "label": "Unused API routes flagged by route audit",
+      "nodes": [
+        "backend_app_http_controllers_importexportcontroller_confirmsiswa",
+        "backend_app_http_controllers_importexportcontroller_uploadsiswa",
+        "backend_app_http_controllers_importexportcontroller_confirmtagihan",
+        "backend_app_http_controllers_importexportcontroller_uploadtagihan",
+        "backend_app_http_controllers_importexportcontroller_templatesiswa",
+        "backend_app_http_controllers_importexportcontroller_templatetagihan",
+        "backend_app_http_controllers_importexportcontroller_jobstatus",
+        "backend_app_http_controllers_kenaikankelascontroller_individualpromotion",
+        "backend_app_http_controllers_midtransnotificationcontroller_handle",
+        "backend_app_http_controllers_pembayarancontroller_lunas",
+        "backend_app_http_controllers_rbaccontroller_attachrole",
+        "backend_app_http_controllers_rbaccontroller_detachrole"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt"
+    },
+    {
+      "id": "endpointpermission_protected_endpoints",
+      "label": "Endpoints protected by EndpointPermission middleware and Sanctum auth",
+      "nodes": [
+        "backend_app_http_middleware_endpointpermission_endpointpermission",
+        "backend_audit_results_sanctum_authentication",
+        "backend_app_http_controllers_importexportcontroller_confirmsiswa",
+        "backend_app_http_controllers_importexportcontroller_uploadsiswa",
+        "backend_app_http_controllers_importexportcontroller_confirmtagihan",
+        "backend_app_http_controllers_importexportcontroller_uploadtagihan",
+        "backend_app_http_controllers_importexportcontroller_templatesiswa",
+        "backend_app_http_controllers_importexportcontroller_templatetagihan",
+        "backend_app_http_controllers_importexportcontroller_jobstatus",
+        "backend_app_http_controllers_kenaikankelascontroller_individualpromotion",
+        "backend_app_http_controllers_pembayarancontroller_lunas",
+        "backend_app_http_controllers_rbaccontroller_attachrole",
+        "backend_app_http_controllers_rbaccontroller_detachrole"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "D:\\First Project\\handayani\\backend\\audit_results.txt"
+    }
+  ],
+  "input_tokens": 132797,
+  "output_tokens": 0
+}

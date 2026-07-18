@@ -2,37 +2,50 @@
 
 namespace App\Filament\Pages\Auth;
 
+use App\Helpers\PermissionHelper;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
-use App\Filament\Pages\Auth\LoginResponse;
-
-// use Filament\Auth\MultiFactor\Contracts\HasBeforeChallengeHook;
-use Filament\Facades\Filament;
 use Filament\Auth\Pages\Login as PagesLogin;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Schema;
-use Illuminate\Support\HtmlString;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Blade;
-use Illuminate\Contracts\Auth\Authenticatable;
-use Filament\Models\Contracts\FilamentUser;
 use Illuminate\Support\Facades\Http;
-use SensitiveParameter;
-use Exception;
-use Filament\Notifications\Notification;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\HtmlString;
 use Illuminate\Validation\ValidationException;
+use SensitiveParameter;
 
 class Login extends PagesLogin
 {
-
-    public function __construct()
+    public function mount(): void
     {
-        $token = session()->get('data');
+        $token = session()->get('data.token');
 
-        if (!is_null($token) && !is_null($token['token'])) {
-            return redirect()->intended(filament()->getUrl() . '/data-master-siswa');
+        if (! is_null($token)) {
+            // Superadmin dan admin: redirect ke dashboard
+            if (in_array('superadmin', session()->get('data.roles', []))) {
+                $this->redirect(filament()->getUrl().'/dashboard-page');
+
+                return;
+            }
+
+            // User dengan portal-access: redirect ke portal
+            if (PermissionHelper::hasResource('portal-access')) {
+                $this->redirect('/'.config('handayani.portal.path', 'portal'));
+
+                return;
+            }
+
+            // Default fallback: redirect ke dashboard
+            $this->redirect(filament()->getUrl().'/dashboard-page');
+
+            return;
         }
+
+        parent::mount();
     }
 
     public function form(Schema $schema): Schema
@@ -57,25 +70,58 @@ class Login extends PagesLogin
 
         try {
             $data = $this->form->getState();
-    
+
             $credentials = $this->getCredentialsFromFormData($data);
-    
-            $response = Http::post(env('API_URL') . '/users/login', $credentials);
-    
+
+            $response = Http::post(env('API_URL').'/login', $credentials);
+
+            if ($response->serverError()) {
+                Notification::make()
+                    ->title('Gagal Login')
+                    ->danger()
+                    ->body('Tidak dapat terhubung ke server. Silakan coba beberapa saat lagi.')
+                    ->send();
+
+                throw ValidationException::withMessages([
+                    'data.username' => 'Tidak dapat terhubung ke server. Silakan coba beberapa saat lagi.',
+                ]);
+            }
+
             if ($response->successful()) {
                 session()->regenerate();
-                session($response->json());
-                
-                Session::put('data', $response->json()['data']);
 
-                Filament::auth()->loginUsingId($response->json()['data']['id']);
+                $responseData = $response->json()['data'];
+
+                session()->put('data.token', $responseData['token']);
+                session()->put('data.permissions', $responseData['permissions']);
+                session()->put('data.roles', $responseData['roles']);
+                session()->put('data.id', $responseData['id']);
+                session()->put('data.username', $responseData['username']);
+                session()->put('data.user.branch_id', $responseData['branch_id'] ?? null);
+                session()->put('data.must_change_password', $responseData['must_change_password'] ?? false);
+
+                // Login ke Laravel Auth agar Filament mengenali user (untuk user menu)
+                Filament::auth()->loginUsingId($responseData['id']);
+
+                // Redirect to change password page if must_change_password is true
+                if (! empty($responseData['must_change_password'])) {
+                    if (in_array('superadmin', session()->get('data.roles', []))) {
+                        $this->redirect(filament()->getUrl().'/change-password');
+                    } elseif (PermissionHelper::hasResource('portal-access')) {
+                        $this->redirect('/'.config('handayani.portal.path', 'portal').'/change-password');
+                    } else {
+                        $this->redirect(filament()->getUrl().'/change-password');
+                    }
+
+                    return null;
+                }
 
                 return app(LoginResponse::class);
             } else {
                 $errorKeys = array_keys($response->json()['errors']);
-                
+
                 $message = $response->json()['errors'][$errorKeys[0]][0];
-                
+
                 Notification::make()
                     ->title('Gagal Login')
                     ->danger()
@@ -83,10 +129,20 @@ class Login extends PagesLogin
                     ->send();
 
                 throw ValidationException::withMessages([
-                    'email' => $message
+                    'data.username' => $message,
                 ]);
             }
-            
+
+        } catch (ConnectionException $e) {
+            Notification::make()
+                ->title('Gagal Login')
+                ->danger()
+                ->body('Tidak dapat terhubung ke server. Silakan coba beberapa saat lagi.')
+                ->send();
+
+            throw ValidationException::withMessages([
+                'data.username' => 'Tidak dapat terhubung ke server. Silakan coba beberapa saat lagi.',
+            ]);
         } catch (ValidationException $th) {
             throw $th;
         }
@@ -95,7 +151,7 @@ class Login extends PagesLogin
     protected function getUsernameFormComponent(): Component
     {
         return TextInput::make('username')
-            ->label(__('Username'))
+            ->label('Email / NIS')
             ->required()
             ->autocomplete()
             ->autofocus()
@@ -123,7 +179,7 @@ class Login extends PagesLogin
     protected function getCredentialsFromFormData(#[SensitiveParameter] array $data): array
     {
         return [
-            'username' => $data['username'],
+            'identifier' => $data['username'],
             'password' => $data['password'],
         ];
     }

@@ -13,10 +13,11 @@ class WaliFactory extends Factory
     {
         return [
             'nama' => $this->faker->name(),
-            'pekerjaan'=>$this->faker->jobTitle(),
+            'pekerjaan' => $this->faker->jobTitle(),
             'alamat' => $this->faker->address(),
             'no_hp' => $this->faker->numerify('08##########'),
             'keterangan' => $this->faker->optional()->sentence(),
+            'email' => $this->faker->optional(0.6)->safeEmail(),
         ];
     }
 }

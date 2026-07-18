@@ -5,48 +5,86 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Kas Harian</title>
     <style>
-        @page { size: A4; margin: 20px; }
-        body { font-family: DejaVu Sans, sans-serif; font-size: 12px; }
+        @page { size: A4 landscape; margin: 18px; }
+        body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #111; }
         h4 { text-align: center; margin: 0; }
-        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-        th, td { border: 1px solid #000; padding: 6px 8px; text-align: left; }
+        table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+        th, td { border: 1px solid #000; padding: 5px 6px; text-align: left; vertical-align: top; }
         th { background: #f5f5f5; font-weight: bold; }
         .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .keterangan-list { margin: 0; padding-left: 14px; }
+        .keterangan-list li { margin-bottom: 2px; line-height: 1.35; }
+        tfoot td { font-weight: bold; background: #fafafa; }
     </style>
 </head>
 <body>
     <h4>BUKU / DOKUMEN</h4>
     <h4>PENCATATAN KAS HARIAN</h4>
-    <p style="text-align:center; margin-top:4px;">Periode: {{ str_pad($bulan, 2, '0', STR_PAD_LEFT) }}/{{ $tahun }}</p>
+    <p class="text-center" style="margin-top:4px;">
+        Periode: {{ str_pad($bulan, 2, '0', STR_PAD_LEFT) }}/{{ $tahun }}
+    </p>
+    @php
+        $totalMasuk = 0;
+        $totalKeluar = 0;
+    @endphp
     <table>
         <thead>
             <tr>
-                <th style="width:20px;">No</th>
-                <th style="width:110px;">Tanggal</th>
-                <th>Uraian</th>
-                <th style="width:110px;">Pemasukan (Rp)</th>
-                <th style="width:110px;">Pengeluaran (Rp)</th>
-                <th style="width:110px;">Saldo (Rp)</th>
-                <th style="width:120px;">Keterangan</th>
+                <th style="width:24px;">No</th>
+                <th style="width:90px;">Tanggal</th>
+                <th style="width:90px;">Pemasukan (Rp)</th>
+                <th style="width:90px;">Pengeluaran (Rp)</th>
+                <th style="width:90px;">Saldo (Rp)</th>
+                <th>Keterangan</th>
             </tr>
         </thead>
         <tbody>
         @forelse($rows as $index => $row)
+            @php
+                $tanggal = $row['tanggal'] ?? '-';
+                $masuk = (int) ($row['total_masuk'] ?? 0);
+                $keluar = (int) ($row['total_keluar'] ?? 0);
+                $saldo = (int) ($row['saldo'] ?? 0);
+                $totalMasuk += $masuk;
+                $totalKeluar += $keluar;
+                $lines = $keterangan[$tanggal] ?? [];
+            @endphp
             <tr>
-                <td>{{ $index + 1 }}</td>
-                <td>{{ $row['tanggal'] ?? '-' }}</td>
-                <td>-</td>
-                <td class="text-right">{{ number_format($row['total_masuk'] ?? 0, 0, ',', '.') }}</td>
-                <td class="text-right">{{ number_format($row['total_keluar'] ?? 0, 0, ',', '.') }}</td>
-                <td class="text-right">{{ number_format($row['saldo'] ?? 0, 0, ',', '.') }}</td>
-                <td>-</td>
+                <td class="text-center">{{ $index + 1 }}</td>
+                <td>{{ $tanggal }}</td>
+                <td class="text-right">{{ number_format($masuk, 0, ',', '.') }}</td>
+                <td class="text-right">{{ number_format($keluar, 0, ',', '.') }}</td>
+                <td class="text-right">{{ number_format($saldo, 0, ',', '.') }}</td>
+                <td>
+                    @if (count($lines) > 0)
+                        <ul class="keterangan-list">
+                            @foreach ($lines as $line)
+                                <li>{{ $line }}</li>
+                            @endforeach
+                        </ul>
+                    @else
+                        -
+                    @endif
+                </td>
             </tr>
         @empty
             <tr>
-                <td colspan="7" style="text-align:center;">Tidak ada data kas harian pada periode ini.</td>
+                <td colspan="6" class="text-center">Tidak ada data kas harian pada periode ini.</td>
             </tr>
         @endforelse
         </tbody>
+        @if(count($rows ?? []) > 0)
+            <tfoot>
+                <tr>
+                    <td colspan="2" class="text-right">TOTAL</td>
+                    <td class="text-right">{{ number_format($totalMasuk, 0, ',', '.') }}</td>
+                    <td class="text-right">{{ number_format($totalKeluar, 0, ',', '.') }}</td>
+                    <td class="text-right">{{ number_format($totalMasuk - $totalKeluar, 0, ',', '.') }}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        @endif
     </table>
 </body>
 </html>

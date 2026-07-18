@@ -28,7 +28,7 @@ class SiswaTKResource extends JsonResource
             'kelas' => $this->whenLoaded('kelas', new KelasResource($this->kelas)),
             'kategori' => $this->whenLoaded('kategori', new KategoriResource($this->kategori)),
             'status' => $this->status,
-            'keterangan' => $this->keterangan
+            'keterangan' => $this->keterangan,
         ];
     }
 }

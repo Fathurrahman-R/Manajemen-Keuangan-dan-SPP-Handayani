@@ -2,10 +2,11 @@
 
 namespace App\Livewire;
 
-use Exception;
-use Illuminate\Support\Facades\Http;
-use Livewire\Component;
+use App\Helpers\PermissionHelper;
+use App\Livewire\Concerns\HandlesApiErrors;
+use App\Services\ApiService;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\TextInput;
@@ -18,59 +19,87 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Livewire\Component;
 
 class DataCategory extends Component implements HasActions, HasSchemas, HasTable
 {
-    use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
+    use HandlesApiErrors, InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     public function table(Table $table): Table
     {
         return $table
             ->records(
-                fn(?string $search): array => Http::withHeaders([
-                    'Authorization' => session()->get('data')['token']
-                ])
-                    ->get(env('API_URL') . '/kategori')
-                    ->collect('data')
-                    ->when(filled($search), fn (Collection $data): Collection => $data->filter(fn (array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))))
-                    ->toArray(),
+                function (?string $search, ?string $sortColumn = null, ?string $sortDirection = null): array {
+                    try {
+                        $response = ApiService::client()->get('/kategori');
+
+                        if (! $response->ok()) {
+                            $this->handleApiError($response);
+
+                            return [];
+                        }
+
+                        return $response->collect('data')
+                            ->when(filled($search), fn (Collection $data): Collection => $data->filter(fn (array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))))
+                            ->when(
+                                filled($sortColumn),
+                                fn (Collection $data): Collection => $data->sortBy(
+                                    $sortColumn,
+                                    SORT_REGULAR,
+                                    ($sortDirection ?? 'asc') === 'desc'
+                                )->values()
+                            )
+                            ->toArray();
+                    } catch (ConnectionException $e) {
+                        $this->notifyConnectionError();
+
+                        return [];
+                    } catch (\Throwable $e) {
+                        $this->notifyUnexpectedError();
+
+                        return [];
+                    }
+                }
             )
             ->columns([
-                TextColumn::make('nama')->label('Nama'),
+                TextColumn::make('nama')->label('Nama')->sortable(),
             ])
             ->deferLoading()
             ->striped()
             ->searchable()
-            ->paginated([5, 10, 25])
-            ->defaultPaginationPageOption(5)
+            ->paginated([5, 10, 25, 50])
+            ->defaultPaginationPageOption(10)
             ->paginatedWhileReordering()
             ->emptyStateHeading('Tidak Ada Kategori')
             ->emptyStateDescription('Silahkan menambahkan kategori')
+            ->emptyStateIcon('heroicon-o-document-text')
             ->recordActions([
                 Action::make('update') // Unique name for your action
                     ->tooltip('Ubah Kategori')
                     ->icon('heroicon-s-pencil-square') // Optional icon
                     ->iconButton()
                     ->color('warning')
+                    ->visible(fn (): bool => PermissionHelper::hasResource('kategori.update'))
                     ->modalHeading('Ubah Kategori')
                     ->modalFooterActions(function (Action $action) {
                         return [
                             $action->getModalSubmitAction()
                                 ->label('Simpan')
-                                ->color('primaryMain')
+                                ->color('primary')
                                 ->extraAttributes([
-                                    'class' => 'text-white font-semibold'
+                                    'class' => 'text-white font-semibold',
                                 ]),
                             $action->getModalCancelAction()->label('Batal'),
                         ];
                     })
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->modalSubmitAction()
-                    ->fillForm(fn(array $record): array => [
+                    ->fillForm(fn (array $record): array => [
                         'id' => $record['id'],
-                        'nama' => $record['nama']
+                        'nama' => $record['nama'],
                     ])
                     ->schema([
                         TextInput::make('nama')
@@ -78,12 +107,10 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
                             ->required(),
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->put(env('API_URL') . '/kategori/' . $record['id'], $data);
+                        $response = ApiService::client()
+                            ->put('/kategori/'.$record['id'], $data);
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             Notification::make()
                                 ->title('Kategori Gagal Diubah')
                                 ->success()
@@ -103,6 +130,7 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
                     ->icon('heroicon-s-trash') // Optional icon
                     ->iconButton()
                     ->color('danger') // Optional color
+                    ->visible(fn (): bool => PermissionHelper::hasResource('kategori.delete'))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Kategori')
                     ->modalDescription('Apakah kamu yakin untuk menghapus kategori ini?')
@@ -112,17 +140,15 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
                                 ->label('Ya')
                                 ->color('danger')
                                 ->extraAttributes([
-                                    'class' => 'text-white font-semibold'
+                                    'class' => 'text-white font-semibold',
                                 ]),
                             $action->getModalCancelAction()->label('Batal'),
                         ];
                     })
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->delete(env('API_URL') . '/kategori' . '/' . $record['id']);
+                        $response = ApiService::client()
+                            ->delete('/kategori'.'/'.$record['id']);
 
                         if ($response->status() != 201) {
                             Notification::make()
@@ -138,21 +164,48 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
                     })
                     ->after(function () {
                         $this->resetTable();
-                    })
+                    }),
+            ])
+            ->bulkActions([
+                BulkAction::make('bulkDelete')
+                    ->label('Hapus Terpilih')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->visible(fn (): bool => PermissionHelper::hasResource('kategori.delete'))
+                    ->requiresConfirmation()
+                    ->modalHeading('Hapus Kategori Terpilih')
+                    ->modalDescription('Apakah kamu yakin ingin menghapus semua kategori yang dipilih?')
+                    ->modalSubmitActionLabel('Ya, Hapus Semua')
+                    ->action(function (Collection $records): void {
+                        $success = 0;
+                        $failed = 0;
+                        foreach ($records as $record) {
+                            $response = ApiService::client()->delete('/kategori/'.$record['id']);
+                            $response->ok() ? $success++ : $failed++;
+                        }
+                        if ($failed > 0) {
+                            Notification::make()->title("{$success} berhasil, {$failed} gagal dihapus")->warning()->send();
+                        } else {
+                            Notification::make()->title("{$success} kategori berhasil dihapus")->success()->send();
+                        }
+                        $this->resetTable();
+                        $this->deselectAllTableRecords();
+                    }),
             ])
             ->headerActions([
                 Action::make('add') // Unique name for your action
                     ->label('Tambah') // Text displayed on the button
-                    ->color('primaryMain') // Optional color
+                    ->color('primary') // Optional color
                     ->button()
+                    ->visible(fn (): bool => PermissionHelper::hasResource('kategori.create'))
                     ->modalHeading('Tambah Kategori')
                     ->modalFooterActions(function (Action $action) {
                         return [
                             $action->getModalSubmitAction()
                                 ->label('Simpan')
-                                ->color('primaryMain')
+                                ->color('primary')
                                 ->extraAttributes([
-                                    'class' => 'text-white font-semibold'
+                                    'class' => 'text-white font-semibold',
                                 ]),
                             $action->getModalCancelAction()->label('Batal'),
                         ];
@@ -164,10 +217,8 @@ class DataCategory extends Component implements HasActions, HasSchemas, HasTable
                             ->required(),
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->post(env('API_URL') . '/kategori', $data);
+                        $response = ApiService::client()
+                            ->post('/kategori', $data);
 
                         if ($response->status() != 201) {
                             Notification::make()

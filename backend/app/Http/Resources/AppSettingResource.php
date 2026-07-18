@@ -16,16 +16,16 @@ class AppSettingResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'nama_sekolah'=>$this->nama_sekolah,
-            'lokasi'=>$this->lokasi,
-            'alamat'=>$this->alamat,
-            'email'=>$this->email,
-            'telepon'=>$this->telepon,
-            'kepala_sekolah'=>$this->kepala_sekolah,
-            'bendahara'=>$this->bendahara,
-            'kode_pos'=>$this->kode_pos,
-            'logo'=>$this->logo,
-            'branch_id'=>$this->branch_id
+            'nama_sekolah' => $this->nama_sekolah,
+            'lokasi' => $this->lokasi,
+            'alamat' => $this->alamat,
+            'email' => $this->email,
+            'telepon' => $this->telepon,
+            'kepala_sekolah' => $this->kepala_sekolah,
+            'bendahara' => $this->bendahara,
+            'kode_pos' => $this->kode_pos,
+            'logo' => $this->logo,
+            'branch_id' => $this->branch_id,
         ];
     }
 }

@@ -28,8 +28,13 @@ class KelasRequest extends FormRequest
                 'required',
                 'string',
                 'min:1',
-                'max:100'
-            ]
+                'max:100',
+            ],
+            'level' => [
+                'nullable',
+                'integer',
+                'min:1',
+            ],
         ];
     }
 
@@ -37,25 +42,25 @@ class KelasRequest extends FormRequest
     {
         if ($this->has('nama')) {
             $this->merge([
-                'nama' => strtoupper(trim($this->input('nama')))
+                'nama' => strtoupper(trim($this->input('nama'))),
             ]);
         }
     }
 
-//    public function messages(): array
-//    {
-//        return [
-//            'nama.required' => 'Nama kelas wajib diisi.',
-//            'nama.string' => 'Nama kelas harus berupa teks.',
-//            'nama.min' => 'Nama kelas minimal 1 karakter.',
-//            'nama.max' => 'Nama kelas maksimal 100 karakter.'
-//        ];
-//    }
+    //    public function messages(): array
+    //    {
+    //        return [
+    //            'nama.required' => 'Nama kelas wajib diisi.',
+    //            'nama.string' => 'Nama kelas harus berupa teks.',
+    //            'nama.min' => 'Nama kelas minimal 1 karakter.',
+    //            'nama.max' => 'Nama kelas maksimal 100 karakter.'
+    //        ];
+    //    }
 
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response([
-            "errors" => $validator->getMessageBag()
+            'errors' => $validator->getMessageBag(),
         ], 400));
     }
 }

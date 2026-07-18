@@ -2,23 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Models\Kategori;
-use App\Models\Kelas;
 use App\Models\Siswa;
-use App\Models\User;
-use App\Models\Wali;
-use Database\Seeders\KategoriSeeder;
-use Database\Seeders\KelasSeeder;
-use Database\Seeders\SiswaSeeder;
-use Database\Seeders\UserSeeder;
-use Database\Seeders\WaliSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class SiswaTest extends TestCase
 {
-    public function testCreateSiswaSuccess()
+    public function test_create_siswa_success()
     {
         $scenario = $this->createSiswaMiScenario();
         $admin = $scenario['admin'];
@@ -43,16 +32,16 @@ class SiswaTest extends TestCase
             'kelas_id' => $kelas->id,
             'kategori_id' => $kategori->id,
         ], [
-            'Authorization' => $admin->token
+            'Authorization' => $admin->token,
         ]);
 
         $response->assertStatus(201)
             ->assertJson([
-                'errors' => []
+                'errors' => [],
             ]);
     }
 
-    public function testCreateSiswaValidationFailed()
+    public function test_create_siswa_validation_failed()
     {
         $scenario = $this->createSiswaMiScenario();
         $admin = $scenario['admin'];
@@ -63,7 +52,7 @@ class SiswaTest extends TestCase
                 // kirim payload kosong / tidak lengkap supaya FormRequest gagal
             ],
             [
-                'Authorization' => $admin->token
+                'Authorization' => $admin->token,
             ]
         )
             ->assertStatus(400)
@@ -72,11 +61,11 @@ class SiswaTest extends TestCase
             )
             ->assertStatus(200)
             ->assertJsonStructure([
-                'errors' => []
+                'errors' => [],
             ]);
     }
 
-    public function testCreateSiswaDuplicateNisFailed()
+    public function test_create_siswa_duplicate_nis_failed()
     {
         $scenario = $this->createSiswaMiScenario();
         $admin = $scenario['admin'];
@@ -100,27 +89,27 @@ class SiswaTest extends TestCase
                 'kategori_id' => $existing->kategori_id,
             ],
             [
-                'Authorization' => $admin->token
+                'Authorization' => $admin->token,
             ]
         )
             ->assertStatus(200)
             ->assertJson([
                 'errors' => [
                     'message' => [
-                        'Siswa dengan NIS tersebut sudah terdaftar.'
-                    ]
-                ]
+                        'Siswa dengan NIS tersebut sudah terdaftar.',
+                    ],
+                ],
             ]);
     }
 
-    public function testUpdateSuccess()
+    public function test_update_success()
     {
         $scenario = $this->createSiswaTkScenario();
         $admin = $scenario['admin'];
         $siswa = $scenario['siswa'];
 
         $this->put(
-            'api/siswa/tk/' . $siswa->id,
+            'api/siswa/tk/'.$siswa->id,
             [
                 'nama' => 'Fathurrahman',
                 'jenis_kelamin' => $siswa->jenis_kelamin,
@@ -137,18 +126,18 @@ class SiswaTest extends TestCase
                 'kelas_diterima' => $siswa->kelas_diterima,
                 'tahun_diterima' => $siswa->tahun_diterima,
                 'status' => $siswa->status,
-                'keterangan' => $siswa->keterangan
+                'keterangan' => $siswa->keterangan,
             ],
             [
-                'Authorization' => $admin->token
+                'Authorization' => $admin->token,
             ]
         )->assertStatus(200)
             ->assertJson([
-                'errors' => []
+                'errors' => [],
             ]);
     }
 
-    public function testUpdateNotFound()
+    public function test_update_not_found()
     {
         $scenario = $this->createSiswaMiScenario();
         $admin = $scenario['admin'];
@@ -173,119 +162,120 @@ class SiswaTest extends TestCase
             'kelas_diterima' => $siswa->kelas_diterima,
             'tahun_diterima' => $siswa->tahun_diterima,
             'status' => $siswa->status,
-            'keterangan' => $siswa->keterangan
+            'keterangan' => $siswa->keterangan,
         ], [
-            'Authorization' => $admin->token
+            'Authorization' => $admin->token,
         ])->assertStatus(200)
             ->assertJson([
                 'errors' => [
                     'message' => [
-                        'siswa tidak ditemukan.'
-                    ]
-                ]
+                        'siswa tidak ditemukan.',
+                    ],
+                ],
             ]);
     }
 
-    public function testGetSuccess()
+    public function test_get_success()
     {
         $scenario = $this->createSiswaMiScenario();
         $admin = $scenario['admin'];
         $siswa = $scenario['siswa'];
-        $this->get(uri: 'api/siswa/mi/' . $siswa->id, headers: [
-            'Authorization' => $admin->token
+        $this->get(uri: 'api/siswa/mi/'.$siswa->id, headers: [
+            'Authorization' => $admin->token,
         ])->assertStatus(200)
             ->assertJson([
-                'errors' => []
+                'errors' => [],
             ]);
     }
 
-    public function testGetNotFound()
+    public function test_get_not_found()
     {
         $scenario = $this->createSiswaMiScenario();
         $admin = $scenario['admin'];
 
         $this->get('api/siswa/mi/999999', [
-            'Authorization' => $admin->token
+            'Authorization' => $admin->token,
         ])->assertStatus(200)
             ->assertJson([
                 'errors' => [
                     'message' => [
-                        'siswa tidak ditemukan.'
-                    ]
-                ]
+                        'siswa tidak ditemukan.',
+                    ],
+                ],
             ]);
     }
 
-    public function testDeleteSuccess()
+    public function test_delete_success()
     {
         $scenario = $this->createSiswaMiScenario();
         $admin = $scenario['admin'];
         $siswa = $scenario['siswa'];
 
-        $this->delete(uri: 'api/siswa/mi/' . $siswa->id, headers: [
-            'Authorization' => $admin->token
+        $this->delete(uri: 'api/siswa/mi/'.$siswa->id, headers: [
+            'Authorization' => $admin->token,
         ])->assertStatus(200)
             ->assertJson(['errors']);
     }
 
-    public function testDeleteNotFound()
+    public function test_delete_not_found()
     {
         $scenario = $this->createSiswaMiScenario();
         $admin = $scenario['admin'];
 
         $this->delete(uri: 'api/siswa/mi/999999', headers: [
-            'Authorization' => $admin->token
+            'Authorization' => $admin->token,
         ])->assertStatus(200)
             ->assertJson([
                 'errors' => [
                     'message' => [
-                        'siswa tidak ditemukan.'
-                    ]
-                ]
+                        'siswa tidak ditemukan.',
+                    ],
+                ],
             ]);
     }
 
-    public function testIndexingSiswa()
+    public function test_indexing_siswa()
     {
         $scenario = $this->createSiswaMiScenario();
         $admin = $scenario['admin'];
 
         $this->get(uri: 'api/siswa/tk', headers: [
-            'Authorization' => $admin->token
+            'Authorization' => $admin->token,
         ])->assertStatus(200)
             ->assertJson(['errors']);
     }
-    public function testIndexingSiswaFailed()
+
+    public function test_indexing_siswa_failed()
     {
         $scenario = $this->createSiswaMiScenario();
         $admin = $scenario['admin'];
 
         $this->get(uri: 'api/siswa/tk', headers: [
-            'Authorization' => $admin->token
+            'Authorization' => $admin->token,
         ])->assertStatus(200)
             ->assertJson([
                 'errors' => [
                     'message' => [
-                        'belum ada data siswa dengan jenjang tersebut.'
-                    ]
-                ]
+                        'belum ada data siswa dengan jenjang tersebut.',
+                    ],
+                ],
             ]);
     }
 
-    public function testSearchSiswaSuccess()
+    public function test_search_siswa_success()
     {
         $scenario = $this->createSiswaKbScenario();
         $admin = $scenario['admin'];
         $siswa = $scenario['siswa'];
 
         // gunakan nama siswa sebagai keyword search
-        $this->get('api/siswa/kb?search=' . urlencode($siswa->nama), [
+        $this->get('api/siswa/kb?search='.urlencode($siswa->nama), [
             'Authorization' => $admin->token,
         ])->assertStatus(200)
             ->assertJson(['errors']);
     }
 
-    public function testSearchSiswaFailed()
+    public function test_search_siswa_failed()
     {
         $scenario = $this->createSiswaMiScenario();
         $admin = $scenario['admin'];
@@ -299,7 +289,7 @@ class SiswaTest extends TestCase
 
     // TK scenarios
 
-    public function testCreateSiswaTkSuccess()
+    public function test_create_siswa_tk_success()
     {
         $scenario = $this->createSiswaTkScenario();
         $admin = $scenario['admin'];
@@ -319,72 +309,72 @@ class SiswaTest extends TestCase
             'kelas_id' => $kelas->id,
             'kategori_id' => $kategori->id,
         ], [
-            'Authorization' => $admin->token
+            'Authorization' => $admin->token,
         ])->assertStatus(201)
             ->assertJson([
-                'errors' => []
+                'errors' => [],
             ]);
     }
 
-    public function testCreateSiswaTkValidationFailed()
+    public function test_create_siswa_tk_validation_failed()
     {
         $scenario = $this->createSiswaTkScenario();
         $admin = $scenario['admin'];
 
         $this->post('api/siswa/tk', [], [
-            'Authorization' => $admin->token
+            'Authorization' => $admin->token,
         ])->assertStatus(200)
             ->assertJsonStructure([
-                'errors' => []
+                'errors' => [],
             ]);
     }
 
-    public function testGetSiswaTkSuccess()
+    public function test_get_siswa_tk_success()
     {
         $scenario = $this->createSiswaTkScenario();
         $admin = $scenario['admin'];
         $siswa = $scenario['siswa'];
 
-        $this->get('api/siswa/tk/' . $siswa->id, [
-            'Authorization' => $admin->token
+        $this->get('api/siswa/tk/'.$siswa->id, [
+            'Authorization' => $admin->token,
         ])->assertStatus(200)
             ->assertJson([
-                'errors' => []
+                'errors' => [],
             ]);
     }
 
-    public function testGetSiswaTkNotFound()
+    public function test_get_siswa_tk_not_found()
     {
         $scenario = $this->createSiswaTkScenario();
         $admin = $scenario['admin'];
 
         $this->get('api/siswa/tk/999999', [
-            'Authorization' => $admin->token
+            'Authorization' => $admin->token,
         ])->assertStatus(200)
             ->assertJson([
                 'errors' => [
                     'message' => [
-                        'siswa tidak ditemukan.'
-                    ]
-                ]
+                        'siswa tidak ditemukan.',
+                    ],
+                ],
             ]);
     }
 
-    public function testIndexSiswaTk()
+    public function test_index_siswa_tk()
     {
         $scenario = $this->createSiswaTkScenario();
         $admin = $scenario['admin'];
         // sudah ada minimal satu siswa TK dari skenario
 
         $this->get('api/siswa/tk', [
-            'Authorization' => $admin->token
+            'Authorization' => $admin->token,
         ])->assertStatus(200)
             ->assertJson(['errors']);
     }
 
     // KB scenarios
 
-    public function testCreateSiswaKbSuccess()
+    public function test_create_siswa_kb_success()
     {
         $scenario = $this->createSiswaKbScenario();
         $admin = $scenario['admin'];
@@ -404,76 +394,76 @@ class SiswaTest extends TestCase
             'kelas_id' => $kelas->id,
             'kategori_id' => $kategori->id,
         ], [
-            'Authorization' => $admin->token
+            'Authorization' => $admin->token,
         ])->assertStatus(201)
             ->assertJson([
-                'errors' => []
+                'errors' => [],
             ]);
     }
 
-    public function testCreateSiswaKbValidationFailed()
+    public function test_create_siswa_kb_validation_failed()
     {
         $scenario = $this->createSiswaKbScenario();
         $admin = $scenario['admin'];
 
         $this->post('api/siswa/kb', [], [
-            'Authorization' => $admin->token
+            'Authorization' => $admin->token,
         ])->assertStatus(200)
             ->assertJsonStructure([
-                'errors' => []
+                'errors' => [],
             ]);
     }
 
-    public function testGetSiswaKbSuccess()
+    public function test_get_siswa_kb_success()
     {
         $scenario = $this->createSiswaKbScenario();
         $admin = $scenario['admin'];
         $siswa = $scenario['siswa'];
 
-        $this->get('api/siswa/kb/' . $siswa->id, [
-            'Authorization' => $admin->token
+        $this->get('api/siswa/kb/'.$siswa->id, [
+            'Authorization' => $admin->token,
         ])->assertStatus(200)
             ->assertJson([
-                'errors' => []
+                'errors' => [],
             ]);
     }
 
-    public function testGetSiswaKbNotFound()
+    public function test_get_siswa_kb_not_found()
     {
         $scenario = $this->createSiswaKbScenario();
         $admin = $scenario['admin'];
 
         $this->get('api/siswa/kb/999999', [
-            'Authorization' => $admin->token
+            'Authorization' => $admin->token,
         ])->assertStatus(200)
             ->assertJson([
                 'errors' => [
                     'message' => [
-                        'siswa tidak ditemukan.'
-                    ]
-                ]
+                        'siswa tidak ditemukan.',
+                    ],
+                ],
             ]);
     }
 
-    public function testIndexSiswaKb()
+    public function test_index_siswa_kb()
     {
         $scenario = $this->createSiswaKbScenario();
         $admin = $scenario['admin'];
 
         $this->get('api/siswa/kb', [
-            'Authorization' => $admin->token
+            'Authorization' => $admin->token,
         ])->assertStatus(200)
             ->assertJson(['errors']);
     }
-    public function testUnathorized()
+
+    public function test_unathorized()
     {
         $scenario = $this->createSiswaKbScenario();
         $admin = $scenario['admin'];
 
         $this->get('api/siswa/kb', [
-            'Authorization' => 'salah'
+            'Authorization' => 'salah',
         ])->assertStatus(200)
             ->assertJson(['errors']);
     }
-
 }

@@ -5,25 +5,38 @@ namespace App\Http\Controllers;
 use App\Http\Requests\KelasRequest;
 use App\Http\Resources\KelasResource;
 use App\Models\Kelas;
-use Illuminate\Http\Exceptions\HttpResponseException;
 use Dedoc\Scramble\Attributes\HeaderParameter;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 
 class KelasController extends Controller
 {
     #[HeaderParameter('Authorization')]
+    public function all()
+    {
+        $kelas = Kelas::where('kelas.branch_id', Auth::user()->branch_id)
+            ->orderBy('jenjang')
+            ->orderBy('level')
+            ->orderBy('nama')
+            ->get();
+
+        return KelasResource::collection($kelas);
+    }
+
+    #[HeaderParameter('Authorization')]
     public function index(string $jenjang)
     {
         $jenjangUp = strtoupper($jenjang);
-        if (!in_array($jenjangUp, ['MI', 'TK', 'KB'])) {
+        if (! in_array($jenjangUp, ['MI', 'TK', 'KB'])) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'message' => ['jenjang tidak valid.']
-                ]
+                    'message' => ['jenjang tidak valid.'],
+                ],
             ], 400));
         }
         $kelas = Kelas::where('jenjang', $jenjangUp)
             ->where('kelas.branch_id', Auth::user()->branch_id)->get();
+
         return KelasResource::collection($kelas);
     }
 
@@ -31,32 +44,53 @@ class KelasController extends Controller
     public function create(KelasRequest $request, string $jenjang)
     {
         $jenjangUp = strtoupper($jenjang);
-        if (!in_array($jenjangUp, ['MI', 'TK', 'KB'])) {
+        if (! in_array($jenjangUp, ['MI', 'TK', 'KB'])) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'message' => ['jenjang tidak valid.']
-                ]
+                    'message' => ['jenjang tidak valid.'],
+                ],
             ], 400));
         }
         $data = $request->validated();
         $namaUp = strtoupper($data['nama']);
+        $branchId = Auth::user()->branch_id;
+
         $exists = Kelas::where('jenjang', $jenjangUp)
-            ->where('kelas.branch_id', Auth::user()->branch_id)
+            ->where('kelas.branch_id', $branchId)
             ->whereRaw('UPPER(nama) = ?', [$namaUp])
             ->exists();
         if ($exists) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'message' => ['nama kelas sudah ada.']
-                ]
+                    'message' => ['nama kelas sudah ada.'],
+                ],
             ], 400));
         }
+
+        // Validate unique level within jenjang + branch_id
+        $level = $data['level'] ?? null;
+        if ($level !== null) {
+            $levelExists = Kelas::where('jenjang', $jenjangUp)
+                ->where('kelas.branch_id', $branchId)
+                ->where('level', $level)
+                ->exists();
+            if ($levelExists) {
+                throw new HttpResponseException(response()->json([
+                    'errors' => [
+                        'level' => ['Level sudah digunakan oleh kelas lain dalam jenjang ini.'],
+                    ],
+                ], 422));
+            }
+        }
+
         $kelas = new Kelas([
             'jenjang' => $jenjangUp,
             'nama' => $namaUp,
-            'branch_id' => Auth::user()->branch_id,
+            'branch_id' => $branchId,
+            'level' => $level,
         ]);
         $kelas->save();
+
         return (new KelasResource($kelas))->response()->setStatusCode(201);
     }
 
@@ -64,27 +98,29 @@ class KelasController extends Controller
     public function update(KelasRequest $request, string $jenjang, string $id)
     {
         $jenjangUp = strtoupper($jenjang);
-        if (!in_array($jenjangUp, ['MI', 'TK', 'KB'])) {
+        if (! in_array($jenjangUp, ['MI', 'TK', 'KB'])) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'message' => ['jenjang tidak valid.']
-                ]
+                    'message' => ['jenjang tidak valid.'],
+                ],
             ], 400));
         }
         $data = $request->validated();
         $kelas = Kelas::where('jenjang', $jenjangUp)->find($id);
 
-        if (!$kelas) {
+        if (! $kelas) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
                     'message' => [
-                        'kelas tidak ditemukan.'
-                    ]
-                ]
+                        'kelas tidak ditemukan.',
+                    ],
+                ],
             ], 404));
         }
 
         $namaUp = strtoupper($data['nama']);
+        $branchId = Auth::user()->branch_id;
+
         $duplicate = Kelas::where('jenjang', $jenjangUp)
             ->whereRaw('UPPER(nama) = ?', [$namaUp])
             ->where('id', '<>', $kelas->id)
@@ -92,12 +128,32 @@ class KelasController extends Controller
         if ($duplicate) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'message' => ['nama kelas sudah ada.']
-                ]
+                    'message' => ['nama kelas sudah ada.'],
+                ],
             ], 400));
         }
+
+        // Validate unique level within jenjang + branch_id (exclude self)
+        $level = array_key_exists('level', $data) ? $data['level'] : $kelas->level;
+        if ($level !== null) {
+            $levelExists = Kelas::where('jenjang', $jenjangUp)
+                ->where('kelas.branch_id', $branchId)
+                ->where('level', $level)
+                ->where('id', '<>', $kelas->id)
+                ->exists();
+            if ($levelExists) {
+                throw new HttpResponseException(response()->json([
+                    'errors' => [
+                        'level' => ['Level sudah digunakan oleh kelas lain dalam jenjang ini.'],
+                    ],
+                ], 422));
+            }
+        }
+
         $kelas->nama = $namaUp;
+        $kelas->level = $level;
         $kelas->save();
+
         return (new KelasResource($kelas))->response()->setStatusCode(200);
     }
 
@@ -105,22 +161,22 @@ class KelasController extends Controller
     public function get(string $jenjang, string $id)
     {
         $jenjangUp = strtoupper($jenjang);
-        if (!in_array($jenjangUp, ['MI', 'TK', 'KB'])) {
+        if (! in_array($jenjangUp, ['MI', 'TK', 'KB'])) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'message' => ['jenjang tidak valid.']
-                ]
+                    'message' => ['jenjang tidak valid.'],
+                ],
             ], 400));
         }
         $kelas = Kelas::where('jenjang', $jenjangUp)->find($id);
 
-        if (!$kelas) {
+        if (! $kelas) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
                     'message' => [
-                        'kelas tidak ditemukan.'
-                    ]
-                ]
+                        'kelas tidak ditemukan.',
+                    ],
+                ],
             ], 404));
         }
 
@@ -130,22 +186,22 @@ class KelasController extends Controller
     public function delete(string $jenjang, string $id)
     {
         $jenjangUp = strtoupper($jenjang);
-        if (!in_array($jenjangUp, ['MI', 'TK', 'KB'])) {
+        if (! in_array($jenjangUp, ['MI', 'TK', 'KB'])) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'message' => ['jenjang tidak valid.']
-                ]
+                    'message' => ['jenjang tidak valid.'],
+                ],
             ], 400));
         }
         $kelas = Kelas::where('jenjang', $jenjangUp)->find($id);
 
-        if (!$kelas) {
+        if (! $kelas) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
                     'message' => [
-                        'kelas tidak ditemukan.'
-                    ]
-                ]
+                        'kelas tidak ditemukan.',
+                    ],
+                ],
             ], 404));
         }
 
@@ -153,15 +209,16 @@ class KelasController extends Controller
             throw new HttpResponseException(response([
                 'errors' => [
                     'message' => [
-                        'kelas digunakan pada data siswa.'
-                    ]
-                ]
+                        'kelas digunakan pada data siswa.',
+                    ],
+                ],
             ], 400));
         }
 
         $kelas->delete();
+
         return response([
-            "data" => true
+            'data' => true,
         ])->setStatusCode(200);
     }
 }

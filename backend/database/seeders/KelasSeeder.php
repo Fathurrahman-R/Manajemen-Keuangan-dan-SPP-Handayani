@@ -2,53 +2,43 @@
 
 namespace Database\Seeders;
 
-use App\Models\Kategori;
+use App\Models\Branch;
 use App\Models\Kelas;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class KelasSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $kelas1 = Kelas::factory()->create([
-            'id'=>1,
-            'nama'=>'KELAS 1',
-            'jenjang'=>'MI',
-            'branch_id'=>1,
-        ]);
-        $kelas2 = Kelas::factory()->create([
-            'id'=>2,
-            'nama'=>'KELAS 2',
-            'jenjang'=>'MI',
-            'branch_id'=>1,
-        ]);
-        $kelas3 = Kelas::factory()->create([
-            'id'=>3,
-            'nama'=>'KELAS 3',
-            'jenjang'=>'MI',
-            'branch_id'=>1,
-        ]);
-        $kelas4 = Kelas::factory()->create([
-            'id'=>4,
-            'nama'=>'KELAS 4',
-            'jenjang'=>'MI',
-            'branch_id'=>1,
-        ]);
-        $kelas5 = Kelas::factory()->create([
-            'id'=>5,
-            'nama'=>'KELAS 5',
-            'jenjang'=>'MI',
-            'branch_id'=>1,
-        ]);
-        $kelas6 = Kelas::factory()->create([
-            'id'=>6,
-            'nama'=>'KELAS 6',
-            'jenjang'=>'MI',
-            'branch_id'=>1,
-        ]);
+        $kelasConfig = [
+            'MI' => [
+                ['nama' => 'Kelas 1', 'level' => 1],
+                ['nama' => 'Kelas 2', 'level' => 2],
+                ['nama' => 'Kelas 3', 'level' => 3],
+                ['nama' => 'Kelas 4', 'level' => 4],
+                ['nama' => 'Kelas 5', 'level' => 5],
+                ['nama' => 'Kelas 6', 'level' => 6],
+            ],
+            'TK' => [
+                ['nama' => 'TK A', 'level' => 1],
+                ['nama' => 'TK B', 'level' => 2],
+            ],
+            'KB' => [
+                ['nama' => 'KB', 'level' => 1],
+            ],
+        ];
+
+        foreach (Branch::all() as $branch) {
+            foreach ($kelasConfig as $jenjang => $kelasList) {
+                foreach ($kelasList as $config) {
+                    Kelas::firstOrCreate([
+                        'jenjang' => $jenjang,
+                        'nama' => $config['nama'],
+                        'level' => $config['level'],
+                        'branch_id' => $branch->id,
+                    ]);
+                }
+            }
+        }
     }
 }

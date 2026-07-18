@@ -2,38 +2,53 @@
 
 namespace Database\Seeders;
 
+use App\Models\Branch;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        User::create([
-            'username' => 'handayaniselpa',
-            'password' => Hash::make('admin123'),
-            'role' => 'admin',
-            'token' => 'test',
-            'branch_id' => 1,
+        $mainBranch = Branch::first();
+        if (! $mainBranch) {
+            return;
+        }
+
+        $password = Hash::make('!handayani123');
+
+        $superadmin = User::firstOrCreate(['username' => 'superadmin'], [
+            'email' => 'superadmin@handayani.com',
+            'name' => 'Superadmin',
+            'password' => $password,
+            'branch_id' => $mainBranch->id,
         ]);
-        User::create([
-            'username' => 'handayanideskap',
-            'password' => Hash::make('admin123'),
-            'role' => 'admin',
-            'token' => 'test2',
-            'branch_id' => 2,
+        $superadmin->assignRole('superadmin');
+
+        $developer = User::firstOrCreate(['username' => 'developer'], [
+            'email' => 'developer@handayani.com',
+            'name' => 'Developer',
+            'password' => $password,
+            'branch_id' => $mainBranch->id,
         ]);
-        User::create([
-            'username' => 'handayanisiantan',
-            'password' => Hash::make('admin123'),
-            'role' => 'admin',
-            'token' => 'test3',
-            'branch_id' => 3,
+        $developer->assignRole('developer');
+
+        $yayasan = User::firstOrCreate(['username' => 'yayasan'], [
+            'email' => 'yayasan@handayani.com',
+            'name' => 'Kepala Yayasan',
+            'password' => $password,
+            'branch_id' => $mainBranch->id,
         ]);
+        $yayasan->assignRole('kepala-yayasan');
+
+        foreach (Branch::all() as $branch) {
+            $admin = User::firstOrCreate(['username' => 'admin_'.strtolower(str_replace(' ', '_', $branch->location))], [
+                'name' => 'Admin '.$branch->location,
+                'password' => $password,
+                'branch_id' => $branch->id,
+            ]);
+            $admin->assignRole('admin');
+        }
     }
 }

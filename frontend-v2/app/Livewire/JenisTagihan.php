@@ -2,129 +2,142 @@
 
 namespace App\Livewire;
 
-use Exception;
-use Illuminate\Support\Facades\Http;
-use Livewire\Component;
+use App\Helpers\PermissionHelper;
+use App\Livewire\Concerns\HandlesApiErrors;
+use App\Services\ApiService;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
-use Filament\Schemas\Schema;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
-use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Support\Enums\Alignment;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
-use Filament\Tables\Enums\PaginationMode;
-use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Tables\Table;
-use Illuminate\Contracts\View\View;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
+use Livewire\Component;
 
 class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
 {
+    use \App\Livewire\Concerns\HasPeriodFilter;
+    use HandlesApiErrors;
     use InteractsWithActions, InteractsWithSchemas, InteractsWithTable;
 
     public function table(Table $table): Table
     {
         return $table
             ->records(
-                fn(?string $search): array => Http::withHeaders([
-                    'Authorization' => session()->get('data')['token']
-                ])
-                    ->get(env('API_URL') . '/jenis-tagihan')
-                    ->collect('data')
-                    ->when(filled($search), fn(Collection $data): Collection => $data->filter(fn(array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))))
-                    ->toArray()
+                function (?string $search, ?string $sortColumn = null, ?string $sortDirection = null): array {
+                    try {
+                        $params = $this->selectedTahunAjaranId
+                            ? ['tahun_ajaran_id' => $this->selectedTahunAjaranId]
+                            : ['all_periods' => 1];
+
+                        $response = ApiService::client()->get('/jenis-tagihan', $params);
+
+                        if (! $response->ok()) {
+                            $this->handleApiError($response);
+
+                            return [];
+                        }
+
+                        return $response->collect('data')
+                            ->when(filled($search), fn (Collection $data): Collection => $data->filter(fn (array $record): bool => str_contains(Str::lower($record['nama']), Str::lower($search))))
+                            ->when(
+                                filled($sortColumn),
+                                fn (Collection $data): Collection => $data->sortBy(
+                                    fn (array $record) => data_get($record, $sortColumn),
+                                    SORT_REGULAR,
+                                    ($sortDirection ?? 'asc') === 'desc'
+                                )->values()
+                            )
+                            ->toArray();
+                    } catch (ConnectionException $e) {
+                        $this->notifyConnectionError();
+
+                        return [];
+                    } catch (\Throwable $e) {
+                        $this->notifyUnexpectedError();
+
+                        return [];
+                    }
+                }
             )
             ->columns([
-                TextColumn::make('nama')->label('Nama')->searchable(),
-                TextColumn::make('jatuh_tempo')->label('Jatuh Tempo'),
-                TextColumn::make('jumlah')->label('Jumlah')->money(currency: 'Rp.', decimalPlaces: 0,),
+                TextColumn::make('nama')->label('Nama')->sortable()->searchable(),
+                TextColumn::make('jatuh_tempo')->label('Jatuh Tempo')->sortable(),
+                TextColumn::make('jumlah')->label('Jumlah')->sortable()->money(currency: 'Rp.', decimalPlaces: 0),
             ])
             ->deferLoading()
             ->striped()
-            ->paginated([5, 10, 25])
-            ->defaultPaginationPageOption(5)
+            ->paginated([5, 10, 25, 50])
+            ->defaultPaginationPageOption(10)
             ->paginatedWhileReordering()
             ->emptyStateHeading('Tidak Ada Jenis Tagihan')
             ->emptyStateDescription('Silahkan menambahkan jenis tagihan')
+            ->emptyStateIcon('heroicon-o-document-text')
             ->recordActions([
-                // Action::make('update') // Unique name for your action
-                //     ->tooltip('Ubah Jenis Tagihan')
-                //     ->icon('heroicon-s-pencil-square') // Optional icon
-                //     ->iconButton()
-                //     ->color('warning')
-                //     ->modalHeading('Ubah Jenis Tagihan')
-                //     ->modalFooterActions(function (Action $action) {
-                //         return [
-                //             $action->getModalSubmitAction()
-                //                 ->label('Simpan')
-                //                 ->color('primaryMain')
-                //                 ->extraAttributes([
-                //                     'class' => 'text-white font-semibold'
-                //                 ]),
-                //             $action->getModalCancelAction()->label('Batal'),
-                //         ];
-                //     })
-                //     ->modalFooterActionsAlignment(Alignment::End)
-                //     ->modalSubmitAction()
-                //     ->fillForm(fn(array $record): array => [
-                //         'id' => $record['id'],
-                //         'nama' => $record['nama'],
-                //         'jatuh_tempo' => $record['jatuh_tempo'],
-                //         'jumlah' => $record['jumlah'],
-                //     ])
-                //     ->schema([
-                //         TextInput::make('nama')
-                //             ->label('Nama Tagihan')
-                //             ->required(),
-                //         DatePicker::make('jatuh_tempo')
-                //             ->label('Jatuh Tempo')
-                //             ->native(false)
-                //             ->timezone('Asia/Jakarta')
-                //             ->format('Y-m-d')
-                //             ->displayFormat('d-m-Y')
-                //             ->required(),
-                //         TextInput::make('jumlah')
-                //             ->label('Jumlah')
-                //             ->numeric()
-                //             ->required(),
-                //     ])
-                //     ->action(function (array $data, $record): void {
-                //         $response = Http::withHeaders([
-                //             'Authorization' => session()->get('data')['token']
-                //         ])
-                //             ->put(env('API_URL') . '/jenis-tagihan/' . $record['id'], $data);
+                Action::make('update')
+                    ->tooltip('Ubah Jenis Tagihan')
+                    ->icon('heroicon-s-pencil-square')
+                    ->iconButton()
+                    ->color('warning')
+                    ->visible(fn (): bool => PermissionHelper::hasResource('jenis-tagihan.update'))
+                    ->modalHeading('Ubah Jenis Tagihan')
+                    ->modalSubmitActionLabel('Simpan')
+                    ->modalCancelActionLabel('Batal')
+                    ->modalFooterActionsAlignment(Alignment::End)
+                    ->fillForm(fn (array $record): array => [
+                        'nama' => $record['nama'],
+                        'jatuh_tempo' => $record['jatuh_tempo'],
+                        'jumlah' => $record['jumlah'],
+                    ])
+                    ->schema([
+                        TextInput::make('nama')
+                            ->label('Nama Tagihan')
+                            ->required(),
+                        DatePicker::make('jatuh_tempo')
+                            ->label('Jatuh Tempo')
+                            ->native(false)
+                            ->timezone('Asia/Jakarta')
+                            ->format('Y-m-d')
+                            ->displayFormat('d-m-Y')
+                            ->required(),
+                        TextInput::make('jumlah')
+                            ->label('Jumlah')
+                            ->numeric()
+                            ->required(),
+                    ])
+                    ->action(function (array $data, $record): void {
+                        $response = ApiService::client()
+                            ->put('/jenis-tagihan/'.$record['id'], $data);
 
-                //         if (!$response->ok()) {
-                //             Notification::make()
-                //                 ->title('Jenis Tagihan Gagal Diubah')
-                //                 ->danger()
-                //                 ->send();
-                //         } else {
-                //             Notification::make()
-                //                 ->title('Jenis Tagihan Berhasil Diubah')
-                //                 ->success()
-                //                 ->send();
-                //         }
-                //     })
-                //     ->after(function () {
-                //         $this->resetTable();
-                //     }), // Optional color
-                Action::make('delete') // Unique name for your action
+                        if (! $response->ok()) {
+                            Notification::make()
+                                ->title('Jenis Tagihan Gagal Diubah')
+                                ->danger()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Jenis Tagihan Berhasil Diubah')
+                                ->success()
+                                ->send();
+                            $this->resetTable();
+                        }
+                    }),
+                Action::make('delete')
                     ->tooltip('Hapus Jenis Tagihan')
                     ->icon('heroicon-s-trash') // Optional icon
                     ->iconButton()
                     ->color('danger') // Optional color
+                    ->visible(fn (): bool => PermissionHelper::hasResource('jenis-tagihan.delete'))
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Jenis Tagihan')
                     ->modalDescription('Apakah kamu yakin untuk menghapus jenis tagihan ini?')
@@ -132,12 +145,10 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                     ->modalCancelActionLabel('Batal')
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->delete(env('API_URL') . '/jenis-tagihan/' . $record['id']);
+                        $response = ApiService::client()
+                            ->delete('/jenis-tagihan/'.$record['id']);
 
-                        if (!$response->ok()) {
+                        if (! $response->ok()) {
                             Notification::make()
                                 ->title('Jenis Tagihan Gagal Dihapus')
                                 ->danger()
@@ -151,21 +162,48 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                     })
                     ->after(function () {
                         $this->resetTable();
-                    })
+                    }),
+            ])
+            ->bulkActions([
+                BulkAction::make('bulkDelete')
+                    ->label('Hapus Terpilih')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->visible(fn (): bool => PermissionHelper::hasResource('jenis-tagihan.delete'))
+                    ->requiresConfirmation()
+                    ->modalHeading('Hapus Jenis Tagihan Terpilih')
+                    ->modalDescription('Apakah kamu yakin ingin menghapus semua jenis tagihan yang dipilih?')
+                    ->modalSubmitActionLabel('Ya, Hapus Semua')
+                    ->action(function (Collection $records): void {
+                        $success = 0;
+                        $failed = 0;
+                        foreach ($records as $record) {
+                            $response = ApiService::client()->delete('/jenis-tagihan/'.$record['id']);
+                            $response->ok() ? $success++ : $failed++;
+                        }
+                        if ($failed > 0) {
+                            Notification::make()->title("{$success} berhasil, {$failed} gagal dihapus")->warning()->send();
+                        } else {
+                            Notification::make()->title("{$success} jenis tagihan berhasil dihapus")->success()->send();
+                        }
+                        $this->resetTable();
+                        $this->deselectAllTableRecords();
+                    }),
             ])
             ->headerActions([
                 Action::make('add') // Unique name for your action
                     ->label('Tambah') // Text displayed on the button
-                    ->color('primaryMain') // Optional color
+                    ->color('primary') // Optional color
                     ->button()
+                    ->visible(fn (): bool => PermissionHelper::hasResource('jenis-tagihan.create'))
                     ->modalHeading('Tambah Jenis Tagihan')
                     ->modalFooterActions(function (Action $action) {
                         return [
                             $action->getModalSubmitAction()
                                 ->label('Simpan')
-                                ->color('primaryMain')
+                                ->color('primary')
                                 ->extraAttributes([
-                                    'class' => 'text-white font-semibold'
+                                    'class' => 'text-white font-semibold',
                                 ]),
                             $action->getModalCancelAction()->label('Batal'),
                         ];
@@ -181,7 +219,6 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                             ->timezone('Asia/Jakarta')
                             ->format('Y-m-d')
                             ->displayFormat('d-m-Y')
-                            //                            ->minDate(now())
                             ->required(),
                         TextInput::make('jumlah')
                             ->label('Jumlah')
@@ -189,10 +226,8 @@ class JenisTagihan extends Component implements HasActions, HasSchemas, HasTable
                             ->required(),
                     ])
                     ->action(function (array $data, $record): void {
-                        $response = Http::withHeaders([
-                            'Authorization' => session()->get('data')['token']
-                        ])
-                            ->post(env('API_URL') . '/jenis-tagihan', $data);
+                        $response = ApiService::client()
+                            ->post('/jenis-tagihan', $data);
 
                         if ($response->status() != 201) {
                             Notification::make()

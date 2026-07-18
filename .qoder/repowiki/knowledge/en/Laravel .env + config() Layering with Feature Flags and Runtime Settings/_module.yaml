@@ -1,0 +1,17 @@
+schema_version: 1
+module_path: configuration_system
+title: Laravel .env + config() Layering with Feature Flags and Runtime Settings
+scope: []
+source_files:
+    - backend/.env.example
+    - frontend-v2/.env.example
+    - backend/config/app.php
+    - backend/config/database.php
+    - backend/config/services.php
+    - backend/config/midtrans.php
+    - frontend-v2/config/handayani.php
+    - backend/app/Providers/AppServiceProvider.php
+    - frontend-v2/app/Services/BrandingService.php
+    - frontend-v2/app/Services/BrandingConfig.php
+depends_on: []
+related_to: []

@@ -3,24 +3,20 @@
 namespace Database\Seeders;
 
 use App\Models\Branch;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class BranchSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        Branch::create([
-            'location' => 'Selat Panjang'
-        ]);
-        Branch::create([
-            'location' => 'Desa Kapur'
-        ]);
-        Branch::create([
-            'location' => 'Darma Putra'
-        ]);
+        $branches = [
+            'Selat Panjang',
+            'Desa Kapur',
+            'Darma Putra',
+        ];
+
+        foreach ($branches as $location) {
+            Branch::firstOrCreate(['location' => $location]);
+        }
     }
 }
