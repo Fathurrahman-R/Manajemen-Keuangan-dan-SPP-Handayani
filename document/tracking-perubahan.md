@@ -284,7 +284,7 @@ Perubahan mekanisme (bukan sekadar daftar permission): sistem berpindah dari rol
 
 Baseline diverifikasi dari migrasi bertanggal sebelum 29 April 2026 (s.d. `2025_12_28_120848_alter_users_new_column_branch_id.php`). Skema saat ini = baseline + seluruh migrasi baru di Bagian 2 (tidak ada migrasi yang dihapus/`down()`-dijalankan — pertumbuhan murni aditif kecuali kolom `users.role`/`users.token` yang di-drop, lihat Bagian 7).
 
-### 9.1 ERD Baseline (14 tabel)
+### 9.1 ERD Baseline (13 tabel aplikasi + `branches` sebagai hub multi-cabang)
 
 ```mermaid
 erDiagram
@@ -445,11 +445,365 @@ erDiagram
     }
 ```
 
-### 9.3 Ringkasan Diff Skema (kuantitatif)
+### 9.3 Detail Kolom Lengkap per Tabel — Baseline (`37ff85a9`, 13 tabel aplikasi)
+
+Sumber: migrasi bertanggal ≤ `2025_12_28_120848_alter_users_new_column_branch_id.php`. Tabel infrastruktur framework (`sessions`, `cache`, `cache_locks`) tidak dirinci karena bawaan skeleton Laravel, tidak berubah selama rentang tracking.
+
+**branches**
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | bigint PK | auto-increment |
+| location | string | |
+| created_at, updated_at | timestamp | |
+
+**users**
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | bigint PK | |
+| username | string(100) | unique |
+| password | string(100) | |
+| role | string(50) | default `user` |
+| token | string(100) | unique, nullable |
+| branch_id | bigint FK → branches.id | cascade update/delete |
+| created_at, updated_at | timestamp | |
+
+**ayah**
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | bigint PK | |
+| nama | string(100) | nullable |
+| pendidikan_terakhir | string(50) | nullable |
+| pekerjaan | string(100) | nullable |
+| created_at, updated_at | timestamp | |
+
+**ibu** — kolom identik dengan `ayah` (id, nama, pendidikan_terakhir, pekerjaan, timestamps).
+
+**kategoris**
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | bigint PK | |
+| nama | string(100) | |
+| branch_id | bigint FK → branches.id | |
+| created_at, updated_at | timestamp | |
+
+**kelas**
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | bigint PK | |
+| jenjang | enum(MI,TK,KB) | |
+| nama | string(100) | |
+| branch_id | bigint FK → branches.id | |
+| created_at, updated_at | timestamp | |
+
+**walis**
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | bigint PK | |
+| nama | string(100) | |
+| pekerjaan | string(100) | nullable |
+| alamat | text | |
+| no_hp | string(100) | |
+| keterangan | text | nullable |
+| created_at, updated_at | timestamp | |
+
+**siswas**
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | bigint PK | |
+| nis | string(20) | unique |
+| nisn | string(20) | unique, nullable |
+| nama | string(100) | |
+| jenis_kelamin | enum(Laki-laki,Perempuan) | |
+| tempat_lahir | string(100) | |
+| tanggal_lahir | date | |
+| agama | string(50) | |
+| alamat | text | |
+| ayah_id | bigint FK → ayah.id | nullable |
+| ibu_id | bigint FK → ibu.id | nullable |
+| wali_id | bigint FK → walis.id | nullable |
+| jenjang | enum(TK,MI,KB) | |
+| kelas_id | bigint FK → kelas.id | nullable |
+| kategori_id | bigint FK → kategoris.id | nullable |
+| asal_sekolah | string(150) | nullable |
+| kelas_diterima | string(10) | nullable |
+| tahun_diterima | year | nullable |
+| status | enum(Aktif,Lulus,Pindah,Keluar) | default Aktif |
+| keterangan | text | nullable |
+| branch_id | bigint FK → branches.id | |
+| created_at, updated_at | timestamp | |
+
+**jenis_tagihans**
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | bigint PK | |
+| nama | string(100) | |
+| jatuh_tempo | date | |
+| jumlah | decimal(12,2) | |
+| branch_id | bigint FK → branches.id | |
+| created_at, updated_at | timestamp | |
+
+**tagihans**
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| kode_tagihan | char(30) PK | |
+| jenis_tagihan_id | bigint FK → jenis_tagihans.id | |
+| nis | string(20) | unique, FK → siswas.nis |
+| tmp | decimal(12,2) | default 0 |
+| status | enum(Lunas,Belum Lunas,Belum Dibayar) | default Belum Dibayar |
+| branch_id | bigint FK → branches.id | |
+| created_at, updated_at | timestamp | |
+
+**pembayarans**
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| kode_pembayaran | char(30) PK | |
+| kode_tagihan | char(30) FK → tagihans.kode_tagihan | index |
+| tanggal | date | default now(), index |
+| metode | enum(offline, online_midtrans) | default offline |
+| jumlah | decimal(12,2) | default 0 |
+| pembayar | string(100) | |
+| branch_id | bigint FK → branches.id | |
+| created_at, updated_at | timestamp | |
+
+**app_settings**
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | bigint PK | ditambahkan belakangan (migrasi terpisah) |
+| nama_sekolah | string(255) | |
+| lokasi | string(100) | |
+| alamat | text | |
+| email | string | |
+| telepon | string(20) | |
+| kepala_sekolah | string(100) | |
+| bendahara | string(100) | |
+| kode_pos | string(15) | |
+| logo | string(255) | |
+| branch_id | bigint FK → branches.id | |
+| created_at, updated_at | timestamp | |
+
+**pengeluarans**
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | bigint PK | |
+| tanggal | date | default now(), index |
+| uraian | text | |
+| jumlah | decimal(12,2) | |
+| branch_id | bigint FK → branches.id | |
+| created_at, updated_at | timestamp | |
+
+---
+
+### 9.4 Detail Kolom Lengkap per Tabel — Saat Ini (HEAD `de22f75` + sesi belum commit, 39 tabel aplikasi)
+
+Kolom baseline yang bertahan tidak diulang detail per-field jika tidak berubah — hanya delta (kolom baru/dihapus/diubah) yang ditandai **[baru]**/**[dihapus]**/**[diubah]**. Tabel yang seluruhnya baru ditandai di judul.
+
+**branches** — tidak berubah dari 9.3.
+
+**users** *(berubah)*
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | bigint PK | |
+| username | string(100) | unique |
+| password | string(100) | |
+| ~~role~~ | — | **[dihapus]** migrasi `2026_05_01_235610` |
+| ~~token~~ | — | **[dihapus]** migrasi `2026_05_02_010000`, digantikan `personal_access_tokens` |
+| name | string | **[baru]** nullable, migrasi `2026_05_24` (backfill dari `username`) |
+| email | string | **[baru]** nullable, unique bersama `branch_id` (`users_email_branch_unique`) |
+| email_verified_at | timestamp | **[baru]** nullable |
+| branch_id | bigint FK → branches.id | |
+| siswa_id | bigint FK → siswas.id | **[baru]** nullable, `nullOnDelete` — akun portal siswa |
+| is_active | boolean | **[baru]** default true |
+| must_change_password | boolean | **[baru]** default false |
+| created_at, updated_at | timestamp | |
+
+**ayah** *(berubah)* — tambahan **[baru]**: `email` string(255) nullable, `email_verified_at` timestamp nullable.
+**ibu** *(berubah)* — tambahan sama persis dengan `ayah`.
+**walis** *(berubah)* — tambahan **[baru]**: `email` string(255) nullable, `email_verified_at` timestamp nullable.
+
+**kategoris** — tidak berubah dari 9.3.
+
+**kelas** *(berubah)*
+- **[baru]** `level` unsignedInteger, nullable, default null (posisi setelah `nama`).
+- **[baru]** unique index gabungan `(jenjang, branch_id, level)` — `kelas_jenjang_branch_level_unique`.
+
+**siswas** *(berubah)*
+- **[baru]** `batch_reference` char(36), nullable, index — jejak asal-usul baris hasil import massal.
+
+**jenis_tagihans** *(berubah)*
+- **[baru]** `tahun_ajaran_id` unsignedBigInteger FK → tahun_ajarans.id, awalnya nullable lalu diubah **NOT NULL** (migrasi `2026_05_25_100400`), `onDelete('restrict')`.
+
+**tagihans** *(berubah)*
+- `nis` **[diubah]**: constraint `unique` dihapus (migrasi `2025_12_02`, sebelum rentang tracking tapi relevan) — satu siswa kini bisa punya banyak tagihan; FK ke `siswas.nis` tetap ada dengan `cascadeOnDelete`.
+- **[baru]** `batch_reference` char(36), nullable, index.
+- **[baru]** `tahun_ajaran_id` unsignedBigInteger FK → tahun_ajarans.id, nullable, `onDelete('set null')`.
+
+**pembayarans** *(berubah)*
+- **[baru]** `midtrans_order_id` string(64), nullable, unique — traceability ke `midtrans_transactions`.
+- **[baru]** index `idx_pembayarans_metode` pada kolom `metode` (mendukung filter online/offline).
+
+**app_settings** — tidak berubah dari 9.3.
+
+**pengeluarans** *(berubah)*
+- **[baru]** `tahun_ajaran_id` bigint FK → tahun_ajarans.id, nullable, `nullOnDelete`, dengan backfill otomatis berdasar rentang tanggal tahun ajaran.
+- **[baru]** `pengeluaran_request_id` bigint FK → pengeluaran_requests.id, nullable, `nullOnDelete` — link ke alur approval.
+
+---
+
+**RBAC — spatie/laravel-permission (5 tabel baru)**
+
+`permissions`
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | bigint PK | |
+| name | string | |
+| guard_name | string | unique bersama `name` |
+| group | string | nullable **[baru §07-09]** — grouping tampilan |
+| audience | string | nullable **[baru §07-09]** — target role/audience |
+| label | string | nullable **[baru §07-09]** — label tampilan |
+| created_at, updated_at | timestamp | |
+
+`roles`: id, team_foreign_key (opsional, mode teams), name, guard_name, timestamps — unique(name, guard_name).
+`model_has_permissions`: permission_id, model_type, model_id (morph), PK komposit (permission_id, model_id, model_type).
+`model_has_roles`: role_id, model_type, model_id (morph), PK komposit (role_id, model_id, model_type).
+`role_has_permissions`: permission_id, role_id — PK komposit.
+
+**RBAC — lapisan resource_key dinamis (2 tabel final, 1 tabel sempat ada lalu dilebur)**
+
+`permission_endpoints` *(bentuk final pasca `2026_07_10_164859`)*
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | bigint PK | |
+| permission_id | bigint FK → permissions.id | nullable, `nullOnDelete` |
+| resource_key | string(255) | unique, NOT NULL |
+| ~~method~~, ~~path_pattern~~ | — | **[dihapus]** ada di skema awal (`2026_07_09_000001`), dibuang saat penyederhanaan pointer |
+| group | string(100) | nullable |
+| description | text | nullable |
+| is_active | boolean | default true |
+| created_at, updated_at | timestamp | |
+
+`page_permissions` *(bentuk final pasca `2026_07_10_000002`)*
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | bigint PK | |
+| ~~route_pattern~~ | — | **[dihapus]** migrasi `2026_07_10_000001` — bagian penyederhanaan "pure pointer" |
+| permission_name | string(255) | nullable |
+| guard_name | string | default `web` |
+| group | string(100) | nullable **[merge dari permission_resources]** |
+| description | text | nullable **[merge dari permission_resources]** |
+| resource_key | string(255) | **[baru §07-09-000008]** → jadi unique + NOT NULL setelah merge |
+| is_active | boolean | default true |
+| created_at, updated_at | timestamp | |
+
+`permission_resources` — **tabel transisi, dibuat `2026_07_09_000002` lalu dihapus total (`Schema::dropIfExists`) oleh `2026_07_10_000002`** setelah datanya disalin ke `page_permissions`. Kolom terakhir sebelum dihapus: id, permission_id (FK), resource_key (unique), label, description, group, is_active, timestamps.
+
+**Auth tambahan (2 tabel baru)**
+
+`personal_access_tokens` (Sanctum): id, tokenable_type + tokenable_id (morph), name, token(64, unique), abilities (text nullable), expires_at, last_used_at, timestamps.
+`password_reset_tokens`: id, email (index), token(64, unique), used (boolean, default false), created_at (useCurrent), expires_at.
+
+---
+
+**Tahun Ajaran & Kenaikan Kelas (4 tabel baru)**
+
+`tahun_ajarans`
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | bigint PK | |
+| nama | string(9) | format `YYYY/YYYY` |
+| tanggal_mulai | date | |
+| tanggal_selesai | date | |
+| status | enum(Aktif, Non-Aktif) | default Non-Aktif |
+| branch_id | bigint FK → branches.id | |
+| created_at, updated_at | timestamp | unique(nama, branch_id); index(branch_id, status) |
+
+`siswa_kelas`: id, siswa_id (FK), kelas_id (FK), tahun_ajaran_id (FK), timestamps — unique(siswa_id, tahun_ajaran_id) → histori kelas per periode.
+
+`batch_promosis`
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | char(36) PK | UUID |
+| batch_type | enum(bulk_promotion, individual_promotion, kelulusan, tinggal_kelas, pindah_jenjang) | |
+| source_tahun_ajaran_id | bigint FK → tahun_ajarans.id | |
+| target_tahun_ajaran_id | bigint FK → tahun_ajarans.id | |
+| kelas_id | bigint FK → kelas.id | nullable, `set null` |
+| processed_by | bigint FK → users.id | |
+| processed_at | timestamp | |
+| status | enum(completed, undone) | default completed — mendukung undo |
+| branch_id | bigint FK → branches.id | |
+| created_at, updated_at | timestamp | |
+
+`batch_promosi_details`: id, batch_id (char(36) FK → batch_promosis.id), siswa_id (FK), action (enum: naik_kelas/tinggal_kelas/lulus/pindah_jenjang), source_kelas_id (FK), target_kelas_id (FK nullable), previous_status string(20), previous_jenjang string(5) nullable, timestamps.
+
+---
+
+**Approval Pengeluaran & Notifikasi (7 tabel baru)**
+
+`pengeluaran_requests`: id, uraian, jumlah decimal(13,2), tanggal_kebutuhan (date), kategori_pengeluaran (nullable), lampiran (nullable), status enum(draft/submitted/approved/rejected/disbursed) default draft, requester_id (FK→users), branch_id (FK), timestamps.
+
+`approval_logs`: id, pengeluaran_request_id (FK, cascade), previous_status, new_status, user_id (FK→users), note (text nullable), created_at (useCurrent).
+
+`branch_approval_settings`: id, branch_id (FK, unique — 1:1), auto_approval_enabled (boolean default false), auto_approval_threshold (decimal(13,2) default 0), timestamps.
+
+`notifications`: id, user_id (FK→users), type, title, message (text), data (json nullable), is_read (boolean default false), created_at (useCurrent).
+
+`notification_settings`: id, branch_id (FK, unique), tagihan_baru_enabled/reminder_enabled/kwitansi_enabled/overdue_enabled (boolean default true), reminder_days_before (json nullable), overdue_interval_days (int default 7), timestamps.
+
+`notification_logs`: id, branch_id (FK), recipient_email, notification_type enum(tagihan_baru/reminder/kwitansi/overdue), tagihan_kode (nullable), status enum(sent/failed/skipped), reason (nullable), error_message (text nullable), sent_at (nullable), timestamps.
+
+`email_opt_outs`: id, email, notification_type enum(tagihan_baru/reminder/kwitansi/overdue/all), token (unique), timestamps — unique(email, notification_type).
+
+`notification_sent_records`: id, tagihan_kode, notification_type enum(4 nilai sama di atas), sent_date (date), timestamps — unique(tagihan_kode, notification_type, sent_date).
+
+---
+
+**Import/Export (2 tabel baru)**
+
+`import_batches`: id, batch_reference (char(36) unique), user_id (FK), import_type enum(siswa,tagihan), file_name(255), total_rows/success_count/error_count (unsignedInteger default 0), status enum(processing/completed/failed/rolled_back) default processing, error_message (text nullable), rolled_back_at (nullable), rolled_back_by (FK→users nullable), branch_id (FK), timestamps.
+
+`export_jobs`: id, job_reference (char(36) unique), user_id (FK), export_type string(50), filters (json nullable), format string(10), status enum(processing/completed/failed) default processing, file_path(500) nullable, error_message (text nullable), expires_at (nullable), branch_id (FK), timestamps.
+
+---
+
+**Midtrans (2 tabel baru)**
+
+`midtrans_transactions`
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | bigint PK | |
+| order_id | string(64) | unique |
+| kode_tagihan | string(64) | FK → tagihans.kode_tagihan (restrict on delete) — untuk batch, menunjuk tagihan "primer" |
+| batch_items | json | nullable **[baru §06-23]** — breakdown per-tagihan `{kode_tagihan, amount}` untuk pembayaran batch |
+| nis | string(32) | index |
+| amount_paid | unsignedBigInteger | |
+| fee_amount | unsignedBigInteger | |
+| gross_amount | unsignedBigInteger | |
+| currency | char(3) | default IDR |
+| status | enum(pending/settlement/capture/deny/cancel/expire/failure/refund/partial_refund) | default pending, index |
+| payment_type | string(64) | nullable |
+| snap_token | string(128) | nullable |
+| snap_redirect_url | string(255) | nullable |
+| expired_at | dateTime | index |
+| paid_at | dateTime | nullable |
+| initiator_user_id | bigint FK → users.id | nullable |
+| branch_id | integer | nullable |
+| last_raw_response | json | nullable |
+| created_at, updated_at | timestamp | |
+
+`midtrans_transaction_logs`: id, order_id (nullable, index), direction enum(outbound_charge/outbound_status/inbound_notification), http_status (nullable), raw_payload (longText nullable), remote_ip(45) nullable, created_at (useCurrent, index).
+
+---
+
+**Filament UI (1 tabel baru)**
+
+`filament_notifications`: id (uuid PK), type, notifiable_type + notifiable_id (morph), data (text), read_at (nullable), timestamps. Tabel terpisah dari `notifications` kustom karena Filament butuh skema database-notification standar Laravel.
+
+---
+
+### 9.5 Ringkasan Diff Skema (kuantitatif)
 
 | Aspek | Baseline (`37ff85a9`) | Saat ini (HEAD `de22f75`) |
 |---|---|---|
-| Jumlah tabel aplikasi (di luar tabel framework Laravel: `sessions`, `cache`, `jobs`, dll) | 14 | ~35 |
+| Jumlah tabel aplikasi (di luar tabel framework Laravel: `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`) | 13 | 39 (termasuk 1 tabel transisi `permission_resources` yang sempat ada lalu dilebur/dihapus) |
 | Mekanisme akses | 1 kolom `users.role` (string) | Spatie RBAC + `resource_key` dinamis (5 tabel: `permissions`, `roles`, `model_has_*`, `permission_endpoints`, `page_permissions`) |
 | Auth token | `users.token` (kolom custom, unique, nullable) | Sanctum `personal_access_tokens` (kolom `token` lama di-drop) |
 | Riwayat kelas siswa | Tidak ada — `siswas.kelas_id` statis | `siswa_kelas` (histori per `tahun_ajaran_id`) + `batch_promosis`/`batch_promosi_details` |

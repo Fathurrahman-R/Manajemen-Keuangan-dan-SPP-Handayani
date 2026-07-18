@@ -57,12 +57,60 @@ class TagihanTest extends TestCase
         $payload = [
             'jenis_tagihan_id' => $scenario['jt']->id,
             'jenjang' => 'MI',
-            'kelas_id' => $scenario['kelas']->id,
-            'kategori_id' => $scenario['kategori']->id,
+            'kelas_id' => [$scenario['kelas']->id],
+            'kategori_id' => [$scenario['kategori']->id],
         ];
         $this->post('api/tagihan', $payload, ['Authorization' => $admin->token])
             ->assertStatus(201)
             ->assertJson(['errors' => []]);
+    }
+
+    public function test_create_tagihan_multi_kelas_kategori_success()
+    {
+        $admin = \App\Models\User::factory()->admin()->create(['token' => 'tagihan-multi']);
+        $jt = \App\Models\JenisTagihan::factory()->create();
+
+        $kelasA = \App\Models\Kelas::factory()->create();
+        $kelasB = \App\Models\Kelas::factory()->create();
+        $kategoriA = \App\Models\Kategori::factory()->create();
+        $kategoriB = \App\Models\Kategori::factory()->create();
+
+        // Satu siswa per kombinasi kelas x kategori yang dipilih (4 total), plus satu siswa di luar seleksi.
+        Siswa::factory()->create(['jenjang' => 'MI', 'kelas_id' => $kelasA->id, 'kategori_id' => $kategoriA->id]);
+        Siswa::factory()->create(['jenjang' => 'MI', 'kelas_id' => $kelasA->id, 'kategori_id' => $kategoriB->id]);
+        Siswa::factory()->create(['jenjang' => 'MI', 'kelas_id' => $kelasB->id, 'kategori_id' => $kategoriA->id]);
+        Siswa::factory()->create(['jenjang' => 'MI', 'kelas_id' => $kelasB->id, 'kategori_id' => $kategoriB->id]);
+        $kelasLain = \App\Models\Kelas::factory()->create();
+        Siswa::factory()->create(['jenjang' => 'MI', 'kelas_id' => $kelasLain->id, 'kategori_id' => $kategoriA->id]);
+
+        $payload = [
+            'jenis_tagihan_id' => $jt->id,
+            'jenjang' => 'MI',
+            'kelas_id' => [$kelasA->id, $kelasB->id],
+            'kategori_id' => [$kategoriA->id, $kategoriB->id],
+        ];
+
+        $response = $this->post('api/tagihan', $payload, ['Authorization' => $admin->token])
+            ->assertStatus(201)
+            ->assertJson(['errors' => []]);
+
+        $response->assertJsonCount(4, 'data');
+    }
+
+    public function test_create_tagihan_requires_at_least_one_kelas_and_kategori()
+    {
+        $admin = \App\Models\User::factory()->admin()->create(['token' => 'tagihan-multi-empty']);
+        $jt = \App\Models\JenisTagihan::factory()->create();
+
+        $payload = [
+            'jenis_tagihan_id' => $jt->id,
+            'jenjang' => 'MI',
+            'kelas_id' => [],
+            'kategori_id' => [],
+        ];
+
+        $this->post('api/tagihan', $payload, ['Authorization' => $admin->token])
+            ->assertStatus(400);
     }
 
     public function test_get_tagihan_success()
