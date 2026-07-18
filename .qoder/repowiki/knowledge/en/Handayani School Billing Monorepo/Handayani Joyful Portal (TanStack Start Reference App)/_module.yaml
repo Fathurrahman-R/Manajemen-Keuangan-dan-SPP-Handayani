@@ -1,8 +1,0 @@
-schema_version: 1
-module_path: portal_reference
-title: Handayani Joyful Portal (TanStack Start Reference App)
-scope:
-    - portal-reference/
-source_files: []
-depends_on: []
-related_to: []

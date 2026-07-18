@@ -1,1 +1,0 @@
-Laravel 12 REST API for a school billing system covering students, invoices, payments, cash flow, RBAC admin panel, and Midtrans online payment integration.
