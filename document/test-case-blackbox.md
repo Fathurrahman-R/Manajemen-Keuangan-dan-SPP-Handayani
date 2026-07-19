@@ -48,14 +48,14 @@ Akses admin panel: `http://127.0.0.1:8000/admin` (atau path admin sesuai konfigu
 
 Password untuk seluruh akun non-siswa (superadmin, developer, kepala yayasan, admin cabang): **`!handayani123`**
 
-| Role           | Username              | Branch                         |
-|----------------|-----------------------|--------------------------------|
-| Superadmin     | `superadmin`          | Selat Panjang (cabang pertama) |
-| Developer      | `developer`           | Selat Panjang                  |
-| Kepala Yayasan | `yayasan`             | Selat Panjang                  |
-| Admin Cabang   | `admin_selat_panjang` | Selat Panjang                  |
-| Admin Cabang   | `admin_desa_kapur`    | Desa Kapur                     |
-| Admin Cabang   | `admin_darma_putra`   | Darma Putra                    |
+| Role           | Username                   | Branch                         |
+|----------------|----------------------------|--------------------------------|
+| Superadmin     | `superadmin@handayani.com` | Selat Panjang (cabang pertama) |
+| Developer      | `developer@handayani.com`  | Selat Panjang                  |
+| Kepala Yayasan | `yayasan@handayani.com`    | Selat Panjang                  |
+| Admin Cabang   | `admin_selat_panjang`      | Selat Panjang                  |
+| Admin Cabang   | `admin_desa_kapur`         | Desa Kapur                     |
+| Admin Cabang   | `admin_darma_putra`        | Darma Putra                    |
 
 Cabang seeded (`BranchSeeder`): **Selat Panjang**, **Desa Kapur**, **Darma Putra**.
 
