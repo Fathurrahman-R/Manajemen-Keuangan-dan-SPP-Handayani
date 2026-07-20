@@ -15,26 +15,28 @@ use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\HtmlString;
+use Livewire\Attributes\Lazy;
 use Livewire\Component;
 
+#[Lazy]
 class TagihanSiswa extends Component implements HasActions, HasSchemas
 {
     use \App\Livewire\Concerns\HandlesApiErrors;
     use InteractsWithActions;
     use InteractsWithSchemas;
 
-    public array $tagihanData = [];
+    public function placeholder(): View
+    {
+        return view('components.global-loading-spinner', ['static' => true, 'message' => 'Memuat tagihan...']);
+    }
 
-    public array $siblings = [];
+    public array $tagihanData = [];
 
     public ?int $selectedSiswaId = null;
 
     public ?string $selectedSiswaName = null;
-
-    public ?int $ownerSiswaId = null;
-
-    public ?string $ownerSiswaName = null;
 
     /** Kode tagihan yang dipilih siswa untuk bayar batch online. */
     public array $selectedKodeTagihan = [];
@@ -46,49 +48,26 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
 
     public function loadData(): void
     {
-        $params = [];
-
-        if ($this->selectedSiswaId) {
-            $params['siswa_id'] = $this->selectedSiswaId;
-        }
-
         try {
-            $response = ApiService::client()->get('/tagihan/siswa', $params);
+            $response = ApiService::client()->get('/tagihan/siswa');
 
             if ($response->ok()) {
                 $json = $response->json();
                 $data = $json['data'] ?? [];
                 $this->tagihanData = $data['tagihan'] ?? [];
-                $this->siblings = $data['siblings'] ?? [];
                 $this->selectedSiswaId = $data['selected_siswa_id'] ?? null;
                 $this->selectedSiswaName = $data['selected_siswa_nama'] ?? null;
-
-                // Store owner info on first load (when no siswa_id param was sent)
-                if ($this->ownerSiswaId === null) {
-                    $this->ownerSiswaId = $this->selectedSiswaId;
-                    $this->ownerSiswaName = $this->selectedSiswaName;
-                }
             } else {
                 $this->handleApiError($response);
                 $this->tagihanData = [];
-                $this->siblings = [];
             }
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             $this->notifyConnectionError();
             $this->tagihanData = [];
-            $this->siblings = [];
         } catch (\Throwable $e) {
             $this->notifyUnexpectedError();
             $this->tagihanData = [];
-            $this->siblings = [];
         }
-    }
-
-    public function updatedSelectedSiswaId(): void
-    {
-        // Reset selection when switching sibling.
-        $this->selectedKodeTagihan = [];
-        $this->loadData();
     }
 
     /**
@@ -129,11 +108,6 @@ class TagihanSiswa extends Component implements HasActions, HasSchemas
         $this->selectedKodeTagihan = count(array_intersect($this->selectedKodeTagihan, $eligibleCodes)) === count($eligibleCodes)
             ? []
             : $eligibleCodes;
-    }
-
-    public function hasSiblings(): bool
-    {
-        return count($this->siblings) > 0;
     }
 
     /**
