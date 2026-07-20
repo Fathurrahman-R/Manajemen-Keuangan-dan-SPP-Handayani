@@ -9,11 +9,12 @@ use Livewire\Component;
 class BranchSwitcher extends Component
 {
     public $branches = [];
+
     public $activeBranchId;
 
     public function mount()
     {
-        if (!PermissionHelper::hasResource('ui.branch_switcher.view')) {
+        if (! PermissionHelper::hasResource('ui.branch_switcher.view')) {
             return;
         }
 
@@ -34,16 +35,26 @@ class BranchSwitcher extends Component
     {
         if ($value) {
             session(['active_branch_id' => $value]);
-            
-            // Reload halaman secara instan dari sisi client
-            // agar tidak menunggu Livewire roundtrip selesai.
-            $this->js('window.location.reload()');
+
+            // Livewire navigate (not a full browser reload) — remounts the
+            // current page (and every widget on it) against the new branch.
+            // `wire:target="activeBranchId"` on the spinner in this component's
+            // view covers the AJAX phase; the navigate swap itself is near-
+            // instant once the response lands, so no separate handoff is needed.
+            //
+            // NOT url()->full() — this component's action runs as part of the
+            // POST to /livewire/update, so url()->full() resolves to THAT
+            // endpoint, not the page the browser is showing (redirects the
+            // whole tab to /livewire/update, a 405). The Referer header on that
+            // POST is the actual page; url()->previous() (session-tracked, GET
+            // requests only) is the fallback if it's ever missing.
+            $this->redirect(request()->header('referer') ?? url()->previous(), navigate: true);
         }
     }
 
     public function render()
     {
-        if (!PermissionHelper::hasResource('ui.branch_switcher.view')) {
+        if (! PermissionHelper::hasResource('ui.branch_switcher.view')) {
             return <<<'HTML'
                 <div></div>
             HTML;

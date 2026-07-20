@@ -4,9 +4,12 @@ namespace App\Livewire;
 
 use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Client\ConnectionException;
+use Livewire\Attributes\Lazy;
 use Livewire\Component;
 
+#[Lazy]
 class SiswaDashboard extends Component
 {
     use HandlesApiErrors;
@@ -14,6 +17,11 @@ class SiswaDashboard extends Component
     public array $dashboardData = [];
 
     public bool $loading = true;
+
+    public function placeholder(): View
+    {
+        return view('components.global-loading-spinner', ['static' => true, 'message' => 'Memuat dashboard...']);
+    }
 
     public function mount(): void
     {

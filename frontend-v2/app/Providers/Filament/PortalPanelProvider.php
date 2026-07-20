@@ -34,7 +34,6 @@ class PortalPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         $path = config('handayani.portal.path', 'portal');
-        $spa = config('handayani.features.spa_loading_enabled', true);
         $breadcrumbs = config('handayani.portal.breadcrumbs', false);
 
         return $panel
@@ -42,7 +41,7 @@ class PortalPanelProvider extends PanelProvider
             ->path($path)
             ->homeUrl($path.'/beranda')
             ->darkMode(true)
-            ->spa($spa)
+            ->spa(false)
             ->breadcrumbs($breadcrumbs)
             ->sidebarCollapsibleOnDesktop(false)
             ->sidebarFullyCollapsibleOnDesktop(false)
@@ -127,7 +126,7 @@ class PortalPanelProvider extends PanelProvider
     {
         $branding = BrandingService::get();
 
-        return $branding->branchName ? $branding->branchName.' Portal' : env('APP_NAME', 'Handayani').' Portal';
+        return $branding->branchName ? $branding->branchName.' Portal' : config('app.name', 'Handayani').' Portal';
     }
 
     protected function resolveBrandLogo(): ?string

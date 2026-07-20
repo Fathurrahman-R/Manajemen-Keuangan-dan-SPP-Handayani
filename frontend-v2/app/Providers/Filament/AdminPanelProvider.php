@@ -62,7 +62,7 @@ class AdminPanelProvider extends PanelProvider
             ->passwordReset(ForgotPassword::class)
             ->profile(false)
             ->darkMode(true)
-            ->spa(config('handayani.features.spa_loading_enabled', true))
+            ->spa(false)
             ->breadcrumbs(true)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -112,10 +112,6 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
                 fn () => Blade::render('@livewire("branch-switcher")')
-            )
-            ->renderHook(
-                PanelsRenderHook::BODY_END,
-                fn () => Blade::render('@include("components.pagination-loading")')
             )
             ->renderHook(
                 PanelsRenderHook::BODY_END,
@@ -385,7 +381,7 @@ class AdminPanelProvider extends PanelProvider
     {
         $branding = BrandingService::get();
 
-        return $branding->branchName ?: env('APP_NAME', 'Handayani');
+        return $branding->branchName ?: config('app.name', 'Handayani');
     }
 
     protected function resolveBrandLogo(): ?string

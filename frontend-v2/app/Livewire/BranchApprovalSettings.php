@@ -11,9 +11,12 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Client\ConnectionException;
+use Livewire\Attributes\Lazy;
 use Livewire\Component;
 
+#[Lazy]
 class BranchApprovalSettings extends Component implements HasForms
 {
     use HandlesApiErrors;
@@ -22,6 +25,11 @@ class BranchApprovalSettings extends Component implements HasForms
     public ?array $data = [];
 
     public bool $loaded = false;
+
+    public function placeholder(): View
+    {
+        return view('components.global-loading-spinner', ['static' => true, 'message' => 'Memuat pengaturan approval...']);
+    }
 
     public function mount(): void
     {

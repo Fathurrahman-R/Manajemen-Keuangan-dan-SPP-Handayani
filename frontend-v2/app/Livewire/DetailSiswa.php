@@ -12,12 +12,20 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\TextSize;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Lazy;
 use Livewire\Component;
 
+#[Lazy]
 class DetailSiswa extends Component implements HasSchemas
 {
     use InteractsWithSchemas;
+
+    public function placeholder(): View
+    {
+        return view('components.global-loading-spinner', ['static' => true, 'message' => 'Memuat data siswa...']);
+    }
 
     public ?string $jenjang;
 

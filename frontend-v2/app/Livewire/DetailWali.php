@@ -13,8 +13,11 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\TextSize;
+use Illuminate\Contracts\View\View;
+use Livewire\Attributes\Lazy;
 use Livewire\Component;
 
+#[Lazy]
 class DetailWali extends Component implements HasSchemas
 {
     use InteractsWithSchemas;
@@ -26,6 +29,11 @@ class DetailWali extends Component implements HasSchemas
     public function mount(int $id): void
     {
         $this->id = $id;
+    }
+
+    public function placeholder(): View
+    {
+        return view('components.global-loading-spinner', ['static' => true, 'message' => 'Memuat data wali...']);
     }
 
     public function infolistDataWali(Schema $schema): Schema
