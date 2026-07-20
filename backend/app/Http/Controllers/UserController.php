@@ -587,6 +587,7 @@ class UserController extends Controller
                     'reminder' => false,
                     'kwitansi' => false,
                     'overdue' => false,
+                    'workflow' => false,
                 ],
             ]);
         }
@@ -605,6 +606,7 @@ class UserController extends Controller
                 'reminder' => $isAllOptedOut ? false : ! in_array('reminder', $optOuts),
                 'kwitansi' => $isAllOptedOut ? false : ! in_array('kwitansi', $optOuts),
                 'overdue' => $isAllOptedOut ? false : ! in_array('overdue', $optOuts),
+                'workflow' => $isAllOptedOut ? false : ! in_array('workflow', $optOuts),
             ],
         ]);
     }
@@ -624,14 +626,21 @@ class UserController extends Controller
             ], 422));
         }
 
+        // All `sometimes` — PortalProfilPage.php (siswa) only ever sends the
+        // 4 tagihan-type toggles, EditProfile.php (staff/admin) only ever
+        // sends `workflow`. Neither caller manages the other's types, so
+        // nothing here can be `required` without breaking whichever caller
+        // doesn't send it.
         $data = $request->validate([
-            'tagihan_baru' => 'required|boolean',
-            'reminder' => 'required|boolean',
-            'kwitansi' => 'required|boolean',
-            'overdue' => 'required|boolean',
+            'tagihan_baru' => 'sometimes|boolean',
+            'reminder' => 'sometimes|boolean',
+            'kwitansi' => 'sometimes|boolean',
+            'overdue' => 'sometimes|boolean',
+            'workflow' => 'sometimes|boolean',
         ]);
 
-        $types = ['tagihan_baru', 'reminder', 'kwitansi', 'overdue'];
+        // Only types actually present in the request get touched.
+        $types = array_intersect(['tagihan_baru', 'reminder', 'kwitansi', 'overdue', 'workflow'], array_keys($data));
 
         // Remove 'all' just in case it exists to normalize
         \App\Models\EmailOptOut::where('email', $user->email)->where('notification_type', 'all')->delete();

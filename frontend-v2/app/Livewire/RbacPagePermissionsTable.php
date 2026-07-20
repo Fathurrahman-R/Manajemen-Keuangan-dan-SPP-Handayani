@@ -50,8 +50,7 @@ class RbacPagePermissionsTable extends Component implements HasActions, HasSchem
                 $search = $this->getTableSearch();
                 if (filled($search)) {
                     $search = strtolower($search);
-                    $records = $records->filter(fn ($item) =>
-                        str_contains(strtolower($item['resource_key'] ?? ''), $search)
+                    $records = $records->filter(fn ($item) => str_contains(strtolower($item['resource_key'] ?? ''), $search)
                         || str_contains(strtolower($item['permission_name'] ?? ''), $search)
                         || str_contains(strtolower($item['group'] ?? ''), $search)
                         || str_contains(strtolower($item['description'] ?? ''), $search)
@@ -83,7 +82,7 @@ class RbacPagePermissionsTable extends Component implements HasActions, HasSchem
                 TextColumn::make('description')->label('Deskripsi')->limit(40)->placeholder('-')->searchable()->toggleable(),
                 ToggleColumn::make('is_active')
                     ->label('Aktif')
-                    ->disabled(fn () => !PermissionHelper::hasResource('rbac.toggle'))
+                    ->disabled(fn () => ! PermissionHelper::hasResource('rbac.toggle'))
                     ->updateStateUsing(function ($state, $record): ?bool {
                         $r = ApiService::client()->put("/rbac/page-permissions/{$record['id']}", [
                             'is_active' => $state,
@@ -137,7 +136,8 @@ class RbacPagePermissionsTable extends Component implements HasActions, HasSchem
                         $r = ApiService::client()->post('/rbac/page-permissions', $data);
                         if (! $r->successful()) {
                             Notification::make()->title($r->json('message') ?? 'Gagal')->danger()->send();
-                            $this->halt();
+
+                            return;
                         }
                         Notification::make()->title('Resource dibuat.')->success()->send();
                     }),
@@ -170,7 +170,8 @@ class RbacPagePermissionsTable extends Component implements HasActions, HasSchem
                         $r = ApiService::client()->put("/rbac/page-permissions/{$record['id']}", $data);
                         if (! $r->successful()) {
                             Notification::make()->title($r->json('message') ?? 'Gagal')->danger()->send();
-                            $this->halt();
+
+                            return;
                         }
                         Notification::make()->title('Resource diperbarui.')->success()->send();
                     }),
@@ -181,7 +182,8 @@ class RbacPagePermissionsTable extends Component implements HasActions, HasSchem
                         $r = ApiService::client()->delete("/rbac/page-permissions/{$record['id']}");
                         if (! $r->successful()) {
                             Notification::make()->title($r->json('message') ?? 'Gagal')->danger()->send();
-                            $this->halt();
+
+                            return;
                         }
                         Notification::make()->title('Resource dihapus.')->success()->send();
                     }),

@@ -47,8 +47,7 @@ class RbacEndpointsTable extends Component implements HasActions, HasSchemas, Ha
                 $search = $this->getTableSearch();
                 if (filled($search)) {
                     $search = strtolower($search);
-                    $records = $records->filter(fn ($item) =>
-                        str_contains(strtolower($item['resource_key'] ?? ''), $search)
+                    $records = $records->filter(fn ($item) => str_contains(strtolower($item['resource_key'] ?? ''), $search)
                         || str_contains(strtolower($item['group'] ?? ''), $search)
                         || str_contains(strtolower($item['description'] ?? ''), $search)
                         || str_contains(strtolower($item['permission']['name'] ?? ''), $search)
@@ -80,7 +79,7 @@ class RbacEndpointsTable extends Component implements HasActions, HasSchemas, Ha
                 TextColumn::make('description')->label('Deskripsi')->limit(40)->placeholder('-')->searchable(),
                 ToggleColumn::make('is_active')
                     ->label('Aktif')
-                    ->disabled(fn () => !PermissionHelper::hasResource('rbac.toggle'))
+                    ->disabled(fn () => ! PermissionHelper::hasResource('rbac.toggle'))
                     ->updateStateUsing(function ($state, $record): ?bool {
                         $r = ApiService::client()->put("/rbac/endpoints/{$record['id']}", [
                             'is_active' => $state,
@@ -133,7 +132,8 @@ class RbacEndpointsTable extends Component implements HasActions, HasSchemas, Ha
                         $r = ApiService::client()->post('/rbac/endpoints', $data);
                         if (! $r->successful()) {
                             Notification::make()->title($r->json('message') ?? 'Gagal')->danger()->send();
-                            $this->halt();
+
+                            return;
                         }
                         Notification::make()->title('Endpoint dibuat.')->success()->send();
                     }),
@@ -165,7 +165,8 @@ class RbacEndpointsTable extends Component implements HasActions, HasSchemas, Ha
                         $r = ApiService::client()->put("/rbac/endpoints/{$record['id']}", $data);
                         if (! $r->successful()) {
                             Notification::make()->title($r->json('message') ?? 'Gagal')->danger()->send();
-                            $this->halt();
+
+                            return;
                         }
                         Notification::make()->title('Endpoint diperbarui.')->success()->send();
                     }),
@@ -176,7 +177,8 @@ class RbacEndpointsTable extends Component implements HasActions, HasSchemas, Ha
                         $r = ApiService::client()->delete("/rbac/endpoints/{$record['id']}");
                         if (! $r->successful()) {
                             Notification::make()->title($r->json('message') ?? 'Gagal')->danger()->send();
-                            $this->halt();
+
+                            return;
                         }
                         Notification::make()->title('Endpoint dihapus.')->success()->send();
                     }),

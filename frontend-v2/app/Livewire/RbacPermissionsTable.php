@@ -46,8 +46,7 @@ class RbacPermissionsTable extends Component implements HasActions, HasSchemas, 
                 $search = $this->getTableSearch();
                 if (filled($search)) {
                     $search = strtolower($search);
-                    $records = $records->filter(fn ($item) =>
-                        str_contains(strtolower($item['name'] ?? ''), $search)
+                    $records = $records->filter(fn ($item) => str_contains(strtolower($item['name'] ?? ''), $search)
                         || str_contains(strtolower($item['label'] ?? ''), $search)
                         || str_contains(strtolower($item['group'] ?? ''), $search)
                         || str_contains(strtolower($item['audience'] ?? ''), $search)
@@ -96,7 +95,8 @@ class RbacPermissionsTable extends Component implements HasActions, HasSchemas, 
                         $r = ApiService::client()->post('/rbac/permissions', $data);
                         if (! $r->successful()) {
                             Notification::make()->title($r->json('message') ?? 'Gagal')->danger()->send();
-                            $this->halt();
+
+                            return;
                         }
                         Notification::make()->title('Permission created.')->success()->send();
                     }),
@@ -121,7 +121,8 @@ class RbacPermissionsTable extends Component implements HasActions, HasSchemas, 
                         $r = ApiService::client()->put("/rbac/permissions/{$record['id']}", $data);
                         if (! $r->successful()) {
                             Notification::make()->title($r->json('message') ?? 'Gagal')->danger()->send();
-                            $this->halt();
+
+                            return;
                         }
                         Notification::make()->title('Permission updated.')->success()->send();
                     }),
@@ -132,7 +133,8 @@ class RbacPermissionsTable extends Component implements HasActions, HasSchemas, 
                         $r = ApiService::client()->delete("/rbac/permissions/{$record['id']}");
                         if (! $r->successful()) {
                             Notification::make()->title($r->json('message') ?? 'Gagal')->danger()->send();
-                            $this->halt();
+
+                            return;
                         }
                         Notification::make()->title('Permission deleted.')->success()->send();
                     }),

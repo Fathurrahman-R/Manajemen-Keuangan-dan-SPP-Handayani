@@ -113,8 +113,12 @@ class RbacController extends Controller
 
     public function updateEndpoint(Request $request, PermissionEndpoint $endpoint): JsonResponse
     {
+        // `sometimes` — this endpoint also serves the table's is_active toggle,
+        // which PUTs only `{is_active}`. A hard `required` here rejected every
+        // toggle with "Field resource key wajib diisi." even though the full
+        // edit form still requires it when resource_key IS present in the payload.
         $validated = $request->validate([
-            'resource_key' => 'required|string|max:255|unique:permission_endpoints,resource_key,'.$endpoint->id,
+            'resource_key' => 'sometimes|required|string|max:255|unique:permission_endpoints,resource_key,'.$endpoint->id,
             'permission_id' => 'nullable|exists:permissions,id',
             'group' => 'nullable|string|max:100',
             'description' => 'nullable|string',
@@ -173,8 +177,10 @@ class RbacController extends Controller
 
     public function updatePagePermission(Request $request, PagePermission $pagePermission): JsonResponse
     {
+        // `sometimes` — see updateEndpoint() above; this endpoint also serves
+        // the table's is_active toggle, which PUTs only `{is_active}`.
         $validated = $request->validate([
-            'resource_key' => 'required|string|max:255|unique:page_permissions,resource_key,'.$pagePermission->id,
+            'resource_key' => 'sometimes|required|string|max:255|unique:page_permissions,resource_key,'.$pagePermission->id,
             'permission_name' => 'nullable|string|max:255|exists:Spatie\Permission\Models\Permission,name',
             'guard_name' => 'nullable|string|max:255',
             'group' => 'nullable|string|max:100',
@@ -321,16 +327,16 @@ class RbacController extends Controller
         }
 
         $siswaHardcoded = [
-//            'Tagihan & Pembayaran' => array_map(
-//                fn (\App\Enum\Permission $p) => [
-//                    'name' => $p->value,
-//                    'label' => $this->humanizePermission($p->value),
-//                ],
-//                [
-//                    \App\Enum\Permission::VIEW_OWN_BILLING,
-//                    \App\Enum\Permission::PAY_TAGIHAN_ONLINE,
-//                ],
-//            ),
+            //            'Tagihan & Pembayaran' => array_map(
+            //                fn (\App\Enum\Permission $p) => [
+            //                    'name' => $p->value,
+            //                    'label' => $this->humanizePermission($p->value),
+            //                ],
+            //                [
+            //                    \App\Enum\Permission::VIEW_OWN_BILLING,
+            //                    \App\Enum\Permission::PAY_TAGIHAN_ONLINE,
+            //                ],
+            //            ),
         ];
 
         // ── Collect all hardcoded names so we don't double-add ──
@@ -342,8 +348,12 @@ class RbacController extends Controller
             ->toArray();
 
         // ── Dynamically add any permissions not in the hardcoded groups ──
+        // Permissions with a non-empty `audience` belong to their own audience
+        // section (built below), not the default "admin" section — otherwise
+        // e.g. a permission created with audience="Testing" would get bucketed
+        // into "admin" here before the audience-section loop ever sees it.
         $allDbPerms = Permission::orderBy('name')->get();
-        $orphaned = $allDbPerms->reject(fn ($p) => in_array($p->name, $allHardcodedNames));
+        $orphaned = $allDbPerms->reject(fn ($p) => in_array($p->name, $allHardcodedNames) || ! empty($p->audience));
 
         if ($orphaned->isNotEmpty()) {
             $dynamicGroups = [];
@@ -373,41 +383,49 @@ class RbacController extends Controller
         ];
 
         if ($audienceDbPermissions->isNotEmpty()) {
-            $sectionGroups = [];
+            // Build one section per distinct audience value found in the DB,
+            // not just the hardcoded 'siswa' — a permission created with a new
+            // audience (e.g. "Testing") must get its own section instead of
+            // being silently dropped from every audience section.
+            $audienceSectionGroups = [];
             foreach ($audienceDbPermissions as $perm) {
                 $audienceKey = $perm->audience;
                 $groupName = $perm->group ?: 'Lainnya';
 
-                if ($audienceKey === 'siswa') {
-                    if (! isset($sectionGroups[$groupName])) {
-                        $sectionGroups[$groupName] = [];
-                    }
-                    $sectionGroups[$groupName][] = [
-                        'name' => $perm->name,
-                        'label' => $perm->label ?: $this->humanizePermission($perm->name),
-                    ];
+                if (! isset($audienceSectionGroups[$audienceKey])) {
+                    $audienceSectionGroups[$audienceKey] = [];
                 }
+                if (! isset($audienceSectionGroups[$audienceKey][$groupName])) {
+                    $audienceSectionGroups[$audienceKey][$groupName] = [];
+                }
+                $audienceSectionGroups[$audienceKey][$groupName][] = [
+                    'name' => $perm->name,
+                    'label' => $perm->label ?: $this->humanizePermission($perm->name),
+                ];
             }
 
             // Merge hardcoded siswa permissions with dynamic ones
             foreach ($siswaHardcoded as $groupName => $entries) {
-                if (isset($sectionGroups[$groupName])) {
-                    $sectionGroups[$groupName] = array_merge($sectionGroups[$groupName], $entries);
+                if (isset($audienceSectionGroups['siswa'][$groupName])) {
+                    $audienceSectionGroups['siswa'][$groupName] = array_merge($audienceSectionGroups['siswa'][$groupName], $entries);
                 } else {
-                    $sectionGroups[$groupName] = $entries;
+                    $audienceSectionGroups['siswa'][$groupName] = $entries;
                 }
             }
-            $audiences['siswa'] = [
-                'label' => 'Siswa / Wali',
-                'groups' => $sectionGroups,
-            ];
+
+            foreach ($audienceSectionGroups as $audienceKey => $sectionGroups) {
+                $audiences[$audienceKey] = [
+                    'label' => $audienceKey === 'siswa' ? 'Siswa / Wali' : \Illuminate\Support\Str::headline($audienceKey),
+                    'groups' => $sectionGroups,
+                ];
+            }
         }
 
         return response()->json([
             'data' => [
                 'audiences' => $audiences,
                 ...$defaultGroups,
-//                'Siswa Portal' => $siswaHardcoded['Tagihan & Pembayaran'],
+                //                'Siswa Portal' => $siswaHardcoded['Tagihan & Pembayaran'],
             ],
         ]);
     }
@@ -616,8 +634,8 @@ class RbacController extends Controller
                 'user_id' => $user->id,
                 'user_username' => $user->username,
                 'user_branch' => $user->branch_id,
-                'perms' => $userPermNames
-            ]
+                'perms' => $userPermNames,
+            ],
         ]);
     }
 
