@@ -17,21 +17,24 @@ class IdentifierService
     /**
      * Find a user by identifier with automatic routing.
      *
-     * - If identifier contains "@": query by email (case-insensitive, is_active=true)
-     * - If not: query by username (is_active=true)
+     * - If identifier contains "@": query by email (case-insensitive)
+     * - If not: query by username
      * - For admin/operator with email set: username login is disabled
+     *
+     * Deliberately does NOT filter by is_active here — callers (AuthController)
+     * need to distinguish "no such account" from "account deactivated" so they
+     * can surface the specific "Akun tidak aktif" message instead of a
+     * misleading "username/password salah" for a disabled account.
      */
     public function findUserByIdentifier(string $identifier): ?User
     {
         if ($this->isEmail($identifier)) {
             return User::where('email', strtolower(trim($identifier)))
-                ->where('is_active', true)
                 ->first();
         }
 
         // Non-email identifier — query by username
         $user = User::where('username', $identifier)
-            ->where('is_active', true)
             ->first();
 
         if (! $user) {

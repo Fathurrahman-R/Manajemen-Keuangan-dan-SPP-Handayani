@@ -146,6 +146,27 @@ class UserTest extends TestCase
             ]);
     }
 
+    public function test_login_failed_inactive_account_shows_specific_message(): void
+    {
+        $user = User::factory()->admin()->create([
+            'username' => 'nonaktif_user',
+            'password' => \Illuminate\Support\Facades\Hash::make('admin123'),
+            'is_active' => false,
+        ]);
+
+        $this->post('api/login', [
+            'username' => 'nonaktif_user',
+            'password' => 'admin123',
+        ])->assertStatus(401)
+            ->assertJson([
+                'errors' => [
+                    'message' => [
+                        'Akun tidak aktif. Hubungi admin sekolah.',
+                    ],
+                ],
+            ]);
+    }
+
     public function test_login_failed()
     {
         $this->post('api/login', [
