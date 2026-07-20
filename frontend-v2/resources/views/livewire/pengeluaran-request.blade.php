@@ -1,4 +1,6 @@
 <div class="space-y-4">
+    @livewire(\App\Filament\Widgets\PengeluaranStatsWidget::class)
+
     @if($this->hasTahunAjaranOptions())
         <x-filament::section>
             <div class="flex flex-wrap items-center gap-3">

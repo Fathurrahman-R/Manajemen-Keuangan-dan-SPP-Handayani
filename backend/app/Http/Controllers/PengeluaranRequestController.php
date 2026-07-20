@@ -15,6 +15,19 @@ class PengeluaranRequestController extends Controller
         private readonly WorkflowService $workflowService
     ) {}
 
+    /**
+     * Saldo cabang, total request outstanding (submitted+approved, belum
+     * dicairkan), dan saldo tersedia untuk request baru. Selalu branch-wide
+     * (semua tahun ajaran) — sama persis dengan angka yang menentukan lolos
+     * tidaknya validasi saldo minus saat submit/disburse.
+     */
+    public function stats(Request $request): JsonResponse
+    {
+        return response()->json([
+            'data' => $this->workflowService->getSaldoBreakdown($request->user()->branch_id),
+        ]);
+    }
+
     #[QueryParameter('sort', description: 'Column to sort by (created_at, jumlah, tanggal_kebutuhan, status)', required: false, example: 'created_at')]
     #[QueryParameter('direction', description: 'Sort direction (asc or desc)', required: false, example: 'desc')]
     public function index(Request $request): JsonResponse
@@ -134,8 +147,12 @@ class PengeluaranRequestController extends Controller
             return response()->json(['message' => 'Request tidak ditemukan.'], 404);
         }
 
+        if ($pengeluaranRequest->requester_id !== $request->user()->id) {
+            return response()->json(['message' => 'Hanya pembuat request yang bisa menghapus.'], 403);
+        }
+
         if (! $pengeluaranRequest->isDeletable()) {
-            return response()->json(['errors' => ['status' => ['Request hanya bisa dihapus saat status draft.']]], 422);
+            return response()->json(['errors' => ['status' => ['Request hanya bisa dihapus saat status draft atau rejected.']]], 422);
         }
 
         $pengeluaranRequest->delete();
