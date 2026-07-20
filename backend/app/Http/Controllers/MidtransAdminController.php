@@ -7,6 +7,7 @@ use App\Models\MidtransTransactionLog;
 use App\Services\Midtrans\MidtransStatusSyncService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class MidtransAdminController extends Controller
 {
@@ -18,6 +19,7 @@ class MidtransAdminController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = MidtransTransaction::query()
+            ->where('branch_id', $request->user()->branch_id)
             ->with(['tagihan.siswa:id,nis,nama'])
             ->select([
                 'id',
@@ -37,11 +39,6 @@ class MidtransAdminController extends Controller
         // Filter by status
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
-        }
-
-        // Filter by branch_id
-        if ($request->filled('branch_id')) {
-            $query->where('branch_id', $request->input('branch_id'));
         }
 
         // Filter by date range
@@ -73,9 +70,10 @@ class MidtransAdminController extends Controller
      *
      * GET /api/midtrans/admin/transactions/{order_id}
      */
-    public function show(string $orderId): JsonResponse
+    public function show(Request $request, string $orderId): JsonResponse
     {
         $trx = MidtransTransaction::where('order_id', $orderId)
+            ->where('branch_id', $request->user()->branch_id)
             ->with(['tagihan.siswa:id,nis,nama', 'initiator:id,name'])
             ->firstOrFail();
 
@@ -106,10 +104,12 @@ class MidtransAdminController extends Controller
      *
      * GET /api/midtrans/admin/transactions/{order_id}/logs
      */
-    public function logs(string $orderId): JsonResponse
+    public function logs(Request $request, string $orderId): JsonResponse
     {
-        // Verify transaction exists
-        MidtransTransaction::where('order_id', $orderId)->firstOrFail();
+        // Verify transaction exists and belongs to the caller's branch
+        MidtransTransaction::where('order_id', $orderId)
+            ->where('branch_id', $request->user()->branch_id)
+            ->firstOrFail();
 
         $logs = MidtransTransactionLog::where('order_id', $orderId)
             ->orderBy('created_at', 'desc')
@@ -134,9 +134,11 @@ class MidtransAdminController extends Controller
      *
      * POST /api/midtrans/admin/transactions/{order_id}/sync
      */
-    public function sync(string $orderId, MidtransStatusSyncService $service): JsonResponse
+    public function sync(Request $request, string $orderId, MidtransStatusSyncService $service): JsonResponse
     {
-        $trx = MidtransTransaction::where('order_id', $orderId)->firstOrFail();
+        $trx = MidtransTransaction::where('order_id', $orderId)
+            ->where('branch_id', $request->user()->branch_id)
+            ->firstOrFail();
 
         try {
             $service->syncManual($trx);
@@ -148,6 +150,26 @@ class MidtransAdminController extends Controller
         } catch (\App\Exceptions\Midtrans\MidtransStatusUnavailableException $e) {
             // Midtrans API is unreachable.
             return response()->json(['error_code' => 'API_UNAVAILABLE', 'message' => 'Layanan Midtrans sedang tidak tersedia'], 503);
+        } catch (\App\Exceptions\Midtrans\MidtransException $e) {
+            // Any other known Midtrans domain error (e.g. overpayment blocked) —
+            // let the global renderable handler in bootstrap/app.php format it.
+            throw $e;
+        } catch (\Throwable $e) {
+            // Unexpected failure (enum/mapping edge case, DB contention, etc).
+            // Never let this fall through as a bare 500 with no error_code —
+            // that renders as an unhelpful "Unknown Midtrans API error" on the
+            // frontend and hides whether the status actually changed.
+            Log::error('MidtransAdminController::sync unexpected failure', [
+                'order_id' => $orderId,
+                'exception' => $e::class,
+                'message' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error_code' => 'SYNC_FAILED',
+                'message' => 'Sinkronisasi gagal karena kesalahan tak terduga.',
+                'status' => $trx->fresh()->status,
+            ], 500);
         }
 
         return response()->json(['status' => $trx->fresh()->status]);

@@ -18,6 +18,8 @@ return [
     'OVERPAYMENT_BLOCKED' => 'Pembayaran melebihi sisa tagihan.',
     'TRANSACTION_ALREADY_FINAL' => 'Transaksi sudah selesai.',
     'CANNOT_DELETE_ONLINE_PEMBAYARAN' => 'Pembayaran online tidak dapat dihapus.',
+    'API_UNAVAILABLE' => 'Layanan Midtrans sedang tidak tersedia.',
+    'SYNC_FAILED' => 'Sinkronisasi gagal karena kesalahan tak terduga. Status transaksi telah dimuat ulang — periksa status terkini di bawah.',
 
     // UI labels
     'pay_online' => 'Bayar Online',

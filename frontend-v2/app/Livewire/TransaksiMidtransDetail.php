@@ -14,8 +14,10 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Client\ConnectionException;
+use Livewire\Attributes\Lazy;
 use Livewire\Component;
 
+#[Lazy]
 class TransaksiMidtransDetail extends Component implements HasActions, HasSchemas
 {
     use HandlesApiErrors;
@@ -28,6 +30,11 @@ class TransaksiMidtransDetail extends Component implements HasActions, HasSchema
     public ?array $logs = null;
 
     public bool $loadError = false;
+
+    public function placeholder(): View
+    {
+        return view('components.global-loading-spinner', ['static' => true, 'message' => 'Memuat detail transaksi...']);
+    }
 
     /**
      * Sensitive fields that should be masked in display.
@@ -144,10 +151,21 @@ class TransaksiMidtransDetail extends Component implements HasActions, HasSchema
                         ->body($e->getUserMessage())
                         ->danger()
                         ->send();
+
+                    // The sync may have partially succeeded (or a concurrent
+                    // webhook may have updated the status) before the error was
+                    // raised — always reload so the admin sees the real current
+                    // status instead of needing a manual page refresh.
+                    $this->loadTransaction();
+                    $this->loadLogs();
                 } catch (ConnectionException $e) {
                     $this->notifyConnectionError();
+                    $this->loadTransaction();
+                    $this->loadLogs();
                 } catch (\Throwable $e) {
                     $this->notifyUnexpectedError();
+                    $this->loadTransaction();
+                    $this->loadLogs();
                 }
             });
     }
