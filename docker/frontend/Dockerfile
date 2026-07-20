@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libxml2-dev \
         libicu-dev \
         default-mysql-client \
+        util-linux \
     && docker-php-ext-configure intl \
     && docker-php-ext-install -j"$(nproc)" \
         pdo_mysql \
@@ -27,8 +28,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 COPY docker/frontend/php.ini /usr/local/etc/php/conf.d/99-handayani.ini
+COPY docker/common/entrypoint-common.sh /usr/local/bin/entrypoint-common.sh
 COPY docker/frontend/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/entrypoint-common.sh
 
 WORKDIR /var/www/frontend-v2
 

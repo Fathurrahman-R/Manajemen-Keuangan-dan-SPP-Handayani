@@ -73,7 +73,7 @@ class Login extends PagesLogin
 
             $credentials = $this->getCredentialsFromFormData($data);
 
-            $response = Http::post(env('API_URL').'/login', $credentials);
+            $response = Http::post(config('handayani.api_url').'/login', $credentials);
 
             if ($response->serverError()) {
                 Notification::make()

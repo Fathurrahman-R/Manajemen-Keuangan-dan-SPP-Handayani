@@ -41,7 +41,7 @@ class ForgotPassword extends SimplePage
         $data = $this->form->getState();
 
         try {
-            Http::post(env('API_URL').'/forgot-password', [
+            Http::post(config('handayani.api_url').'/forgot-password', [
                 'email' => $data['email'],
             ]);
         } catch (\Throwable $e) {

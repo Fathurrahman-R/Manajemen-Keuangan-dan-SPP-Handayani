@@ -1,5 +1,46 @@
 name: handayani
 
+x-backend-build: &backend-build
+  build:
+    context: .
+    dockerfile: docker/backend/Dockerfile
+  image: handayani-backend
+
+x-backend-env: &backend-env
+  DB_HOST: mysql
+  DB_PORT: 3306
+  DB_USERNAME: root
+  DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  CACHE_STORE: redis
+  REDIS_CLIENT: predis
+  MAIL_HOST: mailpit
+
+x-backend-volumes: &backend-volumes
+  - ./backend:/var/www/backend
+  - backend_vendor:/var/www/backend/vendor
+
+x-frontend-build: &frontend-build
+  build:
+    context: .
+    dockerfile: docker/frontend/Dockerfile
+  image: handayani-frontend
+
+x-frontend-env: &frontend-env
+  DB_HOST: mysql
+  DB_PORT: 3306
+  DB_USERNAME: root
+  DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  API_URL: http://backend:8080/api
+
+x-frontend-volumes: &frontend-volumes
+  - ./frontend-v2:/var/www/frontend-v2
+  - frontend_vendor:/var/www/frontend-v2/vendor
+  - frontend_node_modules:/var/www/frontend-v2/node_modules
+
 services:
   mysql:
     image: mariadb:11
@@ -43,10 +84,7 @@ services:
       retries: 10
 
   backend:
-    build:
-      context: .
-      dockerfile: docker/backend/Dockerfile
-    image: handayani-backend
+    <<: *backend-build
     restart: unless-stopped
     working_dir: /var/www/backend
     # `php artisan serve` spawns the real HTTP-handling process via Symfony Process,
@@ -58,21 +96,11 @@ services:
     # so it inherits the full real environment. Command mirrors what ServeCommand itself runs.
     command: ["sh", "-c", "cd public && exec php -S 0.0.0.0:8080 ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php"]
     environment:
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_USERNAME: root
-      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      CACHE_STORE: redis
-      REDIS_CLIENT: predis
-      MAIL_HOST: mailpit
+      <<: *backend-env
       SEED_ON_BOOT: "true"
     ports:
       - "8080:8080"
-    volumes:
-      - ./backend:/var/www/backend
-      - backend_vendor:/var/www/backend/vendor
+    volumes: *backend-volumes
     depends_on:
       mysql:
         condition: service_healthy
@@ -88,78 +116,37 @@ services:
       start_period: 60s
 
   backend-queue:
-    build:
-      context: .
-      dockerfile: docker/backend/Dockerfile
-    image: handayani-backend
+    <<: *backend-build
     restart: unless-stopped
     working_dir: /var/www/backend
     command: ["php", "artisan", "queue:work", "--queue=notifications,default", "--tries=1"]
-    environment:
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_USERNAME: root
-      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      CACHE_STORE: redis
-      REDIS_CLIENT: predis
-      MAIL_HOST: mailpit
-    volumes:
-      - ./backend:/var/www/backend
-      - backend_vendor:/var/www/backend/vendor
+    environment: *backend-env
+    volumes: *backend-volumes
     depends_on:
       backend:
         condition: service_healthy
 
   backend-scheduler:
-    build:
-      context: .
-      dockerfile: docker/backend/Dockerfile
-    image: handayani-backend
+    <<: *backend-build
     restart: unless-stopped
     working_dir: /var/www/backend
     command: ["php", "artisan", "schedule:work"]
-    environment:
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_USERNAME: root
-      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      CACHE_STORE: redis
-      REDIS_CLIENT: predis
-      MAIL_HOST: mailpit
-    volumes:
-      - ./backend:/var/www/backend
-      - backend_vendor:/var/www/backend/vendor
+    environment: *backend-env
+    volumes: *backend-volumes
     depends_on:
       backend:
         condition: service_healthy
 
   frontend:
-    build:
-      context: .
-      dockerfile: docker/frontend/Dockerfile
-    image: handayani-frontend
+    <<: *frontend-build
     restart: unless-stopped
     working_dir: /var/www/frontend-v2
     # Same reason as backend's command override — see comment there.
     command: ["sh", "-c", "cd public && exec php -S 0.0.0.0:8000 ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php"]
-    environment:
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_USERNAME: root
-      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      API_URL: http://backend:8080/api
+    environment: *frontend-env
     ports:
       - "8000:8000"
-    volumes:
-      - ./frontend-v2:/var/www/frontend-v2
-      - frontend_vendor:/var/www/frontend-v2/vendor
-      - frontend_node_modules:/var/www/frontend-v2/node_modules
+    volumes: *frontend-volumes
     depends_on:
       backend:
         condition: service_healthy
@@ -171,28 +158,15 @@ services:
       start_period: 90s
 
   frontend-vite:
-    build:
-      context: .
-      dockerfile: docker/frontend/Dockerfile
-    image: handayani-frontend
+    <<: *frontend-build
     restart: unless-stopped
     working_dir: /var/www/frontend-v2
     entrypoint: ["entrypoint.sh"]
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
-    environment:
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_USERNAME: root
-      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      API_URL: http://backend:8080/api
+    environment: *frontend-env
     ports:
       - "5173:5173"
-    volumes:
-      - ./frontend-v2:/var/www/frontend-v2
-      - frontend_vendor:/var/www/frontend-v2/vendor
-      - frontend_node_modules:/var/www/frontend-v2/node_modules
+    volumes: *frontend-volumes
     depends_on:
       frontend:
         condition: service_healthy
