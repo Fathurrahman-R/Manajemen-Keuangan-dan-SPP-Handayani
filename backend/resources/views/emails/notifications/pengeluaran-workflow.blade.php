@@ -60,7 +60,7 @@
                     <strong>{{ $statusLabel }}</strong>
                 </td>
             </tr>
-            @if($reason)
+            @if($reason && $event === 'rejected')
             <tr>
                 <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; color: #c0392b;">Alasan Penolakan</td>
                 <td style="padding: 10px; border: 1px solid #ddd; color: #c0392b;">{{ $reason }}</td>
@@ -75,15 +75,23 @@
                 <span style="font-size: 12px; color: #7f8c8d;">Waktu: {{ $history['submitted'] ? $history['submitted']->created_at->format('d/m/Y H:i:s') : $pengeluaranRequest->created_at->format('d/m/Y H:i:s') }}</span>
             </li>
             
-            @if($history['approved'])
-            <li style="margin-bottom: 10px;">
-                <strong>Disetujui oleh:</strong> {{ $history['approved']->user->name ?? $history['approved']->user->username ?? '-' }}<br>
-                <span style="font-size: 12px; color: #7f8c8d;">Waktu: {{ $history['approved']->created_at->format('d/m/Y H:i:s') }}</span>
-            </li>
-            @elseif($history['rejected'])
+            {{-- Shown independently (not if/elseif) — a request rejected once and
+                 then resubmitted + approved has BOTH a rejected and an approved
+                 log; the rejection must stay visible, not get hidden by the
+                 later approval. Rejected always precedes approved chronologically
+                 (resubmission is required to move past `rejected`), so this
+                 render order matches the actual timeline. --}}
+            @if($history['rejected'])
             <li style="margin-bottom: 10px;">
                 <strong>Ditolak oleh:</strong> {{ $history['rejected']->user->name ?? $history['rejected']->user->username ?? '-' }}<br>
                 <span style="font-size: 12px; color: #7f8c8d;">Waktu: {{ $history['rejected']->created_at->format('d/m/Y H:i:s') }}</span>
+            </li>
+            @endif
+
+            @if($history['approved'])
+            <li style="margin-bottom: 10px;">
+                <strong>Disetujui oleh:</strong> {{ str_starts_with($history['approved']->note ?? '', 'Auto-approved') ? 'Sistem (disetujui otomatis)' : ($history['approved']->user->name ?? $history['approved']->user->username ?? '-') }}<br>
+                <span style="font-size: 12px; color: #7f8c8d;">Waktu: {{ $history['approved']->created_at->format('d/m/Y H:i:s') }}</span>
             </li>
             @endif
 
@@ -109,6 +117,10 @@
 
         <p style="font-size: 12px; color: #888;">
             Email ini dikirim secara otomatis oleh sistem Handayani. Mohon tidak membalas email ini.
+        </p>
+
+        <p style="font-size: 12px; color: #888;">
+            Untuk mengatur notifikasi approval pengeluaran yang ingin Anda terima, buka menu Profil di admin panel.
         </p>
     </div>
 </body>

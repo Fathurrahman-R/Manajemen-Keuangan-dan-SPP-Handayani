@@ -7,12 +7,12 @@ use BackedEnum;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
-use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 
 class EditProfile extends Page implements HasActions, HasForms
@@ -60,6 +60,9 @@ class EditProfile extends Page implements HasActions, HasForms
 
     public ?string $branchLocation = null;
 
+    // Notification preferences state
+    public bool $notif_workflow = false;
+
     public function mount(): void
     {
         try {
@@ -73,8 +76,52 @@ class EditProfile extends Page implements HasActions, HasForms
                 $this->roles = $userData['roles'] ?? [];
                 $this->branchLocation = $userData['branch']['location'] ?? null;
             }
+
+            if ($this->currentEmail) {
+                $notifResponse = ApiService::client()->get('/users/current/notification-preferences');
+                if ($notifResponse->ok()) {
+                    $this->notif_workflow = $notifResponse->json('data.workflow') ?? false;
+                }
+            }
         } catch (\Throwable $e) {
             // Silent — profile info is non-critical
+        }
+    }
+
+    public function notificationFormSchema(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Toggle::make('notif_workflow')
+                    ->label('Notifikasi Approval Pengeluaran')
+                    ->helperText('Email saat request pengeluaran diajukan/disetujui/ditolak/dicairkan yang melibatkan Anda.'),
+            ]);
+    }
+
+    public function updateNotificationPreferences(): void
+    {
+        if (! $this->currentEmail) {
+            Notification::make()->title('Email belum diatur')->danger()->send();
+
+            return;
+        }
+
+        try {
+            $response = ApiService::client()->put('/users/current/notification-preferences', [
+                'workflow' => $this->notif_workflow,
+            ]);
+
+            if ($response->ok()) {
+                Notification::make()->title('Preferensi notifikasi berhasil disimpan')->success()->send();
+            } else {
+                Notification::make()->title('Gagal')->danger()->body('Gagal memperbarui preferensi notifikasi.')->send();
+            }
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            Notification::make()
+                ->title('Server tidak dapat dihubungi')
+                ->danger()
+                ->persistent()
+                ->send();
         }
     }
 

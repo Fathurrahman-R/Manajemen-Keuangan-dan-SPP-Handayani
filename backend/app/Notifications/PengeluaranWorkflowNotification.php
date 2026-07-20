@@ -2,11 +2,13 @@
 
 namespace App\Notifications;
 
+use App\Models\NotificationLog;
 use App\Models\PengeluaranRequest;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Throwable;
 
 class PengeluaranWorkflowNotification extends Notification implements ShouldQueue
 {
@@ -16,6 +18,18 @@ class PengeluaranWorkflowNotification extends Notification implements ShouldQueu
 
     public $backoff = [10, 30, 60];
 
+    /**
+     * ID of the `notification_logs` row WorkflowNotificationService wrote when
+     * this notification was dispatched to the queue (logged optimistically as
+     * `sent` at that point — dispatch succeeding just means the job was queued,
+     * not that mail delivery succeeded). Set via `withLogId()` before `notify()`
+     * so `failed()` below can correct that row to `failed` once the queue
+     * exhausts all retries — without this, a queued send that fails after
+     * dispatch never touches notification_logs again and stays stuck showing
+     * `sent`.
+     */
+    public ?int $notificationLogId = null;
+
     public function __construct(
         protected PengeluaranRequest $pengeluaranRequest,
         protected string $event,
@@ -23,6 +37,32 @@ class PengeluaranWorkflowNotification extends Notification implements ShouldQueu
         protected ?string $requesterName = null,
     ) {
         $this->onQueue('notifications');
+    }
+
+    public function withLogId(int $notificationLogId): static
+    {
+        $this->notificationLogId = $notificationLogId;
+
+        return $this;
+    }
+
+    /**
+     * Called by the queue worker once this job has exhausted all `$tries`
+     * attempts. Corrects the `notification_logs` row from `sent` to `failed`
+     * — the only place that actually reflects a queued send's real outcome.
+     */
+    public function failed(Throwable $exception): void
+    {
+        if ($this->notificationLogId === null) {
+            return;
+        }
+
+        NotificationLog::where('id', $this->notificationLogId)
+            ->where('status', 'sent')
+            ->update([
+                'status' => 'failed',
+                'error_message' => $exception->getMessage(),
+            ]);
     }
 
     public function via($notifiable): array
