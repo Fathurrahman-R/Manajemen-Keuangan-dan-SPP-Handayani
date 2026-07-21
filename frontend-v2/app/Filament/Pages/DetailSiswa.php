@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Helpers\PermissionHelper;
 use Filament\Pages\Page;
+use Illuminate\Support\Str;
 
 class DetailSiswa extends Page
 {
@@ -11,6 +12,7 @@ class DetailSiswa extends Page
     {
         return PermissionHelper::hasResource('siswa.view');
     }
+
     public $id;
 
     public $jenjang;
@@ -25,7 +27,7 @@ class DetailSiswa extends Page
 
     public function mount($jenjang, $id): void
     {
-        $this->jenjang = $jenjang;
+        $this->jenjang = Str::upper($jenjang);
         $this->id = $id;
     }
 

@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Helpers\PermissionHelper;
 use Filament\Pages\Page;
+use Illuminate\Support\Str;
 use UnitEnum;
 
 class DataMasterSiswa extends Page
@@ -30,6 +31,6 @@ class DataMasterSiswa extends Page
         abort_if(! PermissionHelper::hasResource('siswa.view'), 403);
 
         // Read jenjang from query parameter
-        $this->activeJenjang = request()->query('jenjang', 'KB');
+        $this->activeJenjang = Str::upper(request()->query('jenjang', 'KB'));
     }
 }

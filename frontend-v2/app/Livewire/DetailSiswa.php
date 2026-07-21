@@ -142,6 +142,10 @@ class DetailSiswa extends Component implements HasSchemas
                             ->label('Nama Lengkap')
                             ->default(fn ($livewire) => $livewire->wali['nama'])
                             ->size(TextSize::Large),
+                        TextEntry::make('email')
+                            ->label('Email')
+                            ->default(fn ($livewire) => $livewire->wali['email'] ?? '-')
+                            ->size(TextSize::Large),
                         TextEntry::make('pekerjaan')
                             ->label('Pekerjaan')
                             ->default(fn ($livewire) => $livewire->wali['pekerjaan'])
@@ -179,6 +183,10 @@ class DetailSiswa extends Component implements HasSchemas
                             ->label('Nama Lengkap')
                             ->default(fn ($livewire) => $livewire->ayah['nama'] ?? '-')
                             ->size(TextSize::Large),
+                        TextEntry::make('email')
+                            ->label('Email')
+                            ->default(fn ($livewire) => $livewire->ayah['email'] ?? '-')
+                            ->size(TextSize::Large),
                         TextEntry::make('pendidikan_terakhir')
                             ->label('Pendidikan Terakhir')
                             ->default(fn ($livewire) => $livewire->ayah['pendidikan_terakhir'] ?? '-')
@@ -207,6 +215,10 @@ class DetailSiswa extends Component implements HasSchemas
                         TextEntry::make('nama')
                             ->label('Nama Lengkap')
                             ->default(fn ($livewire) => $livewire->ibu['nama'] ?? '-')
+                            ->size(TextSize::Large),
+                        TextEntry::make('email')
+                            ->label('Email')
+                            ->default(fn ($livewire) => $livewire->ibu['email'] ?? '-')
                             ->size(TextSize::Large),
                         TextEntry::make('pendidikan_terakhir')
                             ->label('Pendidikan Terakhir')
