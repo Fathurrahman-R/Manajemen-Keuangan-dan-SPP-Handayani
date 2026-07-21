@@ -115,6 +115,42 @@ class UserTest extends TestCase
         return $user->token;
     }
 
+    public function test_login_response_includes_email_verified_at_when_already_set(): void
+    {
+        $user = User::factory()->admin()->create([
+            'password' => \Illuminate\Support\Facades\Hash::make('password123'),
+            'email' => 'admin@example.com',
+            'email_verified_at' => now(),
+            'is_active' => true,
+        ]);
+
+        $this->post('api/login', [
+            'username' => $user->email,
+            'password' => 'password123',
+        ])->assertStatus(200)
+            ->assertJson(fn ($json) => $json->has('data.email_verified_at')
+                ->where('data.email_verified_at', fn ($value) => ! is_null($value))
+                ->etc());
+    }
+
+    public function test_login_response_email_verified_at_null_when_not_set(): void
+    {
+        $user = User::factory()->admin()->create([
+            'password' => \Illuminate\Support\Facades\Hash::make('password123'),
+            'email' => null,
+            'email_verified_at' => null,
+            'is_active' => true,
+        ]);
+
+        $this->post('api/login', [
+            'username' => $user->username,
+            'password' => 'password123',
+        ])->assertStatus(200)
+            ->assertJson(fn ($json) => $json->has('data.email_verified_at')
+                ->where('data.email_verified_at', null)
+                ->etc());
+    }
+
     public function test_login_failed_username_not_found()
     {
         $this->post('api/login', [
