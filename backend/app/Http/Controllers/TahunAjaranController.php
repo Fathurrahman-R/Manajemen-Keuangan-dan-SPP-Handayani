@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\TahunAjaranRequest;
 use App\Http\Resources\TahunAjaranResource;
+use App\Models\SiswaKelas;
 use App\Models\TahunAjaran;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -150,6 +151,15 @@ class TahunAjaranController extends Controller
 
             // Activate the target
             $tahunAjaran->update(['status' => 'Aktif']);
+
+            // Resync siswa.kelas_id from SiswaKelas placements of the newly active period
+            SiswaKelas::where('tahun_ajaran_id', $tahunAjaran->id)
+                ->whereHas('siswa', fn ($query) => $query->where('branch_id', $tahunAjaran->branch_id))
+                ->chunkById(200, function ($siswaKelasChunk) {
+                    foreach ($siswaKelasChunk as $siswaKelas) {
+                        $siswaKelas->siswa()->update(['kelas_id' => $siswaKelas->kelas_id]);
+                    }
+                });
         });
 
         return (new TahunAjaranResource($tahunAjaran->fresh()))->response()->setStatusCode(200);
