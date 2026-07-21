@@ -27,7 +27,7 @@ class AkunSiswaController extends Controller
         $branchId = Auth::user()->branch_id;
 
         $users = User::role('siswa')
-
+            ->where('branch_id', $branchId)
             ->with('siswa.kelas');
 
         $this->applySorting($users, ['username', 'name', 'created_at'], 'username', 'asc');

@@ -11,24 +11,15 @@ use App\Models\SiswaKelas;
 use App\Models\TahunAjaran;
 use App\Models\User;
 use App\Models\Wali;
-use App\Services\AkunSiswaService;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class SiswaController extends Controller
 {
     use Traits\Sortable;
-
-    protected AkunSiswaService $akunSiswaService;
-
-    public function __construct(AkunSiswaService $akunSiswaService)
-    {
-        $this->akunSiswaService = $akunSiswaService;
-    }
 
     #[HeaderParameter('Authorization')]
     #[QueryParameter('search')]
@@ -163,13 +154,6 @@ class SiswaController extends Controller
         // Sync SiswaKelas for Periode_Aktif when kelas_id is provided
         if (! empty($data['kelas_id'])) {
             $this->syncSiswaKelas($siswa);
-        }
-
-        // Create akun siswa via service (non-blocking: if it fails, siswa is still created)
-        try {
-            $this->akunSiswaService->createAccount($siswa);
-        } catch (\Throwable $e) {
-            Log::error('Gagal membuat akun siswa untuk NIS '.$siswa->nis.': '.$e->getMessage());
         }
 
         $siswa->refresh();
