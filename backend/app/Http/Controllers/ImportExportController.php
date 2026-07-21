@@ -229,11 +229,12 @@ class ImportExportController extends Controller
 
     // ==================== TEMPLATES ====================
 
-    public function templateSiswa(): BinaryFileResponse
+    public function templateSiswa(Request $request): BinaryFileResponse
     {
         $branchId = auth()->user()->branch_id;
+        $jenjang = $request->query('jenjang');
 
-        return $this->templateService->generateSiswaTemplate($branchId);
+        return $this->templateService->generateSiswaTemplate($branchId, $jenjang);
     }
 
     public function templateTagihan(): BinaryFileResponse

@@ -22,6 +22,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class TagihanCardView extends Component implements HasActions, HasSchemas
 {
     use \App\Livewire\Concerns\HandlesApiErrors;
+    use \App\Livewire\Concerns\HasImportExport;
     use \App\Livewire\Concerns\HasPeriodFilter;
     use InteractsWithActions, InteractsWithSchemas;
 
@@ -634,6 +635,25 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                     return null;
                 }
             });
+    }
+
+    /**
+     * Import Tagihan — backend already supports it (/import-export/import/tagihan/*),
+     * this wires up the missing frontend action (bug IE-003).
+     */
+    public function importTagihanAction(): Action
+    {
+        return $this->makeImportAction('tagihan');
+    }
+
+    public function templateTagihanAction(): Action
+    {
+        return $this->makeDownloadTemplateAction('tagihan');
+    }
+
+    public function importHistoryTagihanAction(): Action
+    {
+        return $this->makeImportHistoryAction('tagihan');
     }
 
     public function addTagihanAction(): Action

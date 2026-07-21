@@ -116,7 +116,7 @@ class SiswaExportService
             $tahunAjaranId = $periodeAktif?->id;
         }
 
-        $export = new SiswaExport($query, $tahunAjaranId);
+        $export = new SiswaExport($query, $tahunAjaranId, $filters['jenjang'] ?? null);
         $fileName = 'export_siswa_'.now()->format('Y-m-d_His').'.'.$format;
 
         return Excel::download($export, $fileName);
