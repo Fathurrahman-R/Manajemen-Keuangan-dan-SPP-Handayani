@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Helpers\PermissionHelper;
 use App\Services\ApiService;
+use App\Support\ApiTableRecord;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -17,7 +18,9 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Component;
 
 class RbacEndpointsTable extends Component implements HasActions, HasSchemas, HasTable
@@ -34,10 +37,10 @@ class RbacEndpointsTable extends Component implements HasActions, HasSchemas, Ha
     public function table(Table $table): Table
     {
         return $table
-            ->records(function (): array {
+            ->records(function (int $page, int|string $recordsPerPage): LengthAwarePaginator {
                 $r = ApiService::client()->get('/rbac/endpoints');
                 if (! $r->successful()) {
-                    return [];
+                    return new LengthAwarePaginator([], 0, $recordsPerPage === 'all' ? 1 : $recordsPerPage, $page);
                 }
 
                 $records = collect($r->json()['data'] ?? [])
@@ -69,7 +72,21 @@ class RbacEndpointsTable extends Component implements HasActions, HasSchemas, Ha
                     $records = $records->where('is_active', (bool) $isActiveValue);
                 }
 
-                return $records->values()->toArray();
+                if ($group = $this->getTableGrouping()) {
+                    $column = $group->getColumn();
+                    $records = $this->getTableGroupingDirection() === 'desc'
+                        ? $records->sortByDesc($column)->values()
+                        : $records->sortBy($column)->values();
+                }
+
+                $records = $records->values();
+                $total = $records->count();
+                $effectivePerPage = $recordsPerPage === 'all' ? max($total, 1) : $recordsPerPage;
+                $items = $records->slice(($page - 1) * $effectivePerPage, $effectivePerPage)
+                    ->map(fn (array $item) => new ApiTableRecord($item))
+                    ->values()->all();
+
+                return new LengthAwarePaginator($items, $total, $effectivePerPage, $page);
             })
             ->heading('Endpoint Mapping (independen)')
             ->columns([
@@ -103,6 +120,11 @@ class RbacEndpointsTable extends Component implements HasActions, HasSchemas, Ha
                     ->options(fn (): array => $this->getPermissionOptions()),
                 TernaryFilter::make('is_active')->label('Active'),
             ])
+            ->groups([
+                Group::make('group')->label('Group'),
+            ])
+            ->paginated([10, 25, 50, 'all'])
+            ->defaultPaginationPageOption(10)
             ->defaultSort('resource_key')
             ->headerActions([
                 CreateAction::make('create')
@@ -159,7 +181,7 @@ class RbacEndpointsTable extends Component implements HasActions, HasSchemas, Ha
                         \Filament\Forms\Components\TextInput::make('group'),
                         \Filament\Forms\Components\TextInput::make('description'),
                     ])
-                    ->fillForm(fn (array $record): array => $record)
+                    ->fillForm(fn ($record): array => $record->toArray())
                     ->action(function (array $data): void {
                         $record = $this->getMountedAction()?->getRecord();
                         $r = ApiService::client()->put("/rbac/endpoints/{$record['id']}", $data);
@@ -173,7 +195,7 @@ class RbacEndpointsTable extends Component implements HasActions, HasSchemas, Ha
                 Action::make('hapus')
                     ->color('danger')
                     ->visible(fn (): bool => PermissionHelper::hasResource('endpoint-mapping.delete'))
-                    ->action(function (array $record): void {
+                    ->action(function ($record): void {
                         $r = ApiService::client()->delete("/rbac/endpoints/{$record['id']}");
                         if (! $r->successful()) {
                             Notification::make()->title($r->json('message') ?? 'Gagal')->danger()->send();
