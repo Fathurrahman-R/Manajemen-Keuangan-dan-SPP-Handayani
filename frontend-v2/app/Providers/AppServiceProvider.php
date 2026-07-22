@@ -8,6 +8,9 @@ use Filament\Auth\Http\Responses\Contracts\LoginResponse as LoginResponseContrac
 use Filament\Auth\Http\Responses\Contracts\LogoutResponse as LogoutResponseContract;
 use Filament\Support\Colors\Color;
 use Filament\Support\Facades\FilamentColor;
+use Illuminate\Http\Client\Events\ResponseReceived;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -54,6 +57,32 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // If the backend rejects our session's bearer token (401 — e.g. the
+        // account was deactivated and its Sanctum tokens were revoked server-side),
+        // the frontend session otherwise keeps looking "logged in" forever with no
+        // way to regain access, since reactivating the account doesn't reissue a
+        // token. There are two parallel "logged in" states to tear down here:
+        // our own `data.token` bearer flag, AND Filament's own Laravel Auth guard
+        // session (set via `Filament::auth()->loginUsingId()` at login time) —
+        // clearing only the former still leaves Filament's login page redirecting
+        // away as if the user were fine. Mirrors LogoutResponse's teardown.
+        Event::listen(ResponseReceived::class, function (ResponseReceived $event): void {
+            if ($event->response->status() !== 401) {
+                return;
+            }
+
+            if (! str_starts_with((string) $event->request->url(), (string) config('handayani.api_url'))) {
+                return;
+            }
+
+            if (! session()->has('data.token')) {
+                return;
+            }
+
+            Auth::logout();
+            session()->flush();
+            session()->invalidate();
+            session()->regenerateToken();
+        });
     }
 }
