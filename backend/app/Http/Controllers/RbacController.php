@@ -231,7 +231,7 @@ class RbacController extends Controller
         }
 
         return DB::transaction(function () use ($validated, $permissions) {
-            $role = Role::create(['name' => $validated['name']]);
+            $role = Role::create(['name' => $validated['name'], 'guard_name' => 'web']);
             if (! empty($permissions)) {
                 $role->syncPermissions($permissions);
             }

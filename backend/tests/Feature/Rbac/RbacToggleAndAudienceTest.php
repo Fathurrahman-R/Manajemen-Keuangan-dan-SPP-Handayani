@@ -35,6 +35,8 @@ class RbacToggleAndAudienceTest extends TestCase
         PermissionEndpoint::where('resource_key', 'test.endpoint.toggle')->delete();
         PagePermission::where('resource_key', 'test.page.toggle')->delete();
         Permission::where('name', 'test-permission-baru')->delete();
+        Permission::where('name', 'test-permission-role-create')->delete();
+        \Spatie\Permission\Models\Role::where('name', 'test-role-baru')->delete();
 
         parent::tearDown();
     }
@@ -128,5 +130,40 @@ class RbacToggleAndAudienceTest extends TestCase
             ->flatten(1)
             ->pluck('name');
         $this->assertFalse($adminNames->contains('test-permission-baru'));
+    }
+
+    /**
+     * Regression for RBAC-005: Role::create() in storeRole() didn't set an
+     * explicit guard_name, so Spatie defaulted it to the acting user's guard
+     * ('sanctum', since API routes use auth:sanctum) — but every seeded
+     * permission has guard_name='web'. Attaching any permission to the new
+     * role then threw PermissionDoesNotExist ("... for guard 'sanctum'"),
+     * so creating a role via the RBAC Dashboard always failed.
+     */
+    public function test_creating_a_role_with_permissions_succeeds_and_uses_web_guard(): void
+    {
+        $this->actingAsAdmin();
+
+        Permission::create([
+            'name' => 'test-permission-role-create',
+            'guard_name' => 'web',
+        ]);
+
+        $response = $this->postJson('/api/rbac/roles', [
+            'name' => 'test-role-baru',
+            'permissions' => ['test-permission-role-create'],
+        ]);
+
+        $response->assertCreated();
+
+        $this->assertDatabaseHas('roles', [
+            'name' => 'test-role-baru',
+            'guard_name' => 'web',
+        ]);
+        $this->assertSame(
+            ['test-permission-role-create'],
+            \Spatie\Permission\Models\Role::where('name', 'test-role-baru')->first()
+                ->permissions->pluck('name')->all(),
+        );
     }
 }

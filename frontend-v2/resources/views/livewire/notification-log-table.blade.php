@@ -13,6 +13,7 @@
                 <option value="kwitansi">Kwitansi</option>
                 <option value="reminder">Pengingat</option>
                 <option value="overdue">Jatuh Tempo</option>
+                <option value="workflow">Workflow</option>
             </select>
         </div>
         <div>

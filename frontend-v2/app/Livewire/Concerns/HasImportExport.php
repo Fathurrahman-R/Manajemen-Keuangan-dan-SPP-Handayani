@@ -8,9 +8,15 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Str;
 
 trait HasImportExport
 {
+    // Action names below use Str::camel() because Filament's mountAction()
+    // resolves an action by calling method_exists($this, "{name}Action") — a
+    // snake_case name here (e.g. "import_tagihan") never matches its camelCase
+    // wrapper method (importTagihanAction()), so the action silently fails to
+    // resolve: no modal, no notification, no error, just a no-op (bug IE-006).
     public ?array $importPreviewData = null;
 
     public ?string $importPreviewId = null;
@@ -28,7 +34,7 @@ trait HasImportExport
                 ->required(),
         ], $filterSchema);
 
-        return Action::make("export_{$exportType}")
+        return Action::make(Str::camel("export_{$exportType}"))
             ->label('Export')
             ->color('success')
             ->icon('heroicon-o-arrow-down-tray')
@@ -51,7 +57,7 @@ trait HasImportExport
      */
     protected function makeImportAction(string $importType): Action
     {
-        return Action::make("import_{$importType}")
+        return Action::make(Str::camel("import_{$importType}"))
             ->label('Import')
             ->color('warning')
             ->icon('heroicon-o-arrow-up-tray')
@@ -101,7 +107,7 @@ trait HasImportExport
      */
     protected function makeDownloadTemplateAction(string $importType): Action
     {
-        return Action::make("template_{$importType}")
+        return Action::make(Str::camel("template_{$importType}"))
             ->label('Template')
             ->color('gray')
             ->icon('heroicon-o-document-arrow-down')
@@ -119,7 +125,7 @@ trait HasImportExport
      */
     protected function makeImportHistoryAction(string $importType): Action
     {
-        return Action::make("import_history_{$importType}")
+        return Action::make(Str::camel("import_history_{$importType}"))
             ->label('Riwayat Import')
             ->color('gray')
             ->icon('heroicon-o-clock')
