@@ -1,10 +1,10 @@
 # Tracking Perubahan Sistem
 
-**Rentang commit:** `37ff85a9` (Merge PR #10 dev-fio) → `34451d1` (HEAD, branch `v3-last-project`) + perubahan working-tree yang belum di-commit
-**Periode:** 29 April 2026 – 20 Juli 2026
-**Jumlah commit:** 49 commit (43 commit lama sampai `de22f75` + 6 commit baru: `e42f2c0`, `1e8970b`, `169fb6a`, `9f4c3a0`, `1c39767`, `34451d1`)
+**Rentang commit:** `37ff85a9` (Merge PR #10 dev-fio) → `93f02c9` (HEAD, branch `v3-last-project`)
+**Periode:** 29 April 2026 – 22 Juli 2026
+**Jumlah commit:** 72 commit (49 commit sampai `34451d1`, sudah tercatat di revisi dokumen sebelumnya + 23 commit baru: `d40da34`, `f45c7ae`, `361ce37`, `52a8f25`, `2cc667c`, `2f84a0a`, `4a9ec63`, `ad2e9ab`, `3d3e295`, `a5bdf76`, `55352e9`, `a71bdd0`, `1d896e1`, `53515d2`, `1ebf989`, `7ebe33f`, `33070b1`, `21b6529`, `630a31d`, `574d551`, `fc34f17`, `245569c`, `93f02c9`)
 
-> Catatan metodologi: dokumen ini dideskripsikan berdasarkan **kondisi kode saat ini** (commit + working-tree), bukan sebagai catatan harian per sesi kerja — setiap sub-bagian fitur ditulis sebagai deskripsi state final, dengan detail commit/tanggal hanya sebagai referensi historis. Isi diverifikasi ulang lewat `graphify query`/`git diff`/pembacaan langsung source per 20 Juli 2026 (bukan disalin mentah dari draft sebelumnya), dikecualikan `graphify-out/`, lockfile (`composer.lock`, `package-lock.json`), dan artefak build. Sejumlah kecil perilaku yang dideskripsikan di bawah ini (branch-scoping Transaksi Midtrans, pengelompokan audience & validasi toggle RBAC, logging notifikasi workflow, alasan login akun nonaktif) berasal dari perubahan **working-tree yang belum di-`git commit`** saat dokumen ini ditulis — ditandai eksplisit di masing-masing sub-bagian, bukan diasumsikan sudah masuk histori commit.
+> Catatan metodologi: dokumen ini dideskripsikan berdasarkan **kondisi kode saat ini** (commit HEAD, tidak ada working-tree tersisa — seluruh perubahan sudah di-`git commit`), bukan sebagai catatan harian per sesi kerja — setiap sub-bagian fitur ditulis sebagai deskripsi state final, dengan detail commit/tanggal hanya sebagai referensi historis. Isi diverifikasi ulang lewat `git show`/`git diff` per commit (bukan disalin mentah dari draft sebelumnya) per 22 Juli 2026, dikecualikan `graphify-out/`, lockfile (`composer.lock`, `package-lock.json`), dan artefak build. **Catatan revisi ini**: beberapa paragraf pada revisi dokumen sebelumnya menandai sejumlah perilaku (branch-scoping Transaksi Midtrans, pengelompokan audience & validasi toggle RBAC, logging notifikasi workflow, alasan login akun nonaktif) sebagai "working-tree belum di-`git commit`" — semuanya sudah menjadi commit resmi sejak saat itu (`361ce37`, `f45c7ae`, `4a9ec63`, `3d3e295`), caption tersebut sudah diperbaiki di masing-masing sub-bagian pada revisi ini untuk mengutip hash commit yang benar. Isi satu paragraf (unsubscribe link di email workflow, section 1.4) juga dikoreksi karena perilakunya sudah berubah lagi sejak deskripsi lama ditulis — link unsubscribe di email digantikan toggle preferensi di halaman profil (`4a9ec63`).
 
 ---
 
@@ -19,7 +19,7 @@ Frontend: halaman admin `TransaksiMidtransPage`, `TransaksiMidtransDetailPage`, 
 Config baru: `backend/config/midtrans.php`. Dependency baru: `midtrans/midtrans-php` (`composer.json`).
 Commit terkait: `a99177e` (checkpoint implementasi midtrans payment gateway), `0a990a2`, `6fae19f`.
 
-**Kondisi saat ini (working-tree, belum di-`git commit`):** `MidtransAdminController::index()`/`show()`/`logs()`/`sync()` seluruhnya di-scope unconditional ke `$request->user()->branch_id` — sebelumnya `index()` hanya memfilter cabang jika query param dikirim eksplisit (default menampilkan semua cabang), dan `show()`/`logs()`/`sync()` bahkan tidak difilter sama sekali sehingga `order_id` cabang lain bisa diakses langsung dari admin cabang manapun. `MidtransAdminController::sync()` juga sudah punya catch-all exception handling dengan `error_code`, dan `TransaksiMidtransDetail::syncAction()` (Livewire) me-reload status di catch block agar UI tidak stuck menampilkan status lama saat sync gagal.
+**Commit `361ce37`** (sebelumnya didokumentasikan sebagai working-tree belum di-commit — sudah menjadi commit resmi): `MidtransAdminController::index()`/`show()`/`logs()`/`sync()` seluruhnya di-scope unconditional ke `$request->user()->branch_id` — sebelumnya `index()` hanya memfilter cabang jika query param dikirim eksplisit (default menampilkan semua cabang), dan `show()`/`logs()`/`sync()` bahkan tidak difilter sama sekali sehingga `order_id` cabang lain bisa diakses langsung dari admin cabang manapun. Exception handling `sync()` diperluas untuk semua tipe error Midtrans, ditambah lang key `API_UNAVAILABLE`/`OVERPAYMENT_BLOCKED` yang sebelumnya hilang. `TransaksiMidtransDetail::syncAction()` (Livewire) me-reload transaction+logs setelah sync gagal (exception apapun) agar UI tidak stuck menampilkan status lama tanpa refresh manual; komponen ini turut dikonversi ke `#[Lazy]` dengan placeholder spinner. Test regresi: `MidtransAdminSyncTest`.
 
 ### 1.2 Portal Web Siswa + Landing Page Publik
 > ⚠️ **Status vs proposal TA:** Sebagian di luar scope — portal siswa sesuai rencana; landing page publik berbasis config + peta interaktif adalah tambahan di luar rencana.
@@ -37,7 +37,11 @@ Backend: `RbacController`, dependency baru `spatie/laravel-permission` (`compose
 Frontend: `RoleManagement.php`, `UserManagement.php`, `BranchManagement.php` sebagai halaman terpisah.
 Iterasi perbaikan lanjutan: `9d76215`, `7f01950` (abstraksi proteksi halaman & visibilitas aksi yang belum sepenuhnya terimplementasi), `81c268a` (perbaiki bug resource key tidak sesuai + dropdown semua cabang untuk akses lebih tinggi — permission `view-all-branches`), `67a33fd` (fix bug log notifikasi terkait RBAC), `6cad146` (fix bug endpoint permission).
 
-**Kondisi saat ini (working-tree, belum di-`git commit`):** `RbacController::permissionsTree()` mengelompokkan permission ke section berdasarkan kolom `audience` secara dinamis — sebelumnya permission ber-`audience` non-null ikut ter-drop ke section default/admin, dan loop pembangun section audience hardcode hanya mengenali `audience === 'siswa'` (audience lain didrop diam-diam). Method `$this->halt()` (bukan API valid di Livewire 3/Filament 4, selalu fatal) diganti `return;` di seluruh 9 pemanggilan across `RbacPermissionsTable`, `RbacEndpointsTable`, `RbacPagePermissionsTable`. Validasi `resource_key` pada `updateEndpoint()`/`updatePagePermission()` diubah dari `required` menjadi `sometimes|required` agar `ToggleColumn` (yang hanya mengirim `{is_active}` partial payload) tidak lagi ditolak dengan pesan "Field resource key wajib diisi.", sementara form full-edit tetap mewajibkan field tsb saat memang dikirim.
+**Commit `f45c7ae`** (sebelumnya didokumentasikan sebagai working-tree belum di-commit — sudah menjadi commit resmi): `RbacController::permissionsTree()` mengelompokkan permission ke section berdasarkan kolom `audience` secara dinamis — sebelumnya permission ber-`audience` non-null ikut ter-drop ke section default/admin, dan loop pembangun section audience hardcode hanya mengenali `audience === 'siswa'` (audience lain didrop diam-diam). Method `$this->halt()` (bukan API valid di Livewire 3/Filament 4, selalu fatal — bikin request Livewire berhenti total, bukan cuma skip action) diganti `return;` di seluruh 9 pemanggilan across `RbacPermissionsTable`, `RbacEndpointsTable`, `RbacPagePermissionsTable`. Validasi `resource_key` pada `updateEndpoint()`/`updatePagePermission()` diubah dari `required` menjadi `sometimes|required` agar `ToggleColumn` (yang hanya mengirim `{is_active}` partial payload) tidak lagi ditolak dengan pesan "Field resource key wajib diisi.", sementara form full-edit tetap mewajibkan field tsb saat memang dikirim. Konsolidasi 4 seeder RBAC (`RoleAndPermissionSeeder`, `PermissionResourceSeeder`, `PermissionMetadataSeeder`, `PermissionEndpointSeeder`) menjadi satu `RbacSeeder` (dipanggil dari `DatabaseSeeder`, dan sejak `1c39767` juga jadi satu-satunya jalur RBAC sync saat boot Docker). Test baru: `RbacToggleAndAudienceTest`.
+
+**Commit `574d551`**: tabel Permissions, Endpoint Mapping, dan Resource & Page Registry di `RbacDashboard` (tabel Manajemen Role sengaja dikecualikan) mendapat grouping dan paginasi. Ketiga tabel ini mengambil data lewat closure `records()` yang mengembalikan array biasa dari API — grouping bawaan Filament (`->groups()`) butuh instance Eloquent Model, langsung 500 kalau dipasang begitu saja di atas array. Dibuat `App\Support\ApiTableRecord` (Model non-persisted ringan) untuk membungkus array API agar kompatibel dengan fitur grouping; `records()` diubah menerima `$page`/`$recordsPerPage` dan mengembalikan `LengthAwarePaginator` (pola sama seperti `ManajemenAkunSiswa`), dan saat grouping aktif otomatis sort ke kolom grup dulu.
+
+**Commit `93f02c9`** (bug RBAC-005, sesi terbaru): `RbacController::storeRole()` memanggil `Role::create(['name' => ...])` tanpa `guard_name` eksplisit — Spatie otomatis memakai guard dari aktor yang login (`sanctum`), padahal seluruh permission ter-seed `guard_name='web'`, sehingga `PermissionDoesNotExist` dilempar saat role baru di-attach permission apapun. Fix: `guard_name => 'web'` ditambahkan eksplisit di `Role::create()`. Test baru: `RbacToggleAndAudienceTest::test_creating_a_role_with_permissions_succeeds_and_uses_web_guard`.
 
 ### 1.4 Notifikasi Email Workflow Approval Pengeluaran
 > ⚠️ **Status vs proposal TA:** Sebagian di luar scope — notifikasi email & approval workflow sesuai rencana; auto-approval per cabang, retry notifikasi, email opt-out, dan kwitansi PDF adalah tambahan di luar rencana.
@@ -47,18 +51,27 @@ Halaman baru: `PengeluaranRequestPage`, `NotificationLogPage` (log notifikasi �
 Commit terkait: `b655de6` (notifikasi email pengeluaran approval workflow), `6cad146`, `8834588`, `eca3a15` (tambah halaman pengaturan notifikasi & approval).
 Controller pendukung: `NotificationController`, `NotificationLogController`, `NotificationSettingController`, `EmailOptOutController`; service `Notifications\NotificationService`, `Notifications\RecipientResolver`, `Notifications\KwitansiPdfService`.
 
-**Kondisi saat ini (working-tree, belum di-`git commit`):**
-- **Halaman `PengeluaranRequestPage`** kini punya 3 row action: `detail` (modal, partial `frontend-v2/resources/views/livewire/partials/pengeluaran-detail.blade.php`, menampilkan timeline `ApprovalLog` kronologis penuh), `edit` (untuk status `draft`/`rejected` milik requester sendiri), `hapus` (untuk status `draft` milik requester sendiri). Form Create ditambah field lampiran (upload) yang sebelumnya hilang meski backend sudah mendukungnya; model `PengeluaranRequest` punya accessor `lampiran_url` (`Attribute::get()`, `Storage::disk('public')->url($this->lampiran)`).
-- **Pesan error validasi/gagal aksi tampil apa adanya** — action `create`/`submit`/`approve`/`reject`/`disburse` di `PengeluaranRequest.php` (Livewire) sekarang memakai `HandlesApiErrors::handleApiError()` yang sudah tersedia di codebase; sebelumnya beberapa action membaca key error yang salah (mis. `errors.status.0` padahal backend melempar key `jumlah`) atau tidak menampilkan notifikasi error sama sekali saat gagal, sehingga pesan asli backend (mis. "Saldo tidak mencukupi...") tertelan.
-- **`WorkflowNotificationService`** kini benar-benar tersambung ke `Notifications\NotificationService::logNotification()` (`private readonly NotificationService $notificationService` di constructor) — sebelumnya adalah implementasi paralel yang tidak pernah mencatat apapun ke `notification_logs`. Setiap pemanggilan `notifyApprovers()`/`notifyRequester()` mencatat baris `notification_logs` dengan `notification_type='workflow'`, `pengeluaran_request_id`, `workflow_event` (kolom baru, lihat Bagian 2), status `sent`/`failed`/`skipped` — termasuk saat email di-skip karena `EmailOptOut::isOptedOut($email, 'workflow')`. `NotificationLogController::retryFailed()` juga sudah punya `case 'workflow'` sehingga tombol Retry di `NotificationLogPage` berfungsi untuk log workflow.
-- **Email opt-out mencakup tipe `workflow`** — `email_opt_outs.notification_type` diperluas dengan nilai `workflow` (migrasi baru, lihat Bagian 2); `PengeluaranWorkflowNotification` menyertakan link unsubscribe di footer email (sebelumnya tidak ada sama sekali untuk notifikasi workflow).
+**Commit `4a9ec63`** (sebelumnya didokumentasikan sebagai working-tree belum di-commit — sudah menjadi commit resmi, dan satu isi paragrafnya sudah dikoreksi karena perilakunya sudah berubah lagi sejak deskripsi lama ditulis, lihat poin opt-out di bawah):
+- **Halaman `PengeluaranRequestPage`** punya 3 row action: `detail` (modal, partial `frontend-v2/resources/views/livewire/partials/pengeluaran-detail.blade.php`, menampilkan timeline `ApprovalLog` kronologis penuh), `edit` (untuk status `draft`/`rejected` milik requester sendiri), `hapus` (untuk status `draft`/`rejected` milik requester sendiri — diperluas ke `rejected` oleh commit `2f84a0a`, lihat di bawah). Form Create ditambah field lampiran (upload) yang sebelumnya hilang meski backend sudah mendukungnya; model `PengeluaranRequest` punya accessor `lampiran_url` (`Attribute::get()`, `Storage::disk('public')->url($this->lampiran)`).
+- **Pesan error validasi/gagal aksi tampil apa adanya** — action `create`/`submit`/`approve`/`reject`/`disburse` di `PengeluaranRequest.php` (Livewire) memakai `HandlesApiErrors::handleApiError()` yang sudah tersedia di codebase; sebelumnya beberapa action membaca key error yang salah (mis. `errors.status.0` padahal backend melempar key `jumlah`) atau tidak menampilkan notifikasi error sama sekali saat gagal, sehingga pesan asli backend (mis. "Saldo tidak mencukupi...") tertelan.
+- **`WorkflowNotificationService`** benar-benar tersambung ke `Notifications\NotificationService::logNotification()` (`private readonly NotificationService $notificationService` di constructor) — sebelumnya adalah implementasi paralel yang tidak pernah mencatat apapun ke `notification_logs`. Notifikasi yang gagal dikirim lewat **queue** juga sekarang tercatat: log dibuat status `sent` SEBELUM dispatch, `PengeluaranWorkflowNotification::failed()` meng-update log itu jadi `failed` kalau job gagal setelah semua retry habis (sebelumnya dispatch sukses ≠ kirim sukses, tapi tidak ada yang mengoreksi log-nya). `notifyRequester()` yang tadinya filter opt-out secara bulk lalu early-return tanpa menulis log sama sekali kalau semua recipient opt-out, sekarang cek opt-out per-recipient di dalam loop (sama seperti `notifyApprovers()`), sehingga selalu ada baris `notification_logs` (sent/failed/skipped). `NotificationLogController::retryFailed()` punya `case 'workflow'` sehingga tombol Retry di `NotificationLogPage` berfungsi untuk log workflow.
+- **Email opt-out mencakup tipe `workflow`** — `email_opt_outs.notification_type` diperluas dengan nilai `workflow` (migrasi baru, lihat Bagian 2). **Koreksi dari revisi dokumen sebelumnya**: sempat ditulis bahwa `PengeluaranWorkflowNotification` menyertakan link unsubscribe di footer email — itu benar untuk versi awal commit ini, tapi mekanismenya diubah lagi dalam commit yang sama: toggle unsubscribe notifikasi workflow dipindah dari link di email ke halaman profil (`EditProfile`), `UserController::getNotificationPreferences()` mengekspos key `workflow`. Jadi saat ini **tidak ada** link unsubscribe di email workflow — opt-out murni self-service lewat toggle profil, konsisten dengan mekanisme opt-out tipe lain (lihat 1.11).
 - **Blade email `pengeluaran-workflow.blade.php`**: riwayat "rejected" dan "approved" dirender independen (bukan `if/elseif`) — baris "Alasan Penolakan" hanya tampil untuk event `rejected`; baris "Disetujui oleh" menampilkan "Sistem (disetujui otomatis)" saat `ApprovalLog.note` berawalan `Auto-approved`, alih-alih menampilkan nama requester untuk approval otomatis.
 - **`AutoApprovalService`**: wording note `ApprovalLog` untuk kasus jumlah tepat sama dengan threshold diubah dari "di bawah threshold" menjadi "dalam batas threshold" — kondisi `jumlah <= threshold` sendiri sudah benar sejak awal, hanya teksnya yang menyesatkan.
+- Test baru: `WorkflowNotificationLogTest`, `WorkflowEmailOptOutTest`, `NotificationPreferencesTest`, `PengeluaranWorkflowEmailTest`.
+
+**Commit `2f84a0a`**: request pengeluaran berstatus `rejected` sekarang boleh dihapus (`isDeletable()` cek `draft`+`rejected`, sebelumnya hanya `draft`). Tiga row action detail/edit/delete digabung jadi satu `ActionGroup` di tabel Livewire. Method `WorkflowService::getSaldoBreakdown()` (`total_saldo_cabang`, `total_outstanding`, `saldo_tersedia`) di-extract dari `assertSaldoMencukupi()` — ternyata perhitungan saldo memang sudah branch-wide sejak awal (bukan per-periode tahun ajaran), murni di-DRY-kan dan dikunci lewat test regresi (`SaldoBreakdownTest`). Endpoint baru `GET /pengeluaran-request/stats` memakai method ini; ditambah widget `PengeluaranStatsWidget` (3 stat: Total Saldo Cabang, Total Request Pengeluaran, Saldo Tersedia) di halaman Pengeluaran, dan 4 stat "Total Saldo Cabang" di dashboard section Semua Periode. Test baru: `PengeluaranRequestCrudTest`, `SaldoBreakdownTest`.
+
+**Commit `93f02c9`** (bug WF-011 & investigasi WF-010, sesi terbaru): filter dropdown "Tipe Notifikasi" di `NotificationLogPage` sebelumnya belum punya opsi "Workflow" dan label tipe `workflow` tampil sebagai raw value tanpa styling — ditambahkan opsi "Workflow" ke dropdown (`notification-log-table.blade.php`) serta label & warna badge `Workflow`/`info` di `NotificationLogTable::table()`. Terpisah dari itu, dugaan bug "`NotificationLogController::index()` tidak mengikuti active-branch-switcher" diinvestigasi ulang dan **dikonfirmasi bukan bug** — `ActiveBranchContextMiddleware` sudah memutasi `$request->user()->branch_id` in-memory sebelum controller jalan, dan `Auth::user()` mengembalikan instance yang sama (tercache di guard), jadi scoping branch-switch sudah bekerja benar; salah diagnosis sebelumnya karena investigasi hanya membaca kode tanpa menjalankan tes nyata dengan permission switch yang benar-benar ter-bind. Ditambah regression test baru `NotificationLogBranchScopeTest` (sebelumnya nol coverage untuk mekanisme ini) untuk mengunci perilaku yang sudah benar itu.
 
 ### 1.5 Detail Profil Siswa
 > ⚠️ **Status vs proposal TA:** Tambahan di luar rencana — tidak disebut di proposal.
 
 `DetailWali.php` (Filament page) + perbaikan bug badge/tombol verifikasi email yang overflow di profil siswa. Commit `f602d6a`.
+
+**Commit `1ebf989`**: form edit siswa MI berubah jadi form KB/TK setelah keluar dari detail siswa lewat breadcrumb — root cause: URL detail siswa memakai jenjang lowercase (`Str::lower`), tapi seluruh pengecekan tab aktif membandingkan case-sensitive terhadap `'MI'` (uppercase), sehingga breadcrumb yang membawa nilai lowercase membuat tab MI dikira bukan MI. Dinormalisasi ke uppercase di titik masuk (`mount` `DataSiswa`, `DataMasterSiswa`, Filament Page `DetailSiswa`). Sekalian ditambahkan field email ayah/ibu/wali yang sebelumnya tidak dirender di halaman detail siswa meski datanya sudah dikirim backend (memenuhi TC-UI-001 — lihat `document/test-case-blackbox.md`). Test baru: `DataSiswaJenjangCaseTest`.
+
+**Commit `2cc667c`** (lihat juga subsection UX di Bagian 1.12): `DetailSiswa` dan `DetailWali` (Livewire) dikonversi ke `#[Lazy]` dengan placeholder spinner agar render awal halaman tidak menunggu fetch API selesai.
 
 ### 1.6 Periode Tahun Ajaran / Kenaikan Kelas / Kelulusan / Auto-Create Akun Siswa
 > ⚠️ **Status vs proposal TA:** Sepenuhnya di luar scope proposal TA — modul akademik yang tidak disebut sama sekali di proposal.
@@ -67,10 +80,26 @@ Backend: `TahunAjaranController`, `KenaikanKelasController`, `AkunSiswaControlle
 Frontend: `TahunAjaranManagement.php`, `KenaikanKelasPage.php`, `ManajemenAkunSiswa.php`, view `kenaikan-kelas.blade.php`, `kenaikan-kelas-batch-detail-table.blade.php`, partial `credentials-list/empty/modal.blade.php` (kredensial akun siswa auto-generate).
 Commit: `05ba2e6` (checkpoint: tagihan-card-view, periode-tahun-ajaran, kenaikan-kelas-kelulusan, auto-create-akun-siswa).
 
+**Commit `55352e9`** (bug TA-006 di `test-case-blackbox.md`): kenaikan kelas tidak mengubah `kelas_id` siswa asli, hanya tercatat di riwayat batch — root cause: sync `kelas_id` hanya jalan kalau periode tujuan sudah aktif SAAT promosi diproses, padahal alur normal mempromosikan siswa ke periode yang BELUM aktif, sehingga sync tidak pernah terjadi dan tidak pernah di-backfill saat periode itu akhirnya diaktifkan. Fix: `TahunAjaranController::activate()` sekarang me-resync `kelas_id` seluruh siswa dari placement `SiswaKelas` periode yang baru diaktifkan. Test baru: `TahunAjaranActivateTest`.
+
+**Commit `a71bdd0`** — **koreksi penting terhadap nama subsection ini**: fitur "Auto-Create Akun Siswa" yang disebut di judul di atas **sudah dihapus** oleh commit ini. Dua bug ditemukan & diperbaiki sekaligus: (1) siswa baru tidak pernah muncul di tab "Belum Terdaftar" halaman Manajemen Akun Siswa — root cause: `SiswaController::create()` auto-membuat akun via `AkunSiswaService` setiap siswa baru dibuat, sehingga siswa itu langsung "terdaftar" dan tidak pernah masuk daftar belum-terdaftar; auto-create ini **dihapus**, akun sekarang murni dibuat manual lewat halaman Manajemen Akun Siswa. (2) data akun siswa bocor lintas cabang — `AkunSiswaController::index()` mengambil `$branchId` tapi tidak pernah memakainya untuk filter query; ditambah `->where('branch_id', $branchId)`. `KategoriFactory` ditambah default `branch_id` untuk mendukung test yang butuh kategori ter-scope cabang. Test baru: `SiswaTest`.
+
+> ⚠️ **Dampak ke `komparasi-proposal-vs-implementasi.md`**: dokumen komparasi masih mendeskripsikan "auto-create akun siswa dengan kredensial generate otomatis" sebagai implementasi berjalan (baris "Portal siswa — cakupan tambahan" dan tabel "Ringkasan Konsolidasi"). Sejak `a71bdd0`, itu tidak lagi akurat — akun siswa sekarang murni dibuat manual. Perlu direvisi terpisah (di luar scope perubahan dokumen ini).
+
 ### 1.7 Import/Export Data
 > ⚠️ **Status vs proposal TA:** Sesuai rencana proposal.
 
 Service baru `backend/app/Services/ImportExport/`: `ImportBatchService`, `TemplateService`, `SiswaImportService`, `SiswaExportService`, `TagihanImportService`, `TagihanExportService`, `PembayaranExportService`, `KasExportService`. Controller `ImportExportController`. Tabel baru `import_batches`, `export_jobs`, kolom `batch_reference` pada `siswas`/`tagihans`. Dependency baru `maatwebsite/excel` di `backend/composer.json`. Commit `a2b9298` (checkpoint: import/export).
+
+**Commit `33070b1`** (6 bug dari `test-case-blackbox.md`: TA-005, IE-001–IE-005):
+- **TA-005**: tabel akun siswa terdaftar (`ManajemenAkunSiswa`) mendapat opsi paginasi `'all'` agar bulk print kredensial bisa langsung semua siswa tanpa per-halaman — `recordsPerPage` ditangani manual karena dukungan `'all'` bawaan Filament hanya jalan untuk query builder Eloquent, bukan closure `records()` custom.
+- **IE-001 & IE-004**: kolom export (`SiswaExport`) & template import siswa (`SiswaImportTemplate`) sekarang jenjang-aware — MI dapat NISN/asal_sekolah/kelas_diterima/tahun_diterima/ayah/ibu, KB/TK dapat wali, mengikuti field yang sungguh dikoleksi form create per jenjang. Tanpa filter jenjang tetap tampilkan semua kolom.
+- **IE-002**: dua bug terpisah — modal Riwayat Import diganti dari tabel HTML kustom jadi komponen `ImportHistoryTable` (tabel Filament asli dengan row action Rollback sendiri); root cause "kelas diterima tidak terbaca di form edit": sample template import memakai angka Arab `'1'`, padahal Select form edit siswa MI hanya menerima angka Romawi I-VI, sehingga nilai hasil import tidak match opsi manapun. Sample diganti ke format Romawi + ditambah validasi dropdown & validasi baris import.
+- **IE-003**: aksi Import Tagihan ditambahkan di `TagihanCardView` — backend sudah mendukung endpoint ini sejak awal, hanya belum pernah di-wire ke frontend.
+- **IE-005**: aksi Export Pembayaran ditambahkan di `PembayaranCardView`, pola sama seperti IE-003.
+- Dokumentasi `test-case-blackbox.md` diupdate sesuai (status keenam bug jadi "Sudah diperbaiki").
+
+**Commit `93f02c9`** (bug IE-006, sesi sebelumnya — root cause asli IE-003/IE-005): aksi `importTagihanAction`/`templateTagihanAction`/`importHistoryTagihanAction`/`exportPembayaranAction` yang ditambahkan `33070b1` ternyata **tidak benar-benar berfungsi** — klik tombol tidak melakukan apapun, tanpa modal/error. Root cause: `HasImportExport::makeExportAction()` dkk memanggil `Action::make("import_{$type}")` dengan nama snake_case, padahal Filament `InteractsWithActions::resolveAction()` menemukan action lewat `method_exists($this, "{nama}Action")` — nama snake_case tidak pernah cocok dengan method camelCase pemanggilnya, sehingga `mountAction()` diam-diam gagal resolve & unmount tanpa efek (tidak ada error sama sekali). Fix: nama di `Action::make()` diubah pakai `Str::camel()` agar cocok persis nama method pemanggil (`frontend-v2/app/Livewire/Concerns/HasImportExport.php`). Test regresi: `CardViewImportExportActionsTest` (assert nama action + assert mount sungguhan membuka modal via `Livewire::test()`).
 
 ### 1.8 Widget Dashboard Baru
 > ⚠️ **Status vs proposal TA:** Sesuai rencana proposal (dashboard monitoring termasuk kebutuhan fungsional proposal).
@@ -99,7 +128,20 @@ Diperkenalkan commit `eca3a15`.
 3. **Ganti password mandiri + wajib ganti password generik** — `UserController::changePassword()` (baris 283-310, verifikasi `current_password` via `Hash::check`, set `must_change_password=false`), route `POST /users/change-password`, halaman `frontend-v2/app/Filament/Pages/ChangePassword.php`. Mekanisme `must_change_password` + redirect paksa ganti password saat login berlaku untuk SEMUA role (cek generik di `frontend-v2/app/Filament/Pages/Auth/Login.php` baris 101 & 107; `AuthController` baris 92), bukan hanya akun siswa.
 4. **Update email mandiri & preferensi notifikasi per-user** — `UserController::updateEmail()` (baris 545-579, route `PATCH /users/current/email`, wajib `current_password`, validasi unik email per-cabang via `EmailValidationService`); `getNotificationPreferences()`/`updateNotificationPreferences()` (baris 584-663, route `GET`/`PUT /users/current/notification-preferences`, model `EmailOptOut`, tipe: `tagihan_baru`, `reminder`, `kwitansi`, `overdue`) — UI self-service di `frontend-v2/app/Filament/Portal/Pages/PortalProfilPage.php` (baris 134, 241, 300). Diperkenalkan commit `eca3a15`.
 
-**Kondisi saat ini (working-tree, belum di-`git commit`):** `IdentifierService::findUserByIdentifier()` sengaja **tidak** memfilter `is_active` di query pencarian user (didokumentasikan langsung di docblock method) — sebelumnya query difilter `is_active` sehingga akun nonaktif dianggap "tidak ditemukan" dan `AuthController` selalu jatuh ke pesan generik "Username atau password salah", padahal seharusnya menampilkan pesan spesifik "Akun tidak aktif. Hubungi admin sekolah." (baris 57-61). Dengan lookup tanpa filter `is_active`, `AuthController` bisa membedakan "akun tidak ada" dari "akun ditemukan tapi nonaktif" dan menampilkan pesan yang sesuai.
+**Commit `3d3e295`** (sebelumnya didokumentasikan sebagai working-tree belum di-commit — sudah menjadi commit resmi): `IdentifierService::findUserByIdentifier()` sengaja **tidak** memfilter `is_active` di query pencarian user (didokumentasikan langsung di docblock method) — sebelumnya query difilter `is_active` sehingga akun nonaktif dianggap "tidak ditemukan" dan `AuthController` selalu jatuh ke pesan generik "Username atau password salah", padahal seharusnya menampilkan pesan spesifik "Akun tidak aktif. Hubungi admin sekolah." (baris 57-61). Dengan lookup tanpa filter `is_active`, `AuthController` bisa membedakan "akun tidak ada" dari "akun ditemukan tapi nonaktif" dan menampilkan pesan yang sesuai. Test regresi ditambahkan di `UserTest`.
+
+**Commit `1d896e1`**: reset password memaksa logout sesi lama lewat `Filament\Http\Middleware\AuthenticateSession`, yang mendeteksi password berubah lalu redirect ke `route('login')` — tapi aplikasi ini tidak pernah mendaftarkan route bernama `login` (hanya path custom), sehingga muncul `RouteNotFoundException`. Fix: tambah route fallback bernama `login` (`frontend-v2/routes/web.php`) yang redirect ke login URL panel Filament aktif.
+
+**Commit `53515d2`**: pengguna yang password-nya di-reset masih dipaksa verifikasi ulang email padahal sudah pernah verified sebelumnya — root cause: `ChangePassword::mount()` selalu set `isEmailVerified = false` tanpa mengecek status verifikasi sebenarnya. Fix: response login (`AuthController`) sekarang menyertakan `email_verified_at`, disimpan ke session saat login (`Login.php`), dan `ChangePassword::mount()` memakainya untuk skip langkah OTP kalau email sudah pernah diverifikasi. Test baru di `UserTest`.
+
+**Commit `fc34f17`**: akun yang dinonaktifkan saat sedang login tidak benar-benar logout, dan tetap kehilangan akses (permission kosong) walau sudah diaktifkan kembali. Root cause dua lapis: backend sudah benar mencabut token Sanctum saat akun dinonaktifkan, tapi frontend tidak pernah mendeteksi ini — sesi Laravel (`data.token`) tetap nyangkut sampai user logout manual; reaktivasi juga tidak reissue token baru, sehingga begitu token lama terhapus permanen, semua panggilan API balik 401 selamanya walau `is_active` sudah `true` lagi. Fix: listener global di `Http\Client\Events\ResponseReceived` (`frontend-v2/app/Providers/AppServiceProvider.php`) — begitu ada respons 401 dari backend API untuk sesi yang punya `data.token`, langsung `Auth::logout()` + flush session (sama seperti `LogoutResponse` saat logout manual), sehingga navigasi berikutnya otomatis kembali ke halaman login untuk dapat token baru. Turut ditemukan ada dua sesi login paralel (`data.token` custom dan Laravel Auth guard Filament) yang keduanya perlu di-clear. Test baru: `SessionInvalidatedOnRevokedTokenTest`.
+
+### 1.12 Perbaikan UX Navigasi & Layout
+> ⚠️ **Status vs proposal TA:** Penyempurnaan UI/UX di luar detail proposal (proposal tidak menspesifikasikan mekanisme navigasi/loading maupun tata letak halaman).
+
+**Commit `2cc667c`**: SPA mode (`spa()`) dinonaktifkan di `AdminPanelProvider`/`PortalPanelProvider` agar navigasi antar halaman langsung berpindah dulu, tidak menunggu data load selesai. Ditambah 1 spinner loading global (`global-loading-spinner.blade.php` + `spinner-icon.blade.php`, memakai `generate_loading_indicator_html` Filament) yang dipasang di aksi-aksi yang memuat data; render hook pagination-loading lama yang rusak dihapus. `BranchSwitcher` diubah dari hard reload menjadi Livewire AJAX dengan `redirect(..., navigate: true)` ke referer, spinner-nya memakai `x-on:livewire:navigated.window` untuk reset state switching (sebelumnya nyangkut berputar terus karena `wire:navigate` melakukan morph DOM, bukan replace, sehingga state Alpine tidak ter-reset). `BranchApprovalSettings`, `DetailSiswa`, `DetailWali`, `NotificationSettings`, `SiswaDashboard` dikonversi ke `#[Lazy]` + placeholder spinner agar render awal halaman tidak menunggu fetch API selesai.
+
+**Commit `21b6529` + `630a31d`**: layout profil diubah jadi 2 kolom di desktop (grid `grid-cols-1 lg:grid-cols-2 gap-6`), tetap 1 kolom di mobile. Portal siswa (`PortalProfilPage`): kolom kiri Informasi Akun/Data Siswa/Data Orang Tua, kolom kanan Email/Notifikasi/Password. Profil admin panel (`EditProfile`) memakai layout sama tapi section Email digabung ke kolom kiri (bareng Informasi Akun) khusus di halaman ini — kolom kanan tinggal Preferensi Notifikasi dan Ubah Password.
 
 ---
 
@@ -233,6 +275,21 @@ Perubahan mekanisme (bukan sekadar daftar permission): sistem berpindah dari rol
 - `5287510`, `0a7dc49` — checkpoint perbaikan bug dan layout.
 - `c5799ae` — Testing modul 1 dan 2 (validasi hasil perbaikan).
 - Property-based tests baru (`DashboardWidgetFallbackTest.php`, `TableComponentErrorHandlingTest.php`, `ExportServicePropertyTest.php`) menambah cakupan uji untuk fallback widget dashboard dan penanganan error tabel.
+- `361ce37` — Fix bug branch-scoping Transaksi Midtrans (admin cabang bisa lihat/sync transaksi cabang lain).
+- `f45c7ae` — Fix bug grouping audience RBAC, hapus `halt()` yang selalu fatal, validasi toggle jadi `sometimes`.
+- `52a8f25` — Hapus fitur switch-sibling di portal siswa (lihat Bagian 7).
+- `2f84a0a` — Fix `assertSaldoMencukupi()`/saldo breakdown pengeluaran didokumentasikan ulang (bukan bug, tapi diverifikasi branch-wide sejak awal via `SaldoBreakdownTest`), izinkan hapus request `rejected`.
+- `4a9ec63` — Fix log notifikasi workflow yang gagal dikirim lewat queue tidak pernah dikoreksi jadi `failed`; fix `notifyRequester()` tidak menulis log sama sekali kalau semua recipient opt-out.
+- `3d3e295` — Fix pesan login akun nonaktif jadi spesifik ("Akun tidak aktif...") bukan generic username/password salah.
+- `55352e9` — Fix kenaikan kelas tidak mengubah `kelas_id` siswa asli, hanya tercatat di riwayat batch (bug TA-006).
+- `a71bdd0` — Fix siswa baru tidak muncul di tab Belum Terdaftar Manajemen Akun Siswa; fix data akun siswa bocor lintas cabang.
+- `1d896e1` — Fix `RouteNotFoundException` saat reset password memaksa logout sesi lama.
+- `53515d2` — Fix user yang password-nya di-reset dipaksa verifikasi ulang email padahal sudah pernah verified.
+- `1ebf989` — Fix form edit siswa MI berubah jadi form KB/TK setelah keluar dari detail siswa lewat breadcrumb (case-mismatch jenjang); tambah field email ayah/ibu/wali yang belum tampil di detail siswa.
+- `7ebe33f` — Fix kolom laporan PDF tagihan geser saat grup tagihan satu siswa terpotong page-break (DomPDF tidak bisa melanjutkan `rowspan` lintas halaman); tiap grup siswa sekarang jadi tabel sendiri dengan `page-break-inside: avoid`.
+- `33070b1` — Fix 6 bug test-case blackbox: TA-005 (paginasi 'all'), IE-001/IE-004 (kolom import/export jenjang-aware), IE-002 (Riwayat Import jadi tabel Filament + kelas diterima tidak terbaca), IE-003 (aksi Import Tagihan hilang), IE-005 (aksi Export Pembayaran hilang).
+- `fc34f17` — Fix akun dinonaktifkan saat login tidak benar-benar logout, dan tetap kehilangan akses walau diaktifkan kembali (session invalidation on 401).
+- `93f02c9` — Fix guard mismatch `Role::create()` (RBAC-005); fix permission check inline di `KenaikanKelas.php` bypass `PermissionHelper` (TA-006); fix opsi filter "Workflow" hilang di log notifikasi (WF-011); fix root cause asli IE-003/IE-005 — action Import/Export tidak berfungsi karena mismatch penamaan `Action::make()` snake_case vs method camelCase (IE-006).
 
 ---
 
@@ -246,12 +303,15 @@ Perubahan mekanisme (bukan sekadar daftar permission): sistem berpindah dari rol
 - **Lifecycle migrate otomatis** dihapus dari `frontend-v2/composer.json` (`migrate --force`/`migrate --graceful`) karena migrasi kini eksklusif milik `backend`.
 - **Skema RBAC "resource registry" terpisah** dilebur/dihapus dan digabung menjadi satu tabel `page_permissions` murni pointer (migrasi `2026_07_10_000002_merge_resource_registry_into_page_permissions.php`), menyederhanakan model data RBAC.
 - Terakhir, commit `9da3f2e` dan `743799c` membersihkan folder/file yang tidak diperlukan lagi dan menambahkan graphify project.
+- **Fitur switch-sibling di portal siswa** dihapus sepenuhnya (commit `52a8f25`) — `SiblingDetectionService` dan seluruh pemakaiannya dihapus; `TagihanController::siswaView()` disederhanakan, selalu mengembalikan tagihan milik siswa akun yang login (tidak lagi menerima query param `siswa_id`); `TagihanSiswa` (Livewire) kehilangan properti `$siblings`/`$ownerSiswaId`/`$ownerSiswaName` dan method terkait, blade-nya kehilangan selector dropdown sibling. Keputusan desain: satu akun portal kini hanya untuk satu siswa.
+- **Auto-create akun siswa** dihapus dari `SiswaController::create()` (commit `a71bdd0`) — akun portal siswa sekarang murni dibuat manual lewat halaman Manajemen Akun Siswa (lihat 1.6).
+- **Tab "Panduan" RBAC Dashboard** dan link unsubscribe di email workflow — lihat 8.3.f dan 1.4 secara berurutan (perubahan dari revisi sebelumnya, dikonfirmasi masih berlaku).
 
 ---
 
-## 8. Perubahan Setelah `743799c` (6 commit baru: `872f983`..`34451d1`)
+## 8. Perubahan Setelah `743799c` (commit `872f983`..`34451d1`, 6 commit)
 
-> Perbaikan bug yang masih berupa working-tree belum di-`git commit` per 20 Juli 2026 (branch-scoping Midtrans, pengelompokan audience & validasi toggle RBAC, wiring log notifikasi workflow, pesan login akun nonaktif) didokumentasikan langsung di sub-bagian fitur terkait pada Bagian 1, bukan di sini — lihat 1.1, 1.3, 1.4, 1.11.
+> Perbaikan bug yang saat revisi dokumen sebelumnya masih berupa working-tree belum di-`git commit` (branch-scoping Midtrans, pengelompokan audience & validasi toggle RBAC, wiring log notifikasi workflow, pesan login akun nonaktif) — semuanya sudah menjadi commit resmi (`361ce37`, `f45c7ae`, `4a9ec63`, `3d3e295`) dan didokumentasikan langsung di sub-bagian fitur terkait pada Bagian 1 dengan hash yang benar, bukan di sini — lihat 1.1, 1.3, 1.4, 1.11. Commit-commit baru sesudah `34451d1` (23 commit, sampai `93f02c9`) juga dilipat ke sub-bagian fitur terkait di Bagian 1 (per keputusan navigasi-per-fitur, bukan per-sesi) alih-alih menambah `8.6`/`8.7`/dst — bagian 8 ini dibiarkan sebagai arsip historis untuk commit `872f983`..`34451d1` saja.
 
 ### 8.1 Commit `872f983` — Fix resource key + dokumentasi
 - **Fix bug**: sinkronisasi ulang `resource_key` yang tidak konsisten (lanjutan dari `81c268a`/`6cad146`) — menyentuh `Settings.php` dan `PortalRiwayatPembayaranPage.php`.
@@ -312,6 +372,8 @@ Perubahan mekanisme (bukan sekadar daftar permission): sistem berpindah dari rol
 - **`docker/mysql/init.sql`** — inisialisasi database awal container MySQL. **`docker/ngrok/ngrok.yml`** — konfigurasi tunnel ngrok (mendukung testing pembayaran mobile & webhook Midtrans dari luar jaringan lokal, konsisten dengan setup tunneling `frontend-v2/bootstrap/app.php` di 8.2).
 - `.env.example` (root, backend, frontend-v2) diperbarui dengan variabel koneksi antar-container (`DB_HOST=mysql`, `REDIS_HOST=redis`, `MAIL_HOST=mailpit`, dst — nama service Docker, bukan `127.0.0.1`).
 - Tidak menambah/mengubah fitur aplikasi yang terlihat pengguna — murni perubahan infrastruktur deployment/dev-environment.
+
+**Commit `d40da34`** (tuning lanjutan pasca-`1c39767`): `opcache.revalidate_freq` diubah dari `0` ke `2` dan duplikat load `zend_extension` di `php.ini` backend/frontend dihapus. Entrypoint di-refactor jadi shared `docker/common/entrypoint-common.sh` yang **sengaja tidak** menjalankan `config:cache` — env override `phpunit.xml` sempat ikut ter-cache sehingga dev DB kepakai konfigurasi test DB dan sempat mem-wipe data dev. Seluruh pemanggilan `env('API_URL')` diganti `config('handayani.api_url')` di `frontend-v2` supaya tetap resolve walau `config:cache` aktif nanti. `trustProxies` dibatasi ke range privat/Docker (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) daripada `'*'`, agar header `X-Forwarded-Host` tidak bisa dispoof dari luar. Ditambah memoisasi request-scoped di `BrandingService` agar tidak fetch API berkali-kali per request (Admin panel dan Portal panel provider sama-sama boot service ini).
 
 ---
 
@@ -629,7 +691,7 @@ Sumber: migrasi bertanggal ≤ `2025_12_28_120848_alter_users_new_column_branch_
 
 ---
 
-### 9.4 Detail Kolom Lengkap per Tabel — Saat Ini (HEAD `de22f75` + sesi belum commit, 39 tabel aplikasi)
+### 9.4 Detail Kolom Lengkap per Tabel — Saat Ini (HEAD `93f02c9`, 39 tabel aplikasi — tidak ada migrasi baru sejak `de22f75`, dikonfirmasi via `git diff 34451d1..93f02c9 --name-status -- backend/database/migrations`)
 
 Kolom baseline yang bertahan tidak diulang detail per-field jika tidak berubah — hanya delta (kolom baru/dihapus/diubah) yang ditandai **[baru]**/**[dihapus]**/**[diubah]**. Tabel yang seluruhnya baru ditandai di judul.
 
@@ -837,7 +899,7 @@ Kolom baseline yang bertahan tidak diulang detail per-field jika tidak berubah �
 
 ### 9.5 Ringkasan Diff Skema (kuantitatif)
 
-| Aspek | Baseline (`37ff85a9`) | Saat ini (HEAD `de22f75`) |
+| Aspek | Baseline (`37ff85a9`) | Saat ini (HEAD `93f02c9`) |
 |---|---|---|
 | Jumlah tabel aplikasi (di luar tabel framework Laravel: `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`) | 13 | 39 (termasuk 1 tabel transisi `permission_resources` yang sempat ada lalu dilebur/dihapus) |
 | Mekanisme akses | 1 kolom `users.role` (string) | Spatie RBAC + `resource_key` dinamis (5 tabel: `permissions`, `roles`, `model_has_*`, `permission_endpoints`, `page_permissions`) |
@@ -852,9 +914,32 @@ Kolom baseline yang bertahan tidak diulang detail per-field jika tidak berubah �
 
 ---
 
-## Lampiran: Daftar Lengkap Commit (37ff85a9..HEAD)
+## Lampiran: Daftar Lengkap Commit (37ff85a9..HEAD `93f02c9`)
 
 ```
+93f02c9 Perbaiki 2 bug RBAC & workflow (guard mismatch role create, permission check inline KenaikanKelas), konfirmasi 1 dugaan bug notifikasi cabang ternyata bukan bug, tambah opsi filter Workflow di log notifikasi.
+245569c Kerjakan 14 test case blackbox yang belum diisi statusnya: webhook Midtrans, RBAC, manajemen akun.
+fc34f17 Perbaiki akun yang dinonaktifkan saat sedang login tidak benar-benar logout, dan tetap kehilangan akses walau sudah diaktifkan kembali.
+574d551 Tambahkan grouping dan paginasi ke tabel Permissions, Endpoint Mapping, dan Resource & Page Registry di halaman Manajemen RBAC.
+630a31d Terapkan layout 2 kolom yang sama ke profil admin panel, dengan section Email digabung ke kolom kiri.
+21b6529 Ubah layout profil portal siswa jadi 2 kolom di desktop, tetap 1 kolom di mobile.
+33070b1 Kerjakan 6 bug tersisa di rekap test case blackbox (TA-005, IE-001 s/d IE-005).
+7ebe33f Perbaiki kolom laporan PDF tagihan yang geser saat grup tagihan satu siswa terpotong page-break.
+1ebf989 Perbaiki form edit siswa MI berubah jadi form KB/TK setelah keluar dari detail siswa lewat breadcrumb.
+53515d2 Perbaiki pengguna yang password-nya di-reset masih dipaksa verifikasi ulang email padahal sudah pernah verified sebelumnya.
+1d896e1 Perbaiki RouteNotFoundException saat reset password memaksa logout sesi lama.
+a5bdf76 dokumen ta
+55352e9 Perbaiki kenaikan kelas yang tidak mengubah kelas_id siswa asli, hanya tercatat di riwayat batch.
+a71bdd0 Perbaiki siswa baru tidak muncul di tab Belum Terdaftar manajemen akun siswa, dan data akun siswa bocor lintas cabang.
+3d3e295 Perbaiki pesan login akun nonaktif jadi spesifik, bukan username/password salah
+ad2e9ab Update dokumentasi tracking-perubahan, komparasi proposal-implementasi, dan rekap test case
+4a9ec63 Perbaiki notifikasi workflow: log gagal-kirim dari queue, opt-out per-recipient, toggle pindah ke profil
+2f84a0a Modul pengeluaran: izinkan hapus rejected, ActionGroup, lampiran_url, stat saldo cabang
+2cc667c Matikan SPA mode, tambah 1 global loading spinner, konversi komponen berat jadi #[Lazy]
+52a8f25 Hapus fitur switch-sibling di portal siswa, satu akun hanya untuk satu siswa
+361ce37 Perbaiki sync Midtrans: branch scoping, exception handling, reload data setelah gagal
+f45c7ae Perbaiki RBAC: grouping audience di permission tree, hapus halt(), validasi toggle jadi sometimes
+d40da34 Tuning performa Docker dan perbaikan resolusi config setelah config:cache
 34451d1 Dockerizing project.
 1c39767 Dockerizing project.
 9f4c3a0 Update Test Case dan fix verify otp error untuk user dengan must_change_password = 0
