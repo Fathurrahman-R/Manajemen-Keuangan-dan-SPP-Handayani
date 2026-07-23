@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\BulkPromotionRequest;
 use App\Http\Requests\CrossLevelTransferRequest;
 use App\Http\Requests\GraduationRequest;
-use App\Http\Requests\IndividualPromotionRequest;
 use App\Http\Requests\RetentionRequest;
 use App\Models\BatchPromosi;
 use App\Models\Kelas;
@@ -39,30 +38,6 @@ class KenaikanKelasController extends Controller
 
         return response()->json([
             'message' => 'Bulk promotion berhasil diproses.',
-            'data' => $result,
-        ], 200);
-    }
-
-    /**
-     * Process individual promotion for a specific student.
-     */
-    public function individualPromotion(IndividualPromotionRequest $request): JsonResponse
-    {
-        $data = $request->validated();
-        $branchId = Auth::user()->branch_id;
-        $userId = Auth::id();
-
-        $result = $this->kenaikanKelasService->processIndividualPromotion(
-            $data['siswa_id'],
-            $data['target_kelas_id'],
-            $data['tahun_ajaran_id'],
-            $data['is_pindah_jenjang'] ?? false,
-            $userId,
-            $branchId
-        );
-
-        return response()->json([
-            'message' => 'Individual promotion berhasil diproses.',
             'data' => $result,
         ], 200);
     }

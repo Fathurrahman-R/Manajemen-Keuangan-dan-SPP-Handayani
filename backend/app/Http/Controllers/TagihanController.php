@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Events\TagihanCreated;
-use App\Http\Requests\BayarLunasRequest;
 use App\Http\Requests\BayarTidakLunasRequest;
 use App\Http\Requests\TagihanRequest;
 use App\Http\Resources\TagihanGroupedResource;
@@ -323,22 +322,6 @@ class TagihanController extends Controller
         }
 
         return response(['data' => true])->setStatusCode(200);
-    }
-
-    #[HeaderParameter('Authorization')]
-    public static function lunas(BayarLunasRequest $request, string $kode_tagihan)
-    {
-        $tagihan = Tagihan::with(['siswa', 'jenis_tagihan'])->where('branch_id', Auth::user()->branch_id)->find($kode_tagihan);
-        if (! $tagihan) {
-            throw new HttpResponseException(response([
-                'errors' => ['message' => ['tagihan tidak ditemukan.']],
-            ], 404));
-        }
-        $sisa = $tagihan->jenis_tagihan->jumlah - $tagihan->tmp;
-        $jumlah = when($tagihan->status == 'Belum Lunas', $sisa, $tagihan->jenis_tagihan->jumlah);
-        $tagihan->update(['status' => 'Lunas', 'tmp' => $tagihan->jenis_tagihan->jumlah]);
-
-        return $jumlah;
     }
 
     #[HeaderParameter('Authorization')]

@@ -22,12 +22,11 @@ use Illuminate\Support\Facades\Session;
 
 uses(TestTrait::class);
 
-// The 12 Table components that must handle errors gracefully
+// The 11 Table components that must handle errors gracefully
 const TABLE_COMPONENTS = [
     \App\Livewire\DataCategory::class,
     \App\Livewire\DataKelas::class,
     \App\Livewire\DataSiswa::class,
-    \App\Livewire\DataWali::class,
     \App\Livewire\BranchManagement::class,
     \App\Livewire\JenisTagihan::class,
     \App\Livewire\UserManagement::class,
@@ -55,7 +54,6 @@ const COMPONENT_RECORDS_PARAMS = [
     // Components that use simple array return: (search, sortColumn, sortDirection)
     \App\Livewire\DataCategory::class => 'simple_search',
     \App\Livewire\DataKelas::class => 'simple_search',
-    \App\Livewire\DataWali::class => 'simple_search',
     \App\Livewire\BranchManagement::class => 'simple_search',
     \App\Livewire\JenisTagihan::class => 'simple_search',
     // Components that use paginated return: (search, page, recordsPerPage, sortColumn, sortDirection)
