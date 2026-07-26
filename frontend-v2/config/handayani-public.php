@@ -34,8 +34,15 @@ return [
     // --- CONTENT ABOUT ---
     'about' => [
         'title' => 'Lembaga pendidikan Islam yang fokus pada ilmu, adab, dan masa depan.',
-        'misi' => 'Menyelenggarakan pendidikan terpadu berbasis nilai Islam, kurikulum nasional, dan pengembangan karakter — untuk membentuk peserta didik yang berilmu, mandiri, dan berakhlak mulia.',
-        'visi' => 'Menjadi yayasan pendidikan Islam rujukan yang melahirkan generasi cerdas spiritual, intelektual, dan sosial — siap berkontribusi bagi umat dan bangsa.',
+        'misi' => [
+            'Menyelenggarakan pendidikan yang menanamkan nilai-nilai akhlakul karimah dalam setiap aktivitas belajar',
+            'Mengembangkan kemampuan kemandirian peserta didik melalui pembiasaan positif dan layanan bimbingan yang berkelanjutan',
+            'Meningkatkan kecerdasan intelektual melalui pembelajaran aktif, kreatif, inovatif, dan menyenangkan',
+            "Memperkuat literasi Al-Qur'an dan program tahfiz serta pembiasaan ibadah harian",
+            'Mengintegrasikan teknologi informasi dalam proses pembelajaran untuk mendukung kecakapan abad 21',
+            'Membangun lingkungan belajar yang kolaboratif antara madrasah, keluarga, dan masyarakat',
+        ],
+        'visi' => 'Mewujudkan peserta didik yang berakhlak mulia, mandiri, berwawasan intelektual, cerdas dalam teknologi, dan menjadi generasi penghafal Al-Qur’an.',
         'nilai_institusional' => [
             ['n' => '01', 'title' => 'Integritas', 'desc' => 'Kejujuran, amanah, dan tanggung jawab menjadi pondasi setiap pendidik dan peserta didik.'],
             ['n' => '02', 'title' => 'Profesionalisme', 'desc' => 'Tenaga pendidik kompeten dengan kurikulum nasional terstandar dan pengembangan berkelanjutan.'],

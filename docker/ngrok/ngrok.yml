@@ -10,10 +10,10 @@ tunnels:
   # ngrok paid plan dengan reserved domain tambahan, aktifkan blok frontend di
   # bawah + isi `domain:` dengan domain reserved kamu, lalu ganti command service
   # `ngrok` di docker-compose.yml dari `start backend` jadi `start --all`.
-  backend:
+  frontend:
     proto: http
-    addr: backend:8080
-  # frontend:
+    addr: frontend:8000
+  # backend:
   #   proto: http
-  #   addr: frontend:8000
+  #   addr: backend:8080
   #   domain: your-reserved-domain.ngrok-free.app

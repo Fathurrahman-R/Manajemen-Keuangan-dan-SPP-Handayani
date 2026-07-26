@@ -9,19 +9,24 @@
             </h2>
         </x-public.reveal>
 
-        {{-- Misi / Visi cards --}}
-        <div class="mt-14 grid gap-10 lg:grid-cols-2 lg:gap-16">
+        {{-- Visi / Misi cards --}}
+        <div class="mt-14 flex flex-col gap-10">
             <x-public.reveal class="rounded-2xl border border-border bg-background p-7">
-                <h3 class="font-display text-sm font-semibold uppercase tracking-widest text-primary">Misi</h3>
-                <p class="mt-3 text-base leading-relaxed text-foreground">
-                    {{ config('handayani-public.about.misi') }}
-                </p>
-            </x-public.reveal>
-            <x-public.reveal delay="80ms" class="rounded-2xl border border-border bg-background p-7">
                 <h3 class="font-display text-sm font-semibold uppercase tracking-widest text-accent">Visi</h3>
                 <p class="mt-3 text-base leading-relaxed text-foreground">
                     {{ config('handayani-public.about.visi') }}
                 </p>
+            </x-public.reveal>
+            <x-public.reveal delay="80ms" class="rounded-2xl border border-border bg-background p-7">
+                <h3 class="font-display text-sm font-semibold uppercase tracking-widest text-primary">Misi</h3>
+                <ul class="mt-3 space-y-2 text-base leading-relaxed text-foreground">
+                    @foreach(config('handayani-public.about.misi', []) as $misi)
+                        <li class="flex gap-2">
+                            <span class="text-primary">&bull;</span>
+                            <span>{{ $misi }}</span>
+                        </li>
+                    @endforeach
+                </ul>
             </x-public.reveal>
         </div>
 
