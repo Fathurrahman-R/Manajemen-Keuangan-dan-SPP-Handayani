@@ -1,0 +1,204 @@
+// Modul: Modul Inti (Baseline)
+// Bagian dari skema 38 tabel aplikasi (post commit 26e9339)
+// Sumber: document/tracking-perubahan.md §9.3/9.4
+// Tabel bertanda 'stub' didefinisikan lengkap di modul lain -- cuma placeholder biar Ref valid.
+
+Table branches {
+  id bigint [pk, note: 'auto-increment']
+  location varchar
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table users {
+  id bigint [pk]
+  username varchar(100) [unique, note: 'unique']
+  password varchar(100)
+  name varchar [note: 'nullable']
+  email varchar [unique, note: 'unique bersama branch_id']
+  email_verified_at timestamp [note: 'nullable']
+  branch_id bigint
+  siswa_id bigint [note: 'nullable, akun portal siswa']
+  is_active boolean [note: 'default true']
+  must_change_password boolean [note: 'default false']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table ayah {
+  id bigint [pk]
+  nama varchar(100) [note: 'nullable']
+  pendidikan_terakhir varchar(50) [note: 'nullable']
+  pekerjaan varchar(100) [note: 'nullable']
+  email varchar(255) [note: 'nullable']
+  email_verified_at timestamp [note: 'nullable']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table ibu {
+  id bigint [pk]
+  nama varchar(100) [note: 'nullable']
+  pendidikan_terakhir varchar(50) [note: 'nullable']
+  pekerjaan varchar(100) [note: 'nullable']
+  email varchar(255) [note: 'nullable']
+  email_verified_at timestamp [note: 'nullable']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table walis {
+  id bigint [pk]
+  nama varchar(100)
+  pekerjaan varchar(100) [note: 'nullable']
+  alamat text
+  no_hp varchar(100)
+  keterangan text [note: 'nullable']
+  email varchar(255) [note: 'nullable']
+  email_verified_at timestamp [note: 'nullable']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table kategoris {
+  id bigint [pk]
+  nama varchar(100)
+  branch_id bigint
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table kelas {
+  id bigint [pk]
+  jenjang varchar
+  nama varchar(100)
+  branch_id bigint
+  level int [note: 'nullable']
+  created_at timestamp [unique, note: 'unique(jenjang, branch_id, level)']
+  updated_at timestamp [unique, note: 'unique(jenjang, branch_id, level)']
+}
+
+Table siswas {
+  id bigint [pk]
+  nis varchar(20) [unique, note: 'unique']
+  nisn varchar(20) [unique, note: 'unique, nullable']
+  nama varchar(100)
+  jenis_kelamin varchar
+  tempat_lahir varchar
+  tanggal_lahir varchar
+  agama varchar
+  alamat varchar
+  ayah_id bigint [note: 'nullable']
+  ibu_id bigint [note: 'nullable']
+  wali_id bigint [note: 'nullable']
+  jenjang varchar
+  kelas_id bigint [note: 'nullable']
+  kategori_id bigint [note: 'nullable']
+  asal_sekolah varchar [note: 'nullable']
+  kelas_diterima varchar [note: 'nullable']
+  tahun_diterima varchar [note: 'nullable']
+  status varchar [note: 'default Aktif']
+  keterangan text [note: 'nullable']
+  branch_id bigint
+  batch_reference char(36) [note: 'nullable, index — jejak asal import massal']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table jenis_tagihans {
+  id bigint [pk]
+  nama varchar(100)
+  jatuh_tempo date
+  jumlah decimal(12,2)
+  branch_id bigint
+  tahun_ajaran_id bigint [note: 'NOT NULL, onDelete restrict']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table tagihans {
+  kode_tagihan char(30) [pk]
+  jenis_tagihan_id bigint
+  nis varchar(20) [unique, note: 'cascadeOnDelete (tidak lagi unique)']
+  tmp decimal(12,2) [note: 'default 0']
+  status varchar [note: 'default Belum Dibayar']
+  branch_id bigint
+  batch_reference char(36) [note: 'nullable, index']
+  tahun_ajaran_id bigint [note: 'nullable, onDelete set null']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table pembayarans {
+  kode_pembayaran char(30) [pk]
+  kode_tagihan char(30) [note: 'index']
+  tanggal date [note: 'default now(), index']
+  metode varchar [note: 'default offline, index']
+  jumlah decimal(12,2) [note: 'default 0']
+  pembayar varchar(100)
+  branch_id bigint
+  midtrans_order_id varchar(64) [unique, note: 'nullable, unique']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table app_settings {
+  id bigint [pk]
+  nama_sekolah varchar
+  lokasi varchar
+  alamat varchar
+  email varchar
+  telepon varchar
+  kepala_sekolah varchar(100)
+  bendahara varchar(100)
+  kode_pos varchar(15)
+  logo varchar(15)
+  branch_id bigint
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table pengeluarans {
+  id bigint [pk]
+  tanggal date [note: 'default now(), index']
+  uraian text
+  jumlah decimal(12,2)
+  branch_id bigint
+  tahun_ajaran_id bigint [note: 'nullable, nullOnDelete']
+  pengeluaran_request_id bigint [note: 'nullable, nullOnDelete']
+  created_at timestamp
+  updated_at timestamp
+}
+
+// ----- stub tabel eksternal (definisi lengkap ada di modul lain) -----
+Table tahun_ajarans { // stub, lihat modul: tahunajaran
+  id bigint [pk]
+}
+
+Table pengeluaran_requests { // stub, lihat modul: approval_notif
+  id bigint [pk]
+}
+
+// ----- relasi -----
+Ref: users.branch_id > branches.id
+Ref: users.siswa_id > siswas.id
+Ref: kategoris.branch_id > branches.id
+Ref: kelas.branch_id > branches.id
+Ref: siswas.kelas_id > kelas.id
+Ref: siswas.kategori_id > kategoris.id
+Ref: siswas.branch_id > branches.id
+Ref: jenis_tagihans.branch_id > branches.id
+Ref: jenis_tagihans.tahun_ajaran_id > tahun_ajarans.id
+Ref: tagihans.jenis_tagihan_id > jenis_tagihans.id
+Ref: tagihans.nis > siswas.nis
+Ref: tagihans.branch_id > branches.id
+Ref: tagihans.tahun_ajaran_id > tahun_ajarans.id
+Ref: pembayarans.kode_tagihan > tagihans.kode_tagihan
+Ref: pembayarans.branch_id > branches.id
+Ref: app_settings.branch_id > branches.id
+Ref: pengeluarans.branch_id > branches.id
+Ref: pengeluarans.tahun_ajaran_id > tahun_ajarans.id
+Ref: pengeluarans.pengeluaran_request_id > pengeluaran_requests.id
+Ref: siswas.ayah_id > ayah.id
+Ref: siswas.ibu_id > ibu.id
+Ref: siswas.wali_id > walis.id

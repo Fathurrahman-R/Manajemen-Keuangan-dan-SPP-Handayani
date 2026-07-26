@@ -1,0 +1,34 @@
+architecture-beta
+    group client(cloud)[Client]
+    group frontend(cloud)[Frontend]
+    group backend(cloud)[Backend]
+    group external(cloud)[External Services]
+
+    service browser(internet)[Browser] in client
+
+    service webapp(server)[Laravel Filament 4 plus Livewire 3] in frontend
+
+    service api(server)[Laravel 12 REST API plus Sanctum] in backend
+    service db(database)[MySQL] in backend
+    service cache(disk)[Redis cache aside] in backend
+    service queue(server)[Queue Worker notifications default] in backend
+    service scheduler(server)[Scheduler cron loop] in backend
+
+    service midtrans(internet)[Midtrans Snap plus Webhook] in external
+    service mail(internet)[SMTP Google Mailpit dev] in external
+
+    junction jcf
+    junction jfb
+    junction jbe
+
+    browser:R -- L:jcf
+    jcf:R -- L:webapp
+    webapp:R -- L:jfb
+    jfb:R -- L:api
+    api:T -- B:queue
+    queue:T -- B:scheduler
+    api:B -- T:db
+    db:B -- T:cache
+    api:R -- L:jbe
+    jbe:R -- L:mail
+    mail:B -- T:midtrans

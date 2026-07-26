@@ -1,0 +1,93 @@
+// Modul: Modul RBAC Dinamis & Autentikasi
+// Bagian dari skema 38 tabel aplikasi (post commit 26e9339)
+// Sumber: document/tracking-perubahan.md §9.3/9.4
+// Tabel bertanda 'stub' didefinisikan lengkap di modul lain -- cuma placeholder biar Ref valid.
+
+Table permissions {
+  id bigint [pk]
+  name varchar [unique, note: 'unique bersama guard_name']
+  guard_name varchar
+  group varchar [note: 'nullable — grouping tampilan']
+  audience varchar [note: 'nullable — target role/audience']
+  label varchar [note: 'nullable — label tampilan']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table roles {
+  id bigint [pk]
+  team_foreign_key bigint [note: 'opsional, mode teams']
+  name varchar [unique, note: 'unique(name, guard_name)']
+  guard_name varchar [unique, note: 'unique(name, guard_name)']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table model_has_permissions {
+  permission_id bigint [note: 'PK komposit']
+  model_type varchar [note: 'PK komposit']
+  model_id varchar [note: 'PK komposit']
+}
+
+Table model_has_roles {
+  role_id bigint [note: 'PK komposit']
+  model_type varchar [note: 'PK komposit']
+  model_id varchar [note: 'PK komposit']
+}
+
+Table role_has_permissions {
+  permission_id bigint [note: 'PK komposit']
+  role_id bigint [note: 'PK komposit']
+}
+
+Table permission_endpoints {
+  id bigint [pk]
+  permission_id bigint [note: 'nullable, nullOnDelete']
+  resource_key varchar(255) [unique, note: 'unique, NOT NULL']
+  group varchar(100) [note: 'nullable']
+  description text [note: 'nullable']
+  is_active boolean [note: 'default true']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table page_permissions {
+  id bigint [pk]
+  permission_name varchar(255) [note: 'nullable']
+  guard_name varchar [note: 'default web']
+  group varchar(100) [note: 'nullable']
+  description text [note: 'nullable']
+  resource_key varchar(255) [unique, note: 'unique, NOT NULL']
+  is_active boolean [note: 'default true']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table personal_access_tokens {
+  id bigint [pk]
+  tokenable_type varchar
+  tokenable_id varchar
+  name varchar
+  token varchar(64) [unique, note: 'unique']
+  abilities text [note: 'nullable']
+  expires_at timestamp [note: 'nullable']
+  last_used_at timestamp [note: 'nullable']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table password_reset_tokens {
+  id bigint [pk]
+  email varchar [note: 'index']
+  token varchar(64) [unique, note: 'unique']
+  used boolean [note: 'default false']
+  created_at timestamp [note: 'useCurrent']
+  expires_at timestamp
+}
+
+// ----- relasi -----
+Ref: model_has_permissions.permission_id > permissions.id
+Ref: model_has_roles.role_id > roles.id
+Ref: role_has_permissions.permission_id > permissions.id
+Ref: role_has_permissions.role_id > roles.id
+Ref: permission_endpoints.permission_id > permissions.id

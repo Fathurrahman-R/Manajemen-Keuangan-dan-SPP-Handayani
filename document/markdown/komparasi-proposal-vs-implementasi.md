@@ -106,6 +106,8 @@ Implementasi jauh melampaui cakupan proposal dengan modul-modul besar yang tidak
 
 ---
 
+**Catatan audit (23 Juli 2026, commit `26e9339`):** dilakukan audit dead code/tabel tak terpakai (`TagihanController::lunas()`, `KenaikanKelasService::processIndividualPromotion()`, klaster halaman `DetailWali`, tabel `filament_notifications`). Tidak ada baris komparasi di atas yang berubah kesimpulannya — seluruh kode/tabel yang dihapus memang tidak pernah menjadi fitur nyata yang di-routing/di-UI-kan, jadi tidak pernah masuk perbandingan proposal-vs-implementasi. Detail lengkap: `document/tracking-perubahan.md` §10.
+
 **Lihat juga:** `document/tracking-perubahan.md` §9 untuk komparasi visual ERD (baseline vs saat ini) dan §8 untuk rincian commit/perubahan terbaru yang belum masuk tabel di atas.
 
 **File ini:** `document/komparasi-proposal-vs-implementasi.md`

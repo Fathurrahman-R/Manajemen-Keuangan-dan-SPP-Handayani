@@ -1,0 +1,83 @@
+// Modul: Modul Tahun Ajaran & Kenaikan Kelas
+// Bagian dari skema 38 tabel aplikasi (post commit 26e9339)
+// Sumber: document/tracking-perubahan.md §9.3/9.4
+// Tabel bertanda 'stub' didefinisikan lengkap di modul lain -- cuma placeholder biar Ref valid.
+
+Table tahun_ajarans {
+  id bigint [pk]
+  nama varchar(9) [note: 'format YYYY/YYYY']
+  tanggal_mulai date
+  tanggal_selesai date
+  status varchar [note: 'default Non-Aktif']
+  branch_id bigint [unique, note: 'unique(nama, branch_id)']
+  created_at timestamp [note: 'index(branch_id, status)']
+  updated_at timestamp [note: 'index(branch_id, status)']
+}
+
+Table siswa_kelas {
+  id bigint [pk]
+  siswa_id bigint
+  kelas_id bigint
+  tahun_ajaran_id bigint [unique, note: 'unique(siswa_id, tahun_ajaran_id)']
+  created_at timestamp [note: 'histori kelas per periode']
+  updated_at timestamp [note: 'histori kelas per periode']
+}
+
+Table batch_promosis {
+  id char(36) [pk, note: 'uuid']
+  batch_type varchar [note: '*individual_promotion tersisa untuk histori lama, alurnya sudah tidak dipakai']
+  source_tahun_ajaran_id bigint
+  target_tahun_ajaran_id bigint
+  kelas_id bigint [note: 'nullable, set null']
+  processed_by bigint
+  processed_at timestamp
+  status varchar [note: 'default completed']
+  branch_id bigint
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table batch_promosi_details {
+  id bigint [pk]
+  batch_id char(36)
+  siswa_id bigint
+  action varchar
+  source_kelas_id bigint [note: 'target nullable']
+  target_kelas_id bigint [note: 'target nullable']
+  previous_status varchar(20)
+  previous_jenjang varchar(5) [note: 'nullable']
+  created_at timestamp
+  updated_at timestamp
+}
+
+// ----- stub tabel eksternal (definisi lengkap ada di modul lain) -----
+Table branches { // stub, lihat modul: core
+  id bigint [pk]
+}
+
+Table siswas { // stub, lihat modul: core
+  id bigint [pk]
+}
+
+Table kelas { // stub, lihat modul: core
+  id bigint [pk]
+}
+
+Table users { // stub, lihat modul: core
+  id bigint [pk]
+}
+
+// ----- relasi -----
+Ref: tahun_ajarans.branch_id > branches.id
+Ref: siswa_kelas.siswa_id > siswas.id
+Ref: siswa_kelas.kelas_id > kelas.id
+Ref: siswa_kelas.tahun_ajaran_id > tahun_ajarans.id
+Ref: batch_promosis.source_tahun_ajaran_id > tahun_ajarans.id
+Ref: batch_promosis.target_tahun_ajaran_id > tahun_ajarans.id
+Ref: batch_promosis.kelas_id > kelas.id
+Ref: batch_promosis.processed_by > users.id
+Ref: batch_promosis.branch_id > branches.id
+Ref: batch_promosi_details.batch_id > batch_promosis.id
+Ref: batch_promosi_details.siswa_id > siswas.id
+Ref: batch_promosi_details.source_kelas_id > kelas.id
+Ref: batch_promosi_details.target_kelas_id > kelas.id

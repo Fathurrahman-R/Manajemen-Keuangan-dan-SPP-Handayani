@@ -1,8 +1,8 @@
 # Tracking Perubahan Sistem
 
-**Rentang commit:** `37ff85a9` (Merge PR #10 dev-fio) → `93f02c9` (HEAD, branch `v3-last-project`)
-**Periode:** 29 April 2026 – 22 Juli 2026
-**Jumlah commit:** 72 commit (49 commit sampai `34451d1`, sudah tercatat di revisi dokumen sebelumnya + 23 commit baru: `d40da34`, `f45c7ae`, `361ce37`, `52a8f25`, `2cc667c`, `2f84a0a`, `4a9ec63`, `ad2e9ab`, `3d3e295`, `a5bdf76`, `55352e9`, `a71bdd0`, `1d896e1`, `53515d2`, `1ebf989`, `7ebe33f`, `33070b1`, `21b6529`, `630a31d`, `574d551`, `fc34f17`, `245569c`, `93f02c9`)
+**Rentang commit:** `37ff85a9` (Merge PR #10 dev-fio) → `26e9339` (HEAD, branch `v3-last-project`)
+**Periode:** 29 April 2026 – 23 Juli 2026
+**Jumlah commit:** 74 commit (49 commit sampai `34451d1`, sudah tercatat di revisi dokumen sebelumnya + 23 commit sampai `93f02c9` (tercatat di revisi sebelumnya): `d40da34`, `f45c7ae`, `361ce37`, `52a8f25`, `2cc667c`, `2f84a0a`, `4a9ec63`, `ad2e9ab`, `3d3e295`, `a5bdf76`, `55352e9`, `a71bdd0`, `1d896e1`, `53515d2`, `1ebf989`, `7ebe33f`, `33070b1`, `21b6529`, `630a31d`, `574d551`, `fc34f17`, `245569c`, `93f02c9` + 2 commit baru: `48e9c07` (update dokumentasi tracking/komparasi), `26e9339` (audit & pembersihan dead code — lihat Bagian 10))
 
 > Catatan metodologi: dokumen ini dideskripsikan berdasarkan **kondisi kode saat ini** (commit HEAD, tidak ada working-tree tersisa — seluruh perubahan sudah di-`git commit`), bukan sebagai catatan harian per sesi kerja — setiap sub-bagian fitur ditulis sebagai deskripsi state final, dengan detail commit/tanggal hanya sebagai referensi historis. Isi diverifikasi ulang lewat `git show`/`git diff` per commit (bukan disalin mentah dari draft sebelumnya) per 22 Juli 2026, dikecualikan `graphify-out/`, lockfile (`composer.lock`, `package-lock.json`), dan artefak build. **Catatan revisi ini**: beberapa paragraf pada revisi dokumen sebelumnya menandai sejumlah perilaku (branch-scoping Transaksi Midtrans, pengelompokan audience & validasi toggle RBAC, logging notifikasi workflow, alasan login akun nonaktif) sebagai "working-tree belum di-`git commit`" — semuanya sudah menjadi commit resmi sejak saat itu (`361ce37`, `f45c7ae`, `4a9ec63`, `3d3e295`), caption tersebut sudah diperbaiki di masing-masing sub-bagian pada revisi ini untuk mengutip hash commit yang benar. Isi satu paragraf (unsubscribe link di email workflow, section 1.4) juga dikoreksi karena perilakunya sudah berubah lagi sejak deskripsi lama ditulis — link unsubscribe di email digantikan toggle preferensi di halaman profil (`4a9ec63`).
 
@@ -901,7 +901,7 @@ Kolom baseline yang bertahan tidak diulang detail per-field jika tidak berubah �
 
 | Aspek | Baseline (`37ff85a9`) | Saat ini (HEAD `93f02c9`) |
 |---|---|---|
-| Jumlah tabel aplikasi (di luar tabel framework Laravel: `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`) | 13 | 39 (termasuk 1 tabel transisi `permission_resources` yang sempat ada lalu dilebur/dihapus) |
+| Jumlah tabel aplikasi (di luar tabel framework Laravel: `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`) | 13 | 39 di HEAD `93f02c9` (termasuk 1 tabel transisi `permission_resources` yang sempat ada lalu dilebur/dihapus); **38 sejak commit `26e9339`** — `filament_notifications` di-drop saat audit dead code, lihat Bagian 10 |
 | Mekanisme akses | 1 kolom `users.role` (string) | Spatie RBAC + `resource_key` dinamis (5 tabel: `permissions`, `roles`, `model_has_*`, `permission_endpoints`, `page_permissions`) |
 | Auth token | `users.token` (kolom custom, unique, nullable) | Sanctum `personal_access_tokens` (kolom `token` lama di-drop) |
 | Riwayat kelas siswa | Tidak ada — `siswas.kelas_id` statis | `siswa_kelas` (histori per `tahun_ajaran_id`) + `batch_promosis`/`batch_promosi_details` |
@@ -914,9 +914,34 @@ Kolom baseline yang bertahan tidak diulang detail per-field jika tidak berubah �
 
 ---
 
-## Lampiran: Daftar Lengkap Commit (37ff85a9..HEAD `93f02c9`)
+## 10. Audit & Pembersihan Dead Code (commit `26e9339`, 23 Juli 2026)
+
+Setelah seluruh fitur di Bagian 1-9 selesai dan diverifikasi (102/103 test case blackbox PASS), dilakukan audit menyeluruh untuk mencari tabel/kode/halaman yang tidak lagi terpakai, sebelum modul basis data didokumentasikan final di laporan TA (lihat `komparasi-proposal-vs-implementasi.md` dan sub-bab 3.3 laporan).
+
+**Backend — kode mati dihapus:**
+- `_disabled.SyncResourcesCommand` dan `_disabled.DynamicPermissionMiddleware` — sudah lama tidak ke-load PSR-4 (prefix `_disabled.`), merujuk tabel/kelas yang sudah dihapus di iterasi RBAC sebelumnya.
+- `TagihanController::lunas()` + `BayarLunasRequest` — tidak ada route/pemanggil aktif; alur pelunasan tagihan yang benar-benar dipakai sudah lewat `PembayaranController::batchLunas()`.
+- `KenaikanKelasController::individualPromotion()` + `KenaikanKelasService::processIndividualPromotion()` + `IndividualPromotionRequest` — dibangun tapi tidak pernah di-route/di-UI-kan. Enum `individual_promotion` pada kolom `batch_promosis.batch_type` **dipertahankan** (bukan dihapus) untuk kompatibilitas histori data lama.
+- `backend/audit_results.txt` — dump `print_r()` basi dari audit rute lama, bukan source atau dokumentasi yang relevan.
+
+**Frontend — halaman tak terpakai dihapus:**
+- Klaster `DetailWali` (Filament Page `DetailWali.php`, Livewire `DetailWali.php` & `DataWali.php`, 4 view blade terkait) — sudah tidak bisa diakses karena info Ayah/Ibu/Wali sudah ditampilkan inline di `DetailSiswa`; sudah lama tercatat "tidak dipakai" di `test-case-blackbox.md` tapi belum pernah dibersihkan.
+
+**Database — 1 tabel dihapus:**
+- `filament_notifications` (beserta model `App\Models\FilamentDatabaseNotification` dan override `User::notifications()`) — bekas implementasi notifikasi in-app Filament yang tidak jadi dipakai, sudah digantikan sepenuhnya oleh notifikasi email (`notifications`, `notification_logs`, dst). Migrasi `2026_07_23_160126_drop_filament_notifications_table.php`.
+- **Dampak jumlah tabel aplikasi**: 39 (HEAD `93f02c9`) → **38** (HEAD `26e9339`). Tidak ada tabel lain yang ditambah/dihapus pada commit ini — lihat Bagian 9.5 yang sudah diperbarui.
+
+**Verifikasi:** full backend test suite (`php artisan test`) dibandingkan baseline HEAD vs setelah perubahan — 191 nama test gagal identik persis di kedua run (semua pre-existing test debt, bukan regresi dari pembersihan ini), 0 kegagalan baru. Frontend-v2 test suite tetap 47 passed / 6 failed (kegagalan pre-existing soal branding/config, tidak terkait perubahan ini).
+
+**Dampak ke dokumen lain:** tidak ada fitur yang pernah dibandingkan di `komparasi-proposal-vs-implementasi.md` yang terpengaruh — seluruh kode/tabel yang dihapus di atas memang tidak pernah menjadi fitur nyata yang di-routing/di-UI-kan (dead/unused sejak awal), lihat catatan singkat di dokumen tersebut.
+
+---
+
+## Lampiran: Daftar Lengkap Commit (37ff85a9..HEAD `26e9339`)
 
 ```
+26e9339 Hapus dead code, fitur duplikat, dan halaman tak terpakai (audit unused table/deadcode/fitur duplikat/halaman frontend).
+48e9c07 Update dokumentasi tracking-perubahan (catch-up 23 commit sejak 34451d1) dan komparasi proposal-implementasi (koreksi fakta auto-create akun siswa).
 93f02c9 Perbaiki 2 bug RBAC & workflow (guard mismatch role create, permission check inline KenaikanKelas), konfirmasi 1 dugaan bug notifikasi cabang ternyata bukan bug, tambah opsi filter Workflow di log notifikasi.
 245569c Kerjakan 14 test case blackbox yang belum diisi statusnya: webhook Midtrans, RBAC, manajemen akun.
 fc34f17 Perbaiki akun yang dinonaktifkan saat sedang login tidak benar-benar logout, dan tetap kehilangan akses walau sudah diaktifkan kembali.

@@ -1,0 +1,29 @@
+sequenceDiagram
+    actor P as Pengelola
+    participant Sys as Sistem
+
+    P->>Sys: Pilih kelas/siswa, tahun ajaran tujuan, jenis aksi
+    %% Note over Sys: Endpoint digerbangi RBAC (resource_key `kenaikan-kelas.process`/`.undo`, lihat Gambar 3.5.5)
+    Note over Sys: Validasi periode tujuan ≠ periode aktif (sumber)
+
+    Note over Sys: Naik Kelas/Tinggal Kelas/Kelulusan = BATCH multi-siswa sekaligus
+    Note over Sys: Khusus Naik Kelas: tolak dulu jika tidak ada kelas berikutnya dlm hierarki atau tidak ada siswa eligible
+    loop tiap siswa terpilih (Naik Kelas / Tinggal Kelas / Kelulusan)
+        Sys->>Sys: Terapkan aksi (skip siswa yang tidak memenuhi syarat)
+        Sys->>Sys: Jika periode tujuan = periode aktif, sinkronkan siswa.kelas_id juga (bukan cuma tercatat di riwayat batch)
+    end
+
+    %% Note over Sys: Pindah Jenjang BEDA MEKANISME — 1 request hanya utk 1 siswa, TIDAK ada loop/multi-select
+    Sys->>Sys: Validasi siswa berstatus Lulus & transisi jenjang diizinkan (KB→TK, TK→MI), lalu terapkan
+
+    Sys->>Sys: Buat 1 record Batch Promosi + rincian (per siswa, atau 1 baris utk Pindah Jenjang)
+    Sys-->>P: Selesai (status: completed)
+
+    Note over P,Sys: Kapan saja setelah batch selesai
+    P->>Sys: Ajukan Undo Batch
+    Note over Sys: Validasi status batch masih completed
+    loop tiap detail batch
+        Sys->>Sys: Kembalikan status/jenjang/kelas sebelumnya (skip jika sudah diubah manual)
+    end
+    Sys->>Sys: Tandai batch: undone
+    Sys-->>P: Undo selesai
