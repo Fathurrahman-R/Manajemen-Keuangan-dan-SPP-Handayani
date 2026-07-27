@@ -21,6 +21,9 @@ Ganti NIS siswa = tagihannya lepas. Kalau memang harus ganti, update tagihan ter
 **Database test terpisah, dan tidak dibuat otomatis.**
 Backend test pakai `handayani_testing` di MariaDB beneran. Tanpa dibuat duluan, semua test gagal. Caranya ada di [Testing](testing.md).
 
+**`--env=testing` tidak nunjuk database test.**
+Tidak ada `backend/.env.testing`, jadi Laravel jatuh balik ke `.env` yang `DB_DATABASE=handayani`. `php artisan migrate:fresh --env=testing` bakal ngehapus **database dev**, bukan database test. Sudah pernah kejadian. Kalau perlu reset skema DB test, sebut databasenya eksplisit lewat `-e DB_DATABASE=handayani_testing`.
+
 ## RBAC
 
 **Nama permission pakai bahasa Indonesia.**
@@ -75,6 +78,9 @@ php artisan queue:work --queue=notifications,default
 Di Docker `MAIL_HOST` diarahkan ke `mailpit:1025`. Cek di `http://localhost:8025`, bukan di inbox asli.
 
 ## Autentikasi
+
+**User yang punya email tidak bisa login pakai username.**
+`IdentifierService` sengaja matiin login-by-username buat user non-siswa yang emailnya keisi. Jadi `superadmin` ditolak 401 walau passwordnya benar, harus pakai `superadmin@handayani.com`. Admin cabang hasil seeder tidak punya email, jadi mereka justru pakai username. Daftar lengkapnya di [Setup](setup.md#akun-hasil-seeder).
 
 **Token Sanctum expired 8 jam.**
 Atur lewat `SANCTUM_TOKEN_EXPIRATION` (menit, default 480). Lewat dari itu request ditolak 401, ini normal.
