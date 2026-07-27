@@ -36,6 +36,25 @@ php artisan serve --port=8080
 
 Port 8080-nya wajib, bukan default 8000. `frontend-v2/.env.example` sudah nunjuk `http://127.0.0.1:8080/api`.
 
+### Akun hasil seeder
+
+`migrate --seed` bikin akun berikut. Password semuanya sama: `!handayani123`.
+
+| Login pakai | Role | Cabang |
+|---|---|---|
+| `superadmin@handayani.com` | superadmin | Selat Panjang |
+| `developer@handayani.com` | developer | Selat Panjang |
+| `yayasan@handayani.com` | kepala-yayasan | Selat Panjang |
+| `admin_selat_panjang` | admin | Selat Panjang |
+| `admin_desa_kapur` | admin | Desa Kapur |
+| `admin_darma_putra` | admin | Darma Putra |
+
+Tiga akun pertama **harus login pakai email, bukan username**. `IdentifierService` sengaja matiin login-by-username buat user non-siswa yang punya email, jadi `superadmin` bakal ditolak 401 padahal passwordnya benar. Admin cabang tidak diseed dengan email, jadi mereka justru pakai username.
+
+Seeder tidak bikin akun siswa. Akun portal siswa dibuat manual lewat UI admin.
+
+Kredensial ini cuma buat development. Jangan jalanin `UserSeeder` di production, passwordnya ada di repo dan kebaca siapa saja.
+
 Buat nyalain semua service dev sekaligus (serve, queue listener, Vite):
 
 ```bash

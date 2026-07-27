@@ -21,6 +21,8 @@ Habis `up`, container `backend` otomatis `composer install` (kalau perlu), `migr
 | MariaDB (buat HeidiSQL native Windows) | `127.0.0.1:3306`, user `root`, password sesuai `MYSQL_ROOT_PASSWORD` di root `.env` |
 | Mailpit (nangkep semua email dev) | `http://localhost:8025`, SMTP di `mailpit:1025` |
 
+Buat login pertama kali, akun hasil seeder ada di [Setup & Menjalankan](setup.md#akun-hasil-seeder). Singkatnya: `superadmin@handayani.com` / `!handayani123`, dan harus pakai email, bukan username.
+
 ## Asset CSS/JS
 
 Dua mode, pilih sesuai kebutuhan:

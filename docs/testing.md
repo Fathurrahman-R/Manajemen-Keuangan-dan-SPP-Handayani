@@ -12,23 +12,37 @@ Framework dan setup database beda per aplikasi. Ini yang paling sering bikin bin
 
 `backend/phpunit.xml` nunjuk `DB_DATABASE=handayani_testing` di koneksi `mariadb`. Database ini tidak dibuat otomatis. Kalau belum ada, semua test gagal dengan error koneksi atau `Table ... doesn't exist`.
 
-Sekali di awal:
+Bikin databasenya sekali di awal:
 
 ```bash
 mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS handayani_testing"
 
-cd backend
-php artisan migrate:fresh --database=mariadb --env=testing --no-interaction
+# Docker
+docker compose exec mysql mariadb -uroot -p"$MYSQL_ROOT_PASSWORD" -e "CREATE DATABASE IF NOT EXISTS handayani_testing"
 ```
 
-Pakai Docker:
+Skemanya diisi lewat `RefreshDatabase` waktu test jalan, jadi biasanya tidak perlu migrasi manual.
+
+**Jangan pakai `--env=testing` buat migrasi.** Repo ini tidak punya `backend/.env.testing`, jadi Laravel jatuh balik ke `.env` biasa yang `DB_DATABASE=handayani`. Artinya:
 
 ```bash
-docker compose exec mysql mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "CREATE DATABASE IF NOT EXISTS handayani_testing"
-docker compose exec backend php artisan migrate:fresh --database=mariadb --env=testing --no-interaction
+php artisan migrate:fresh --env=testing    # ini MENGHAPUS database dev, bukan database test
 ```
 
-Kalau muncul `Table 'handayani_testing.model_has_roles' doesn't exist` padahal `migrate:status --env=testing` bilang semua migrasi *Ran*, berarti state DB test tidak sinkron: baris di tabel `migrations` ada, tabelnya tidak. Jalanin `migrate:fresh --env=testing` lagi. Ini pernah kejadian dan bikin 129 test gagal tanpa ada yang salah di kodenya.
+Perintah itu pernah dijalankan di sini dan menghabisi seluruh isi DB dev. `phpunit.xml` mengarahkan test ke `handayani_testing` lewat env var proses test, mekanismenya beda dari flag `--env`.
+
+Kalau butuh reset skema DB test secara manual, sebut databasenya eksplisit:
+
+```bash
+docker compose exec -e DB_DATABASE=handayani_testing backend php artisan migrate:fresh --force
+```
+
+Cek dulu targetnya bener sebelum jalan:
+
+```bash
+docker compose exec -e DB_DATABASE=handayani_testing backend \
+  php artisan tinker --execute="echo config('database.connections.mariadb.database');"
+```
 
 `frontend-v2` tidak butuh setup apa-apa, SQLite in-memory dibikin ulang tiap run.
 
@@ -83,7 +97,7 @@ docker compose exec backend sh -c "
 "
 ```
 
-Bandingkan **nama** testnya, bukan angka total. Jumlah gagal bisa lompat drastis cuma gara-gara DB test perlu `migrate:fresh`, padahal daftar namanya sama persis. Pernah kejadian: 354 gagal, habis `migrate:fresh` turun jadi 221, nol regresi.
+Bandingkan **nama** testnya, bukan angka total. Angka gagal bisa lompat drastis gara-gara kondisi environment, bukan gara-gara kodemu. Pernah kejadian satu run nunjukin 354 gagal (129 di antaranya `Base table or view not found`), run berikutnya 221 gagal, padahal daftar nama yang gagal identik. Nol regresi, cuma noise.
 
 Durasi wajib dibuang waktu normalisasi. Kalau tidak, semua nama keliatan "berubah" cuma karena selisih milidetik.
 
