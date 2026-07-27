@@ -1,3 +1,7 @@
+@php
+    $navLinks = config('handayani-public.nav_links', []);
+@endphp
+
 {{-- Sticky navigation header --}}
 <header
     x-data="{
@@ -28,14 +32,8 @@
         </a>
 
         {{-- Desktop navigation --}}
-        <ul class="hidden items-center gap-8 md:flex">
-            @foreach([
-                ['href' => '#beranda', 'label' => 'Beranda'],
-                ['href' => '#tentang', 'label' => 'Tentang'],
-                ['href' => '#jenjang', 'label' => 'Jenjang'],
-                ['href' => '#spp', 'label' => 'SPP'],
-                ['href' => '#kontak', 'label' => 'Kontak'],
-            ] as $link)
+        <ul class="hidden items-center gap-6 lg:flex">
+            @foreach($navLinks as $link)
                 <li>
                     <a 
                         href="{{ $link['href'] }}" 
@@ -49,7 +47,7 @@
         </ul>
 
         {{-- Desktop Portal SPP button --}}
-        <div class="hidden md:block">
+        <div class="hidden lg:block">
             <a
                 href="{{ config('handayani-public.spp_portal_url') }}"
                 class="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-transform hover:-translate-y-0.5"
@@ -70,7 +68,7 @@
             @keydown.escape="open = false"
             :aria-label="open ? 'Tutup menu' : 'Buka menu'"
             :aria-expanded="open"
-            class="grid size-10 place-items-center rounded-md border border-border md:hidden"
+            class="grid size-10 place-items-center rounded-md border border-border lg:hidden"
         >
             {{-- Menu icon --}}
             <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5">
@@ -98,16 +96,10 @@
         @click.outside="closeMenu()"
         @keydown.escape.window="closeMenu()"
         x-cloak
-        class="border-t border-border md:hidden"
+        class="border-t border-border lg:hidden"
     >
         <ul class="mx-auto flex max-w-7xl flex-col gap-1 px-5 py-3">
-            @foreach([
-                ['href' => '#beranda', 'label' => 'Beranda'],
-                ['href' => '#tentang', 'label' => 'Tentang'],
-                ['href' => '#jenjang', 'label' => 'Jenjang'],
-                ['href' => '#spp', 'label' => 'SPP'],
-                ['href' => '#kontak', 'label' => 'Kontak'],
-            ] as $link)
+            @foreach($navLinks as $link)
                 <li>
                     <a
                         href="{{ $link['href'] }}"
