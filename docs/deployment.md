@@ -22,12 +22,10 @@ Untuk production, set `MIDTRANS_ENVIRONMENT=production` dan pakai access key pro
 
 Daftarkan juga Payment Notification URL production (domain asli, bukan ngrok) di dashboard Midtrans.
 
-Jangan lupa `MIDTRANS_FINISH_URL` — defaultnya `http://127.0.0.1:8000/portal/beranda`. Kalau tidak diganti ke domain asli, siswa yang selesai membayar akan diarahkan ke localhost mereka sendiri.
-
 ## Checklist singkat
 
+- [ ] `FRONTEND_URL` ke domain asli — menentukan link reset password **dan** redirect setelah pembayaran
 - [ ] `MIDTRANS_ENVIRONMENT=production` + access key production
-- [ ] `MIDTRANS_FINISH_URL` ke domain asli
 - [ ] Payment Notification URL terdaftar di dashboard Midtrans
 - [ ] Cron `schedule:run` aktif
 - [ ] Queue worker jalan dengan `--queue=notifications,default` di bawah process manager

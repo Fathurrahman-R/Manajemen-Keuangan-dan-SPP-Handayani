@@ -50,14 +50,11 @@ Midtrans harus bisa memanggilnya dari luar. Ini bukan bug — jangan "diperbaiki
 **Webhook tetap diproses walau `HANDAYANI_MIDTRANS_ENABLED=false`.**
 Controller-nya sengaja tidak mengecek toggle itu, supaya transaksi yang sudah terlanjur berjalan tetap bisa diselesaikan. Yang dicek adalah `HANDAYANI_MIDTRANS_WEBHOOK_ENABLED` di service layer.
 
-> [!WARNING]
-> **`expiry_minutes` saat ini bernilai `1`, bukan 1440.**
-> Di `backend/config/midtrans.php` nilainya di-hardcode `'expiry_minutes' => 1` sementara komentar tepat di atasnya menyebut *"default 1440 = 24 jam"*. Efek nyatanya: setiap transaksi Midtrans kedaluwarsa **1 menit** setelah dibuat, jadi pembayaran yang tidak langsung diselesaikan akan expired. Nilai ini juga tidak bisa di-override lewat `.env` (tidak dibungkus `env()`).
->
-> Kemungkinan besar ini sisa setelan uji coba yang belum dikembalikan. Kalau memang disengaja, komentarnya perlu diperbaiki; kalau tidak, kembalikan ke `1440`.
+**Transaksi kedaluwarsa 24 jam sejak diinisiasi.**
+Diatur lewat `MIDTRANS_EXPIRY_MINUTES` (default 1440). Kalau menurunkannya untuk menguji skenario expired, jangan lupa dikembalikan — nilai kecil membuat pembayaran yang tidak langsung diselesaikan gagal.
 
-**`finish_url` default menunjuk `127.0.0.1:8000`.**
-Setelah selesai/batal di halaman Snap, siswa diarahkan ke `MIDTRANS_FINISH_URL` (default `http://127.0.0.1:8000/portal/beranda`). Di production wajib di-set ke domain asli, kalau tidak pembayar akan dilempar ke localhost mereka sendiri.
+**`finish_url` mengikuti `FRONTEND_URL`.**
+Setelah selesai/batal di halaman Snap, siswa diarahkan ke `FRONTEND_URL` + `/portal/beranda`. Set `FRONTEND_URL` ke domain asli saat deploy; `MIDTRANS_FINISH_URL` hanya perlu diisi kalau tujuannya berbeda dari itu.
 
 **Setiap dev pakai akun sandbox sendiri.**
 Jangan meminta atau memakai `MIDTRANS_SERVER_KEY` orang lain — server key setara password merchant. Cara daftar sendiri: [Setup Midtrans](midtrans.md).
@@ -65,13 +62,14 @@ Jangan meminta atau memakai `MIDTRANS_SERVER_KEY` orang lain — server key seta
 ## Queue & notifikasi
 
 **Semua notifikasi email masuk queue bernama `notifications`, bukan `default`.**
-Kalau menjalankan `php artisan queue:work` polos, job notifikasi **tidak akan pernah diproses** — tidak ada error, email hanya diam tidak terkirim. Jalankan dengan nama queue-nya:
+Kalau menjalankan `php artisan queue:work` polos, job notifikasi **tidak akan pernah diproses** — tidak ada error, email hanya diam tidak terkirim. Selalu sertakan nama queue-nya:
 
 ```bash
 php artisan queue:work --queue=notifications,default
+composer run queue                                   # sudah memakai flag yang benar
 ```
 
-Stack Docker sudah benar (`backend-queue` memakai flag itu); yang perlu hati-hati adalah saat menjalankan worker manual.
+`composer run dev` dan stack Docker (`backend-queue`) sudah memakai flag itu.
 
 **Email dev ditangkap Mailpit, bukan dikirim sungguhan.**
 Di Docker, `MAIL_HOST` diarahkan ke `mailpit:1025`. Semua email bisa dilihat di `http://localhost:8025` — jangan bingung kalau inbox asli kosong.
@@ -79,7 +77,10 @@ Di Docker, `MAIL_HOST` diarahkan ke `mailpit:1025`. Semua email bisa dilihat di 
 ## Autentikasi
 
 **Token Sanctum kedaluwarsa 8 jam.**
-`backend/config/sanctum.php` menetapkan `'expiration' => 480` (menit) dan nilainya di-hardcode, tidak lewat `.env`. Sesi yang dibiarkan lebih lama akan menolak request dengan 401 — ini perilaku normal, bukan bug.
+Diatur lewat `SANCTUM_TOKEN_EXPIRATION` (menit, default 480). Sesi yang dibiarkan lebih lama akan menolak request dengan 401 — ini perilaku normal, bukan bug.
+
+**`FRONTEND_URL` dipakai link reset password dan redirect pembayaran.**
+Defaultnya localhost. Kalau tidak diganti saat deploy, link reset password di email dan redirect setelah bayar akan menunjuk ke localhost penerima, bukan ke aplikasi.
 
 ## Frontend & asset
 

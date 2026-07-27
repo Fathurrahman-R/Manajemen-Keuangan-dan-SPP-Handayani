@@ -11,9 +11,15 @@ Notifikasi (kwitansi, tagihan baru, reminder jatuh tempo, overdue, workflow peng
 
 ```bash
 cd backend
+composer run queue                                              # cara termudah — flag queue sudah benar
 php artisan queue:work --queue=notifications,default            # dev
 php artisan queue:listen --queue=notifications,default          # dev alternatif — reload otomatis tiap request, lebih lambat
 ```
+
+> [!WARNING]
+> Menjalankan `php artisan queue:work` **tanpa** `--queue=notifications,default` membuat seluruh notifikasi email tidak pernah terkirim, tanpa pesan error apa pun. Pakai `composer run queue` kalau ragu.
+
+**Semua service dev sekaligus** — `composer run dev` menjalankan `serve --port=8080`, queue listener (dengan queue yang benar), dan Vite secara paralel.
 
 **Scheduler** — didefinisikan di `backend/routes/console.php`:
 - `notifications:send-reminders` → jalan tiap hari jam 08:00
