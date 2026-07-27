@@ -1,25 +1,25 @@
 # Tunneling (ngrok)
 
-Dua kebutuhan berbeda memakai tunnel yang sama:
+Ada dua kebutuhan yang rebutan tunnel yang sama:
 
-- **Webhook Midtrans** → butuh `backend:8080` publik. Endpoint `POST /api/midtrans/notification` **sengaja publik tanpa auth** karena Midtrans harus bisa mengirim notifikasi status pembayaran ke instance lokal.
-- **Akses aplikasi dari HP** → butuh `frontend:8000` publik.
+- Webhook Midtrans butuh `backend:8080` publik. Endpoint `POST /api/midtrans/notification` sengaja publik tanpa auth karena Midtrans harus bisa ngirim notifikasi ke instance lokal.
+- Akses aplikasi dari HP butuh `frontend:8000` publik.
 
-Stack Docker sudah punya service `ngrok` sendiri. Konfigurasinya ada di **dua tempat yang harus cocok**:
+Stack Docker punya service `ngrok` sendiri. Konfigurasinya kesebar di dua tempat yang harus cocok:
 
-- `docker/ngrok/ngrok.yml` — mendefinisikan tunnel beserta target-nya.
-- `docker-compose.yml`, service `ngrok` — `command:` menyebut *nama* tunnel mana yang dijalankan.
+- `docker/ngrok/ngrok.yml` mendefinisikan tunnel dan targetnya.
+- `docker-compose.yml` service `ngrok`, `command:` nyebut nama tunnel mana yang dijalanin.
 
-Kalau `command:` menyebut nama yang tidak ada di `ngrok.yml`, container langsung exit.
+Kalau `command:` nyebut nama yang tidak ada di `ngrok.yml`, container langsung exit.
 
-> **ngrok free plan hanya mengalokasikan satu ephemeral domain per sesi agent.** Frontend dan backend **tidak bisa** jalan bersamaan — tunnel di sini sifatnya saling tukar, bukan tambah. Default saat ini: `backend` (webhook Midtrans).
+ngrok free cuma dapat satu ephemeral domain per sesi. Frontend dan backend tidak bisa jalan bareng, jadi ini sifatnya tukeran, bukan nambah. Default sekarang `backend`.
 
-## Menukar target tunnel (backend ↔ frontend)
+## Tukar target tunnel
 
-**Langkah 1** — `docker/ngrok/ngrok.yml`, aktifkan blok yang dituju dan komentari yang lain:
+**1. Edit `docker/ngrok/ngrok.yml`.** Aktifkan blok yang dituju, komentari yang lain:
 
 ```yaml
-# --- Mode BACKEND (default) — webhook Midtrans ---
+# Mode BACKEND (default), buat webhook Midtrans
 tunnels:
   backend:
     proto: http
@@ -30,7 +30,7 @@ tunnels:
 ```
 
 ```yaml
-# --- Mode FRONTEND — akses aplikasi dari HP ---
+# Mode FRONTEND, buat akses dari HP
 tunnels:
   frontend:
     proto: http
@@ -40,7 +40,7 @@ tunnels:
   #   addr: backend:8080
 ```
 
-**Langkah 2** — `docker-compose.yml`, service `ngrok`. Samakan nama tunnel di `command:` **dan** `depends_on:` (kalau `depends_on` menunggu service yang tidak relevan, startup jadi menggantung tanpa alasan):
+**2. Edit `docker-compose.yml`, service `ngrok`.** Samakan nama tunnel di `command:` dan `depends_on:`. Kalau `depends_on` nungguin service yang tidak relevan, startup nggantung tanpa sebab jelas:
 
 ```yaml
 # Mode backend
@@ -58,25 +58,27 @@ depends_on:
     condition: service_healthy
 ```
 
-**Langkah 3** — recreate container dan ambil URL publiknya:
+**3. Recreate container, ambil URL-nya:**
 
 ```bash
 docker compose up -d ngrok --force-recreate
 docker logs handayani-ngrok-1 --tail 20 | grep "started tunnel"
 ```
 
-Outputnya berbentuk:
+Outputnya:
 
 ```
 msg="started tunnel" obj=tunnels name=backend addr=http://backend:8080 url=https://<subdomain>.ngrok-free.dev
 ```
 
-Nilai `url=` itu alamat publiknya; `name=` memastikan mode yang aktif sudah benar. Bisa juga dilihat lewat inspector `http://localhost:4040`.
+`url=` itu alamat publiknya, `name=` buat mastiin mode yang aktif sudah bener. Bisa juga lihat di inspector `http://localhost:4040`.
 
 ## Catatan per mode
 
-- **Mode backend:** daftarkan `https://<subdomain>.ngrok-free.dev/api/midtrans/notification` sebagai Payment Notification URL di dashboard Midtrans Sandbox. URL berubah tiap container di-restart (kecuali pakai reserved domain berbayar) — daftar ulang tiap sesi dev.
-- **Mode frontend:** cukup buka `url=` di HP. Pastikan asset sudah di-`npm run build` — lihat gotcha `public/hot` di [Docker](docker.md), karena mode hot reload mengarah ke `localhost:5173` yang tidak reachable dari HP.
-- **Punya paid plan + reserved domain:** dua tunnel bisa hidup bersamaan — isi `domain:` di masing-masing blok `ngrok.yml`, lalu ganti `command:` jadi `["start", "--all", ...]`.
-- **Tanpa Docker:** `ngrok http 8080` (backend) atau `ngrok http 8000` (frontend).
+**Mode backend.** Daftarkan `https://<subdomain>.ngrok-free.dev/api/midtrans/notification` sebagai Payment Notification URL di dashboard Midtrans Sandbox. URL-nya ganti tiap container restart kecuali pakai reserved domain berbayar, jadi daftar ulang tiap sesi.
 
+**Mode frontend.** Tinggal buka `url=` di HP. Pastikan asset sudah di-`npm run build`, karena mode hot reload nunjuk `localhost:5173` yang tidak kejangkau dari HP. Detailnya di [Docker](docker.md).
+
+**Paid plan + reserved domain.** Dua tunnel bisa hidup bareng. Isi `domain:` di masing-masing blok `ngrok.yml`, lalu ganti `command:` jadi `["start", "--all", ...]`.
+
+**Tanpa Docker.** `ngrok http 8080` buat backend, `ngrok http 8000` buat frontend.

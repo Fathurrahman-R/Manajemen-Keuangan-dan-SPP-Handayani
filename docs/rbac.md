@@ -1,14 +1,14 @@
-# RBAC — Panduan Developer
+# RBAC
 
-> Dipindahkan dari tab "Panduan" di halaman **Manajemen RBAC** (`frontend-v2/app/Filament/Pages/RbacDashboard.php`) — tab tersebut dihapus, isi lengkapnya ada di sini.
+Dipindah dari tab "Panduan" di halaman Manajemen RBAC (`frontend-v2/app/Filament/Pages/RbacDashboard.php`). Tab itu sudah dihapus, isinya pindah ke sini.
 
-Sistem RBAC bersifat dinamis penuh — permission, resource key, endpoint mapping, semuanya dikelola via UI. Tidak ada hardcoded permission name di kode.
+RBAC di sini dinamis penuh: permission, resource key, dan endpoint mapping semuanya dikelola lewat UI. Tidak ada nama permission yang di-hardcode di kode.
 
 ## Ringkasan Arsitektur RBAC
 
 **Konsep Utama: Resource Key**
 
-Semua entitas keamanan (halaman, tombol, API endpoint) diidentifikasi oleh **resource_key** — string unik seperti `siswa.create` atau `api.laporan.export`. Kode TIDAK PERNAH menyebut nama permission secara langsung, hanya resource_key.
+Semua entitas keamanan (halaman, tombol, API endpoint) diidentifikasi pakai `resource_key`, string unik macam `siswa.create` atau `api.laporan.export`. Kode tidak pernah nyebut nama permission langsung, cuma resource_key.
 
 **3 Tabel yang Terlibat:**
 
@@ -26,7 +26,7 @@ Semua entitas keamanan (halaman, tombol, API endpoint) diidentifikasi oleh **res
 4. **Cek Proteksi** → Halaman dilindungi oleh `PermissionHelper::hasResource()` di `mount()` dan `shouldRegisterNavigation()`. Backend endpoint dilindungi oleh middleware `endpoint.permission:xxx`.
 5. **Cek Backend** → Route backend pakai middleware `resource:resource_key` (future) atau `can()` di controller.
 
-**Superadmin Bypass:** `Gate::before` memberi superadmin akses penuh. `PermissionHelper::hasResource()` selalu return `true` untuk superadmin.
+**Superadmin bypass.** `Gate::before` ngasih superadmin akses penuh. `PermissionHelper::hasResource()` selalu return `true` untuk superadmin.
 
 | Komponen | Berkas / Lokasi | Fungsi |
 |---|---|---|
@@ -39,7 +39,7 @@ Semua entitas keamanan (halaman, tombol, API endpoint) diidentifikasi oleh **res
 
 ## Langkah 1: Daftarkan Permission Baru
 
-**Cara 1 — Via UI (tanpa deploy ulang):** buka tab **Permissions** di Manajemen RBAC, klik **Permission Baru**, isi:
+**Cara 1, lewat UI (tanpa deploy ulang):** buka tab **Permissions** di Manajemen RBAC, klik **Permission Baru**, isi:
 
 | Field | Contoh | Keterangan |
 |-------|--------|------------|
@@ -50,7 +50,7 @@ Semua entitas keamanan (halaman, tombol, API endpoint) diidentifikasi oleh **res
 
 Setelah disimpan, permission langsung bisa dipilih di dropdown tab **Assign Role**, dan bisa di-bind ke **Resource Key**.
 
-**Cara 2 — Via Backend Enum (untuk seeder/permanen):**
+**Cara 2, lewat enum backend (buat seeder/permanen):**
 
 ```php
 // backend/app/Enum/Permission.php
@@ -143,7 +143,7 @@ Contoh resource key yang sudah di-seed (`PermissionResourceSeeder`):
 
 ## Langkah 3: Mapping Endpoint API
 
-Mapping endpoint backend ke permission. Resource_key di sini **independen** — tidak harus sama dengan yang di `page_permissions`.
+Mapping endpoint backend ke permission. Resource_key di sini independen, tidak harus sama dengan yang di `page_permissions`.
 
 Buka tab **Endpoint Mapping**, klik **Tambah Endpoint**. Isi:
 
@@ -158,7 +158,7 @@ Buka tab **Endpoint Mapping**, klik **Tambah Endpoint**. Isi:
 **Endpoint mapping sekarang independen:**
 - Resource key endpoint **tidak harus sama** dengan resource key di `page_permissions`.
 - Bisa membuat resource key `api.siswa.index` yang di-bind ke permission `view-siswa`.
-- Tabel `permission_endpoints` punya kolom `permission_id` langsung — tidak perlu auto-resolve.
+- Tabel `permission_endpoints` punya kolom `permission_id` langsung, jadi tidak perlu auto-resolve.
 
 **Cara proteksi di Backend (future):**
 
@@ -194,12 +194,12 @@ Buka tab **Assign Role**:
 1. Permission langsung aktif untuk semua user dengan role tersebut.
 2. Saat user login/logout ulang, frontend memanggil `GET /api/rbac/user-resources`.
 3. Backend mengembalikan daftar `resource_key` dari `page_permissions` yang permission_name-nya cocok.
-4. `PermissionHelper` menyimpan di session — semua pengecekan `hasResource()` jadi cepat (zero query).
+4. `PermissionHelper` nyimpen di session, jadi semua pengecekan `hasResource()` cepat dan zero query.
 5. Superadmin mendapat **semua** resource tanpa perlu assign.
 
 **Urutan workflow untuk menambah fitur baru:**
 
-1. **(Via UI)** Buat permission baru di tab Permissions — atau **(Via Enum)** tambah case di `App\Enum\Permission` + `php artisan db:seed --class=RoleAndPermissionSeeder`.
+1. Lewat UI: bikin permission baru di tab Permissions. Atau lewat enum: tambah case di `App\Enum\Permission` lalu `php artisan db:seed --class=RoleAndPermissionSeeder`.
 2. **(Via UI)** Daftarkan resource key di tab Resource & Page Registry.
 3. *(Opsional)* Mapping endpoint API di tab Endpoint Mapping.
 4. **(Via UI)** Assign permission ke role di tab Assign Role.
@@ -251,7 +251,7 @@ class AbsensiController extends Controller
 }
 ```
 
-**3. Daftarkan Route** — disarankan via `can()` di controller (tanpa middleware route):
+**3. Daftarkan route.** Disarankan lewat `can()` di controller, tanpa middleware route:
 
 ```php
 // backend/routes/api.php
@@ -261,7 +261,7 @@ Route::apiResource('absensi', AbsensiController::class)
 
 Cukup gunakan `auth:sanctum`. Permission dicek manual di controller via `$request->user()->can()`.
 
-Alternatif — via Spatie middleware (jika perlu hardcode):
+Alternatifnya lewat Spatie middleware, kalau memang perlu hardcode:
 
 ```php
 Route::get('/absensi', [AbsensiController::class, 'index'])
@@ -273,7 +273,7 @@ Route::get('/absensi', [AbsensiController::class, 'index'])
 
 ## Panduan Kode: Frontend Filament
 
-Semua kontrol akses di frontend menggunakan `PermissionHelper::hasResource()` — tidak ada `has()` lagi.
+Semua kontrol akses di frontend pakai `PermissionHelper::hasResource()`. `has()` sudah tidak ada.
 
 **1. Proteksi Halaman Filament:**
 
@@ -336,7 +336,7 @@ NavigationItem::make('Absensi Online')
 
 ## Referensi PermissionHelper API
 
-> `has()` sudah dihapus — gunakan `hasResource()`.
+`has()` sudah dihapus, pakai `hasResource()`.
 
 | Method | Parameter | Return | Keterangan |
 |---|---|---|---|
@@ -345,18 +345,18 @@ NavigationItem::make('Absensi Online')
 
 **File:** `frontend-v2/app/Helpers/PermissionHelper.php`
 
-**Superadmin Bypass:** semua method di atas memiliki superadmin bypass — jika user memiliki role `superadmin`, return `true` tanpa perlu cek database.
+**Superadmin bypass.** Semua method di atas punya bypass: kalau user punya role `superadmin`, langsung return `true` tanpa cek database.
 
 **Session Cache:** saat login, frontend memanggil `GET /api/rbac/user-resources` dan menyimpan hasilnya di `session('data.resources')`. Semua pengecekan `hasResource()` hanya membaca session, tanpa query database.
 
-**Method utama — `hasResource()`:**
+**Method utama, `hasResource()`:**
 - `PermissionHelper::hasResource('siswa')` → cek akses resource key `siswa`
 - `PermissionHelper::hasResource('siswa.create')` → cek akses resource key `siswa.create`
 - Resource key didaftarkan di tabel `page_permissions` (tab **Resource & Page Registry**).
 
 ## Workflow Seeder & Permission Sync
 
-Tidak ada command `permissions:sync*` — semua sinkronisasi permission/role/resource key/endpoint lewat seeder (`firstOrCreate`/`updateOrCreate`, aman dijalankan berulang kali).
+Tidak ada command `permissions:sync*`. Semua sinkronisasi permission/role/resource key/endpoint lewat seeder, pakai `firstOrCreate`/`updateOrCreate` jadi aman diulang.
 
 **1. Sync Permission Enum ke Database + refresh role:**
 
@@ -380,9 +380,9 @@ php artisan db:seed --class=PermissionEndpointSeeder
 ```
 
 **Kapan harus menjalankan:**
-- `RoleAndPermissionSeeder` — setelah menambah/mengubah/menghapus case di `App\Enum\Permission`.
-- `PermissionResourceSeeder` — setelah deploy ulang database, atau setelah menambah resource key baru di seeder.
-- `PermissionEndpointSeeder` — setelah menambah/mengubah mapping endpoint API → permission di seeder.
+- `RoleAndPermissionSeeder`: habis nambah/ubah/hapus case di `App\Enum\Permission`.
+- `PermissionResourceSeeder`: habis deploy ulang database, atau habis nambah resource key baru di seeder.
+- `PermissionEndpointSeeder`: habis nambah/ubah mapping endpoint API ke permission di seeder.
 
 > [!WARNING]
 > Hapus/rename permission via UI dapat menyebabkan error jika permission tersebut masih di-bind ke resource key. Sebaiknya **nonaktifkan** dulu permission via UI sebelum menghapus.
@@ -393,7 +393,7 @@ php artisan db:seed --class=PermissionEndpointSeeder
 Tidak. `Gate::before` memberi bypass penuh ke semua fitur. `PermissionHelper::hasResource()` selalu return `true` untuk superadmin.
 
 **Q: Apa bedanya resource key dengan permission?**
-Resource key adalah **pointer** — string unik yang di-refer oleh kode. Permission name adalah **izin sesungguhnya** yang dicek oleh Spatie. Satu resource key di-bind ke satu permission name di tabel `page_permissions`. Kode **tidak pernah** menyebut permission name, hanya resource key.
+Resource key itu pointer, string unik yang di-refer kode. Permission name itu izin sesungguhnya yang dicek Spatie. Satu resource key di-bind ke satu permission name di tabel `page_permissions`. Kode tidak pernah nyebut permission name, cuma resource key.
 
 **Q: Kenapa endpoint mapping pakai resource_key sendiri?**
 Agar fleksibel. Resource key di `page_permissions` (`siswa.create`) bisa berbeda dengan di endpoint mapping (`api.siswa.store`). Keduanya punya permission binding masing-masing.
@@ -421,7 +421,7 @@ Sudah dinonaktifkan. Tidak ada lagi middleware berbasis method+path di backend. 
 1. Tambah case di `App\Enum\Permission`
 2. Jalankan `php artisan db:seed --class=RoleAndPermissionSeeder`
 3. Di controller: `$request->user()->can(Permission::NAMA->value)`
-4. Routing: cukup `auth:sanctum` — tanpa middleware `dynamic.permission`
+4. Routing: cukup `auth:sanctum`, tanpa middleware `dynamic.permission`
 
 **Frontend Checklist:**
 1. Daftarkan resource key dan pattern proteksi di tab **Resource & Page Registry**
@@ -429,10 +429,10 @@ Sudah dinonaktifkan. Tidak ada lagi middleware berbasis method+path di backend. 
 3. Assign permission ke role di tab **Assign Role**
 
 > [!IMPORTANT]
-> - Superadmin **tidak butuh permission** — `Gate::before` bypass.
-> - Permission baru cukup daftar via UI — **tanpa deploy ulang**.
+> - Superadmin tidak butuh permission, `Gate::before` yang bypass.
+> - Permission baru cukup didaftarkan lewat UI, tanpa deploy ulang.
 > - Setiap permission baru harus di-**assign ke role** via Assign Role.
 > - Permission yang bersifat permanen sebaiknya **ada di `App\Enum\Permission`** agar konsisten saat di-seed ulang.
-> - Proteksi halaman cukup daftarkan di tab **Resource & Page Registry** — tanpa kode PHP.
-> - Gunakan `PermissionHelper::hasResource()` untuk kontrol tampilan komponen — jangan hanya andalkan middleware.
+> - Proteksi halaman cukup didaftarkan di tab Resource & Page Registry, tanpa nulis kode PHP.
+> - Pakai `PermissionHelper::hasResource()` buat kontrol tampilan komponen, jangan cuma andelin middleware.
 

@@ -1,10 +1,10 @@
 # Deployment (production)
 
-Catatan khusus deployment. Untuk perintah cache/optimize sebelum deploy, lihat [Command Reference](commands.md).
+Perintah cache/optimize sebelum deploy ada di [Command Reference](commands.md).
 
 ## Cron (scheduler)
 
-Tambahkan satu baris ini di crontab server (jalan tiap menit, Laravel scheduler sendiri yang menentukan kapan tiap job benar-benar dieksekusi):
+Satu baris di crontab server. Jalan tiap menit, Laravel yang nentuin job mana yang benar-benar dieksekusi:
 
 ```bash
 * * * * * cd /path/ke/backend && php artisan schedule:run >> /dev/null 2>&1
@@ -12,22 +12,22 @@ Tambahkan satu baris ini di crontab server (jalan tiap menit, Laravel scheduler 
 
 ## Queue worker
 
-Jalankan `queue:work --queue=notifications,default` lewat process manager (Supervisor/systemd) — jangan pakai `nohup` manual, karena worker perlu auto-restart saat crash atau saat deploy kode baru.
+Jalanin `queue:work --queue=notifications,default` di bawah process manager (Supervisor/systemd). Jangan `nohup` manual, worker perlu auto-restart kalau crash atau habis deploy.
 
-Setelah deploy jalankan `php artisan queue:restart` agar worker memuat kode terbaru. Tanpa ini worker tetap menjalankan kode lama sampai prosesnya mati sendiri.
+Habis deploy, jalanin `php artisan queue:restart`. Tanpa itu worker masih pakai kode lama sampai prosesnya mati sendiri.
 
 ## Kredensial Midtrans
 
-Untuk production, set `MIDTRANS_ENVIRONMENT=production` dan pakai access key production (tanpa awalan `SB-`) dari dashboard Midtrans production. Detail tiap variabel ada di [Setup Midtrans](midtrans.md).
+Set `MIDTRANS_ENVIRONMENT=production` dan pakai access key production (tanpa awalan `SB-`) dari dashboard production. Penjelasan tiap variabel ada di [Setup Midtrans](midtrans.md).
 
-Daftarkan juga Payment Notification URL production (domain asli, bukan ngrok) di dashboard Midtrans.
+Daftarkan Payment Notification URL production di dashboard, pakai domain asli, bukan ngrok.
 
-## Checklist singkat
+## Checklist
 
-- [ ] `FRONTEND_URL` ke domain asli — menentukan link reset password **dan** redirect setelah pembayaran
+- [ ] `FRONTEND_URL` ke domain asli. Ini yang nentuin link reset password dan redirect habis bayar
 - [ ] `MIDTRANS_ENVIRONMENT=production` + access key production
 - [ ] Payment Notification URL terdaftar di dashboard Midtrans
 - [ ] Cron `schedule:run` aktif
 - [ ] Queue worker jalan dengan `--queue=notifications,default` di bawah process manager
-- [ ] `config:cache`, `route:cache`, `view:cache`, `event:cache` dijalankan ([Command Reference](commands.md))
-- [ ] `queue:restart` setiap kali deploy kode baru
+- [ ] `config:cache`, `route:cache`, `view:cache`, `event:cache` sudah dijalankan
+- [ ] `queue:restart` tiap deploy kode baru

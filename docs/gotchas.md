@@ -1,102 +1,102 @@
-# Gotchas — hal yang bikin dev baru tersesat
+# Gotchas
 
-Kumpulan perilaku yang **disengaja tapi tidak intuitif**, plus jebakan yang sudah pernah memakan waktu orang. Baca sekali di awal; sisanya jadi rujukan saat ada yang aneh.
+Perilaku yang disengaja tapi tidak kelihatan dari kodenya, plus beberapa jebakan yang sudah pernah makan waktu. Baca sekali, sisanya jadi tempat balik kalau ada yang aneh.
 
 ## Arsitektur
 
 **Backend jalan di port 8080, bukan 8000.**
-`frontend-v2/.env` mengharapkan API di `http://127.0.0.1:8080/api`. Jalankan backend dengan `php artisan serve --port=8080`. Kalau lupa, seluruh halaman admin kosong/error tanpa pesan yang jelas.
+`frontend-v2/.env` nyari API di `http://127.0.0.1:8080/api`. Pakai `php artisan serve --port=8080`. Kalau salah port, halaman admin kosong tanpa error yang jelas.
 
-**Hanya `backend` yang punya migrasi.**
-`frontend-v2` mengakses data lewat HTTP ke backend, bukan Eloquent langsung. Jangan pernah membuat migrasi di `frontend-v2` — keduanya menunjuk database yang sama, jadi migrasi ganda akan bentrok.
+**Cuma `backend` yang punya migrasi.**
+`frontend-v2` ambil data lewat HTTP ke backend, bukan Eloquent. Jangan bikin migrasi di `frontend-v2`. Dua-duanya nunjuk database yang sama, jadi migrasi dobel bakal bentrok.
 
-**`frontend-v2` menyimpan token Sanctum di session.**
-Bukan di database atau cookie terpisah. Session hilang (mis. `SESSION_DRIVER` berubah, atau `php artisan session:clear`) berarti user harus login ulang.
+**Token Sanctum disimpan di session frontend.**
+Bukan di database atau cookie sendiri. Kalau session hilang (ganti `SESSION_DRIVER`, `session:clear`), user harus login lagi.
 
 ## Database
 
-**`Tagihan` ↔ `Siswa` di-join lewat kolom `nis`, bukan `siswa.id`.**
-Mengubah NIS seorang siswa memutus tautan ke tagihannya. Kalau butuh mengubah NIS, pastikan tagihan terkait ikut di-update.
+**`Tagihan` join ke `Siswa` lewat kolom `nis`, bukan `siswa.id`.**
+Ganti NIS siswa = tagihannya lepas. Kalau memang harus ganti, update tagihan terkait juga.
 
-**Database test terpisah dan tidak dibuat otomatis.**
-Backend test memakai `handayani_testing` di MariaDB nyata. Lihat [Testing](testing.md) untuk cara membuatnya — tanpa langkah itu semua test gagal.
+**Database test terpisah, dan tidak dibuat otomatis.**
+Backend test pakai `handayani_testing` di MariaDB beneran. Tanpa dibuat duluan, semua test gagal. Caranya ada di [Testing](testing.md).
 
 ## RBAC
 
-**Nama permission berbahasa Indonesia.**
-Contoh: `view-tagihan`, `create-pengeluaran-request`. `PermissionHelper` di frontend mencocokkan string persis dari session.
+**Nama permission pakai bahasa Indonesia.**
+`view-tagihan`, `create-pengeluaran-request`, dst. `PermissionHelper` cocokkan string persis dari session, jadi typo tidak ketahuan sampai runtime.
 
 **Tidak ada command `permissions:sync`.**
-Sinkronisasi RBAC hanya lewat seeder. Setelah menambah/mengubah case di `App\Enum\Permission`, jalankan:
+Sinkronisasi cuma lewat seeder. Habis nambah/ganti case di `App\Enum\Permission`:
 
 ```bash
 php artisan db:seed --class=RoleAndPermissionSeeder
 php artisan db:seed --class=PermissionEndpointSeeder   # kalau mapping endpoint ikut berubah
 ```
 
-Keduanya memakai `firstOrCreate`/`updateOrCreate` — aman dijalankan berulang. Kalau dilewat, permission baru belum punya baris di tabel `permissions` dan middleware Spatie akan menolak semua akses ke situ.
+Dua-duanya pakai `firstOrCreate`/`updateOrCreate`, aman diulang. Kalau kelewat, permission baru belum punya baris di tabel `permissions` dan middleware Spatie nolak semua akses ke situ.
 
-**Ada dua lapis pengecekan yang harus sama-sama diurus.**
-UI (halaman/komponen Filament) dicek lewat `page_perms` + `PermissionHelper`; API dicek lewat `permission_endpoints` + middleware. Mendaftarkan satu saja bikin halaman terlihat tapi datanya gagal dimuat, atau sebaliknya. Detail: [RBAC](rbac.md).
+**Ada dua lapis pengecekan, dua-duanya harus diurus.**
+UI dicek lewat `page_perms` + `PermissionHelper`, API lewat `permission_endpoints` + middleware. Daftar satu doang hasilnya halaman kebuka tapi datanya gagal load, atau sebaliknya. Detail di [RBAC](rbac.md).
 
-**Cache RBAC ±60 detik.**
-Hasil `/rbac/user-resources` di-cache (`RBAC_CACHE_TTL`, default 60). Setelah mengubah permission, tunggu sebentar atau clear cache — jangan langsung menyimpulkan perubahannya tidak jalan.
+**Cache RBAC 60 detik.**
+`/rbac/user-resources` di-cache (`RBAC_CACHE_TTL`). Habis ubah permission, tunggu sebentar atau clear cache dulu sebelum menyimpulkan perubahannya tidak ngefek.
 
 ## Midtrans
 
 **Webhook `POST /api/midtrans/notification` sengaja publik tanpa auth.**
-Midtrans harus bisa memanggilnya dari luar. Ini bukan bug — jangan "diperbaiki" dengan menambah middleware auth. Verifikasi keamanannya lewat signature, bukan lewat auth middleware.
+Midtrans harus bisa manggil dari luar. Ini bukan bug, jangan ditambahin middleware auth. Pengamanannya lewat verifikasi signature.
 
-**Webhook tetap diproses walau `HANDAYANI_MIDTRANS_ENABLED=false`.**
-Controller-nya sengaja tidak mengecek toggle itu, supaya transaksi yang sudah terlanjur berjalan tetap bisa diselesaikan. Yang dicek adalah `HANDAYANI_MIDTRANS_WEBHOOK_ENABLED` di service layer.
+**Webhook tetap jalan walau `HANDAYANI_MIDTRANS_ENABLED=false`.**
+Controllernya sengaja tidak cek toggle itu supaya transaksi yang terlanjur jalan masih bisa selesai. Yang dicek `HANDAYANI_MIDTRANS_WEBHOOK_ENABLED`, di service layer.
 
-**Transaksi kedaluwarsa 24 jam sejak diinisiasi.**
-Diatur lewat `MIDTRANS_EXPIRY_MINUTES` (default 1440). Kalau menurunkannya untuk menguji skenario expired, jangan lupa dikembalikan — nilai kecil membuat pembayaran yang tidak langsung diselesaikan gagal.
+**Transaksi expired 24 jam sejak dibuat.**
+Atur lewat `MIDTRANS_EXPIRY_MINUTES` (default 1440). Kalau diturunkan buat nguji skenario expired, balikin lagi setelahnya.
 
-**`finish_url` mengikuti `FRONTEND_URL`.**
-Setelah selesai/batal di halaman Snap, siswa diarahkan ke `FRONTEND_URL` + `/portal/beranda`. Set `FRONTEND_URL` ke domain asli saat deploy; `MIDTRANS_FINISH_URL` hanya perlu diisi kalau tujuannya berbeda dari itu.
+**`finish_url` ngikut `FRONTEND_URL`.**
+Habis selesai/batal di Snap, siswa dilempar ke `FRONTEND_URL` + `/portal/beranda`. Set `FRONTEND_URL` ke domain asli waktu deploy. `MIDTRANS_FINISH_URL` cuma perlu diisi kalau tujuannya beda.
 
-**Setiap dev pakai akun sandbox sendiri.**
-Jangan meminta atau memakai `MIDTRANS_SERVER_KEY` orang lain — server key setara password merchant. Cara daftar sendiri: [Setup Midtrans](midtrans.md).
+**Pakai akun sandbox sendiri.**
+Jangan minta atau pakai `MIDTRANS_SERVER_KEY` orang lain, itu setara password merchant. Cara daftar: [Setup Midtrans](midtrans.md).
 
 ## Queue & notifikasi
 
-**Semua notifikasi email masuk queue bernama `notifications`, bukan `default`.**
-Kalau menjalankan `php artisan queue:work` polos, job notifikasi **tidak akan pernah diproses** — tidak ada error, email hanya diam tidak terkirim. Selalu sertakan nama queue-nya:
+**Notifikasi email masuk queue `notifications`, bukan `default`.**
+Jalanin `php artisan queue:work` polos = job notifikasi tidak pernah kepegang. Tidak ada error, emailnya diam saja. Sebutkan queue-nya:
 
 ```bash
+composer run queue                                     # flag sudah bener
 php artisan queue:work --queue=notifications,default
-composer run queue                                   # sudah memakai flag yang benar
 ```
 
-`composer run dev` dan stack Docker (`backend-queue`) sudah memakai flag itu.
+`composer run dev` dan service `backend-queue` di Docker sudah pakai flag itu.
 
-**Email dev ditangkap Mailpit, bukan dikirim sungguhan.**
-Di Docker, `MAIL_HOST` diarahkan ke `mailpit:1025`. Semua email bisa dilihat di `http://localhost:8025` — jangan bingung kalau inbox asli kosong.
+**Email dev ketangkep Mailpit.**
+Di Docker `MAIL_HOST` diarahkan ke `mailpit:1025`. Cek di `http://localhost:8025`, bukan di inbox asli.
 
 ## Autentikasi
 
-**Token Sanctum kedaluwarsa 8 jam.**
-Diatur lewat `SANCTUM_TOKEN_EXPIRATION` (menit, default 480). Sesi yang dibiarkan lebih lama akan menolak request dengan 401 — ini perilaku normal, bukan bug.
+**Token Sanctum expired 8 jam.**
+Atur lewat `SANCTUM_TOKEN_EXPIRATION` (menit, default 480). Lewat dari itu request ditolak 401, ini normal.
 
 **`FRONTEND_URL` dipakai link reset password dan redirect pembayaran.**
-Defaultnya localhost. Kalau tidak diganti saat deploy, link reset password di email dan redirect setelah bayar akan menunjuk ke localhost penerima, bukan ke aplikasi.
+Defaultnya localhost. Kalau lupa diganti waktu deploy, link reset password di email dan redirect habis bayar bakal nunjuk localhost penerima.
 
 ## Frontend & asset
 
 **Vite dev server tidak ikut nyala di `docker compose up`.**
-Service `frontend-vite` ada di profile `dev`. Konsekuensinya asset harus di-`npm run build`, atau nyalakan profile-nya secara eksplisit. Lihat [Docker](docker.md).
+Service `frontend-vite` ada di profile `dev`. Jadi asset harus di-`npm run build`, atau nyalain profilenya manual. Lihat [Docker](docker.md).
 
-**File `public/hot` menentukan sumber asset.**
-Selama file itu ada, `@vite` menunjuk `localhost:5173` — tidak reachable dari HP atau lewat tunnel. Hapus file-nya dan `npm run build` untuk kembali ke asset statis.
+**File `public/hot` nentuin sumber asset.**
+Selama file itu ada, `@vite` nunjuk `localhost:5173`, yang tidak kejangkau dari HP atau lewat tunnel. Hapus filenya lalu `npm run build` buat balik ke asset statis.
 
 **Konten landing page ada di config, bukan di Blade.**
-Semua teks halaman publik ada di `frontend-v2/config/handayani-public.php`. Beberapa key **wajib array** (`about.misi`, `nav_links`, `ekstrakurikuler.kegiatan`, `fasilitas.sarana`, `hero.stats`, `jenjang.levels`) karena dirender lewat `@foreach` — mengisinya dengan string tunggal bikin halaman error.
+Semua teks halaman publik di `frontend-v2/config/handayani-public.php`. Beberapa key harus array karena dirender pakai `@foreach`: `about.misi`, `nav_links`, `ekstrakurikuler.kegiatan`, `fasilitas.sarana`, `hero.stats`, `jenjang.levels`. Diisi string tunggal = halaman error.
 
 ## Tooling
 
-**ngrok free plan cuma satu tunnel.**
-Frontend dan backend tidak bisa di-tunnel bersamaan; sifatnya saling tukar. Cara menukar: [Tunneling](tunneling.md).
+**ngrok free cuma dapat satu tunnel.**
+Frontend dan backend tidak bisa jalan bareng, harus tukeran. Caranya di [Tunneling](tunneling.md).
 
-**Jangan `config:cache` saat development.**
-Perubahan `.env` tidak akan terbaca sampai `config:clear`. Ini sering menyesatkan karena error-nya muncul jauh dari penyebabnya.
+**Jangan `config:cache` waktu development.**
+Perubahan `.env` tidak kebaca sampai `config:clear`. Gampang bikin bingung karena errornya muncul jauh dari penyebabnya.

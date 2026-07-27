@@ -1,18 +1,15 @@
 # Setup & Menjalankan
 
-Panduan setup manual (tanpa Docker). Untuk cara tercepat, lihat [Menjalankan dengan Docker](docker.md).
+Setup manual, tanpa Docker. Cara cepatnya ada di [Menjalankan dengan Docker](docker.md).
 
 ## Prasyarat
 
 - PHP `^8.4`
 - Composer
-- Node.js & npm (untuk build asset frontend-v2, lihat `frontend-v2/package.json`)
-- Database **MariaDB/MySQL** (default `.env.example`: `DB_CONNECTION=mariadb`)
+- Node.js & npm, buat build asset frontend-v2
+- MariaDB/MySQL (default `.env.example`: `DB_CONNECTION=mariadb`)
 
-> [!NOTE]
-> Kedua aplikasi mengarah ke **satu database yang sama**. Hanya `backend` yang memiliki migrasi — jangan pernah menambahkan migrasi di `frontend-v2`.
-
-
+Dua aplikasi ini nunjuk database yang sama. Cuma `backend` yang punya migrasi, jangan bikin migrasi di `frontend-v2`.
 
 ## 1. Clone repository
 
@@ -37,12 +34,19 @@ php artisan migrate --seed
 php artisan serve --port=8080
 ```
 
-> [!IMPORTANT]
-> Backend **harus** dijalankan di port `8080`, bukan default `8000` — `frontend-v2/.env.example` sudah mengarah ke `http://127.0.0.1:8080/api`.
+Port 8080-nya wajib, bukan default 8000. `frontend-v2/.env.example` sudah nunjuk `http://127.0.0.1:8080/api`.
 
-Konfigurasi opsional di `backend/.env` (lihat `backend/.env.example`):
-- **Midtrans sandbox**: `HANDAYANI_MIDTRANS_ENABLED`, `MIDTRANS_ENVIRONMENT`, `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`, `MIDTRANS_MERCHANT_ID`, `HANDAYANI_MIDTRANS_FEE_FLAT`.
-- **Mail**: `MAIL_MAILER` dan variabel SMTP terkait, dipakai untuk notifikasi email workflow approval pengeluaran.
+Buat nyalain semua service dev sekaligus (serve, queue listener, Vite):
+
+```bash
+composer run dev
+```
+
+Config opsional di `backend/.env`:
+
+- Midtrans sandbox: `HANDAYANI_MIDTRANS_ENABLED`, `MIDTRANS_ENVIRONMENT`, `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`, `MIDTRANS_MERCHANT_ID`. Detailnya di [Setup Midtrans](midtrans.md).
+- Mail: `MAIL_MAILER` dan variabel SMTP, dipakai notifikasi email workflow approval.
+- `FRONTEND_URL`: dipakai link reset password dan redirect habis bayar. Wajib diganti waktu deploy.
 
 ## 3. frontend-v2 (Admin Panel & Portal)
 
@@ -53,7 +57,7 @@ copy .env.example .env
 php artisan key:generate
 ```
 
-Pastikan `DB_DATABASE` di `.env` sama dengan yang dipakai `backend` (satu database bersama), dan API sudah berjalan di `http://127.0.0.1:8080/api`.
+Pastikan `DB_DATABASE` sama dengan punya `backend`, dan API sudah jalan di `http://127.0.0.1:8080/api`.
 
 ```bash
 npm install
@@ -61,15 +65,12 @@ npm run build
 php artisan serve
 ```
 
-Konfigurasi opsional (public-safe) di `frontend-v2/.env`: `HANDAYANI_MIDTRANS_ENABLED`, `MIDTRANS_CLIENT_KEY`, `MIDTRANS_SNAP_URL`, `HANDAYANI_MIDTRANS_FEE_FLAT`.
+Config opsional (public-safe): `HANDAYANI_MIDTRANS_ENABLED`, `MIDTRANS_CLIENT_KEY`, `MIDTRANS_SNAP_URL`, `HANDAYANI_MIDTRANS_FEE_FLAT`.
 
-## Konten halaman publik (landing page)
+## Konten halaman publik
 
-Seluruh teks dan konten landing page ada di **`frontend-v2/config/handayani-public.php`**, bukan hardcode di Blade. Section yang tersedia: `hero`, `about` (title/visi/misi/nilai_institusional), `jenjang`, `ekstrakurikuler`, `fasilitas`, `nav_links`, `spp_cta`, `branches`, `map_settings`.
+Semua teks landing page ada di `frontend-v2/config/handayani-public.php`, bukan hardcode di Blade. Section yang ada: `hero`, `about` (title/visi/misi/nilai_institusional), `jenjang`, `ekstrakurikuler`, `fasilitas`, `nav_links`, `spp_cta`, `branches`, `map_settings`.
 
-Hanya field identitas yang bisa di-override lewat env `HANDAYANI_PUBLIC_*` (`name`, `short_name`, `tagline`, `address`, `phone`, `email`, `whatsapp_number`, `spp_portal_url`, `logo`, `colors.*`). Konten section **tidak** lewat env — edit langsung di config.
+Cuma field identitas yang bisa di-override lewat env `HANDAYANI_PUBLIC_*`: `name`, `short_name`, `tagline`, `address`, `phone`, `email`, `whatsapp_number`, `spp_portal_url`, `logo`, `colors.*`. Konten section tidak lewat env, edit langsung di file confignya.
 
-> **Gotcha:** beberapa key wajib berupa **array**, bukan string, karena dirender lewat `@foreach` di komponen Blade-nya:
-> `about.misi` (list `<ul>` di `components/public/about.blade.php`), `nav_links`, `ekstrakurikuler.kegiatan`, `fasilitas.sarana`, `fasilitas.ruang_penunjang`, `jenjang.levels`, `hero.stats`.
-> Mengisinya dengan string tunggal akan bikin halaman error.
-
+Beberapa key harus array karena dirender pakai `@foreach`: `about.misi`, `nav_links`, `ekstrakurikuler.kegiatan`, `fasilitas.sarana`, `fasilitas.ruang_penunjang`, `jenjang.levels`, `hero.stats`. Diisi string tunggal = halaman error.

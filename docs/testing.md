@@ -1,96 +1,99 @@
 # Testing
 
-Framework test berbeda per aplikasi, dan **setup database-nya juga berbeda** — ini sumber kebingungan paling umum.
+Framework dan setup database beda per aplikasi. Ini yang paling sering bikin bingung di awal.
 
 | | backend | frontend-v2 |
 |---|---|---|
 | Framework | PHPUnit | Pest |
-| Database test | MariaDB nyata, DB terpisah `handayani_testing` | SQLite `:memory:` |
-| Perlu setup manual? | **Ya** (lihat di bawah) | Tidak |
+| Database test | MariaDB, DB terpisah `handayani_testing` | SQLite `:memory:` |
+| Perlu setup manual | Ya | Tidak |
 
 ## Setup database test (backend)
 
-`backend/phpunit.xml` mengarahkan test ke `DB_DATABASE=handayani_testing` pada koneksi `mariadb`. Database ini **tidak dibuat otomatis** — kalau belum ada, seluruh test gagal dengan error koneksi atau `Table ... doesn't exist`.
+`backend/phpunit.xml` nunjuk `DB_DATABASE=handayani_testing` di koneksi `mariadb`. Database ini tidak dibuat otomatis. Kalau belum ada, semua test gagal dengan error koneksi atau `Table ... doesn't exist`.
 
-Buat dan migrasikan sekali di awal:
+Sekali di awal:
 
 ```bash
-# buat database kosong
 mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS handayani_testing"
 
-# isi skemanya
 cd backend
 php artisan migrate:fresh --database=mariadb --env=testing --no-interaction
 ```
 
-Dengan Docker:
+Pakai Docker:
 
 ```bash
 docker compose exec mysql mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "CREATE DATABASE IF NOT EXISTS handayani_testing"
 docker compose exec backend php artisan migrate:fresh --database=mariadb --env=testing --no-interaction
 ```
 
-> [!WARNING]
-> Kalau muncul error semacam `Table 'handayani_testing.model_has_roles' doesn't exist` **padahal** `php artisan migrate:status --env=testing` menampilkan semua migrasi sebagai *Ran*, berarti state database test tidak konsisten (baris di tabel `migrations` ada, tabelnya tidak). Perbaikannya: `migrate:fresh --env=testing` lagi. Ini pernah terjadi dan bikin ratusan test gagal tanpa sebab yang jelas dari kodenya.
+Kalau muncul `Table 'handayani_testing.model_has_roles' doesn't exist` padahal `migrate:status --env=testing` bilang semua migrasi *Ran*, berarti state DB test tidak sinkron: baris di tabel `migrations` ada, tabelnya tidak. Jalanin `migrate:fresh --env=testing` lagi. Ini pernah kejadian dan bikin 129 test gagal tanpa ada yang salah di kodenya.
 
-`frontend-v2` tidak butuh langkah apa pun — SQLite in-memory dibuat ulang tiap run.
+`frontend-v2` tidak butuh setup apa-apa, SQLite in-memory dibikin ulang tiap run.
 
 ## Menjalankan test
 
 ```bash
-# backend (PHPUnit)
+# backend
 cd backend
 php artisan test
 php artisan test --filter=SomeTest
 vendor/bin/phpunit tests/Feature/SomeTest.php
 
-# frontend-v2 (Pest)
+# frontend-v2
 cd frontend-v2
 php artisan test
 vendor/bin/pest tests/Unit/BrandingConfigTest.php
 ```
 
-Dengan Docker, jalankan lewat container agar koneksi database benar (dari host, `vendor/bin/phpunit` gagal connect karena `DB_HOST` mengarah ke service Docker):
+Pakai Docker, jalanin dari dalam container. Dari host `vendor/bin/phpunit` gagal connect karena `DB_HOST` nunjuk service Docker:
 
 ```bash
 docker compose exec backend php artisan test
 docker compose exec frontend php artisan test
 ```
 
-## Sebagian test memang gagal — jangan panik
+## Suite backend belum hijau
 
-Suite backend saat ini **tidak hijau seluruhnya**. Ada sejumlah test yang sudah gagal sejak sebelum kamu clone, sebagian karena data seeder yang berubah, sebagian karena test lama yang belum disesuaikan.
+Ada sekitar 220 test yang sudah gagal sebelum kamu clone. Sebagian karena data seeder berubah, sebagian test lama yang belum disesuaikan.
 
-Artinya: **jumlah gagal yang bukan nol bukan berarti kamu merusak sesuatu.** Yang perlu dipastikan adalah tidak ada kegagalan **baru**.
+Jadi jumlah gagal yang bukan nol itu wajar. Yang penting: tidak ada kegagalan **baru**.
 
-Cara membandingkan sebelum/sesudah perubahan:
+Bandingkan sebelum/sesudah:
 
 ```bash
-# 1. simpan baseline SEBELUM mengubah kode
+# baseline, sebelum ubah kode
 git stash push -u -m baseline
 docker compose exec backend sh -c "php artisan test > /tmp/before.txt 2>&1"
-docker compose exec backend grep -E "^\s+(FAILED|⨯)" /tmp/before.txt | sort > /tmp/before_names.txt
 
-# 2. kembalikan perubahan, jalankan lagi
+# balikin perubahan, jalanin lagi
 git stash pop
 docker compose exec backend sh -c "php artisan test > /tmp/after.txt 2>&1"
-docker compose exec backend grep -E "^\s+(FAILED|⨯)" /tmp/after.txt | sort > /tmp/after_names.txt
 
-# 3. bandingkan NAMA test-nya, bukan cuma jumlahnya
-docker compose exec backend comm -13 /tmp/before_names.txt /tmp/after_names.txt   # gagal baru → masalah
-docker compose exec backend comm -23 /tmp/before_names.txt /tmp/after_names.txt   # jadi lulus → bagus
+# ambil nama test yang gagal, buang durasinya, bandingkan
+docker compose exec backend sh -c "
+  for f in before after; do
+    grep -E '^\s+(FAILED|⨯)' /tmp/\$f.txt \
+      | sed -E 's/[[:space:]]+[0-9]+\.[0-9]+s[[:space:]]*\$//; s/^[[:space:]]+//; s/[[:space:]]+\$//' \
+      | sort -u > /tmp/\${f}_n.txt
+  done
+  echo 'regresi:'; comm -13 /tmp/before_n.txt /tmp/after_n.txt
+  echo 'jadi lulus:'; comm -23 /tmp/before_n.txt /tmp/after_n.txt
+"
 ```
 
-> [!TIP]
-> Bandingkan **nama** test, bukan angka totalnya. Jumlah gagal bisa melonjak drastis hanya karena database test perlu di-`migrate:fresh`, padahal daftar nama yang gagal identik — artinya nol regresi.
+Bandingkan **nama** testnya, bukan angka total. Jumlah gagal bisa lompat drastis cuma gara-gara DB test perlu `migrate:fresh`, padahal daftar namanya sama persis. Pernah kejadian: 354 gagal, habis `migrate:fresh` turun jadi 221, nol regresi.
 
-Kalau perlu menyimpan output panjang, arahkan langsung ke file **di dalam container** (`sh -c "... > /tmp/x.txt 2>&1"`) seperti contoh di atas. Menangkap output panjang dari luar sering terpotong.
+Durasi wajib dibuang waktu normalisasi. Kalau tidak, semua nama keliatan "berubah" cuma karena selisih milidetik.
+
+Output panjang arahkan ke file di dalam container (`sh -c "... > /tmp/x.txt 2>&1"`) seperti contoh di atas. Ditangkap dari luar sering kepotong.
 
 ## Format kode
 
 Wajib sebelum commit, di kedua aplikasi:
 
 ```bash
-vendor/bin/pint          # perbaiki semua
-vendor/bin/pint --dirty  # hanya file yang berubah
+vendor/bin/pint          # semua file
+vendor/bin/pint --dirty  # cuma yang berubah
 ```

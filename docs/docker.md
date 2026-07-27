@@ -1,55 +1,56 @@
 # Menjalankan dengan Docker
 
+Alternatif dari [setup manual](setup.md). Satu `docker compose up` menghidupkan stack dev: `backend` (8080), `frontend-v2` (8000), MariaDB, Redis, queue worker, scheduler, dan tunnel ngrok. Source code di-bind-mount, jadi edit kode PHP/Blade langsung kepakai tanpa restart.
 
-Alternatif dari setup manual di atas — satu `docker compose up` menghidupkan stack dev: `backend` (port 8080), `frontend-v2` (port 8000), MariaDB, Redis, queue worker, scheduler, dan tunnel ngrok. Source code di-bind-mount, jadi edit kode PHP/Blade langsung kepakai tanpa restart.
-
-**Vite dev server (port 5173) sengaja tidak ikut nyala** — service `frontend-vite` ada di profile `dev`, jadi dilewati oleh `docker compose up` biasa. Asset CSS/JS **tidak** otomatis ter-compile; pilih salah satu mode di bawah.
+Vite dev server (5173) sengaja tidak ikut nyala. Service `frontend-vite` ada di profile `dev`, jadi dilewati `docker compose up` biasa. Konsekuensinya asset CSS/JS tidak otomatis ter-compile, pilih salah satu mode di bawah.
 
 ```bash
 cp .env.example .env        # isi NGROK_AUTHTOKEN (https://dashboard.ngrok.com/get-started/your-authtoken)
 docker compose up --build
 ```
 
-Yang perlu disiapkan lebih dulu: `backend/.env` dan `frontend-v2/.env` (copy dari `.env.example` masing-masing seperti biasa) — nilai `DB_HOST`, `REDIS_HOST`, `API_URL`, `CACHE_STORE` di dalamnya **otomatis di-override** oleh `docker-compose.yml` supaya mengarah ke service Docker (`mysql`, `redis`, `backend`), jadi tidak perlu diedit manual.
+Siapkan dulu `backend/.env` dan `frontend-v2/.env` (copy dari `.env.example` masing-masing). Nilai `DB_HOST`, `REDIS_HOST`, `API_URL`, `CACHE_STORE` di dalamnya otomatis di-override `docker-compose.yml` supaya nunjuk service Docker (`mysql`, `redis`, `backend`), tidak perlu diedit manual.
 
-Setelah `up`, container `backend` otomatis `composer install` (kalau perlu), `migrate --seed`, dan sinkron RBAC lewat seeder (`RoleAndPermissionSeeder`, `PermissionResourceSeeder`, `PermissionMetadataSeeder`, `PermissionEndpointSeeder`) — tunggu sampai statusnya `healthy` (`docker compose ps`) sebelum akses.
+Habis `up`, container `backend` otomatis `composer install` (kalau perlu), `migrate --seed`, dan sinkron RBAC lewat seeder (`RoleAndPermissionSeeder`, `PermissionResourceSeeder`, `PermissionMetadataSeeder`, `PermissionEndpointSeeder`). Tunggu statusnya `healthy` (`docker compose ps`) sebelum diakses.
 
 | Akses | URL |
 |---|---|
 | Frontend (admin panel/portal) | `http://localhost:8000` |
 | Backend API | `http://localhost:8080/api` |
-| ngrok inspector (lihat URL publik) | `http://localhost:4040` |
+| ngrok inspector | `http://localhost:4040` |
 | MariaDB (buat HeidiSQL native Windows) | `127.0.0.1:3306`, user `root`, password sesuai `MYSQL_ROOT_PASSWORD` di root `.env` |
-| Mailpit (tangkap semua email dev, ganti Mailtrap) | `http://localhost:8025` — SMTP di `mailpit:1025` (sudah otomatis jadi `MAIL_HOST` container backend) |
+| Mailpit (nangkep semua email dev) | `http://localhost:8025`, SMTP di `mailpit:1025` |
 
-## Asset CSS/JS — dua mode
+## Asset CSS/JS
 
-| Mode | Perintah | Kapan dipakai |
+Dua mode, pilih sesuai kebutuhan:
+
+| Mode | Perintah | Kapan |
 |---|---|---|
-| **Build statis** (default) | `docker compose exec frontend npm run build` | Menjalankan app biasa, atau testing lewat tunnel/HP |
-| **Hot reload** | `docker compose --profile dev up -d frontend-vite` | Ngoprek CSS/JS di laptop, akses lewat `localhost:8000` |
+| Build statis (default) | `docker compose exec frontend npm run build` | Jalanin app biasa, atau testing lewat tunnel/HP |
+| Hot reload | `docker compose --profile dev up -d frontend-vite` | Ngoprek CSS/JS di laptop, akses lewat `localhost:8000` |
 
-Mode build statis butuh `npm run build` ulang tiap kali ubah CSS/JS. Mode hot reload tidak, tapi ada konsekuensinya:
+Mode statis butuh `npm run build` ulang tiap ubah CSS/JS. Mode hot reload tidak, tapi ada efek sampingnya.
 
-> **Gotcha — CSS tidak muncul saat diakses dari HP/tunnel.**
-> `frontend-vite` menulis file `frontend-v2/public/hot`. Selama file itu ada, `@vite` di Blade mengarahkan asset ke `http://localhost:5173`. Dari laptop itu jalan (ada port-forward), tapi dari HP `localhost` berarti HP itu sendiri — asset gagal load, halaman tampil tanpa style.
->
-> Balik ke mode statis:
-> ```bash
-> docker compose stop frontend-vite
-> docker exec handayani-frontend-1 rm -f public/hot
-> docker exec handayani-frontend-1 npm run build
-> ```
-> Jangan jalankan `frontend-vite` bersamaan dengan sesi testing di HP — begitu nyala, `public/hot` ditulis ulang dan CSS di HP putus lagi.
+`frontend-vite` nulis file `frontend-v2/public/hot`. Selama file itu ada, `@vite` ngarahin asset ke `http://localhost:5173`. Dari laptop jalan karena ada port-forward, tapi dari HP `localhost` artinya HP itu sendiri, jadi asset gagal load dan halaman tampil tanpa style.
 
-Perintah harian yang berguna:
+Balik ke mode statis:
+
+```bash
+docker compose stop frontend-vite
+docker exec handayani-frontend-1 rm -f public/hot
+docker exec handayani-frontend-1 npm run build
+```
+
+Jangan nyalain `frontend-vite` barengan sama sesi testing di HP. Begitu nyala, `public/hot` ditulis ulang dan CSS di HP putus lagi.
+
+## Perintah harian
 
 ```bash
 docker compose logs -f backend-queue        # pantau job notifikasi/import-export
 docker compose logs -f backend-scheduler    # pantau schedule:work
 docker compose exec backend php artisan migrate:status
 docker compose exec backend php artisan test
-docker compose down                         # stop semua service (data DB tetap ada di volume)
-docker compose down -v                      # stop + hapus volume (DB/vendor/node_modules reset total)
+docker compose down                         # stop semua service, data DB tetap di volume
+docker compose down -v                      # stop + hapus volume, DB/vendor/node_modules reset total
 ```
-
