@@ -1,0 +1,35 @@
+sequenceDiagram
+    actor C as User (Browser)
+    participant Auth as Sistem (Login)
+    participant UI as Frontend 
+    participant RbacApi as RbacController
+    participant MW as Middleware
+
+    C->>Auth: Login (identifier + password)
+    Note over Auth: Validasi kredensial & akun aktif
+    Auth->>Auth: Cabut token lama,<br>kumpulkan permission dari role,<br>terbitkan Sanctum token
+    Auth-->>C: Token + daftar permission & role<br>(disimpan di session frontend)
+
+    Note over C,UI: === Sisi UI: render menu & buka halaman ===
+    C->>UI: Buka aplikasi / navigasi ke<br>halaman tertentu
+    UI->>UI: PermissionHelper::hasResource('xxx.view') dipanggil<br>(shouldRegisterNavigation & mount)
+    UI->>RbacApi: GET /rbac/user-resources<br>(cached ~60 detik)
+    Note over RbacApi: Superadmin → semua resource_key aktif
+    RbacApi-->>UI: Daftar resource_key yang boleh diakses
+    alt resource_key ada di daftar
+        UI-->>C: Tampilkan menu / render halaman
+    else tidak ada
+        UI-->>C: Sembunyikan menu dari navigasi, atau abort 403 kalau akses URL langsung
+    end
+
+    Note over C,MW: === Sisi API: user klik aksi/submit di halaman ===
+    C->>MW: Request ke endpoint tertentu<br>(bawa Bearer token)
+    %% Note over MW: resource_key endpoint ini TIDAK dikirim client — sudah terikat<br>statis di kode route (`middleware('endpoint.permission:xxx')`)<br>dicek ulang dari nol terhadap permission_endpoints (independen dari hasil cek UI di atas)
+    MW->>MW: Cari pemetaan resource_key di permission_endpoints (aktif)
+    Note over MW: Tidak terdaftar → tolak 403 (strict-by-default),<br>belum terikat permission → izinkan langsung
+    MW->>MW: Cek otorisasi via Gate: user->can(permission)<br>Gate::before meloloskan superadmin di sini
+    alt lolos (punya izin / superadmin)
+        MW-->>C: Izinkan akses
+    else tidak punya izin
+        MW-->>C: Tolak 403
+    end

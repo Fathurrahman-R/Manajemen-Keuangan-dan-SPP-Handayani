@@ -12,11 +12,9 @@ use Illuminate\Notifications\Notifiable;
  *
  * frontend-v2 TIDAK mengelola data user secara mandiri — sumber kebenaran ada
  * di backend (`backend/app/Models/User.php`). Tabel `users` di DB lokal hanya
- * dipakai oleh Filament untuk:
- *   1. Menyimpan referensi user yang sudah login (Filament::auth()->loginUsingId)
- *      sehingga user menu, profile dropdown, dsb. dapat resolve nama user.
- *   2. Foreign key `notifiable_id` untuk tabel `filament_notifications`
- *      (database notifications Filament).
+ * dipakai oleh Filament untuk menyimpan referensi user yang sudah login
+ * (Filament::auth()->loginUsingId) sehingga user menu, profile dropdown, dsb.
+ * dapat resolve nama user.
  *
  * Jangan tulis logika domain (permission, branch rules, dsb.) di sini. Semua
  * permission/role/branch dibaca dari session (`data.permissions`, `data.roles`,
@@ -50,15 +48,5 @@ class User extends Authenticatable implements FilamentUser
     public function getFilamentName(): string
     {
         return $this->name ?? $this->username ?? '';
-    }
-
-    /**
-     * Override notifications relationship to use the filament_notifications table
-     * (the backend already has a `notifications` table with a different schema).
-     */
-    public function notifications()
-    {
-        return $this->morphMany(FilamentDatabaseNotification::class, 'notifiable')
-            ->orderBy('created_at', 'desc');
     }
 }

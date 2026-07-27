@@ -1,25 +1,4 @@
 <div class="space-y-4 pb-32">
-    {{-- Sibling Selector --}}
-    @if($this->hasSiblings())
-        <x-filament::section>
-            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                <label for="sibling-selector" class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                    Lihat tagihan untuk:
-                </label>
-                <select
-                    id="sibling-selector"
-                    wire:model.live="selectedSiswaId"
-                    class="border border-gray-300 dark:border-gray-600 rounded-lg text-sm py-2 px-3 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-900 dark:text-gray-100 w-full sm:w-auto"
-                >
-                    <option value="{{ $ownerSiswaId }}">{{ $ownerSiswaName }} (Saya)</option>
-                    @foreach($siblings as $sibling)
-                        <option value="{{ $sibling['id'] }}">{{ $sibling['nama'] }}</option>
-                    @endforeach
-                </select>
-            </div>
-        </x-filament::section>
-    @endif
-
     @if(count($tagihanData) > 0)
         @php
             $totalTagihan = collect($tagihanData)->sum(fn($t) => $t['jenis_tagihan']['jumlah'] ?? 0);

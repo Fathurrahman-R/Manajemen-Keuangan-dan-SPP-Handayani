@@ -1,0 +1,69 @@
+%%{
+    init: {
+        'layout': 'elk',
+        'themeVariables': {'fontSize': '32px'},
+        'themeCSS': '.edgeLabel, .edgeLabel p { font-size: 32px !important; }'
+    }
+}%%
+erDiagram
+    direction RL
+    BRANCHES {
+        bigint id PK
+        string location
+    }
+    USERS {
+        bigint id PK
+        string username UK
+        string email UK "unique per branch"
+        bigint branch_id FK
+        bigint siswa_id FK "nullable, akun portal"
+        string lainnya "password, name, is_active, dst"
+    }
+    AYAH {
+        bigint id PK
+        string lainnya "nama, pendidikan, pekerjaan, email"
+    }
+    IBU {
+        bigint id PK
+        string lainnya "nama, pendidikan, pekerjaan, email"
+    }
+    WALIS {
+        bigint id PK
+        string lainnya "nama, pekerjaan, alamat, no_hp, email"
+    }
+    KATEGORIS {
+        bigint id PK
+        bigint branch_id FK
+        string nama
+    }
+    KELAS {
+        bigint id PK
+        enum jenjang "MI, TK, KB"
+        bigint branch_id FK
+        string lainnya "nama, level"
+    }
+    SISWAS {
+        bigint id PK
+        string nis UK
+        string nisn UK "nullable"
+        bigint ayah_id FK "nullable"
+        bigint ibu_id FK "nullable"
+        bigint wali_id FK "nullable"
+        bigint kelas_id FK "nullable"
+        bigint kategori_id FK "nullable"
+        bigint branch_id FK
+        enum jenjang "TK, MI, KB"
+        enum status "Aktif, Lulus, Pindah, Keluar"
+        string lainnya "nama, ttl, agama, alamat, dst"
+    }
+
+    BRANCHES ||--o{ USERS : "memiliki"
+    BRANCHES ||--o{ SISWAS : "memiliki"
+    BRANCHES ||--o{ KELAS : "memiliki"
+    BRANCHES ||--o{ KATEGORIS : "memiliki"
+    AYAH ||--o{ SISWAS : "ayah dari"
+    IBU ||--o{ SISWAS : "ibu dari"
+    WALIS ||--o{ SISWAS : "wali dari"
+    KELAS ||--o{ SISWAS : "menampung"
+    KATEGORIS ||--o{ SISWAS : "mengelompokkan"
+    SISWAS ||--o| USERS : "punya akun portal"

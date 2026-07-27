@@ -13,9 +13,16 @@
     {{-- Filters --}}
     <x-filament::section>
         {{-- Header bar --}}
-        <div class="flex items-center gap-2 mb-4 text-sm font-medium text-gray-700 dark:text-gray-300">
-            <x-heroicon-o-funnel class="h-4 w-4 text-gray-400" />
-            <span>Filter Pembayaran</span>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <div class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <x-heroicon-o-funnel class="h-4 w-4 text-gray-400" />
+                <span>Filter Pembayaran</span>
+            </div>
+            @if(\App\Helpers\PermissionHelper::hasResource('export-data'))
+                <div class="flex flex-wrap items-center gap-2">
+                    {{ $this->exportPembayaranAction }}
+                </div>
+            @endif
         </div>
 
         {{-- Search full width --}}

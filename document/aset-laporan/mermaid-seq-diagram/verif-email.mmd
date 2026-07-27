@@ -1,0 +1,15 @@
+sequenceDiagram
+    actor U as User
+    participant Sys as Sistem
+    participant Mail as Layanan Email
+
+    U->>Sys: Isi alamat email baru
+    %% Note over Sys: Endpoint hanya perlu login (auth:sanctum) — TIDAK digerbangi RBAC resource_key seperti 3 alur lain
+    Note over Sys: Validasi rate-limit (maks 3x/10 menit) & email unik di cabang
+    Sys->>Sys: Buat kode OTP 6 digit, simpan (kedaluwarsa 10 menit)
+    Sys->>Mail: Kirim email berisi OTP
+    Mail-->>U: Terima email OTP
+    U->>Sys: Masukkan kode OTP
+    Note over Sys: Validasi kode cocok & belum kedaluwarsa
+    Sys->>Sys: Set email user + tandai terverifikasi, hapus OTP
+    Sys-->>U: Email berhasil terverifikasi

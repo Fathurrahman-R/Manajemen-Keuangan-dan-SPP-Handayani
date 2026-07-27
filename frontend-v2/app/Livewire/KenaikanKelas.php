@@ -52,10 +52,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
 
     public function mount(): void
     {
-        $permissions = session()->get('data.permissions', session()->get('data')['permissions'] ?? []);
-        if (! in_array('view-kenaikan-kelas', $permissions)) {
-            abort(403);
-        }
+        abort_if(! PermissionHelper::hasResource('kenaikan-kelas.view'), 403);
 
         $this->loadTahunAjaranOptions();
         $this->selectedSourcePeriodId = $this->getAktifPeriodId();

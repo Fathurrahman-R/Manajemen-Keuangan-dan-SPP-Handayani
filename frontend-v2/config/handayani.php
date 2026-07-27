@@ -11,6 +11,11 @@ return [
     |
     */
 
+    // Backend API base URL. Must go through config() (not env() directly) so it still
+    // resolves once `config:cache` is enabled — env() outside config files returns null
+    // after caching.
+    'api_url' => env('API_URL', 'http://127.0.0.1:8080/api'),
+
     'features' => [
         // Enable parent/student portal at path '/portal'
         'portal_enabled' => env('HANDAYANI_PORTAL_ENABLED', true),
@@ -20,9 +25,6 @@ return [
 
         // Enable fallback profile page migration to Filament-native EditProfile page
         'profile_migration_enabled' => env('HANDAYANI_PROFILE_MIGRATION_ENABLED', true),
-
-        // Enable loading screen indicators and SPA transition animations
-        'spa_loading_enabled' => env('HANDAYANI_SPA_LOADING_ENABLED', true),
 
         // Enable Midtrans online payment gateway integration
         'midtrans_enabled' => env('HANDAYANI_MIDTRANS_ENABLED', false),

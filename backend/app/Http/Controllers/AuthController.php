@@ -84,6 +84,7 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'username' => $user->username,
                 'email' => $user->email,
+                'email_verified_at' => $user->email_verified_at?->toISOString(),
                 'token' => $token->plainTextToken,
                 'expires_at' => $token->accessToken->expires_at->toISOString(),
                 'permissions' => $abilities,

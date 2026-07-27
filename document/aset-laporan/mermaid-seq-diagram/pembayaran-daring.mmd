@@ -1,0 +1,22 @@
+sequenceDiagram
+    actor S as Siswa/Wali
+    participant Sys as Sistem
+    participant Snap as Midtrans Snap API
+    participant MT as Midtrans (Webhook)
+
+    S->>Sys: Pilih tagihan, klik Bayar Online
+    %% Note over Sys: Endpoint digerbangi RBAC (resource_key `midtrans.pay`, lihat Gambar 3.5.5) sebelum masuk sini
+    Note over Sys: Validasi: fitur aktif, kepemilikan tagihan,<br/>sisa tagihan > 0, batas nominal, tidak ada transaksi pending lain
+    Sys->>Sys: Hitung biaya admin, simpan transaksi (status: pending)
+    Sys->>Snap: Buat Snap transaction
+    Snap-->>Sys: token & redirect_url
+    Sys-->>S: Tampilkan halaman pembayaran Snap
+    S->>Snap: Selesaikan pembayaran
+
+    Note over MT,Sys: Async — konfirmasi terpisah dari sesi pembayaran
+    MT->>Sys: POST notifikasi webhook
+    Note over Sys: Validasi: webhook aktif, signature valid,<br/>nominal cocok, transisi status diizinkan, idempoten, anti-overpayment
+    Sys->>Sys: Update status transaksi
+    Sys->>Sys: Catat Pembayaran + update status Tagihan (Lunas/Belum Lunas)
+    Sys--)S: Notifikasi pembayaran berhasil
+    Sys-->>MT: 200 OK

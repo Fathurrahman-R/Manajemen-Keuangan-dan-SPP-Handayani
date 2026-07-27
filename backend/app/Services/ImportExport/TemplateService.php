@@ -11,11 +11,13 @@ class TemplateService
 {
     /**
      * Generate and return the siswa import template.
+     * Columns are scoped to $jenjang (MI vs KB/TK) when provided, matching
+     * the fields actually collected by the create/edit siswa form per jenjang.
      */
-    public function generateSiswaTemplate(int $branchId): BinaryFileResponse
+    public function generateSiswaTemplate(int $branchId, ?string $jenjang = null): BinaryFileResponse
     {
         return Excel::download(
-            new SiswaImportTemplate($branchId),
+            new SiswaImportTemplate($branchId, $jenjang),
             'template_import_siswa.xlsx'
         );
     }

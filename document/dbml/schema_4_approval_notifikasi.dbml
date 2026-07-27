@@ -1,0 +1,115 @@
+// Modul: Modul Approval Pengeluaran & Notifikasi
+// Bagian dari skema 38 tabel aplikasi (post commit 26e9339)
+// Sumber: document/tracking-perubahan.md §9.3/9.4
+// Tabel bertanda 'stub' didefinisikan lengkap di modul lain -- cuma placeholder biar Ref valid.
+
+Table pengeluaran_requests {
+  id bigint [pk]
+  uraian text
+  jumlah decimal(13,2)
+  tanggal_kebutuhan date
+  kategori_pengeluaran varchar [note: 'nullable']
+  lampiran varchar [note: 'nullable']
+  status varchar [note: 'default draft']
+  requester_id bigint
+  branch_id bigint
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table approval_logs {
+  id bigint [pk]
+  pengeluaran_request_id bigint [note: 'cascade']
+  previous_status varchar
+  new_status varchar
+  user_id bigint
+  note text [note: 'nullable']
+  created_at timestamp [note: 'useCurrent']
+}
+
+Table branch_approval_settings {
+  id bigint [pk]
+  branch_id bigint [unique, note: 'unique — 1:1']
+  auto_approval_enabled boolean [note: 'default false']
+  auto_approval_threshold decimal(13,2) [note: 'default 0']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table notifications {
+  id bigint [pk]
+  user_id bigint
+  type varchar
+  title varchar
+  message text
+  data json [note: 'nullable']
+  is_read boolean [note: 'default false']
+  created_at timestamp [note: 'useCurrent']
+}
+
+Table notification_settings {
+  id bigint [pk]
+  branch_id bigint [unique, note: 'unique']
+  tagihan_baru_enabled boolean [note: 'default true']
+  reminder_enabled boolean [note: 'default true']
+  kwitansi_enabled boolean [note: 'default true']
+  overdue_enabled boolean [note: 'default true']
+  reminder_days_before json [note: 'nullable']
+  overdue_interval_days int [note: 'default 7']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table notification_logs {
+  id bigint [pk]
+  branch_id bigint
+  recipient_email varchar
+  notification_type varchar
+  tagihan_kode varchar [note: 'nullable']
+  pengeluaran_request_id bigint [note: 'nullable, nullOnDelete']
+  workflow_event varchar [note: 'nullable']
+  status varchar
+  reason varchar [note: 'nullable']
+  error_message varchar [note: 'nullable']
+  sent_at timestamp [note: 'nullable']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table email_opt_outs {
+  id bigint [pk]
+  email varchar
+  notification_type varchar [unique, note: 'unique(email, notification_type)']
+  token varchar [unique, note: 'unique']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table notification_sent_records {
+  id bigint [pk]
+  tagihan_kode varchar
+  notification_type varchar [unique, note: 'unique(tagihan_kode, notification_type, sent_date)']
+  sent_date date
+  created_at timestamp
+  updated_at timestamp
+}
+
+// ----- stub tabel eksternal (definisi lengkap ada di modul lain) -----
+Table users { // stub, lihat modul: core
+  id bigint [pk]
+}
+
+Table branches { // stub, lihat modul: core
+  id bigint [pk]
+}
+
+// ----- relasi -----
+Ref: pengeluaran_requests.requester_id > users.id
+Ref: pengeluaran_requests.branch_id > branches.id
+Ref: approval_logs.pengeluaran_request_id > pengeluaran_requests.id
+Ref: approval_logs.user_id > users.id
+Ref: branch_approval_settings.branch_id > branches.id
+Ref: notifications.user_id > users.id
+Ref: notification_settings.branch_id > branches.id
+Ref: notification_logs.branch_id > branches.id
+Ref: notification_logs.pengeluaran_request_id > pengeluaran_requests.id

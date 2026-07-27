@@ -466,4 +466,69 @@ class SiswaTest extends TestCase
         ])->assertStatus(200)
             ->assertJson(['errors']);
     }
+
+    public function test_create_siswa_does_not_auto_create_account_and_appears_in_unregistered_list()
+    {
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
+        $this->seed(\Database\Seeders\PermissionEndpointSeeder::class);
+
+        $admin = \App\Models\User::factory()->admin()->create();
+        \Laravel\Sanctum\Sanctum::actingAs($admin, ['*']);
+        $ayah = \App\Models\Ayah::factory()->create();
+        $ibu = \App\Models\Ibu::factory()->create();
+        $wali = \App\Models\Wali::factory()->create();
+        $kelas = \App\Models\Kelas::factory()->create(['branch_id' => $admin->branch_id]);
+        $kategori = \App\Models\Kategori::factory()->create(['branch_id' => $admin->branch_id]);
+
+        $response = $this->post('api/siswa/mi', [
+            'nis' => '000002',
+            'nisn' => '000002',
+            'nama' => 'Siswa Belum Terdaftar',
+            'jenis_kelamin' => 'Laki-laki',
+            'tempat_lahir' => 'Bandung',
+            'tanggal_lahir' => '2010-01-01',
+            'agama' => 'Islam',
+            'alamat' => 'Jln. Raya Bandung',
+            'ayah_id' => $ayah->id,
+            'ibu_id' => $ibu->id,
+            'wali_id' => $wali->id,
+            'kelas_id' => $kelas->id,
+            'kategori_id' => $kategori->id,
+        ]);
+        $response->assertStatus(201);
+        $siswaId = $response->json('data.id');
+
+        $this->assertDatabaseMissing('users', ['siswa_id' => $siswaId]);
+
+        $this->get('api/akun-siswa/unregistered')
+            ->assertStatus(200)
+            ->assertJsonFragment(['id' => $siswaId]);
+    }
+
+    public function test_akun_siswa_index_scoped_to_branch()
+    {
+        $this->seed(\Database\Seeders\RoleAndPermissionSeeder::class);
+        $this->seed(\Database\Seeders\PermissionEndpointSeeder::class);
+
+        $admin = \App\Models\User::factory()->admin()->create();
+        \Laravel\Sanctum\Sanctum::actingAs($admin, ['*']);
+
+        $kelasOwn = \App\Models\Kelas::factory()->create(['branch_id' => $admin->branch_id]);
+        $kategoriOwn = \App\Models\Kategori::factory()->create(['branch_id' => $admin->branch_id]);
+        $siswaOwn = \App\Models\Siswa::factory()->create(['branch_id' => $admin->branch_id, 'kelas_id' => $kelasOwn->id, 'kategori_id' => $kategoriOwn->id]);
+        $ownUser = \App\Models\User::factory()->create(['username' => 'siswa-own', 'branch_id' => $admin->branch_id, 'siswa_id' => $siswaOwn->id]);
+        $ownUser->assignRole('siswa');
+
+        $otherBranch = \App\Models\Branch::factory()->create();
+        $kelasOther = \App\Models\Kelas::factory()->create(['branch_id' => $otherBranch->id]);
+        $kategoriOther = \App\Models\Kategori::factory()->create(['branch_id' => $otherBranch->id]);
+        $siswaOther = \App\Models\Siswa::factory()->create(['branch_id' => $otherBranch->id, 'kelas_id' => $kelasOther->id, 'kategori_id' => $kategoriOther->id]);
+        $otherUser = \App\Models\User::factory()->create(['username' => 'siswa-other', 'branch_id' => $otherBranch->id, 'siswa_id' => $siswaOther->id]);
+        $otherUser->assignRole('siswa');
+
+        $this->get('api/akun-siswa')
+            ->assertStatus(200)
+            ->assertJsonFragment(['id' => $ownUser->id])
+            ->assertJsonMissing(['id' => $otherUser->id]);
+    }
 }

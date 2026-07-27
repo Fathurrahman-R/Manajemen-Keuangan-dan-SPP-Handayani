@@ -38,7 +38,7 @@ class ChangePassword extends Page implements HasForms
         }
 
         $this->isFirstTimeUser = true;
-        $this->isEmailVerified = false;
+        $this->isEmailVerified = filled(session()->get('data.email_verified_at'));
 
         $this->form->fill();
     }
@@ -151,6 +151,7 @@ class ChangePassword extends Page implements HasForms
 
             if ($response->successful()) {
                 $this->isEmailVerified = true;
+                session()->put('data.email_verified_at', now()->toISOString());
 
                 // Refresh form schema and layout
                 $this->form->fill();

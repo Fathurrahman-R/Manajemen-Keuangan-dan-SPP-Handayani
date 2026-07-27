@@ -3,7 +3,7 @@
 return [
     'name' => env('HANDAYANI_PUBLIC_NAME', 'Lembaga Pendidikan Anak Handayani'),
     'short_name' => env('HANDAYANI_PUBLIC_SHORT_NAME', 'Handayani'),
-    'tagline' => env('HANDAYANI_PUBLIC_TAGLINE', 'Membentuk Generasi Berilmu dan Berakhlak'),
+    'tagline' => env('HANDAYANI_PUBLIC_TAGLINE', "Mandiri, Intelektual, Smart, Hafiz Qur'an"),
     'address' => env('HANDAYANI_PUBLIC_ADDRESS', 'Jl. Selat Panjang No.357, Siantan Hulu, Kec. Pontianak Utara, Kota Pontianak, Kalimantan Barat 78243'),
     'phone' => env('HANDAYANI_PUBLIC_PHONE', '(021) 1234-5678'),
     'email' => env('HANDAYANI_PUBLIC_EMAIL', 'info@handayani.sch.id'),
@@ -21,7 +21,7 @@ return [
     'hero' => [
         'stats' => [
             ['key' => '3', 'value' => 'Jenjang Terpadu'],
-            ['key' => '20+', 'value' => 'Tahun Berdiri'],
+            ['key' => '2017', 'value' => 'Tahun Berdiri'],
             ['key' => '100%', 'value' => 'Kurikulum Nasional'],
         ],
         'images' => [
@@ -34,8 +34,15 @@ return [
     // --- CONTENT ABOUT ---
     'about' => [
         'title' => 'Lembaga pendidikan Islam yang fokus pada ilmu, adab, dan masa depan.',
-        'misi' => 'Menyelenggarakan pendidikan terpadu berbasis nilai Islam, kurikulum nasional, dan pengembangan karakter — untuk membentuk peserta didik yang berilmu, mandiri, dan berakhlak mulia.',
-        'visi' => 'Menjadi yayasan pendidikan Islam rujukan yang melahirkan generasi cerdas spiritual, intelektual, dan sosial — siap berkontribusi bagi umat dan bangsa.',
+        'misi' => [
+            'Menyelenggarakan pendidikan yang menanamkan nilai-nilai akhlakul karimah dalam setiap aktivitas belajar',
+            'Mengembangkan kemampuan kemandirian peserta didik melalui pembiasaan positif dan layanan bimbingan yang berkelanjutan',
+            'Meningkatkan kecerdasan intelektual melalui pembelajaran aktif, kreatif, inovatif, dan menyenangkan',
+            "Memperkuat literasi Al-Qur'an dan program tahfiz serta pembiasaan ibadah harian",
+            'Mengintegrasikan teknologi informasi dalam proses pembelajaran untuk mendukung kecakapan abad 21',
+            'Membangun lingkungan belajar yang kolaboratif antara madrasah, keluarga, dan masyarakat',
+        ],
+        'visi' => 'Mewujudkan peserta didik yang berakhlak mulia, mandiri, berwawasan intelektual, cerdas dalam teknologi, dan menjadi generasi penghafal Al-Qur’an.',
         'nilai_institusional' => [
             ['n' => '01', 'title' => 'Integritas', 'desc' => 'Kejujuran, amanah, dan tanggung jawab menjadi pondasi setiap pendidik dan peserta didik.'],
             ['n' => '02', 'title' => 'Profesionalisme', 'desc' => 'Tenaga pendidik kompeten dengan kurikulum nasional terstandar dan pengembangan berkelanjutan.'],
@@ -70,6 +77,77 @@ return [
                 'programs' => ['Kurikulum Nasional + IT', 'Tahfidz terstruktur', 'Sains bilingual', 'Ekstrakurikuler pilihan'],
             ],
         ],
+    ],
+
+    // --- CONTENT EKSTRAKURIKULER ---
+    'ekstrakurikuler' => [
+        'title' => 'Ruang tumbuh di luar jam pelajaran.',
+        'description' => 'Setiap kegiatan dibimbing guru penanggung jawab dan dinilai sebagai bagian dari rapor peserta didik.',
+        'kegiatan' => [
+            [
+                'name' => 'Pramuka',
+                'sasaran' => 'Kelas 3 – 6',
+                'sifat' => 'Wajib',
+                'desc' => 'Menumbuhkan sikap kepemimpinan, kemandirian, disiplin, tanggung jawab, dan semangat nasionalisme.',
+            ],
+            [
+                'name' => 'Olahraga',
+                'sasaran' => 'Kelas 1 – 6',
+                'sifat' => 'Pilihan',
+                'desc' => 'Silat, karate, senam, dan bulu tangkis untuk membangun karakter mandiri serta gotong royong.',
+            ],
+            [
+                'name' => 'Kesenian',
+                'sasaran' => 'Kelas 4 – 6',
+                'sifat' => 'Pilihan',
+                'desc' => 'Pengembangan kemampuan seni tari sebagai wadah ekspresi dan apresiasi budaya.',
+            ],
+            [
+                'name' => 'Paskibra',
+                'sasaran' => 'Kelas 4 – 6',
+                'sifat' => 'Pilihan',
+                'desc' => 'Latihan baris-berbaris yang menumbuhkan kedisiplinan, kekompakan, dan cinta tanah air.',
+            ],
+            [
+                'name' => 'Literasi & Numerasi',
+                'sasaran' => 'Kelas 4 – 6',
+                'sifat' => 'Pilihan',
+                'desc' => 'Bimbingan membaca dan berhitung bagi peserta didik yang membutuhkan pendampingan tambahan.',
+            ],
+        ],
+    ],
+
+    // --- CONTENT FASILITAS ---
+    'fasilitas' => [
+        'title' => 'Fasilitas yang menopang kegiatan belajar.',
+        'description' => 'Sarana pembelajaran dan ruang penunjang yang tersedia di lingkungan Madrasah Ibtidaiyah Handayani.',
+        'sarana' => [
+            ['jumlah' => '6', 'label' => 'Ruang Kelas'],
+            ['jumlah' => '10', 'label' => 'Unit Komputer'],
+            ['jumlah' => '1', 'label' => 'Papan Interaktif'],
+            ['jumlah' => '1', 'label' => 'Proyektor'],
+            ['jumlah' => '2', 'label' => 'Pengeras Suara'],
+            ['jumlah' => '3', 'label' => 'Printer'],
+        ],
+        'ruang_penunjang' => [
+            'Ruang Kepala Madrasah',
+            'Ruang Guru',
+            'Ruang Tata Usaha',
+            'Ruang Dapur',
+            'Gudang',
+            'WC Guru & WC Murid terpisah',
+        ],
+    ],
+
+    // --- NAVIGASI ---
+    'nav_links' => [
+        ['href' => '#beranda', 'label' => 'Beranda'],
+        ['href' => '#tentang', 'label' => 'Tentang'],
+        ['href' => '#jenjang', 'label' => 'Jenjang'],
+        ['href' => '#ekstrakurikuler', 'label' => 'Ekskul'],
+        ['href' => '#fasilitas', 'label' => 'Fasilitas'],
+        ['href' => '#spp', 'label' => 'SPP'],
+        ['href' => '#kontak', 'label' => 'Kontak'],
     ],
 
     // --- CONTENT SPP CTA ---

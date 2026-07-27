@@ -1,0 +1,70 @@
+%%{
+    init: {
+        'layout': 'elk',
+        'themeVariables': {'fontSize': '32px'},
+        'themeCSS': '.edgeLabel, .edgeLabel p { font-size: 32px !important; }'
+    }
+}%%
+erDiagram
+    direction BT
+    BRANCHES {
+        bigint id PK
+    }
+    SISWAS {
+        bigint id PK
+        string nis UK
+    }
+    JENIS_TAGIHANS {
+        bigint id PK
+        bigint branch_id FK
+        bigint tahun_ajaran_id FK "NOT NULL"
+        string lainnya "nama, jatuh_tempo, jumlah"
+    }
+    TAGIHANS {
+        char kode_tagihan PK
+        bigint jenis_tagihan_id FK
+        string nis FK "cascade on delete"
+        bigint branch_id FK
+        bigint tahun_ajaran_id FK "nullable"
+        enum status "Lunas, Belum Lunas, Belum Dibayar"
+        char batch_reference "nullable"
+    }
+    PEMBAYARANS {
+        char kode_pembayaran PK
+        char kode_tagihan FK
+        bigint branch_id FK
+        string midtrans_order_id UK "nullable"
+        enum metode "offline, online_midtrans"
+        string lainnya "tanggal, jumlah, pembayar"
+    }
+    APP_SETTINGS {
+        bigint id PK
+        bigint branch_id FK
+        string lainnya "profil sekolah"
+    }
+    PENGELUARANS {
+        bigint id PK
+        bigint branch_id FK
+        bigint tahun_ajaran_id FK "nullable"
+        bigint pengeluaran_request_id FK "nullable"
+        string lainnya "tanggal, uraian, jumlah"
+    }
+    TAHUN_AJARANS {
+        bigint id PK
+    }
+    PENGELUARAN_REQUESTS {
+        bigint id PK
+    }
+
+    BRANCHES ||--o{ JENIS_TAGIHANS : "memiliki"
+    BRANCHES ||--o{ APP_SETTINGS : "memiliki"
+    BRANCHES ||--o{ PEMBAYARANS : "memiliki"
+    BRANCHES ||--o{ PENGELUARANS : "memiliki"
+    BRANCHES ||--o{ TAGIHANS : "memiliki"
+    SISWAS ||--o{ TAGIHANS : "ditagih lewat nis"
+    JENIS_TAGIHANS ||--o{ TAGIHANS : "menentukan jenis"
+    TAGIHANS ||--o{ PEMBAYARANS : "dibayar lewat kode_tagihan"
+    TAHUN_AJARANS ||--o{ JENIS_TAGIHANS : "berlaku pada periode"
+    TAHUN_AJARANS ||--o{ TAGIHANS : "berlaku pada periode"
+    TAHUN_AJARANS ||--o{ PENGELUARANS : "berlaku pada periode"
+    PENGELUARAN_REQUESTS ||--o{ PENGELUARANS : "direalisasikan sebagai"

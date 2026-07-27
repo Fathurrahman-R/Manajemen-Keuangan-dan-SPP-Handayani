@@ -1,0 +1,26 @@
+sequenceDiagram
+    actor R as Requester
+    participant Sys as Sistem
+    participant Auto as Auto-Approval
+    actor Ap as Approver
+
+    R->>Sys: Submit pengajuan (dari draft/rejected)
+    %% Note over Sys: Tiap endpoint digerbangi RBAC resource_key sendiri (pengeluaran.create/approve/disburse, lihat Gambar 3.5.5)
+    Note over Sys: Validasi saldo cabang mencukupi
+    Sys->>Sys: Status → submitted, catat log
+    Sys->>Auto: Cek pengaturan auto-approval cabang
+
+    alt nominal ≤ threshold & auto-approval aktif
+        Auto->>Sys: Set status → approved otomatis
+    else perlu approval manual
+        Sys--)Ap: Notifikasi pengajuan menunggu
+        Ap->>Sys: Kirim keputusan (setuju/tolak + alasan bila tolak)
+        Sys->>Sys: Status → approved / rejected, catat log
+    end
+    Sys--)R: Notifikasi hasil keputusan
+
+    R->>Sys: Ajukan pencairan (dari status approved)
+    Note over Sys: Validasi ulang saldo cabang saat ini
+    Sys->>Sys: Catat Pengeluaran aktual (periode aktif)
+    Sys->>Sys: Status → disbursed, catat log
+    Sys--)R: Notifikasi dicairkan

@@ -9,15 +9,29 @@ class BrandingService
     private const SESSION_KEY = 'data.branding';
 
     /**
+     * Request-scoped memoization — Admin + Portal panel providers each call
+     * get()/logoUrl()/primaryColor()/faviconUrl() multiple times per request
+     * (Filament boots both panels regardless of which one matches the URL),
+     * so without this a single page load fires several redundant API calls
+     * to the backend before the session write from the first call is read
+     * back by the others.
+     */
+    private static ?BrandingConfig $memoized = null;
+
+    /**
      * Get the current branding configuration.
-     * Falls back: session cache → API fetch → default.
+     * Falls back: request memo → session cache → API fetch → default.
      */
     public static function get(): BrandingConfig
     {
+        if (static::$memoized instanceof BrandingConfig) {
+            return static::$memoized;
+        }
+
         $cached = session()->get(self::SESSION_KEY);
 
         if ($cached instanceof BrandingConfig) {
-            return $cached;
+            return static::$memoized = $cached;
         }
 
         // If cached as array (session serialization), reconstruct
@@ -25,10 +39,10 @@ class BrandingService
             $config = BrandingConfig::fromApiResponse($cached);
             session()->put(self::SESSION_KEY, $config);
 
-            return $config;
+            return static::$memoized = $config;
         }
 
-        return static::fetchAndCache();
+        return static::$memoized = static::fetchAndCache();
     }
 
     /**
@@ -36,6 +50,7 @@ class BrandingService
      */
     public static function refresh(): void
     {
+        static::$memoized = null;
         static::fetchAndCache();
     }
 

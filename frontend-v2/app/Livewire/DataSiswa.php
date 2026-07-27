@@ -47,7 +47,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
 
     public function mount(string $jenjang = 'KB'): void
     {
-        $this->activeTab = $jenjang;
+        $this->activeTab = Str::upper($jenjang);
     }
 
     public function table(Table $table): Table
@@ -877,7 +877,11 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                         ->placeholder('Ketik nama ayah untuk mencari...'),
                                     TextInput::make('ayah_nama')
                                         ->label('Nama Ayah')
-                                        ->hidden(fn ($get) => filled($get('ayah_id'))),
+                                        ->required(fn ($get) => ! filled($get('ayah_id')))
+                                        ->hidden(fn ($get) => filled($get('ayah_id')))
+                                        ->validationMessages([
+                                            'required' => 'Nama Ayah Tidak Boleh Kosong',
+                                        ]),
                                     TextInput::make('ayah_pendidikan_terakhir')
                                         ->label('Pendidikan Terakhir')
                                         ->hidden(fn ($get) => filled($get('ayah_id'))),
@@ -934,7 +938,11 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
                                         ->placeholder('Ketik nama ibu untuk mencari...'),
                                     TextInput::make('ibu_nama')
                                         ->label('Nama Ibu')
-                                        ->hidden(fn ($get) => filled($get('ibu_id'))),
+                                        ->required(fn ($get) => ! filled($get('ibu_id')))
+                                        ->hidden(fn ($get) => filled($get('ibu_id')))
+                                        ->validationMessages([
+                                            'required' => 'Nama Ibu Tidak Boleh Kosong',
+                                        ]),
                                     TextInput::make('ibu_pendidikan_terakhir')
                                         ->label('Pendidikan Terakhir')
                                         ->hidden(fn ($get) => filled($get('ibu_id'))),
@@ -1244,7 +1252,7 @@ class DataSiswa extends Component implements HasActions, HasSchemas, HasTable
 
     public function setActiveTab($tab)
     {
-        $this->activeTab = $tab;
+        $this->activeTab = Str::upper($tab);
         $this->resetTable();
     }
 }

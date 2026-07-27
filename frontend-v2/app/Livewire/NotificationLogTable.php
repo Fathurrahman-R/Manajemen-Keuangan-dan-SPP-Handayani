@@ -93,6 +93,7 @@ class NotificationLogTable extends Component implements HasActions, HasSchemas, 
                         'kwitansi' => 'Kwitansi',
                         'reminder' => 'Pengingat',
                         'overdue' => 'Jatuh Tempo',
+                        'workflow' => 'Workflow',
                         default => $state ?? '-',
                     })
                     ->color(fn (?string $state) => match ($state) {
@@ -100,6 +101,7 @@ class NotificationLogTable extends Component implements HasActions, HasSchemas, 
                         'kwitansi' => 'success',
                         'reminder' => 'warning',
                         'overdue' => 'danger',
+                        'workflow' => 'info',
                         default => 'gray',
                     }),
                 TextColumn::make('tagihan_kode')

@@ -33,6 +33,9 @@
             <div class="flex flex-wrap items-center gap-2">
                 @if($this->isAdmin())
                     {{ $this->exportPdfAction }}
+                    {{ $this->templateTagihanAction }}
+                    {{ $this->importTagihanAction }}
+                    {{ $this->importHistoryTagihanAction }}
                 @endif
                 @if($this->canCreate())
                     {{ $this->addTagihanAction }}

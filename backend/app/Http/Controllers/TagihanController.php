@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Events\TagihanCreated;
-use App\Http\Requests\BayarLunasRequest;
 use App\Http\Requests\BayarTidakLunasRequest;
 use App\Http\Requests\TagihanRequest;
 use App\Http\Resources\TagihanGroupedResource;
@@ -13,7 +12,6 @@ use App\Models\Siswa;
 use App\Models\Tagihan;
 use App\Models\TahunAjaran;
 use App\Services\GenerateKodeTagihan;
-use App\Services\SiblingDetectionService;
 use Dedoc\Scramble\Attributes\HeaderParameter;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Database\QueryException;
@@ -26,13 +24,6 @@ use Throwable;
 class TagihanController extends Controller
 {
     use Traits\Sortable;
-
-    protected SiblingDetectionService $siblingDetectionService;
-
-    public function __construct(SiblingDetectionService $siblingDetectionService)
-    {
-        $this->siblingDetectionService = $siblingDetectionService;
-    }
 
     /**
      * Get tagihan data grouped by siswa with pagination at the siswa level.
@@ -334,22 +325,6 @@ class TagihanController extends Controller
     }
 
     #[HeaderParameter('Authorization')]
-    public static function lunas(BayarLunasRequest $request, string $kode_tagihan)
-    {
-        $tagihan = Tagihan::with(['siswa', 'jenis_tagihan'])->where('branch_id', Auth::user()->branch_id)->find($kode_tagihan);
-        if (! $tagihan) {
-            throw new HttpResponseException(response([
-                'errors' => ['message' => ['tagihan tidak ditemukan.']],
-            ], 404));
-        }
-        $sisa = $tagihan->jenis_tagihan->jumlah - $tagihan->tmp;
-        $jumlah = when($tagihan->status == 'Belum Lunas', $sisa, $tagihan->jenis_tagihan->jumlah);
-        $tagihan->update(['status' => 'Lunas', 'tmp' => $tagihan->jenis_tagihan->jumlah]);
-
-        return $jumlah;
-    }
-
-    #[HeaderParameter('Authorization')]
     public static function bayar(BayarTidakLunasRequest $request, string $kode_tagihan)
     {
         $data = $request->validated();
@@ -373,24 +348,20 @@ class TagihanController extends Controller
     }
 
     /**
-     * Get tagihan for the logged-in siswa with sibling support.
-     *
-     * Returns tagihan data for the selected siswa (self or sibling),
-     * along with a sibling list for the selector UI.
+     * Get tagihan for the logged-in siswa. One account maps to exactly one
+     * siswa (`users.siswa_id`) — this always returns that siswa's own
+     * tagihan, never another siswa's, regardless of query params.
      */
-    #[QueryParameter('siswa_id', description: 'Optional siswa ID to view sibling tagihan', required: false, example: 1)]
     public function siswaView(Request $request): JsonResponse
     {
         $user = Auth::user();
 
-        // 1. Check if user has a siswa_id (is a siswa account)
         if (! $user->siswa_id) {
             return response()->json([
                 'errors' => ['message' => ['Akun ini bukan akun siswa.']],
             ], 403);
         }
 
-        // 2. Find the Siswa record for the authenticated user
         $siswa = Siswa::find($user->siswa_id);
         if (! $siswa) {
             return response()->json([
@@ -398,52 +369,15 @@ class TagihanController extends Controller
             ], 404);
         }
 
-        // 3. Use SiblingDetectionService to find siblings
-        $siblings = $this->siblingDetectionService->findSiblings($siswa);
-
-        // 4. Determine which siswa_id to show tagihan for
-        $requestedSiswaId = $request->query('siswa_id');
-        $selectedSiswaId = $siswa->id; // default to account owner
-
-        if ($requestedSiswaId !== null) {
-            $requestedSiswaId = (int) $requestedSiswaId;
-
-            // Validate: must be self or a detected sibling
-            $validIds = $siblings->pluck('id')->push($siswa->id)->toArray();
-
-            if (! in_array($requestedSiswaId, $validIds)) {
-                return response()->json([
-                    'errors' => ['message' => ['Anda tidak memiliki akses ke data siswa ini.']],
-                ], 403);
-            }
-
-            $selectedSiswaId = $requestedSiswaId;
-        }
-
-        // 5. Get the selected siswa's NIS for tagihan query
-        $selectedSiswa = $selectedSiswaId === $siswa->id
-            ? $siswa
-            : Siswa::find($selectedSiswaId);
-
-        // 6. Query tagihan for the selected siswa (with jenis_tagihan relationship)
-        $tagihan = Tagihan::where('nis', $selectedSiswa->nis)
+        $tagihan = Tagihan::where('nis', $siswa->nis)
             ->with('jenis_tagihan')
             ->get();
-
-        // 7. Build sibling list for selector (id + nama)
-        $siblingList = $siblings->map(function ($sibling) {
-            return [
-                'id' => $sibling->id,
-                'nama' => $sibling->nama,
-            ];
-        })->values();
 
         return response()->json([
             'data' => [
                 'tagihan' => TagihanResource::collection($tagihan),
-                'siblings' => $siblingList,
-                'selected_siswa_id' => $selectedSiswaId,
-                'selected_siswa_nama' => $selectedSiswa->nama,
+                'selected_siswa_id' => $siswa->id,
+                'selected_siswa_nama' => $siswa->nama,
             ],
         ]);
     }

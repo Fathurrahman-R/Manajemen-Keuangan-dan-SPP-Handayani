@@ -13,6 +13,7 @@ class KategoriFactory extends Factory
     {
         return [
             'nama' => $this->faker->randomElement(['Bersaudara', 'Yatim', 'Piatu', 'Yatim Piatu']),
+            'branch_id' => \App\Models\Branch::factory(),
         ];
     }
 }

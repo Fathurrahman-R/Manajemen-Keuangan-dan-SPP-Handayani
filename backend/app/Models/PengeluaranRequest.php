@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class PengeluaranRequest extends Model
 {
@@ -19,6 +21,13 @@ class PengeluaranRequest extends Model
         'requester_id',
         'branch_id',
     ];
+
+    protected $appends = ['lampiran_url'];
+
+    protected function lampiranUrl(): Attribute
+    {
+        return Attribute::get(fn (): ?string => $this->lampiran ? Storage::disk('public')->url($this->lampiran) : null);
+    }
 
     protected function casts(): array
     {
@@ -57,6 +66,6 @@ class PengeluaranRequest extends Model
 
     public function isDeletable(): bool
     {
-        return $this->status === 'draft';
+        return in_array($this->status, ['draft', 'rejected']);
     }
 }

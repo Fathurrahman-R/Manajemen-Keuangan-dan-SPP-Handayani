@@ -1,5 +1,6 @@
 <x-filament-panels::page>
-    <div class="max-w-xl space-y-6">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <div class="space-y-6">
         {{-- User Info Section --}}
         <x-filament::section>
             <x-slot name="heading">Informasi Akun</x-slot>
@@ -69,6 +70,34 @@
                 </div>
             </form>
         </x-filament::section>
+    </div>
+
+    <div class="space-y-6">
+        {{-- Preferensi Notifikasi Section --}}
+        <x-filament::section>
+            <x-slot name="heading">Preferensi Notifikasi Email</x-slot>
+            <x-slot name="description">Atur notifikasi approval pengeluaran apa saja yang ingin Anda terima.</x-slot>
+
+            @if($currentEmail)
+                <form wire:submit="updateNotificationPreferences" class="space-y-4">
+                    {{ $this->notificationFormSchema }}
+
+                    <div class="flex justify-end">
+                        <x-filament::button type="submit" wire:loading.attr="disabled">
+                            <span wire:loading.remove wire:target="updateNotificationPreferences">Simpan Preferensi</span>
+                            <span wire:loading wire:target="updateNotificationPreferences">
+                                <x-filament::loading-indicator class="h-4 w-4" />
+                                Menyimpan...
+                            </span>
+                        </x-filament::button>
+                    </div>
+                </form>
+            @else
+                <div class="text-sm text-gray-500 dark:text-gray-400">
+                    Anda harus mengatur alamat email terlebih dahulu untuk mengelola preferensi notifikasi.
+                </div>
+            @endif
+        </x-filament::section>
 
         {{-- Password Section --}}
         <x-filament::section>
@@ -91,8 +120,10 @@
                 </div>
             </form>
         </x-filament::section>
+    </div>
+    </div>
 
-        {{-- OTP Verification Modal --}}
+    {{-- OTP Verification Modal --}}
         @if($showOtpModal)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" wire:click.self="cancelOtp">
                 <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800">
@@ -136,5 +167,4 @@
                 </div>
             </div>
         @endif
-    </div>
 </x-filament-panels::page>

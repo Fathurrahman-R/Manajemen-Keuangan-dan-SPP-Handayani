@@ -1,5 +1,6 @@
 <x-filament-panels::page>
-    <div class="max-w-xl space-y-6">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <div class="space-y-6">
         {{-- User Info Section --}}
         <x-filament::section>
             <x-slot name="heading">Informasi Akun</x-slot>
@@ -193,7 +194,9 @@
             </x-filament::section>
             @endif
         @endif
+    </div>
 
+    <div class="space-y-6">
         {{-- Email Section --}}
         <x-filament::section>
             <x-slot name="heading">Email</x-slot>
@@ -259,8 +262,10 @@
                 </div>
             </form>
         </x-filament::section>
+    </div>
+    </div>
 
-        {{-- Parent Email OTP Verification Modal --}}
+    {{-- Parent Email OTP Verification Modal --}}
         @if($showParentOtpModal)
             <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" wire:click.self="cancelParentOtp">
                 <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800">
@@ -304,7 +309,6 @@
                 </div>
             </div>
         @endif
-    </div>
 </x-filament-panels::page>
 
 

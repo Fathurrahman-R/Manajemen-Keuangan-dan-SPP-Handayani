@@ -35,6 +35,13 @@ class SiswaImportService
     private const ALLOWED_AGAMA = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'];
 
     /**
+     * Allowed kelas_diterima values — must match the Roman-numeral options
+     * used by the Select field in the siswa create/edit form (DataSiswa.php),
+     * otherwise an imported value silently fails to display as selected.
+     */
+    private const ALLOWED_KELAS_DITERIMA = ['I', 'II', 'III', 'IV', 'V', 'VI'];
+
+    /**
      * Validate the uploaded import file and return a preview.
      */
     public function validate(UploadedFile $file, int $branchId): ImportPreviewDTO
@@ -382,6 +389,11 @@ class SiswaImportService
         // Agama validation
         if (! empty($row['agama']) && ! in_array($row['agama'], self::ALLOWED_AGAMA)) {
             $errors[] = ['row' => $rowNumber, 'column' => 'agama', 'message' => 'Agama tidak valid. Pilihan: '.implode(', ', self::ALLOWED_AGAMA)];
+        }
+
+        // Kelas diterima validation: must be Roman numeral (I-VI) to match the edit form's Select options
+        if (! empty($row['kelas_diterima']) && ! in_array($row['kelas_diterima'], self::ALLOWED_KELAS_DITERIMA)) {
+            $errors[] = ['row' => $rowNumber, 'column' => 'kelas_diterima', 'message' => 'Kelas diterima harus salah satu dari: '.implode(', ', self::ALLOWED_KELAS_DITERIMA)];
         }
 
         // Duplicate NIS check (existing in DB)

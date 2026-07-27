@@ -45,8 +45,8 @@ class AppServiceProvider extends ServiceProvider
         //
         // CATATAN: Middleware `permission:foo` dari Spatie tetap akan
         // memeriksa `permissions.has(foo)`, jadi superadmin juga di-grant
-        // semua permission di RoleAndPermissionSeeder/SyncPermissionsCommand
-        // sebagai backup eksplisit. Dengan dua lapis ini, superadmin tidak
+        // semua permission di RoleAndPermissionSeeder sebagai backup eksplisit.
+        // Dengan dua lapis ini, superadmin tidak
         // akan pernah ter-blok dari halaman atau aksi apa pun.
         // ────────────────────────────────────────────────────────────────
         Gate::before(function ($user, $ability) {

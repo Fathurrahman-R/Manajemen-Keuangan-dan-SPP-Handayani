@@ -441,49 +441,44 @@ class DashboardService
                 $periodFilterT = '';
                 $periodFilterT2 = '';
                 $periodFilterSK = '';
-                $bindings = [$branchId, $branchId, $branchId];
             } else {
                 $periodFilterT = ' AND t.tahun_ajaran_id = ?';
                 $periodFilterT2 = ' AND t2.tahun_ajaran_id = ?';
                 $periodFilterSK = ' AND sk.tahun_ajaran_id = ?';
-                $bindings = [
-                    $branchId,                      // subquery total_terbayar t2.branch_id
-                    $tahunAjaranId,                 // subquery total_terbayar t2.tahun_ajaran_id
-                    $branchId,                      // join tagihans t.branch_id
-                    $tahunAjaranId,                 // join tagihans t.tahun_ajaran_id
-                    $tahunAjaranId,                 // siswa_kelas sk.tahun_ajaran_id
-                    $branchId,                      // siswas.branch_id
-                ];
             }
 
+            // Wrap in subquery so MariaDB 11 can reference aliases in
+            // HAVING / ORDER BY without "reference to group function" error.
             $sql = "
-                SELECT
-                    s.nis,
-                    s.nama,
-                    s.jenjang,
-                    COALESCE(k.nama, '-') as kelas,
-                    COALESCE(SUM(jt.jumlah), 0) as total_tagihan,
-                    COALESCE((
-                        SELECT SUM(p.jumlah)
-                        FROM pembayarans p
-                        JOIN tagihans t2 ON p.kode_tagihan = t2.kode_tagihan
-                        WHERE t2.nis = s.nis
-                          AND t2.branch_id = ?{$periodFilterT2}
-                    ), 0) as total_terbayar
-                FROM siswas s
-                JOIN tagihans t ON t.nis = s.nis AND t.branch_id = ?{$periodFilterT}
-                JOIN jenis_tagihans jt ON t.jenis_tagihan_id = jt.id
-                LEFT JOIN siswa_kelas sk ON sk.siswa_id = s.id{$periodFilterSK}
-                LEFT JOIN kelas k ON sk.kelas_id = k.id
-                WHERE s.branch_id = ?
-                GROUP BY s.nis, s.nama, s.jenjang, k.nama
-                HAVING (total_tagihan - total_terbayar) > 0
+                SELECT * FROM (
+                    SELECT
+                        s.nis,
+                        s.nama,
+                        s.jenjang,
+                        COALESCE(k.nama, '-') as kelas,
+                        COALESCE(SUM(jt.jumlah), 0) as total_tagihan,
+                        COALESCE((
+                            SELECT SUM(p.jumlah)
+                            FROM pembayarans p
+                            JOIN tagihans t2 ON p.kode_tagihan = t2.kode_tagihan
+                            WHERE t2.nis = s.nis
+                              AND t2.branch_id = ?{$periodFilterT2}
+                        ), 0) as total_terbayar
+                    FROM siswas s
+                    JOIN tagihans t ON t.nis = s.nis AND t.branch_id = ?{$periodFilterT}
+                    JOIN jenis_tagihans jt ON t.jenis_tagihan_id = jt.id
+                    LEFT JOIN siswa_kelas sk ON sk.siswa_id = s.id{$periodFilterSK}
+                    LEFT JOIN kelas k ON sk.kelas_id = k.id
+                    WHERE s.branch_id = ?
+                    GROUP BY s.nis, s.nama, s.jenjang, k.nama
+                ) AS ranked
+                WHERE (total_tagihan - total_terbayar) > 0
                 ORDER BY (total_tagihan - total_terbayar) DESC
                 LIMIT 10
             ";
 
             // Susun ulang bindings sesuai urutan placeholder dalam SQL.
-            // Urutan placeholder: t2.branch_id, [t2.tahun_ajaran_id], t.branch_id, [t.tahun_ajaran_id], [sk.tahun_ajaran_id], s.branch_id
+            // Urutan: subquery-t2(branch,[ta]), join-t(branch,[ta]), [sk.ta], where-s(branch)
             $orderedBindings = $allPeriods
                 ? [$branchId, $branchId, $branchId]
                 : [$branchId, $tahunAjaranId, $branchId, $tahunAjaranId, $tahunAjaranId, $branchId];
@@ -503,6 +498,7 @@ class DashboardService
             })->toArray();
         });
     }
+
 
     /**
      * Get tagihan due within next 7 days.

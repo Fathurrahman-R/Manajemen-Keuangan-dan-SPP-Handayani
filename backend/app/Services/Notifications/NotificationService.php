@@ -73,6 +73,8 @@ class NotificationService
             'recipient_email' => $data['recipient_email'],
             'notification_type' => $data['notification_type'],
             'tagihan_kode' => $data['tagihan_kode'] ?? null,
+            'pengeluaran_request_id' => $data['pengeluaran_request_id'] ?? null,
+            'workflow_event' => $data['workflow_event'] ?? null,
             'status' => $data['status'],
             'reason' => $data['reason'] ?? null,
             'error_message' => $data['error_message'] ?? null,
@@ -720,6 +722,31 @@ class NotificationService
                                     $tagihan->siswa,
                                     $daysOverdue
                                 ));
+                        }
+                        break;
+
+                    case 'workflow':
+                        $pengeluaranRequest = \App\Models\PengeluaranRequest::with('requester', 'approvalLogs')
+                            ->find($log->pengeluaran_request_id);
+
+                        if ($pengeluaranRequest) {
+                            $reason = $log->workflow_event === 'rejected'
+                                ? $pengeluaranRequest->approvalLogs->where('new_status', 'rejected')->last()?->note
+                                : null;
+
+                            // ->withLogId() lets PengeluaranWorkflowNotification::failed()
+                            // correct this same log row back to `failed` if the queued
+                            // retry also fails after its own 3 attempts — otherwise the
+                            // optimistic `sent` update below (queued != delivered) is the
+                            // last thing this log ever records, same gap as the original
+                            // dispatch in WorkflowNotificationService.
+                            Notification::route('mail', $email)
+                                ->notify((new \App\Notifications\PengeluaranWorkflowNotification(
+                                    $pengeluaranRequest,
+                                    $log->workflow_event,
+                                    $reason,
+                                    $pengeluaranRequest->requester?->name,
+                                ))->withLogId($log->id));
                         }
                         break;
 

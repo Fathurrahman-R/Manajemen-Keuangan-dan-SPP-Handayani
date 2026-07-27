@@ -1,0 +1,59 @@
+%%{
+    init: {
+        'layout': 'elk',
+        'themeVariables': {'fontSize': '32px'},
+        'themeCSS': '.edgeLabel, .edgeLabel p { font-size: 32px !important; }'
+    }
+}%%
+erDiagram
+    direction BT
+    TAHUN_AJARANS {
+        bigint id PK
+        string nama "format YYYY/YYYY"
+        date tanggal_mulai
+        date tanggal_selesai
+        enum status "Aktif, Non-Aktif"
+        bigint branch_id FK "unique(nama, branch_id)"
+    }
+    SISWA_KELAS {
+        bigint id PK
+        bigint siswa_id FK
+        bigint kelas_id FK
+        bigint tahun_ajaran_id FK "unique(siswa_id, tahun_ajaran_id)"
+    }
+    BATCH_PROMOSIS {
+        char id PK "uuid"
+        enum batch_type "bulk_promotion, individual_promotion*, kelulusan, tinggal_kelas, pindah_jenjang"
+        bigint source_tahun_ajaran_id FK
+        bigint target_tahun_ajaran_id FK
+        bigint kelas_id FK "nullable"
+        bigint processed_by FK
+        timestamp processed_at
+        enum status "completed, undone"
+        bigint branch_id FK
+    }
+    BATCH_PROMOSI_DETAILS {
+        bigint id PK
+        char batch_id FK
+        bigint siswa_id FK
+        enum action "naik_kelas, tinggal_kelas, lulus, pindah_jenjang"
+        bigint source_kelas_id FK
+        bigint target_kelas_id FK "nullable"
+        string previous_status
+        string previous_jenjang "nullable"
+    }
+    BRANCHES { bigint id PK }
+    SISWAS { bigint id PK }
+    KELAS { bigint id PK }
+    USERS { bigint id PK }
+
+    BRANCHES ||--o{ TAHUN_AJARANS : "memiliki"
+    SISWAS ||--o{ SISWA_KELAS : "punya histori penempatan"
+    KELAS ||--o{ SISWA_KELAS : "ditempati pada periode"
+    TAHUN_AJARANS ||--o{ SISWA_KELAS : "berlaku pada periode"
+    BRANCHES ||--o{ BATCH_PROMOSIS : "memiliki"
+    TAHUN_AJARANS ||--o{ BATCH_PROMOSIS : "jadi source & target"
+    USERS ||--o{ BATCH_PROMOSIS : "memproses (processed_by)"
+    BATCH_PROMOSIS ||--o{ BATCH_PROMOSI_DETAILS : "punya rincian per siswa"
+    SISWAS ||--o{ BATCH_PROMOSI_DETAILS : "dipromosikan pada"
+    KELAS ||--o{ BATCH_PROMOSI_DETAILS : "jadi kelas source & target"

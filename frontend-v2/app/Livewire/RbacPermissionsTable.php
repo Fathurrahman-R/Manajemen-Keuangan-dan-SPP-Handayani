@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Helpers\PermissionHelper;
 use App\Services\ApiService;
+use App\Support\ApiTableRecord;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -16,7 +17,9 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Component;
 
 class RbacPermissionsTable extends Component implements HasActions, HasSchemas, HasTable
@@ -33,10 +36,10 @@ class RbacPermissionsTable extends Component implements HasActions, HasSchemas, 
     public function table(Table $table): Table
     {
         return $table
-            ->records(function (): array {
+            ->records(function (int $page, int|string $recordsPerPage): LengthAwarePaginator {
                 $r = ApiService::client()->get('/rbac/permissions');
                 if (! $r->successful()) {
-                    return [];
+                    return new LengthAwarePaginator([], 0, $recordsPerPage === 'all' ? 1 : $recordsPerPage, $page);
                 }
 
                 $records = collect($r->json()['data'] ?? [])
@@ -46,8 +49,7 @@ class RbacPermissionsTable extends Component implements HasActions, HasSchemas, 
                 $search = $this->getTableSearch();
                 if (filled($search)) {
                     $search = strtolower($search);
-                    $records = $records->filter(fn ($item) =>
-                        str_contains(strtolower($item['name'] ?? ''), $search)
+                    $records = $records->filter(fn ($item) => str_contains(strtolower($item['name'] ?? ''), $search)
                         || str_contains(strtolower($item['label'] ?? ''), $search)
                         || str_contains(strtolower($item['group'] ?? ''), $search)
                         || str_contains(strtolower($item['audience'] ?? ''), $search)
@@ -65,7 +67,21 @@ class RbacPermissionsTable extends Component implements HasActions, HasSchemas, 
                     $records = $records->where('audience', $audienceValue);
                 }
 
-                return $records->values()->toArray();
+                if ($group = $this->getTableGrouping()) {
+                    $column = $group->getColumn();
+                    $records = $this->getTableGroupingDirection() === 'desc'
+                        ? $records->sortByDesc($column)->values()
+                        : $records->sortBy($column)->values();
+                }
+
+                $records = $records->values();
+                $total = $records->count();
+                $effectivePerPage = $recordsPerPage === 'all' ? max($total, 1) : $recordsPerPage;
+                $items = $records->slice(($page - 1) * $effectivePerPage, $effectivePerPage)
+                    ->map(fn (array $item) => new ApiTableRecord($item))
+                    ->values()->all();
+
+                return new LengthAwarePaginator($items, $total, $effectivePerPage, $page);
             })
             ->heading('Daftar Permission')
             ->columns([
@@ -81,6 +97,11 @@ class RbacPermissionsTable extends Component implements HasActions, HasSchemas, 
                 SelectFilter::make('audience')
                     ->options(fn (): array => $this->getColumnFilterOptions('audience')),
             ])
+            ->groups([
+                Group::make('group')->label('Grup'),
+            ])
+            ->paginated([10, 25, 50, 'all'])
+            ->defaultPaginationPageOption(10)
             ->defaultSort('name')
             ->headerActions([
                 CreateAction::make('create')
@@ -96,7 +117,8 @@ class RbacPermissionsTable extends Component implements HasActions, HasSchemas, 
                         $r = ApiService::client()->post('/rbac/permissions', $data);
                         if (! $r->successful()) {
                             Notification::make()->title($r->json('message') ?? 'Gagal')->danger()->send();
-                            $this->halt();
+
+                            return;
                         }
                         Notification::make()->title('Permission created.')->success()->send();
                     }),
@@ -110,7 +132,7 @@ class RbacPermissionsTable extends Component implements HasActions, HasSchemas, 
                         TextInput::make('group')->label('Nama Grup')->placeholder('contoh: Laporan Keuangan'),
                         TextInput::make('audience')->label('Section / Audience')->placeholder('kosongkan untuk Admin / Karyawan, atau isi misal: siswa'),
                     ])
-                    ->fillForm(fn (array $record): array => [
+                    ->fillForm(fn ($record): array => [
                         'name' => $record['name'],
                         'label' => $record['label'] ?? '',
                         'group' => $record['group'] ?? '',
@@ -121,18 +143,20 @@ class RbacPermissionsTable extends Component implements HasActions, HasSchemas, 
                         $r = ApiService::client()->put("/rbac/permissions/{$record['id']}", $data);
                         if (! $r->successful()) {
                             Notification::make()->title($r->json('message') ?? 'Gagal')->danger()->send();
-                            $this->halt();
+
+                            return;
                         }
                         Notification::make()->title('Permission updated.')->success()->send();
                     }),
                 Action::make('hapus')
                     ->color('danger')
                     ->visible(fn () => PermissionHelper::hasResource('permission.delete'))
-                    ->action(function (array $record): void {
+                    ->action(function ($record): void {
                         $r = ApiService::client()->delete("/rbac/permissions/{$record['id']}");
                         if (! $r->successful()) {
                             Notification::make()->title($r->json('message') ?? 'Gagal')->danger()->send();
-                            $this->halt();
+
+                            return;
                         }
                         Notification::make()->title('Permission deleted.')->success()->send();
                     }),

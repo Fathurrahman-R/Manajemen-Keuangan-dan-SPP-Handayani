@@ -36,7 +36,7 @@ class ResetPassword extends SimplePage
 
         // Validate token
         try {
-            $response = Http::get(env('API_URL').'/reset-password/'.$this->token);
+            $response = Http::get(config('handayani.api_url').'/reset-password/'.$this->token);
 
             if ($response->ok() && $response->json('valid')) {
                 $this->tokenValid = true;
@@ -75,7 +75,7 @@ class ResetPassword extends SimplePage
         $data = $this->form->getState();
 
         try {
-            $response = Http::post(env('API_URL').'/reset-password', [
+            $response = Http::post(config('handayani.api_url').'/reset-password', [
                 'token' => $this->token,
                 'password' => $data['password'],
                 'password_confirmation' => $data['password_confirmation'],

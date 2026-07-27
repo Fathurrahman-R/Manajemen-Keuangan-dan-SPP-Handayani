@@ -12,3 +12,7 @@ CLAUDE.md
 /.windsurf/
 /AGENTS.md
 /.remember/
+/.env
+
+# File lock sementara Microsoft Office (muncul selama dokumen dibuka)
+~$*

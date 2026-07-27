@@ -28,7 +28,7 @@ class ApiService
             $headers['X-Branch-Id'] = session('active_branch_id');
         }
 
-        return Http::withHeaders($headers)->baseUrl(env('API_URL'));
+        return Http::withHeaders($headers)->baseUrl(config('handayani.api_url'));
     }
 
     /**

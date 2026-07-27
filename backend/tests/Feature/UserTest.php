@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Database\Seeders\UserSeeder;
+use Illuminate\Support\Facades\Cache;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 use function PHPUnit\Framework\assertNotNull;
@@ -113,6 +115,42 @@ class UserTest extends TestCase
         return $user->token;
     }
 
+    public function test_login_response_includes_email_verified_at_when_already_set(): void
+    {
+        $user = User::factory()->admin()->create([
+            'password' => \Illuminate\Support\Facades\Hash::make('password123'),
+            'email' => 'admin@example.com',
+            'email_verified_at' => now(),
+            'is_active' => true,
+        ]);
+
+        $this->post('api/login', [
+            'username' => $user->email,
+            'password' => 'password123',
+        ])->assertStatus(200)
+            ->assertJson(fn ($json) => $json->has('data.email_verified_at')
+                ->where('data.email_verified_at', fn ($value) => ! is_null($value))
+                ->etc());
+    }
+
+    public function test_login_response_email_verified_at_null_when_not_set(): void
+    {
+        $user = User::factory()->admin()->create([
+            'password' => \Illuminate\Support\Facades\Hash::make('password123'),
+            'email' => null,
+            'email_verified_at' => null,
+            'is_active' => true,
+        ]);
+
+        $this->post('api/login', [
+            'username' => $user->username,
+            'password' => 'password123',
+        ])->assertStatus(200)
+            ->assertJson(fn ($json) => $json->has('data.email_verified_at')
+                ->where('data.email_verified_at', null)
+                ->etc());
+    }
+
     public function test_login_failed_username_not_found()
     {
         $this->post('api/login', [
@@ -139,6 +177,27 @@ class UserTest extends TestCase
                 'errors' => [
                     'message' => [
                         'username or password is wrong',
+                    ],
+                ],
+            ]);
+    }
+
+    public function test_login_failed_inactive_account_shows_specific_message(): void
+    {
+        $user = User::factory()->admin()->create([
+            'username' => 'nonaktif_user',
+            'password' => \Illuminate\Support\Facades\Hash::make('admin123'),
+            'is_active' => false,
+        ]);
+
+        $this->post('api/login', [
+            'username' => 'nonaktif_user',
+            'password' => 'admin123',
+        ])->assertStatus(401)
+            ->assertJson([
+                'errors' => [
+                    'message' => [
+                        'Akun tidak aktif. Hubungi admin sekolah.',
                     ],
                 ],
             ]);
@@ -258,6 +317,35 @@ class UserTest extends TestCase
                     ],
                 ],
             ]);
+    }
+
+    public function test_verify_email_otp_success_for_admin_not_forced_password_change()
+    {
+        // Admin biasa yang sudah pernah ganti password (must_change_password = false),
+        // memperbarui email lewat halaman profil, lalu verifikasi dengan OTP benar.
+        $admin = User::factory()->admin()->create([
+            'must_change_password' => false,
+        ]);
+        Sanctum::actingAs($admin, $admin->getAllPermissions()->pluck('name')->toArray());
+        $email = 'admin-baru@example.com';
+
+        $this->postJson('api/users/send-verification-otp', [
+            'email' => $email,
+        ])->assertStatus(200);
+
+        $otp = Cache::get('email_otp_'.$admin->id.'_'.$email);
+        self::assertNotNull($otp);
+
+        $this->postJson('api/users/verify-email-otp', [
+            'email' => $email,
+            'otp' => $otp,
+        ])->assertStatus(200)
+            ->assertJson([
+                'data' => true,
+            ]);
+
+        self::assertEquals($email, $admin->refresh()->email);
+        self::assertNotNull($admin->email_verified_at);
     }
 
     public function test_logout_success()

@@ -6,9 +6,11 @@ use App\Helpers\PermissionHelper;
 use App\Livewire\Concerns\HandlesApiErrors;
 use App\Services\ApiService;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -31,6 +33,30 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
     public function mount(): void
     {
         $this->mountHasPeriodFilter();
+    }
+
+    /**
+     * POST `$data` to `$url`, attaching `lampiran` as multipart when a new
+     * file was uploaded. `$overrideMethod` spoofs PUT via `_method` (pattern
+     * from Settings.php) since PHP does not populate uploaded files for real
+     * PUT requests.
+     */
+    private function submitWithOptionalLampiran(string $url, array $data, ?string $overrideMethod = null): \Illuminate\Http\Client\Response
+    {
+        $file = $data['lampiran'] ?? null;
+        unset($data['lampiran']);
+
+        if ($overrideMethod) {
+            $data['_method'] = $overrideMethod;
+        }
+
+        $request = ApiService::client();
+
+        if ($file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+            $request = $request->attach('lampiran', file_get_contents($file->getRealPath()), $file->getClientOriginalName());
+        }
+
+        return $request->post($url, $data);
     }
 
     public function table(Table $table): Table
@@ -124,7 +150,7 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                             Notification::make()->title('Request berhasil disubmit')->success()->send();
                             $this->resetTable();
                         } else {
-                            Notification::make()->title('Gagal')->danger()->body($response->json('errors.status.0') ?? 'Error')->send();
+                            $this->handleApiError($response);
                         }
                     }),
                 \Filament\Actions\Action::make('approve')
@@ -141,6 +167,8 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                         if ($response->ok()) {
                             Notification::make()->title('Request disetujui')->success()->send();
                             $this->resetTable();
+                        } else {
+                            $this->handleApiError($response);
                         }
                     }),
                 \Filament\Actions\Action::make('reject')
@@ -157,6 +185,8 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                         if ($response->ok()) {
                             Notification::make()->title('Request ditolak')->success()->send();
                             $this->resetTable();
+                        } else {
+                            $this->handleApiError($response);
                         }
                     }),
                 \Filament\Actions\Action::make('viewReason')
@@ -215,6 +245,8 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                         if ($response->ok()) {
                             Notification::make()->title('Pencairan berhasil')->success()->send();
                             $this->resetTable();
+                        } else {
+                            $this->handleApiError($response);
                         }
                     }),
                 \Filament\Actions\Action::make('viewDisburse')
@@ -233,6 +265,97 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
 
                         return view('livewire.partials.disburse-info', compact('disbursedBy', 'disbursedAt'));
                     }),
+                ActionGroup::make([
+                    \Filament\Actions\Action::make('detail')
+                        ->label('Detail')
+                        ->icon('heroicon-o-eye')
+                        ->color('gray')
+                        ->visible(fn () => PermissionHelper::hasResource('pengeluaran.view'))
+                        ->modalHeading('Detail Request Pengeluaran')
+                        ->modalSubmitAction(false)
+                        ->modalCancelActionLabel('Tutup')
+                        ->modalContent(function ($record): \Illuminate\Contracts\View\View {
+                            $timeline = collect($record['approval_logs'] ?? [])
+                                ->sortBy('created_at')
+                                ->map(fn ($log) => [
+                                    'label' => match ($log['new_status'] ?? null) {
+                                        'submitted' => 'Diajukan',
+                                        'approved' => 'Disetujui',
+                                        'rejected' => 'Ditolak',
+                                        'disbursed' => 'Dicairkan',
+                                        default => $log['new_status'] ?? '-',
+                                    },
+                                    'by' => str_starts_with($log['note'] ?? '', 'Auto-approved') ? 'Sistem (disetujui otomatis)' : ($log['user']['name'] ?? $log['user']['username'] ?? '-'),
+                                    'note' => $log['note'] ?? null,
+                                    'at' => isset($log['created_at']) ? \Carbon\Carbon::parse($log['created_at'])->format('d M Y, H:i') : '-',
+                                ])
+                                ->values();
+
+                            return view('livewire.partials.pengeluaran-detail', [
+                                'record' => $record,
+                                'timeline' => $timeline,
+                            ]);
+                        }),
+                    \Filament\Actions\Action::make('edit')
+                        ->label('Edit')
+                        ->icon('heroicon-o-pencil')
+                        ->color('gray')
+                        ->visible(fn ($record) => in_array($record['status'], ['draft', 'rejected'])
+                            && ($record['requester_id'] ?? null) == session()->get('data.id')
+                            && PermissionHelper::hasResource('pengeluaran.update'))
+                        ->schema([
+                            TextInput::make('uraian')->label('Uraian')->required()->maxLength(255),
+                            TextInput::make('jumlah')->label('Jumlah (Rp)')->numeric()->required()->minValue(1),
+                            DatePicker::make('tanggal_kebutuhan')->label('Tanggal Kebutuhan')->required(),
+                            TextInput::make('kategori_pengeluaran')->label('Kategori (opsional)'),
+                            FileUpload::make('lampiran')->label('Ganti Lampiran (opsional)')
+                                ->storeFiles(false)
+                                ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png'])
+                                ->maxSize(2048)
+                                ->helperText('Kosongkan untuk mempertahankan lampiran yang sudah ada.'),
+                        ])
+                        ->fillForm(fn (array $record): array => [
+                            'uraian' => $record['uraian'],
+                            'jumlah' => $record['jumlah'],
+                            'tanggal_kebutuhan' => $record['tanggal_kebutuhan'],
+                            'kategori_pengeluaran' => $record['kategori_pengeluaran'] ?? '',
+                        ])
+                        ->modalHeading('Edit Request Pengeluaran')
+                        ->action(function (array $data): void {
+                            $record = $this->getMountedAction()?->getRecord();
+                            $response = $this->submitWithOptionalLampiran("/pengeluaran-request/{$record['id']}", $data, overrideMethod: 'PUT');
+                            if ($response->ok()) {
+                                Notification::make()->title('Request berhasil diubah')->success()->send();
+                                $this->resetTable();
+                            } else {
+                                $this->handleApiError($response);
+                            }
+                        }),
+                    \Filament\Actions\Action::make('hapus')
+                        ->label('Hapus')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->visible(fn ($record) => in_array($record['status'], ['draft', 'rejected'])
+                            && ($record['requester_id'] ?? null) == session()->get('data.id')
+                            && PermissionHelper::hasResource('pengeluaran.delete'))
+                        ->requiresConfirmation()
+                        ->modalHeading('Hapus Request Pengeluaran')
+                        ->modalDescription('Yakin ingin menghapus request ini? Tindakan tidak dapat dibatalkan.')
+                        ->action(function ($record): void {
+                            $response = ApiService::client()->delete("/pengeluaran-request/{$record['id']}");
+                            if ($response->ok()) {
+                                Notification::make()->title('Request berhasil dihapus')->success()->send();
+                                $this->resetTable();
+                            } else {
+                                $this->handleApiError($response);
+                            }
+                        }),
+                ])
+                    ->label('Aksi')
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->color('gray')
+                    ->button()
+                    ->size('sm'),
             ])
             ->headerActions([
                 Action::make('create')
@@ -245,15 +368,19 @@ class PengeluaranRequest extends Component implements HasActions, HasSchemas, Ha
                         TextInput::make('jumlah')->label('Jumlah (Rp)')->numeric()->required()->minValue(1),
                         DatePicker::make('tanggal_kebutuhan')->label('Tanggal Kebutuhan')->required(),
                         TextInput::make('kategori_pengeluaran')->label('Kategori (opsional)'),
+                        FileUpload::make('lampiran')->label('Lampiran (opsional)')
+                            ->storeFiles(false)
+                            ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png'])
+                            ->maxSize(2048),
                     ])
                     ->modalHeading('Buat Request Pengeluaran')
                     ->action(function (array $data) {
-                        $response = ApiService::client()->post('/pengeluaran-request', $data);
+                        $response = $this->submitWithOptionalLampiran('/pengeluaran-request', $data);
                         if ($response->status() === 201) {
                             Notification::make()->title('Request berhasil dibuat')->success()->send();
                             $this->resetTable();
                         } else {
-                            Notification::make()->title('Gagal')->danger()->body('Gagal membuat request.')->send();
+                            $this->handleApiError($response);
                         }
                     }),
             ])

@@ -1,0 +1,93 @@
+// Modul: Modul Import/Export & Payment Gateway
+// Bagian dari skema 38 tabel aplikasi (post commit 26e9339)
+// Sumber: document/tracking-perubahan.md §9.3/9.4
+// Tabel bertanda 'stub' didefinisikan lengkap di modul lain -- cuma placeholder biar Ref valid.
+
+Table import_batches {
+  id bigint [pk]
+  batch_reference char(36) [unique, note: 'unique']
+  user_id bigint
+  import_type varchar
+  file_name varchar(255)
+  total_rows int [note: 'default 0']
+  success_count int [note: 'default 0']
+  error_count int [note: 'default 0']
+  status varchar [note: 'default processing']
+  error_message text [note: 'nullable']
+  rolled_back_at timestamp [note: 'nullable']
+  rolled_back_by bigint [note: 'nullable']
+  branch_id bigint
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table export_jobs {
+  id bigint [pk]
+  job_reference char(36) [unique, note: 'unique']
+  user_id bigint
+  export_type varchar(50)
+  filters json [note: 'nullable']
+  format varchar(10)
+  status varchar [note: 'default processing']
+  file_path varchar(500) [note: 'nullable']
+  error_message text [note: 'nullable']
+  expires_at timestamp [note: 'nullable']
+  branch_id bigint
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table midtrans_transactions {
+  id bigint [pk]
+  order_id varchar(64) [unique, note: 'unique']
+  kode_tagihan varchar(64) [note: 'restrict on delete; tagihan primer untuk batch']
+  batch_items json [note: 'nullable — breakdown per-tagihan pembayaran batch']
+  nis varchar(32) [note: 'index']
+  amount_paid bigint
+  fee_amount bigint
+  gross_amount bigint
+  currency char(3) [note: 'default IDR']
+  status varchar [note: 'default pending, index']
+  payment_type varchar [note: 'nullable']
+  snap_token varchar [note: 'nullable']
+  snap_redirect_url varchar [note: 'nullable']
+  expired_at timestamp [note: 'index']
+  paid_at timestamp [note: 'nullable']
+  initiator_user_id bigint [note: 'nullable']
+  branch_id integer [note: 'nullable']
+  last_raw_response json [note: 'nullable']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table midtrans_transaction_logs {
+  id bigint [pk]
+  order_id varchar [note: 'nullable, index']
+  direction varchar
+  http_status int [note: 'nullable']
+  raw_payload text [note: 'nullable']
+  remote_ip varchar(45) [note: 'nullable']
+  created_at timestamp [note: 'useCurrent, index']
+}
+
+// ----- stub tabel eksternal (definisi lengkap ada di modul lain) -----
+Table users { // stub, lihat modul: core
+  id bigint [pk]
+}
+
+Table branches { // stub, lihat modul: core
+  id bigint [pk]
+}
+
+Table tagihans { // stub, lihat modul: core
+  kode_tagihan char(30) [pk]
+}
+
+// ----- relasi -----
+Ref: import_batches.user_id > users.id
+Ref: import_batches.rolled_back_by > users.id
+Ref: import_batches.branch_id > branches.id
+Ref: export_jobs.user_id > users.id
+Ref: export_jobs.branch_id > branches.id
+Ref: midtrans_transactions.kode_tagihan > tagihans.kode_tagihan
+Ref: midtrans_transactions.initiator_user_id > users.id

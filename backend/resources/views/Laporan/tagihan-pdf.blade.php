@@ -9,7 +9,9 @@
         body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #111; }
         h4 { text-align: center; margin: 0; }
         h5 { text-align: center; margin: 0; font-weight: normal; }
-        table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+        table { width: 100%; border-collapse: collapse; }
+        table.siswa-group { page-break-inside: avoid; margin-top: 14px; }
+        table.grand-total { margin-top: 0; }
         th, td { border: 1px solid #000; padding: 5px 6px; text-align: left; vertical-align: top; }
         th { background: #f5f5f5; font-weight: bold; }
         .text-right { text-align: right; }
@@ -42,65 +44,60 @@
         $totalSisa = 0;
     @endphp
 
-    <table>
-        <thead>
-            <tr>
-                <th style="width:24px;">No</th>
-                <th>Nama Siswa</th>
-                <th style="width:60px;">NIS</th>
-                <th style="width:60px;">Jenjang</th>
-                <th style="width:60px;">Kelas</th>
-                <th style="width:80px;">Kode Tagihan</th>
-                <th>Jenis Tagihan</th>
-                <th style="width:80px;">Jatuh Tempo</th>
-                <th style="width:80px;">Status</th>
-                <th style="width:80px;">Total (Rp)</th>
-                <th style="width:80px;">Terbayar (Rp)</th>
-                <th style="width:80px;">Sisa (Rp)</th>
-            </tr>
-        </thead>
-        <tbody>
-        @forelse($groupedRows ?? [] as $i => $siswaData)
-            @php
-                $tagihansCount = count($siswaData['tagihans']);
-                $totalTagihan += $siswaData['total_jumlah'];
-                $totalTerbayar += $siswaData['total_terbayar'];
-                $totalSisa += $siswaData['total_sisa'];
-            @endphp
-            
-            @foreach($siswaData['tagihans'] as $index => $tagihan)
-                <tr>
-                    @if($index === 0)
-                        <td class="text-center" rowspan="{{ $tagihansCount }}">{{ $i + 1 }}</td>
-                        <td rowspan="{{ $tagihansCount }}">{{ $siswaData['nama'] ?? '-' }}</td>
-                        <td rowspan="{{ $tagihansCount }}">{{ $siswaData['nis'] ?? '-' }}</td>
-                        <td class="text-center" rowspan="{{ $tagihansCount }}">{{ $siswaData['jenjang'] ?? '-' }}</td>
-                        <td rowspan="{{ $tagihansCount }}">{{ $siswaData['kelas'] ?? '-' }}</td>
-                    @endif
-                    <td>{{ $tagihan['kode_tagihan'] ?? '-' }}</td>
-                    <td>{{ $tagihan['jenis_tagihan'] ?? '-' }}</td>
-                    <td>{{ $tagihan['jatuh_tempo'] ?? '-' }}</td>
-                    <td>{{ $tagihan['status'] ?? '-' }}</td>
-                    <td class="text-right">{{ number_format($tagihan['jumlah'], 0, ',', '.') }}</td>
-                    <td class="text-right">{{ number_format($tagihan['tmp'], 0, ',', '.') }}</td>
-                    <td class="text-right">{{ number_format($tagihan['sisa'], 0, ',', '.') }}</td>
+    @forelse($groupedRows ?? [] as $i => $siswaData)
+        @php
+            $totalTagihan += $siswaData['total_jumlah'];
+            $totalTerbayar += $siswaData['total_terbayar'];
+            $totalSisa += $siswaData['total_sisa'];
+        @endphp
+
+        {{-- Each student's group is its own table so page-break-inside:avoid
+             moves the whole group to a new page instead of splitting the
+             rowspan'd student-info cells away from their tagihan rows. --}}
+        <table class="siswa-group">
+            @include('Laporan.partials.tagihan-pdf-header')
+            <tbody>
+                @foreach($siswaData['tagihans'] as $index => $tagihan)
+                    <tr>
+                        @if($index === 0)
+                            <td class="text-center" rowspan="{{ count($siswaData['tagihans']) }}">{{ $i + 1 }}</td>
+                            <td rowspan="{{ count($siswaData['tagihans']) }}">{{ $siswaData['nama'] ?? '-' }}</td>
+                            <td rowspan="{{ count($siswaData['tagihans']) }}">{{ $siswaData['nis'] ?? '-' }}</td>
+                            <td class="text-center" rowspan="{{ count($siswaData['tagihans']) }}">{{ $siswaData['jenjang'] ?? '-' }}</td>
+                            <td rowspan="{{ count($siswaData['tagihans']) }}">{{ $siswaData['kelas'] ?? '-' }}</td>
+                        @endif
+                        <td>{{ $tagihan['kode_tagihan'] ?? '-' }}</td>
+                        <td>{{ $tagihan['jenis_tagihan'] ?? '-' }}</td>
+                        <td>{{ $tagihan['jatuh_tempo'] ?? '-' }}</td>
+                        <td>{{ $tagihan['status'] ?? '-' }}</td>
+                        <td class="text-right">{{ number_format($tagihan['jumlah'], 0, ',', '.') }}</td>
+                        <td class="text-right">{{ number_format($tagihan['tmp'], 0, ',', '.') }}</td>
+                        <td class="text-right">{{ number_format($tagihan['sisa'], 0, ',', '.') }}</td>
+                    </tr>
+                @endforeach
+
+                {{-- Subtotal per Siswa --}}
+                <tr style="background: #fdfdfd; font-style: italic;">
+                    <td colspan="9" class="text-right">Subtotal: {{ $siswaData['nama'] }}</td>
+                    <td class="text-right">{{ number_format($siswaData['total_jumlah'], 0, ',', '.') }}</td>
+                    <td class="text-right">{{ number_format($siswaData['total_terbayar'], 0, ',', '.') }}</td>
+                    <td class="text-right">{{ number_format($siswaData['total_sisa'], 0, ',', '.') }}</td>
                 </tr>
-            @endforeach
-            
-            {{-- Subtotal per Siswa --}}
-            <tr style="background: #fdfdfd; font-style: italic;">
-                <td colspan="9" class="text-right">Subtotal: {{ $siswaData['nama'] }}</td>
-                <td class="text-right">{{ number_format($siswaData['total_jumlah'], 0, ',', '.') }}</td>
-                <td class="text-right">{{ number_format($siswaData['total_terbayar'], 0, ',', '.') }}</td>
-                <td class="text-right">{{ number_format($siswaData['total_sisa'], 0, ',', '.') }}</td>
-            </tr>
-        @empty
-            <tr>
-                <td colspan="12" class="text-center">Tidak ada data tagihan untuk filter yang dipilih.</td>
-            </tr>
-        @endforelse
-        </tbody>
-        @if(count($groupedRows ?? []) > 0)
+            </tbody>
+        </table>
+    @empty
+        <table class="siswa-group">
+            @include('Laporan.partials.tagihan-pdf-header')
+            <tbody>
+                <tr>
+                    <td colspan="12" class="text-center">Tidak ada data tagihan untuk filter yang dipilih.</td>
+                </tr>
+            </tbody>
+        </table>
+    @endforelse
+
+    @if(count($groupedRows ?? []) > 0)
+        <table class="grand-total">
             <tfoot>
                 <tr>
                     <td colspan="9" class="text-right">GRAND TOTAL</td>
@@ -109,7 +106,7 @@
                     <td class="text-right">{{ number_format($totalSisa, 0, ',', '.') }}</td>
                 </tr>
             </tfoot>
-        @endif
-    </table>
+        </table>
+    @endif
 </body>
 </html>

@@ -10,7 +10,7 @@ use Spatie\Permission\Models\Permission as SpatiePermission;
  * Seed label, group, and audience columns for all permissions
  * defined in App\Enum\Permission.
  *
- * Run after `permissions:sync` so that all enum cases exist in the DB.
+ * Run after `RoleAndPermissionSeeder` so that all enum cases exist in the DB.
  */
 class PermissionMetadataSeeder extends Seeder
 {

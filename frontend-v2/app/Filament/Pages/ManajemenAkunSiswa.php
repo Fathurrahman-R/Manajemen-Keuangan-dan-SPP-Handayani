@@ -99,7 +99,7 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
     {
         return $table
             ->records(
-                fn (?string $search, int $page, int $recordsPerPage, array $filters = []): LengthAwarePaginator => $this->fetchRegistered($search, $page, $recordsPerPage, $filters),
+                fn (?string $search, int $page, int|string $recordsPerPage, array $filters = []): LengthAwarePaginator => $this->fetchRegistered($search, $page, $recordsPerPage, $filters),
             )
             ->columns([
                 TextColumn::make('name')
@@ -278,20 +278,20 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
             ->deferLoading()
             ->striped()
             ->searchable()
-            ->paginated([10, 25, 50])
+            ->paginated([10, 25, 50, 'all'])
             ->defaultPaginationPageOption(10)
             ->emptyStateHeading('Tidak Ada Akun Siswa')
             ->emptyStateDescription('Belum ada akun siswa yang terdaftar.')
             ->emptyStateIcon('heroicon-o-document-text');
     }
 
-    protected function fetchRegistered(?string $search, int $page, int $recordsPerPage, ?array $filters): LengthAwarePaginator
+    protected function fetchRegistered(?string $search, int $page, int|string $recordsPerPage, ?array $filters): LengthAwarePaginator
     {
         try {
             $response = ApiService::client()->get('/akun-siswa', ['per_page' => 200]);
 
             if (! $response->ok()) {
-                return new LengthAwarePaginator([], 0, $recordsPerPage, $page);
+                return new LengthAwarePaginator([], 0, $recordsPerPage === 'all' ? 1 : $recordsPerPage, $page);
             }
 
             $collection = collect($response->json('data') ?? []);
@@ -318,11 +318,12 @@ class ManajemenAkunSiswa extends Page implements HasActions, HasSchemas, HasTabl
             }
 
             $total = $collection->count();
-            $items = $collection->slice(($page - 1) * $recordsPerPage, $recordsPerPage)->values()->toArray();
+            $effectivePerPage = $recordsPerPage === 'all' ? max($total, 1) : $recordsPerPage;
+            $items = $collection->slice(($page - 1) * $effectivePerPage, $effectivePerPage)->values()->toArray();
 
-            return new LengthAwarePaginator($items, $total, $recordsPerPage, $page);
+            return new LengthAwarePaginator($items, $total, $effectivePerPage, $page);
         } catch (\Throwable $e) {
-            return new LengthAwarePaginator([], 0, $recordsPerPage, $page);
+            return new LengthAwarePaginator([], 0, $recordsPerPage === 'all' ? 1 : $recordsPerPage, $page);
         }
     }
 

@@ -25,6 +25,7 @@ class DashboardAllTimeStatsWidget extends BaseWidget
         $totalTagihan = (int) ($data['total_tagihan'] ?? 0);
         $totalPemasukan = (int) ($data['total_pemasukan'] ?? 0);
         $totalPengeluaran = (int) ($data['total_pengeluaran'] ?? 0);
+        $totalSaldo = (int) ($data['saldo'] ?? 0);
 
         return [
             Stat::make('Total Tagihan (Semua Periode)', 'Rp '.number_format($totalTagihan, 0, ',', '.'))
@@ -39,6 +40,10 @@ class DashboardAllTimeStatsWidget extends BaseWidget
                 ->description('Akumulasi pengeluaran dari semua periode')
                 ->descriptionIcon('heroicon-m-arrow-trending-down')
                 ->color('danger'),
+            Stat::make('Total Saldo Cabang', 'Rp '.number_format($totalSaldo, 0, ',', '.'))
+                ->description('Pemasukan dikurangi pengeluaran, seluruh periode')
+                ->descriptionIcon('heroicon-m-banknotes')
+                ->color($totalSaldo < 0 ? 'danger' : 'info'),
         ];
     }
 

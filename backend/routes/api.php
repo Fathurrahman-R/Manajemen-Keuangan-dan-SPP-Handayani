@@ -286,6 +286,7 @@ Route::middleware(['auth:sanctum', 'active.branch'])->group(function () {
     // Pengeluaran Request (Approval Workflow) routes
     Route::prefix('/pengeluaran-request')->group(function () {
         Route::get('/', [PengeluaranRequestController::class, 'index'])->middleware('endpoint.permission:pengeluaran.view');
+        Route::get('/stats', [PengeluaranRequestController::class, 'stats'])->middleware('endpoint.permission:pengeluaran.view');
         Route::get('/{id}', [PengeluaranRequestController::class, 'show'])->middleware('endpoint.permission:pengeluaran.view')->where('id', '[0-9]+');
         Route::post('/', [PengeluaranRequestController::class, 'store'])->middleware('endpoint.permission:pengeluaran.create');
         Route::put('/{id}', [PengeluaranRequestController::class, 'update'])->middleware('endpoint.permission:pengeluaran.update')->where('id', '[0-9]+');

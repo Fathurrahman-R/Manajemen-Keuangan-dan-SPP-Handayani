@@ -12,9 +12,12 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Client\ConnectionException;
+use Livewire\Attributes\Lazy;
 use Livewire\Component;
 
+#[Lazy]
 class NotificationSettings extends Component implements HasForms
 {
     use HandlesApiErrors;
@@ -23,6 +26,11 @@ class NotificationSettings extends Component implements HasForms
     public ?array $data = [];
 
     public bool $loaded = false;
+
+    public function placeholder(): View
+    {
+        return view('components.global-loading-spinner', ['static' => true, 'message' => 'Memuat pengaturan notifikasi...']);
+    }
 
     public function mount(): void
     {
@@ -106,13 +114,13 @@ class NotificationSettings extends Component implements HasForms
         // Convert reminder_days_before tags to integer array
         $reminderDays = [];
         $rawReminderDays = $state['reminder_days_before'] ?? [];
-        
+
         if (is_string($rawReminderDays)) {
             $decoded = json_decode($rawReminderDays, true);
             $rawReminderDays = is_array($decoded) ? $decoded : explode(',', $rawReminderDays);
         }
 
-        if (is_array($rawReminderDays) && !empty($rawReminderDays)) {
+        if (is_array($rawReminderDays) && ! empty($rawReminderDays)) {
             foreach ($rawReminderDays as $v) {
                 // Strip all non-numeric characters (e.g. if user types 'H-7' or '7 hari')
                 $val = intval(preg_replace('/[^0-9]/', '', (string) $v));

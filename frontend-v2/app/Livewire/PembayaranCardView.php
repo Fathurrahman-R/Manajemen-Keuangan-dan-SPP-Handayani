@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class PembayaranCardView extends Component implements HasActions, HasSchemas
 {
     use \App\Livewire\Concerns\HandlesApiErrors;
+    use \App\Livewire\Concerns\HasImportExport;
     use \App\Livewire\Concerns\HasPeriodFilter;
     use InteractsWithActions, InteractsWithSchemas;
 
@@ -239,6 +240,15 @@ class PembayaranCardView extends Component implements HasActions, HasSchemas
 
                 $this->deletingKodePembayaran = null;
             });
+    }
+
+    /**
+     * Export Pembayaran — backend already supports it (/import-export/export/pembayaran),
+     * this wires up the missing frontend action (bug IE-005).
+     */
+    public function exportPembayaranAction(): \Filament\Actions\Action
+    {
+        return $this->makeExportAction('pembayaran');
     }
 
     public function downloadKwitansi(string $kodePembayaran): StreamedResponse

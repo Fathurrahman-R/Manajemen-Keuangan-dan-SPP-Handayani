@@ -1,0 +1,83 @@
+%%{
+    init: {
+        'layout': 'elk',
+        'themeVariables': {'fontSize': '32px'},
+        'themeCSS': '.edgeLabel, .edgeLabel p { font-size: 32px !important; }'
+    }
+}%%
+erDiagram
+    direction LR
+    PERMISSIONS {
+        bigint id PK
+        string name UK "unique bersama guard_name"
+        string guard_name
+        string group "nullable"
+        string audience "nullable"
+        string label "nullable"
+    }
+    ROLES {
+        bigint id PK
+        bigint team_foreign_key "opsional"
+        string name UK "unique(name, guard_name)"
+        string guard_name
+    }
+    MODEL_HAS_PERMISSIONS {
+        bigint permission_id FK
+        string model_type
+        bigint model_id
+    }
+    MODEL_HAS_ROLES {
+        bigint role_id FK
+        string model_type
+        bigint model_id
+    }
+    ROLE_HAS_PERMISSIONS {
+        bigint permission_id FK
+        bigint role_id FK
+    }
+    PERMISSION_ENDPOINTS {
+        bigint id PK
+        bigint permission_id FK "nullable"
+        string resource_key UK
+        string group "nullable"
+        text description "nullable"
+        boolean is_active
+    }
+    PAGE_PERMISSIONS {
+        bigint id PK
+        string permission_name "nullable"
+        string guard_name
+        string group "nullable"
+        text description "nullable"
+        string resource_key UK
+        boolean is_active
+    }
+    PERSONAL_ACCESS_TOKENS {
+        bigint id PK
+        string tokenable_type
+        bigint tokenable_id
+        string name
+        string token UK
+        text abilities "nullable"
+        timestamp expires_at "nullable"
+        timestamp last_used_at "nullable"
+    }
+    PASSWORD_RESET_TOKENS {
+        bigint id PK
+        string email
+        string token UK
+        boolean used
+        timestamp expires_at
+    }
+    USERS {
+        bigint id PK
+    }
+
+    PERMISSIONS ||--o{ ROLE_HAS_PERMISSIONS : "diberikan ke role via"
+    ROLES ||--o{ ROLE_HAS_PERMISSIONS : "memiliki permission via"
+    PERMISSIONS ||--o{ MODEL_HAS_PERMISSIONS : "diberikan langsung ke user via"
+    ROLES ||--o{ MODEL_HAS_ROLES : "diberikan ke user via"
+    PERMISSIONS ||--o{ PERMISSION_ENDPOINTS : "dipetakan ke endpoint (nullable)"
+    PERMISSIONS ||--o{ PAGE_PERMISSIONS : "dipetakan lewat resource_key"
+    USERS ||--o{ PERSONAL_ACCESS_TOKENS : "punya token Sanctum"
+    USERS ||--o{ PASSWORD_RESET_TOKENS : "minta reset lewat email"

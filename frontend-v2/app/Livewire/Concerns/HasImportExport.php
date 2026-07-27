@@ -8,9 +8,15 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Str;
 
 trait HasImportExport
 {
+    // Action names below use Str::camel() because Filament's mountAction()
+    // resolves an action by calling method_exists($this, "{name}Action") — a
+    // snake_case name here (e.g. "import_tagihan") never matches its camelCase
+    // wrapper method (importTagihanAction()), so the action silently fails to
+    // resolve: no modal, no notification, no error, just a no-op (bug IE-006).
     public ?array $importPreviewData = null;
 
     public ?string $importPreviewId = null;
@@ -28,7 +34,7 @@ trait HasImportExport
                 ->required(),
         ], $filterSchema);
 
-        return Action::make("export_{$exportType}")
+        return Action::make(Str::camel("export_{$exportType}"))
             ->label('Export')
             ->color('success')
             ->icon('heroicon-o-arrow-down-tray')
@@ -51,7 +57,7 @@ trait HasImportExport
      */
     protected function makeImportAction(string $importType): Action
     {
-        return Action::make("import_{$importType}")
+        return Action::make(Str::camel("import_{$importType}"))
             ->label('Import')
             ->color('warning')
             ->icon('heroicon-o-arrow-up-tray')
@@ -101,7 +107,7 @@ trait HasImportExport
      */
     protected function makeDownloadTemplateAction(string $importType): Action
     {
-        return Action::make("template_{$importType}")
+        return Action::make(Str::camel("template_{$importType}"))
             ->label('Template')
             ->color('gray')
             ->icon('heroicon-o-document-arrow-down')
@@ -113,11 +119,13 @@ trait HasImportExport
     }
 
     /**
-     * Create Import History action.
+     * Create Import History action. Modal content is the ImportHistoryTable
+     * Livewire component — a genuine Filament table (bug IE-002), instead of
+     * a custom HTML table.
      */
     protected function makeImportHistoryAction(string $importType): Action
     {
-        return Action::make("import_history_{$importType}")
+        return Action::make(Str::camel("import_history_{$importType}"))
             ->label('Riwayat Import')
             ->color('gray')
             ->icon('heroicon-o-clock')
@@ -125,23 +133,7 @@ trait HasImportExport
             ->modalHeading('Riwayat Import '.ucfirst($importType))
             ->modalSubmitAction(false)
             ->modalCancelActionLabel('Tutup')
-            ->modalContent(function () use ($importType) {
-                $response = ApiService::client()->get('/import-export/import/history', [
-                    'per_page' => 10,
-                ]);
-
-                $history = [];
-                if ($response->successful()) {
-                    $data = $response->json();
-                    // Filter by import type
-                    $history = collect($data['data'] ?? [])
-                        ->filter(fn ($item) => ($item['import_type'] ?? '') === $importType)
-                        ->values()
-                        ->toArray();
-                }
-
-                return view('livewire.partials.import-history', ['history' => $history]);
-            });
+            ->modalContent(fn () => view('livewire.partials.import-history-modal', ['importType' => $importType]));
     }
 
     /**
@@ -212,7 +204,12 @@ trait HasImportExport
     protected function downloadImportTemplate(string $importType): ?\Symfony\Component\HttpFoundation\StreamedResponse
     {
         try {
-            $response = ApiService::client()->get("/import-export/import/template/{$importType}");
+            $params = [];
+            if ($importType === 'siswa' && property_exists($this, 'activeTab')) {
+                $params['jenjang'] = strtoupper($this->activeTab);
+            }
+
+            $response = ApiService::client()->get("/import-export/import/template/{$importType}", $params);
 
             if ($response->successful()) {
                 $filename = "template_import_{$importType}.xlsx";
@@ -371,40 +368,5 @@ trait HasImportExport
 
         $this->importPreviewId = null;
         $this->importPreviewData = null;
-    }
-
-    /**
-     * Rollback an import batch.
-     */
-    public function rollbackImport(string $batchId): void
-    {
-        try {
-            $response = ApiService::client()->post("/import-export/import/{$batchId}/rollback");
-
-            if ($response->successful()) {
-                Notification::make()
-                    ->title('Rollback Berhasil')
-                    ->body('Data import telah dihapus.')
-                    ->success()
-                    ->send();
-
-                if (method_exists($this, 'resetTable')) {
-                    $this->resetTable();
-                }
-            } else {
-                $errors = $response->json('errors', []);
-                Notification::make()
-                    ->title('Rollback Gagal')
-                    ->body(is_array($errors) ? implode(', ', \Illuminate\Support\Arr::flatten($errors)) : 'Rollback gagal.')
-                    ->danger()
-                    ->send();
-            }
-        } catch (\Exception $e) {
-            Notification::make()
-                ->title('Error')
-                ->body($e->getMessage())
-                ->danger()
-                ->send();
-        }
     }
 }

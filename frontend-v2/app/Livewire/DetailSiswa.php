@@ -12,12 +12,20 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\TextSize;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Lazy;
 use Livewire\Component;
 
+#[Lazy]
 class DetailSiswa extends Component implements HasSchemas
 {
     use InteractsWithSchemas;
+
+    public function placeholder(): View
+    {
+        return view('components.global-loading-spinner', ['static' => true, 'message' => 'Memuat data siswa...']);
+    }
 
     public ?string $jenjang;
 
@@ -134,6 +142,10 @@ class DetailSiswa extends Component implements HasSchemas
                             ->label('Nama Lengkap')
                             ->default(fn ($livewire) => $livewire->wali['nama'])
                             ->size(TextSize::Large),
+                        TextEntry::make('email')
+                            ->label('Email')
+                            ->default(fn ($livewire) => $livewire->wali['email'] ?? '-')
+                            ->size(TextSize::Large),
                         TextEntry::make('pekerjaan')
                             ->label('Pekerjaan')
                             ->default(fn ($livewire) => $livewire->wali['pekerjaan'])
@@ -171,6 +183,10 @@ class DetailSiswa extends Component implements HasSchemas
                             ->label('Nama Lengkap')
                             ->default(fn ($livewire) => $livewire->ayah['nama'] ?? '-')
                             ->size(TextSize::Large),
+                        TextEntry::make('email')
+                            ->label('Email')
+                            ->default(fn ($livewire) => $livewire->ayah['email'] ?? '-')
+                            ->size(TextSize::Large),
                         TextEntry::make('pendidikan_terakhir')
                             ->label('Pendidikan Terakhir')
                             ->default(fn ($livewire) => $livewire->ayah['pendidikan_terakhir'] ?? '-')
@@ -199,6 +215,10 @@ class DetailSiswa extends Component implements HasSchemas
                         TextEntry::make('nama')
                             ->label('Nama Lengkap')
                             ->default(fn ($livewire) => $livewire->ibu['nama'] ?? '-')
+                            ->size(TextSize::Large),
+                        TextEntry::make('email')
+                            ->label('Email')
+                            ->default(fn ($livewire) => $livewire->ibu['email'] ?? '-')
                             ->size(TextSize::Large),
                         TextEntry::make('pendidikan_terakhir')
                             ->label('Pendidikan Terakhir')

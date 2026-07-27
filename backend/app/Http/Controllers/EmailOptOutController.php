@@ -31,6 +31,9 @@ class EmailOptOutController extends Controller
         }
 
         $type = $request->input('type', 'all');
+        // 'workflow' is deliberately excluded — that opt-out is managed from
+        // the staff/admin profile page (EditProfile.php), not this public
+        // unauthenticated link, since workflow recipients always have a login.
         $validTypes = ['tagihan_baru', 'reminder', 'kwitansi', 'overdue', 'all'];
 
         if (! in_array($type, $validTypes)) {

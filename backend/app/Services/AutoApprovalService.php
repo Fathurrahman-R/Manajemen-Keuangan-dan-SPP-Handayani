@@ -32,11 +32,11 @@ class AutoApprovalService
             'previous_status' => 'submitted',
             'new_status' => 'approved',
             'user_id' => $request->requester_id,
-            'note' => 'Auto-approved: jumlah di bawah threshold',
+            'note' => 'Auto-approved: jumlah dalam batas threshold',
             'created_at' => now(),
         ]);
 
-        // Notify requester
-        app(WorkflowNotificationService::class)->notifyRequester($request, 'approved', 'Request disetujui otomatis.');
+        // Notify requester (no reason — that field is reserved for rejections)
+        app(WorkflowNotificationService::class)->notifyRequester($request, 'approved');
     }
 }

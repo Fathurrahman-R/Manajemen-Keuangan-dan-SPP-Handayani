@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Helpers\PermissionHelper;
 use App\Services\ApiService;
+use App\Support\ApiTableRecord;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -20,7 +21,9 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Component;
 
 class RbacPagePermissionsTable extends Component implements HasActions, HasSchemas, HasTable
@@ -37,10 +40,10 @@ class RbacPagePermissionsTable extends Component implements HasActions, HasSchem
     public function table(Table $table): Table
     {
         return $table
-            ->records(function (): array {
+            ->records(function (int $page, int|string $recordsPerPage): LengthAwarePaginator {
                 $r = ApiService::client()->get('/rbac/page-permissions');
                 if (! $r->successful()) {
-                    return [];
+                    return new LengthAwarePaginator([], 0, $recordsPerPage === 'all' ? 1 : $recordsPerPage, $page);
                 }
 
                 $records = collect($r->json()['data'] ?? [])
@@ -50,8 +53,7 @@ class RbacPagePermissionsTable extends Component implements HasActions, HasSchem
                 $search = $this->getTableSearch();
                 if (filled($search)) {
                     $search = strtolower($search);
-                    $records = $records->filter(fn ($item) =>
-                        str_contains(strtolower($item['resource_key'] ?? ''), $search)
+                    $records = $records->filter(fn ($item) => str_contains(strtolower($item['resource_key'] ?? ''), $search)
                         || str_contains(strtolower($item['permission_name'] ?? ''), $search)
                         || str_contains(strtolower($item['group'] ?? ''), $search)
                         || str_contains(strtolower($item['description'] ?? ''), $search)
@@ -73,7 +75,21 @@ class RbacPagePermissionsTable extends Component implements HasActions, HasSchem
                     $records = $records->where('is_active', (bool) $isActiveValue);
                 }
 
-                return $records->values()->toArray();
+                if ($group = $this->getTableGrouping()) {
+                    $column = $group->getColumn();
+                    $records = $this->getTableGroupingDirection() === 'desc'
+                        ? $records->sortByDesc($column)->values()
+                        : $records->sortBy($column)->values();
+                }
+
+                $records = $records->values();
+                $total = $records->count();
+                $effectivePerPage = $recordsPerPage === 'all' ? max($total, 1) : $recordsPerPage;
+                $items = $records->slice(($page - 1) * $effectivePerPage, $effectivePerPage)
+                    ->map(fn (array $item) => new ApiTableRecord($item))
+                    ->values()->all();
+
+                return new LengthAwarePaginator($items, $total, $effectivePerPage, $page);
             })
             ->heading('Resource & Page Registry (merged)')
             ->columns([
@@ -83,7 +99,7 @@ class RbacPagePermissionsTable extends Component implements HasActions, HasSchem
                 TextColumn::make('description')->label('Deskripsi')->limit(40)->placeholder('-')->searchable()->toggleable(),
                 ToggleColumn::make('is_active')
                     ->label('Aktif')
-                    ->disabled(fn () => !PermissionHelper::hasResource('rbac.toggle'))
+                    ->disabled(fn () => ! PermissionHelper::hasResource('rbac.toggle'))
                     ->updateStateUsing(function ($state, $record): ?bool {
                         $r = ApiService::client()->put("/rbac/page-permissions/{$record['id']}", [
                             'is_active' => $state,
@@ -107,6 +123,11 @@ class RbacPagePermissionsTable extends Component implements HasActions, HasSchem
                     ->options(fn (): array => $this->getPermissionNameOptions()),
                 TernaryFilter::make('is_active')->label('Active'),
             ])
+            ->groups([
+                Group::make('group')->label('Group'),
+            ])
+            ->paginated([10, 25, 50, 'all'])
+            ->defaultPaginationPageOption(10)
             ->defaultSort('resource_key')
             ->headerActions([
                 CreateAction::make('create')
@@ -137,7 +158,8 @@ class RbacPagePermissionsTable extends Component implements HasActions, HasSchem
                         $r = ApiService::client()->post('/rbac/page-permissions', $data);
                         if (! $r->successful()) {
                             Notification::make()->title($r->json('message') ?? 'Gagal')->danger()->send();
-                            $this->halt();
+
+                            return;
                         }
                         Notification::make()->title('Resource dibuat.')->success()->send();
                     }),
@@ -164,24 +186,26 @@ class RbacPagePermissionsTable extends Component implements HasActions, HasSchem
                         TextInput::make('description')->label('Deskripsi'),
                         Toggle::make('is_active')->label('Aktif'),
                     ])
-                    ->fillForm(fn (array $record): array => $record)
+                    ->fillForm(fn ($record): array => $record->toArray())
                     ->action(function (array $data): void {
                         $record = $this->getMountedAction()?->getRecord();
                         $r = ApiService::client()->put("/rbac/page-permissions/{$record['id']}", $data);
                         if (! $r->successful()) {
                             Notification::make()->title($r->json('message') ?? 'Gagal')->danger()->send();
-                            $this->halt();
+
+                            return;
                         }
                         Notification::make()->title('Resource diperbarui.')->success()->send();
                     }),
                 Action::make('hapus')
                     ->color('danger')
                     ->visible(fn () => PermissionHelper::hasResource('resource-registry.delete'))
-                    ->action(function (array $record): void {
+                    ->action(function ($record): void {
                         $r = ApiService::client()->delete("/rbac/page-permissions/{$record['id']}");
                         if (! $r->successful()) {
                             Notification::make()->title($r->json('message') ?? 'Gagal')->danger()->send();
-                            $this->halt();
+
+                            return;
                         }
                         Notification::make()->title('Resource dihapus.')->success()->send();
                     }),
