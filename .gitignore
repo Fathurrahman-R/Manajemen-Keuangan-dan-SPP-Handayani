@@ -13,3 +13,6 @@ CLAUDE.md
 /AGENTS.md
 /.remember/
 /.env
+
+# File lock sementara Microsoft Office (muncul selama dokumen dibuka)
+~$*

@@ -5,17 +5,18 @@ tunnels:
   # URL yang sama (dibuktikan lewat log: kedua tunnel dapat public_url identik,
   # dan yang benar-benar reachable cuma salah satu).
   #
-  # Default: tunnel `frontend` (akses aplikasi dari HP). Untuk webhook Midtrans,
-  # tukar jadi blok `backend` di bawah DAN ganti `command:` service `ngrok` di
-  # docker-compose.yml jadi `start backend` — dua tempat itu harus cocok, kalau
-  # tidak container langsung exit. Langkah lengkap: README §Tunneling (ngrok).
+  # Default: tunnel `backend` (webhook Midtrans, use-case utama). Untuk akses
+  # aplikasi dari HP, tukar jadi blok `frontend` di bawah DAN ganti `command:`
+  # service `ngrok` di docker-compose.yml jadi `start frontend` — dua tempat itu
+  # harus cocok, kalau tidak container langsung exit. Langkah lengkap: README
+  # §Tunneling (ngrok).
   #
   # Punya paid plan dengan reserved domain? Aktifkan kedua blok, isi `domain:`
   # masing-masing, lalu ganti `command:` jadi `start --all`.
-  frontend:
+  backend:
     proto: http
-    addr: frontend:8000
-  # backend:
+    addr: backend:8080
+  # frontend:
   #   proto: http
-  #   addr: backend:8080
+  #   addr: frontend:8000
   #   domain: your-reserved-domain.ngrok-free.app

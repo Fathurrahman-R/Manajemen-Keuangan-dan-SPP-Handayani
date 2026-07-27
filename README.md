@@ -356,25 +356,14 @@ Stack Docker sudah punya service `ngrok` sendiri. Konfigurasinya ada di **dua te
 
 Kalau `command:` menyebut nama yang tidak ada di `ngrok.yml`, container langsung exit.
 
-> **ngrok free plan hanya mengalokasikan satu ephemeral domain per sesi agent.** Frontend dan backend **tidak bisa** jalan bersamaan — tunnel di sini sifatnya saling tukar, bukan tambah. Default saat ini: `frontend`.
+> **ngrok free plan hanya mengalokasikan satu ephemeral domain per sesi agent.** Frontend dan backend **tidak bisa** jalan bersamaan — tunnel di sini sifatnya saling tukar, bukan tambah. Default saat ini: `backend` (webhook Midtrans).
 
-#### Menukar target tunnel (frontend ↔ backend)
+#### Menukar target tunnel (backend ↔ frontend)
 
 **Langkah 1** — `docker/ngrok/ngrok.yml`, aktifkan blok yang dituju dan komentari yang lain:
 
 ```yaml
-# --- Mode FRONTEND (default) — akses aplikasi dari HP ---
-tunnels:
-  frontend:
-    proto: http
-    addr: frontend:8000
-  # backend:
-  #   proto: http
-  #   addr: backend:8080
-```
-
-```yaml
-# --- Mode BACKEND — webhook Midtrans ---
+# --- Mode BACKEND (default) — webhook Midtrans ---
 tunnels:
   backend:
     proto: http
@@ -384,21 +373,32 @@ tunnels:
   #   addr: frontend:8000
 ```
 
-**Langkah 2** — `docker-compose.yml`, service `ngrok`. Samakan nama tunnel di `command:` **dan** `depends_on:` (kalau `depends_on` menunggu service yang tidak relevan, startup jadi menggantung tanpa alasan):
-
 ```yaml
-# Mode frontend
-command: ["start", "frontend", "--config", "/etc/ngrok.yml", "--log=stdout", "--log-format=logfmt"]
-depends_on:
+# --- Mode FRONTEND — akses aplikasi dari HP ---
+tunnels:
   frontend:
-    condition: service_healthy
+    proto: http
+    addr: frontend:8000
+  # backend:
+  #   proto: http
+  #   addr: backend:8080
 ```
+
+**Langkah 2** — `docker-compose.yml`, service `ngrok`. Samakan nama tunnel di `command:` **dan** `depends_on:` (kalau `depends_on` menunggu service yang tidak relevan, startup jadi menggantung tanpa alasan):
 
 ```yaml
 # Mode backend
 command: ["start", "backend", "--config", "/etc/ngrok.yml", "--log=stdout", "--log-format=logfmt"]
 depends_on:
   backend:
+    condition: service_healthy
+```
+
+```yaml
+# Mode frontend
+command: ["start", "frontend", "--config", "/etc/ngrok.yml", "--log=stdout", "--log-format=logfmt"]
+depends_on:
+  frontend:
     condition: service_healthy
 ```
 
@@ -412,7 +412,7 @@ docker logs handayani-ngrok-1 --tail 20 | grep "started tunnel"
 Outputnya berbentuk:
 
 ```
-msg="started tunnel" obj=tunnels name=frontend addr=http://frontend:8000 url=https://<subdomain>.ngrok-free.dev
+msg="started tunnel" obj=tunnels name=backend addr=http://backend:8080 url=https://<subdomain>.ngrok-free.dev
 ```
 
 Nilai `url=` itu alamat publiknya; `name=` memastikan mode yang aktif sudah benar. Bisa juga dilihat lewat inspector `http://localhost:4040`.

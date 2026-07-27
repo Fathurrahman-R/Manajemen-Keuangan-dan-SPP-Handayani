@@ -179,11 +179,11 @@ services:
       NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
     volumes:
       - ./docker/ngrok/ngrok.yml:/etc/ngrok.yml
-    command: ["start", "frontend", "--config", "/etc/ngrok.yml", "--log=stdout", "--log-format=logfmt"]
+    command: ["start", "backend", "--config", "/etc/ngrok.yml", "--log=stdout", "--log-format=logfmt"]
     ports:
       - "4040:4040"
     depends_on:
-      frontend:
+      backend:
         condition: service_healthy
 
 volumes:
