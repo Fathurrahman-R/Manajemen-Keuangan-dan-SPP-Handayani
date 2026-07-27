@@ -93,9 +93,21 @@ php artisan serve
 
 Konfigurasi opsional (public-safe) di `frontend-v2/.env`: `HANDAYANI_MIDTRANS_ENABLED`, `MIDTRANS_CLIENT_KEY`, `MIDTRANS_SNAP_URL`, `HANDAYANI_MIDTRANS_FEE_FLAT`.
 
+### Konten halaman publik (landing page)
+
+Seluruh teks dan konten landing page ada di **`frontend-v2/config/handayani-public.php`**, bukan hardcode di Blade. Section yang tersedia: `hero`, `about` (title/visi/misi/nilai_institusional), `jenjang`, `ekstrakurikuler`, `fasilitas`, `nav_links`, `spp_cta`, `branches`, `map_settings`.
+
+Hanya field identitas yang bisa di-override lewat env `HANDAYANI_PUBLIC_*` (`name`, `short_name`, `tagline`, `address`, `phone`, `email`, `whatsapp_number`, `spp_portal_url`, `logo`, `colors.*`). Konten section **tidak** lewat env — edit langsung di config.
+
+> **Gotcha:** beberapa key wajib berupa **array**, bukan string, karena dirender lewat `@foreach` di komponen Blade-nya:
+> `about.misi` (list `<ul>` di `components/public/about.blade.php`), `nav_links`, `ekstrakurikuler.kegiatan`, `fasilitas.sarana`, `fasilitas.ruang_penunjang`, `jenjang.levels`, `hero.stats`.
+> Mengisinya dengan string tunggal akan bikin halaman error.
+
 ## Menjalankan dengan Docker
 
-Alternatif dari setup manual di atas — satu `docker compose up` menghidupkan seluruh stack dev: `backend` (port 8080), `frontend-v2` (port 8000) + Vite dev server (port 5173), MariaDB, Redis, queue worker, scheduler, dan tunnel ngrok. Source code di-bind-mount, jadi edit langsung kepakai (live reload) sama seperti dev manual.
+Alternatif dari setup manual di atas — satu `docker compose up` menghidupkan stack dev: `backend` (port 8080), `frontend-v2` (port 8000), MariaDB, Redis, queue worker, scheduler, dan tunnel ngrok. Source code di-bind-mount, jadi edit kode PHP/Blade langsung kepakai tanpa restart.
+
+**Vite dev server (port 5173) sengaja tidak ikut nyala** — service `frontend-vite` ada di profile `dev`, jadi dilewati oleh `docker compose up` biasa. Asset CSS/JS **tidak** otomatis ter-compile; pilih salah satu mode di bawah.
 
 ```bash
 cp .env.example .env        # isi NGROK_AUTHTOKEN (https://dashboard.ngrok.com/get-started/your-authtoken)
@@ -113,6 +125,26 @@ Setelah `up`, container `backend` otomatis `composer install` (kalau perlu), `mi
 | ngrok inspector (lihat URL publik) | `http://localhost:4040` |
 | MariaDB (buat HeidiSQL native Windows) | `127.0.0.1:3306`, user `root`, password sesuai `MYSQL_ROOT_PASSWORD` di root `.env` |
 | Mailpit (tangkap semua email dev, ganti Mailtrap) | `http://localhost:8025` — SMTP di `mailpit:1025` (sudah otomatis jadi `MAIL_HOST` container backend) |
+
+### Asset CSS/JS — dua mode
+
+| Mode | Perintah | Kapan dipakai |
+|---|---|---|
+| **Build statis** (default) | `docker compose exec frontend npm run build` | Menjalankan app biasa, atau testing lewat tunnel/HP |
+| **Hot reload** | `docker compose --profile dev up -d frontend-vite` | Ngoprek CSS/JS di laptop, akses lewat `localhost:8000` |
+
+Mode build statis butuh `npm run build` ulang tiap kali ubah CSS/JS. Mode hot reload tidak, tapi ada konsekuensinya:
+
+> **Gotcha — CSS tidak muncul saat diakses dari HP/tunnel.**
+> `frontend-vite` menulis file `frontend-v2/public/hot`. Selama file itu ada, `@vite` di Blade mengarahkan asset ke `http://localhost:5173`. Dari laptop itu jalan (ada port-forward), tapi dari HP `localhost` berarti HP itu sendiri — asset gagal load, halaman tampil tanpa style.
+>
+> Balik ke mode statis:
+> ```bash
+> docker compose stop frontend-vite
+> docker exec handayani-frontend-1 rm -f public/hot
+> docker exec handayani-frontend-1 npm run build
+> ```
+> Jangan jalankan `frontend-vite` bersamaan dengan sesi testing di HP — begitu nyala, `public/hot` ditulis ulang dan CSS di HP putus lagi.
 
 Perintah harian yang berguna:
 
@@ -310,15 +342,87 @@ php artisan cache:clear
 php artisan optimize:clear    # clear semua sekaligus
 ```
 
-### Tunneling untuk webhook Midtrans (dev lokal)
+### Tunneling (ngrok)
 
-Webhook `POST /api/midtrans/notification` di `backend` **sengaja publik tanpa auth** — Midtrans butuh URL publik untuk mengirim notifikasi status pembayaran ke instance lokal. Pakai `ngrok` (atau tunnel sejenis, mis. `cloudflared`):
+Dua kebutuhan berbeda memakai tunnel yang sama:
 
-```bash
-ngrok http 8080
+- **Webhook Midtrans** → butuh `backend:8080` publik. Endpoint `POST /api/midtrans/notification` **sengaja publik tanpa auth** karena Midtrans harus bisa mengirim notifikasi status pembayaran ke instance lokal.
+- **Akses aplikasi dari HP** → butuh `frontend:8000` publik.
+
+Stack Docker sudah punya service `ngrok` sendiri. Konfigurasinya ada di **dua tempat yang harus cocok**:
+
+- `docker/ngrok/ngrok.yml` — mendefinisikan tunnel beserta target-nya.
+- `docker-compose.yml`, service `ngrok` — `command:` menyebut *nama* tunnel mana yang dijalankan.
+
+Kalau `command:` menyebut nama yang tidak ada di `ngrok.yml`, container langsung exit.
+
+> **ngrok free plan hanya mengalokasikan satu ephemeral domain per sesi agent.** Frontend dan backend **tidak bisa** jalan bersamaan — tunnel di sini sifatnya saling tukar, bukan tambah. Default saat ini: `frontend`.
+
+#### Menukar target tunnel (frontend ↔ backend)
+
+**Langkah 1** — `docker/ngrok/ngrok.yml`, aktifkan blok yang dituju dan komentari yang lain:
+
+```yaml
+# --- Mode FRONTEND (default) — akses aplikasi dari HP ---
+tunnels:
+  frontend:
+    proto: http
+    addr: frontend:8000
+  # backend:
+  #   proto: http
+  #   addr: backend:8080
 ```
 
-Lalu daftarkan `https://<subdomain-acak>.ngrok-free.app/api/midtrans/notification` sebagai Payment Notification URL di dashboard Midtrans Sandbox. URL ngrok berubah tiap restart (kecuali pakai domain statis berbayar) — update ulang tiap sesi dev.
+```yaml
+# --- Mode BACKEND — webhook Midtrans ---
+tunnels:
+  backend:
+    proto: http
+    addr: backend:8080
+  # frontend:
+  #   proto: http
+  #   addr: frontend:8000
+```
+
+**Langkah 2** — `docker-compose.yml`, service `ngrok`. Samakan nama tunnel di `command:` **dan** `depends_on:` (kalau `depends_on` menunggu service yang tidak relevan, startup jadi menggantung tanpa alasan):
+
+```yaml
+# Mode frontend
+command: ["start", "frontend", "--config", "/etc/ngrok.yml", "--log=stdout", "--log-format=logfmt"]
+depends_on:
+  frontend:
+    condition: service_healthy
+```
+
+```yaml
+# Mode backend
+command: ["start", "backend", "--config", "/etc/ngrok.yml", "--log=stdout", "--log-format=logfmt"]
+depends_on:
+  backend:
+    condition: service_healthy
+```
+
+**Langkah 3** — recreate container dan ambil URL publiknya:
+
+```bash
+docker compose up -d ngrok --force-recreate
+docker logs handayani-ngrok-1 --tail 20 | grep "started tunnel"
+```
+
+Outputnya berbentuk:
+
+```
+msg="started tunnel" obj=tunnels name=frontend addr=http://frontend:8000 url=https://<subdomain>.ngrok-free.dev
+```
+
+Nilai `url=` itu alamat publiknya; `name=` memastikan mode yang aktif sudah benar. Bisa juga dilihat lewat inspector `http://localhost:4040`.
+
+#### Catatan per mode
+
+- **Mode backend:** daftarkan `https://<subdomain>.ngrok-free.dev/api/midtrans/notification` sebagai Payment Notification URL di dashboard Midtrans Sandbox. URL berubah tiap container di-restart (kecuali pakai reserved domain berbayar) — daftar ulang tiap sesi dev.
+- **Mode frontend:** cukup buka `url=` di HP. Pastikan asset sudah di-`npm run build` — lihat gotcha `public/hot` di §Menjalankan dengan Docker, karena mode hot reload mengarah ke `localhost:5173` yang tidak reachable dari HP.
+- **Punya paid plan + reserved domain:** dua tunnel bisa hidup bersamaan — isi `domain:` di masing-masing blok `ngrok.yml`, lalu ganti `command:` jadi `["start", "--all", ...]`.
+- **Tanpa Docker:** `ngrok http 8080` (backend) atau `ngrok http 8000` (frontend).
 
 ### Cron setup (production)
 
