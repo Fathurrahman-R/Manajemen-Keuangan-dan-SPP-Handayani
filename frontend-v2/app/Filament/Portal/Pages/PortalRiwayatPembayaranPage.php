@@ -71,12 +71,9 @@ class PortalRiwayatPembayaranPage extends Page implements HasActions, HasSchemas
                         }
 
                         $json = $response->json();
+                        // Transaksi pending sudah digabung + dipaginasi di backend,
+                        // jadi meta.total cocok dengan jumlah baris di data.
                         $items = $json['data'] ?? [];
-
-                        // Hanya di halaman pertama: prepend list pending Midtrans di atas.
-                        if ($page === 1 && ! empty($json['pending'])) {
-                            $items = array_merge($json['pending'], $items);
-                        }
 
                         $items = collect($items)->mapWithKeys(function ($item) {
                             $key = $item['order_id'] ?? $item['kode_pembayaran'] ?? uniqid();
