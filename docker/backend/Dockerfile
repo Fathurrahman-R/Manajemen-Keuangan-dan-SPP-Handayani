@@ -6,12 +6,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         curl \
         libzip-dev \
         libpng-dev \
+        libjpeg-dev \
+        libwebp-dev \
+        libfreetype6-dev \
         libonig-dev \
         libxml2-dev \
         libicu-dev \
         default-mysql-client \
         util-linux \
     && docker-php-ext-configure intl \
+    # GD bawaan hanya mendukung PNG. Logo sekolah yang diunggah bisa .webp/.jpg,
+    # dan tanpa dukungan ini DomPDF gagal merender kwitansi ("Function
+    # imagecreatefromwebp() not found") sehingga email kwitansi terkirim tanpa lampiran.
+    && docker-php-ext-configure gd --with-jpeg --with-webp --with-freetype \
     && docker-php-ext-install -j"$(nproc)" \
         pdo_mysql \
         mbstring \

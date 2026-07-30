@@ -35,6 +35,11 @@ x-frontend-env: &frontend-env
   REDIS_HOST: redis
   REDIS_PORT: 6379
   API_URL: http://backend:8080/api
+  # URL logo sekolah dirender ke HTML dan diambil oleh BROWSER, bukan oleh PHP —
+  # jadi tidak boleh memakai hostname internal Docker (`backend`) yang cuma
+  # resolve antar container. Default config/handayani.php menurunkannya dari
+  # API_URL; di sini di-override ke port yang dipublish ke host.
+  BACKEND_STORAGE_URL: ${BACKEND_STORAGE_URL:-http://127.0.0.1:8080/storage}
 
 x-frontend-volumes: &frontend-volumes
   - ./frontend-v2:/var/www/frontend-v2
