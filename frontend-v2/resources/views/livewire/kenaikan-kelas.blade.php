@@ -96,14 +96,19 @@
                                 @foreach($students as $student)
                                     <tr class="fi-ta-row transition hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                         <td class="fi-ta-cell px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ $student['nis'] ?? '-' }}</td>
-                                        <td class="fi-ta-cell px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ $student['nama'] ?? '-' }}</td>
+                                        <td class="fi-ta-cell px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                                            {{ $student['nama'] ?? '-' }}
+                                            @if(($student['status'] ?? 'Aktif') === 'Lulus')
+                                                <span class="ms-2 inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">Lulus</span>
+                                            @endif
+                                        </td>
                                         <td class="fi-ta-cell px-4 py-3 text-sm">
                                             <div class="flex items-center gap-2">
                                                 <x-filament::input.wrapper>
                                                     <x-filament::input.select
                                                         wire:change="updateStudentAction({{ $student['id'] }}, $event.target.value)"
                                                     >
-                                                        @foreach($this->getAvailableActions() as $value => $label)
+                                                        @foreach($this->getActionsForStudent($student) as $value => $label)
                                                             <option value="{{ $value }}" {{ ($studentActions[$student['id']] ?? '') === $value ? 'selected' : '' }}>{{ $label }}</option>
                                                         @endforeach
                                                     </x-filament::input.select>

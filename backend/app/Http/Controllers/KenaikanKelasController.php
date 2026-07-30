@@ -33,7 +33,8 @@ class KenaikanKelasController extends Controller
             $data['kelas_id'],
             $data['tahun_ajaran_id'],
             $userId,
-            $branchId
+            $branchId,
+            $data['siswa_ids'] ?? null
         );
 
         return response()->json([
@@ -199,7 +200,8 @@ class KenaikanKelasController extends Controller
 
         $students = $this->kenaikanKelasService->getEligibleStudents(
             (int) $kelasId,
-            (int) $tahunAjaranId
+            (int) $tahunAjaranId,
+            includeLulus: true
         );
 
         return response()->json([

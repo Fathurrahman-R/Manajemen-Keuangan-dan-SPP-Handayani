@@ -34,6 +34,19 @@ class BulkPromotionRequest extends FormRequest
                 'integer',
                 'exists:tahun_ajarans,id',
             ],
+            // Opsional. Kalau diisi, hanya siswa dalam daftar ini yang dipromosikan.
+            // Tanpa ini seluruh siswa eligible di kelas ikut naik — termasuk yang
+            // di UI ditandai tinggal kelas/lulus, sehingga batch mencatat mereka
+            // sebagai naik_kelas dan undo jadi salah.
+            'siswa_ids' => [
+                'sometimes',
+                'array',
+                'min:1',
+            ],
+            'siswa_ids.*' => [
+                'integer',
+                'exists:siswas,id',
+            ],
         ];
     }
 

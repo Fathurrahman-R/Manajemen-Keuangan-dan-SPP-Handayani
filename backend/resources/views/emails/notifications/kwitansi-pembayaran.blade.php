@@ -48,8 +48,8 @@
         <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
 
         <p style="font-size: 12px; color: #888;">
-            Jika Anda tidak ingin menerima email ini, silakan
-            <a href="{{ $unsubscribeUrl }}" style="color: #888;">klik di sini untuk berhenti berlangganan</a>.
+            Jika Anda tidak ingin menerima email ini, atur preferensi notifikasi
+            lewat menu Profil pada portal Handayani.
         </p>
     </div>
 </body>

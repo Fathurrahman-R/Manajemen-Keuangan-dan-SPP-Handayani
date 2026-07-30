@@ -160,7 +160,7 @@ class UserTest extends TestCase
             ->assertJson([
                 'errors' => [
                     'message' => [
-                        'username or password is wrong',
+                        'Username/email atau kata sandi salah.',
                     ],
                 ],
             ]);
@@ -176,7 +176,7 @@ class UserTest extends TestCase
             ->assertJson([
                 'errors' => [
                     'message' => [
-                        'username or password is wrong',
+                        'Username/email atau kata sandi salah.',
                     ],
                 ],
             ]);

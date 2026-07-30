@@ -39,7 +39,6 @@ class TagihanOverdueNotification extends Notification implements ShouldQueue
                 'siswa' => $this->siswa,
                 'tagihan' => $this->tagihan,
                 'daysOverdue' => $this->daysOverdue,
-                'unsubscribeUrl' => '#unsubscribe',
             ]);
     }
 

@@ -47,15 +47,26 @@ class ApiService
     {
         $ttl ??= (int) config('handayani.cache.dashboard_ttl', 60);
 
-        return Cache::remember(
-            self::dashboardCacheKey($endpoint, $params),
-            $ttl,
-            function () use ($endpoint, $params) {
-                $response = self::client()->get($endpoint, $params);
+        $key = self::dashboardCacheKey($endpoint, $params);
 
-                return $response->ok() ? ($response->json('data') ?? []) : null;
-            }
-        );
+        $cached = Cache::get($key);
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $response = self::client()->get($endpoint, $params);
+
+        // Kegagalan sengaja TIDAK di-cache. `Cache::remember` ikut menyimpan
+        // null, jadi satu request gagal akan membekukan dashboard dalam
+        // keadaan kosong selama satu TTL penuh walau backend sudah pulih.
+        if (! $response->ok()) {
+            return null;
+        }
+
+        $data = $response->json('data') ?? [];
+        Cache::put($key, $data, $ttl);
+
+        return $data;
     }
 
     /**

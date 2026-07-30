@@ -22,7 +22,14 @@
                             <option value="">Semua Periode</option>
                             @foreach($tahunAjaranOptions as $option)
                                 <option value="{{ $option['id'] }}">
-                                    {{ $option['nama'] }}{{ $option['status'] === 'Aktif' ? '(Aktif)' : '(Historis)' }}
+                                    {{ $option['nama'] }}
+                                    @if($option['status'] === 'Aktif')
+                                        (Aktif)
+                                    @elseif(! empty($option['tanggal_mulai']) && \Illuminate\Support\Carbon::parse($option['tanggal_mulai'])->isFuture())
+                                        (Mendatang)
+                                    @else
+                                        (Historis)
+                                    @endif
                                 </option>
                             @endforeach
                         </x-filament::input.select>

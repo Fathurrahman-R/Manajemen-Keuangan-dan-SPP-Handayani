@@ -64,47 +64,86 @@ class DashboardService
     }
 
     /**
+     * Endpoint yang punya dua varian cache key: satu per tahun ajaran dan satu
+     * bersuffix `-all` untuk mode "Semua Periode" (mode default widget saat
+     * belum ada tahun ajaran dipilih).
+     */
+    private const ENDPOINTS_PER_PERIODE = [
+        'summary',
+        'pembayaran-bulanan',
+        'tunggakan-jenjang',
+        'kas-bulanan',
+        'status-tagihan',
+        'top-tunggakan',
+        'tagihan-jatuh-tempo',
+        'pembayaran-terbaru',
+    ];
+
+    /**
+     * Endpoint tanpa varian `-all`. `kas-summary` memakai slot tahun ajaran
+     * (dengan 0 sebagai penanda all-time), `all-time-summary` selalu di slot 0.
+     */
+    private const ENDPOINTS_KAS = [
+        'kas-summary',
+        'all-time-summary',
+    ];
+
+    /**
+     * Semua slot tahun ajaran yang mungkin dipakai sebagai bagian cache key:
+     * setiap tahun ajaran milik branch, plus '' (null) dan 0 yang dipakai
+     * method all-periods / all-time.
+     *
+     * @return list<int|string>
+     */
+    private static function cacheSlotsTahunAjaran(int $branchId): array
+    {
+        $slots = TahunAjaran::where('branch_id', $branchId)->pluck('id')->all();
+        $slots[] = '';
+        $slots[] = 0;
+
+        return $slots;
+    }
+
+    /**
      * Invalidate all dashboard cache keys for a branch.
+     *
+     * Wajib menyapu varian `-all` juga: dashboard default memakai mode
+     * "Semua Periode", jadi kalau varian itu dilewat, KPI (termasuk persentase
+     * pelunasan) tetap menampilkan angka lama sampai TTL 5 menit habis.
      */
     public static function invalidateCache(int $branchId): void
     {
-        $endpoints = [
-            'summary',
-            'pembayaran-bulanan',
-            'tunggakan-jenjang',
-            'kas-bulanan',
-            'status-tagihan',
-            'top-tunggakan',
-            'tagihan-jatuh-tempo',
-            'pembayaran-terbaru',
-        ];
+        $endpoints = [];
 
-        // Get all active tahun ajaran for this branch to clear all period caches
-        $tahunAjaranIds = TahunAjaran::where('branch_id', $branchId)->pluck('id');
-
-        foreach ($tahunAjaranIds as $taId) {
-            foreach ($endpoints as $endpoint) {
-                Cache::forget("dashboard:{$branchId}:{$taId}:{$endpoint}");
-            }
+        foreach (self::ENDPOINTS_PER_PERIODE as $endpoint) {
+            $endpoints[] = $endpoint;
+            $endpoints[] = $endpoint.'-all';
         }
 
-        // Also clear with null tahun_ajaran_id
-        foreach ($endpoints as $endpoint) {
-            Cache::forget("dashboard:{$branchId}::{$endpoint}");
+        foreach (self::ENDPOINTS_KAS as $endpoint) {
+            $endpoints[] = $endpoint;
+        }
+
+        foreach (self::cacheSlotsTahunAjaran($branchId) as $slot) {
+            foreach ($endpoints as $endpoint) {
+                Cache::forget("dashboard:{$branchId}:{$slot}:{$endpoint}");
+            }
         }
     }
 
     /**
-     * Invalidate kas-bulanan cache for a branch (pengeluaran changes).
+     * Invalidate cache kas untuk sebuah branch (perubahan pengeluaran).
+     * Mencakup kas-bulanan (kedua varian), kas-summary, dan all-time-summary.
      */
     public static function invalidateKasCache(int $branchId): void
     {
-        $tahunAjaranIds = TahunAjaran::where('branch_id', $branchId)->pluck('id');
+        $endpoints = ['kas-bulanan', 'kas-bulanan-all', 'kas-summary', 'all-time-summary'];
 
-        foreach ($tahunAjaranIds as $taId) {
-            Cache::forget("dashboard:{$branchId}:{$taId}:kas-bulanan");
+        foreach (self::cacheSlotsTahunAjaran($branchId) as $slot) {
+            foreach ($endpoints as $endpoint) {
+                Cache::forget("dashboard:{$branchId}:{$slot}:{$endpoint}");
+            }
         }
-        Cache::forget("dashboard:{$branchId}::kas-bulanan");
     }
 
     /**
@@ -498,7 +537,6 @@ class DashboardService
             })->toArray();
         });
     }
-
 
     /**
      * Get tagihan due within next 7 days.

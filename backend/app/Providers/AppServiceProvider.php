@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Enum\DefaultRoles;
 use App\Exceptions\Midtrans\InvalidMidtransConfigException;
+use App\Models\JenisTagihan;
 use App\Models\Pembayaran;
 use App\Models\Pengeluaran;
 use App\Models\Siswa;
@@ -59,10 +60,14 @@ class AppServiceProvider extends ServiceProvider
 
         Siswa::observe(SiswaObserver::class);
 
-        // Dashboard cache invalidation observers
+        // Dashboard cache invalidation observers.
+        // JenisTagihan ikut diobservasi karena nominalnya (jenis_tagihans.jumlah)
+        // adalah sumber angka "total tagihan" di KPI dashboard — mengubahnya
+        // menggeser persentase pelunasan walau tidak ada tagihan/pembayaran baru.
         Pembayaran::observe(DashboardCacheObserver::class);
         Tagihan::observe(DashboardCacheObserver::class);
         Pengeluaran::observe(DashboardCacheObserver::class);
+        JenisTagihan::observe(DashboardCacheObserver::class);
 
         // Midtrans configuration validation
         if (config('midtrans.enabled')) {

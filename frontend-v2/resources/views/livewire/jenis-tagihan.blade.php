@@ -21,7 +21,7 @@
                         @foreach($tahunAjaranOptions as $option)
                             <option value="{{ $option['id'] }}">
                                 {{ $option['nama'] }}
-                                {{ $option['status'] === 'Aktif' ? '(Aktif)' : '(Historis)' }}
+                                {{ $this->getPeriodBadge($option) }}
                             </option>
                         @endforeach
                     </x-filament::input.select>

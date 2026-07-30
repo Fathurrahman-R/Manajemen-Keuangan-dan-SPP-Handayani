@@ -17,9 +17,16 @@ class DashboardAllTimeStatsWidget extends BaseWidget
     protected function getStats(): array
     {
         try {
-            $data = ApiService::dashboardOverviewSlice('all_time_summary') ?? [];
+            $data = ApiService::dashboardOverviewSlice('all_time_summary');
         } catch (\Throwable $e) {
-            $data = [];
+            $data = null;
+        }
+
+        // `null` berarti panggilan API gagal, bukan "datanya nol". Menampilkan
+        // Rp 0 di kondisi ini menyesatkan: admin bisa menyimpulkan sekolah
+        // memang tidak punya tagihan sama sekali.
+        if ($data === null) {
+            return $this->unavailableStats();
         }
 
         $totalTagihan = (int) ($data['total_tagihan'] ?? 0);
@@ -45,6 +52,23 @@ class DashboardAllTimeStatsWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color($totalSaldo < 0 ? 'danger' : 'info'),
         ];
+    }
+
+    /**
+     * @return array<int, Stat>
+     */
+    private function unavailableStats(): array
+    {
+        return collect([
+            'Total Tagihan (Semua Periode)',
+            'Total Pemasukan (Semua Periode)',
+            'Total Pengeluaran (Semua Periode)',
+            'Total Saldo Cabang',
+        ])->map(fn (string $label): Stat => Stat::make($label, 'Tidak tersedia')
+            ->description('Data gagal dimuat dari server')
+            ->descriptionIcon('heroicon-m-exclamation-triangle')
+            ->color('danger')
+        )->all();
     }
 
     public static function canView(): bool

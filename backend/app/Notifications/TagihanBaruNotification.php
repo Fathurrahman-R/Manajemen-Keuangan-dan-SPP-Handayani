@@ -37,7 +37,6 @@ class TagihanBaruNotification extends Notification implements ShouldQueue
             ->view('emails.notifications.tagihan-baru', [
                 'siswa' => $this->siswa,
                 'tagihans' => $this->tagihans,
-                'unsubscribeUrl' => '#unsubscribe',
             ]);
     }
 

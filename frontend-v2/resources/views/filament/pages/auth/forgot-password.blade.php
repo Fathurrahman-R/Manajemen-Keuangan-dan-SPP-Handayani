@@ -18,7 +18,7 @@
         <form wire:submit="submit">
             {{ $this->form }}
 
-            <x-filament::button type="submit" class="mt-4 w-full" style="background-color: #1B4FBF">
+            <x-filament::button type="submit" color="primary" class="mt-4 w-full">
                 Kirim Link Reset
             </x-filament::button>
         </form>

@@ -49,6 +49,56 @@ class EndpointPermission
             return $next($request);
         }
 
+        // Sebelum menolak, pastikan penolakannya bukan cache Spatie yang basi.
+        // `can()` membaca cache role→permission; kalau cache di-flush di store
+        // yang berbeda (mis. seeder dijalankan dari host sementara aplikasi
+        // jalan di container), setiap permission yang sah ikut ditolak dan
+        // seluruh aplikasi terkunci sampai TTL 24 jam habis. Cek ulang ke
+        // database sekali; kalau ternyata user memang punya permission itu,
+        // buang cache lalu lanjutkan.
+        if ($this->hasPermissionInDatabase($request, $permissionName)) {
+            app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+
+            \Illuminate\Support\Facades\Log::warning('Cache permission basi terdeteksi; cache di-flush otomatis', [
+                'user_id' => $request->user()?->id,
+                'permission' => $permissionName,
+                'resource_key' => $resourceKey,
+            ]);
+
+            return $next($request);
+        }
+
         abort(403, 'Forbidden: missing required permission "'.$permissionName.'" for resource "'.$resourceKey.'".');
+    }
+
+    /**
+     * Query langsung ke tabel pivot, melewati cache Spatie sepenuhnya.
+     */
+    private function hasPermissionInDatabase(Request $request, string $permissionName): bool
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        $viaRole = \Illuminate\Support\Facades\DB::table('role_has_permissions')
+            ->join('permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
+            ->join('model_has_roles', 'model_has_roles.role_id', '=', 'role_has_permissions.role_id')
+            ->where('permissions.name', $permissionName)
+            ->where('model_has_roles.model_id', $user->getKey())
+            ->where('model_has_roles.model_type', $user->getMorphClass())
+            ->exists();
+
+        if ($viaRole) {
+            return true;
+        }
+
+        return \Illuminate\Support\Facades\DB::table('model_has_permissions')
+            ->join('permissions', 'permissions.id', '=', 'model_has_permissions.permission_id')
+            ->where('permissions.name', $permissionName)
+            ->where('model_has_permissions.model_id', $user->getKey())
+            ->where('model_has_permissions.model_type', $user->getMorphClass())
+            ->exists();
     }
 }

@@ -65,7 +65,7 @@ class AppSettingRequest extends FormRequest
             ],
             'logo' => [
                 'file',
-                'mimes:jpg,png',
+                'mimes:jpg,png,webp',
             ],
         ];
     }
