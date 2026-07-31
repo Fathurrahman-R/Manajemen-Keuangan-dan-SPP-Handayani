@@ -62,6 +62,9 @@ Route::middleware(['auth:sanctum', 'active.branch'])->group(function () {
     Route::get('/pembayaran/siswa', [PembayaranController::class, 'siswaView'])->middleware('endpoint.permission:pembayaran.siswa');
 
     // Shared Pembayaran routes
+    // Segmen literal kwitansi-bulk didaftarkan lebih dulu supaya tidak tertelan
+    // wildcard {kode_pembayaran} di route kwitansi tunggal.
+    Route::get('/pembayaran/kwitansi-bulk', [PdfGeneratorController::class, 'bulkKwitansi'])->middleware('endpoint.permission:pembayaran.kwitansi');
     Route::get('/pembayaran/kwitansi/{kode_pembayaran}', [PdfGeneratorController::class, 'get'])->middleware('endpoint.permission:pembayaran.kwitansi');
 
     // Dashboard routes

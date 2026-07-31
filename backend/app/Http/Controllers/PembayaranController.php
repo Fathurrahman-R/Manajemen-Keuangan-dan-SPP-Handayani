@@ -38,11 +38,11 @@ class PembayaranController extends Controller
         $user = Auth::user();
 
         $query = \App\Models\Siswa::query()
-            ->where('branch_id', $user->branch_id)
+            ->where('siswas.branch_id', $user->branch_id)
             ->whereHas('tagihan.pembayaran');
 
         if ($user && ! $user->hasAnyRole(['superadmin', 'admin'])) {
-            $query->where('nis', $user->siswa?->nis ?? $user->username);
+            $query->where('siswas.nis', $user->siswa?->nis ?? $user->username);
         }
 
         $tahunAjaranId = request('tahun_ajaran_id');
@@ -59,22 +59,25 @@ class PembayaranController extends Controller
             });
         }
 
+        // Kolom di-prefix eksplisit: sort=latest/oldest menambahkan leftJoinSub
+        // 'last_pay' yang juga punya kolom nis, jadi tanpa prefix MariaDB menolak
+        // dengan "Column 'nis' in WHERE is ambiguous".
         $search = request('search');
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('nama', 'like', "%{$search}%")
-                    ->orWhere('nis', 'like', "%{$search}%");
+                $q->where('siswas.nama', 'like', "%{$search}%")
+                    ->orWhere('siswas.nis', 'like', "%{$search}%");
             });
         }
 
         $jenjang = request('jenjang');
         if ($jenjang) {
-            $query->where('jenjang', $jenjang);
+            $query->where('siswas.jenjang', $jenjang);
         }
 
         $kelasId = request('kelas_id');
         if (! is_null($kelasId) && $kelasId !== '') {
-            $query->where('kelas_id', (int) $kelasId);
+            $query->where('siswas.kelas_id', (int) $kelasId);
         }
 
         $metode = request('metode');
