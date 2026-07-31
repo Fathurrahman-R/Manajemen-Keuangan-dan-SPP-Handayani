@@ -115,11 +115,34 @@ trait HasPeriodFilter
     {
         return collect($this->tahunAjaranOptions)
             ->mapWithKeys(function ($option) {
-                $label = $option['nama'].($option['status'] === 'Aktif' ? ' (Aktif)' : ' (Historis)');
-
-                return [(int) $option['id'] => $label];
+                return [(int) $option['id'] => $option['nama'].' '.$this->getPeriodBadge($option)];
             })
             ->toArray();
+    }
+
+    /**
+     * Badge status periode.
+     *
+     * Periode non-aktif tidak otomatis berarti masa lalu — periode yang baru
+     * dibuat untuk kenaikan kelas tahun depan juga non-aktif. Memberi label
+     * "(Historis)" pada periode mendatang jelas keliru, jadi bedakan lewat
+     * tanggal mulai.
+     *
+     * @param  array<string, mixed>  $option
+     */
+    public function getPeriodBadge(array $option): string
+    {
+        if (($option['status'] ?? '') === 'Aktif') {
+            return '(Aktif)';
+        }
+
+        $mulai = $option['tanggal_mulai'] ?? null;
+
+        if ($mulai && \Illuminate\Support\Carbon::parse($mulai)->isFuture()) {
+            return '(Mendatang)';
+        }
+
+        return '(Historis)';
     }
 
     public function getAktifId(): ?int
@@ -147,9 +170,7 @@ trait HasPeriodFilter
     {
         foreach ($this->tahunAjaranOptions as $option) {
             if ((int) $option['id'] === $this->selectedTahunAjaranId) {
-                $badge = $option['status'] === 'Aktif' ? ' (Aktif)' : ' (Historis)';
-
-                return $option['nama'].$badge;
+                return $option['nama'].' '.$this->getPeriodBadge($option);
             }
         }
 

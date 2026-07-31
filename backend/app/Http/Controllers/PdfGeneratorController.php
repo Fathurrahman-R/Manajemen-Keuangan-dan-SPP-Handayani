@@ -36,8 +36,23 @@ class PdfGeneratorController extends Controller
         $logoRelative = $data['setting']['logo'] ?? null;
         $logo = null;
         if ($logoRelative && Storage::disk('public')->exists($logoRelative)) {
-            // Absolute filesystem path DomPDF can read
-            $logo = Storage::disk('public')->path($logoRelative);
+            // Absolute filesystem path DomPDF can read. Format yang tidak
+            // didukung GD terpasang (mis. .webp) dilewati — kalau dipaksa,
+            // DomPDF melempar exception dan seluruh kwitansi gagal dibuat.
+            $path = Storage::disk('public')->path($logoRelative);
+            $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+            $supported = match ($extension) {
+                'webp' => function_exists('imagecreatefromwebp'),
+                'jpg', 'jpeg' => function_exists('imagecreatefromjpeg'),
+                'png' => function_exists('imagecreatefrompng'),
+                'gif' => function_exists('imagecreatefromgif'),
+                default => true,
+            };
+
+            if ($supported) {
+                $logo = $path;
+            }
         }
         if (! $logo) {
             $logo = public_path('favicon.ico');

@@ -55,8 +55,11 @@ class TagihanImportService
         // Get existing tagihan combinations (NIS + jenis_tagihan) for this tahun_ajaran
         $existingTagihan = [];
         if ($tahunAjaranId) {
-            $existingTagihan = Tagihan::where('branch_id', $branchId)
-                ->where('tahun_ajaran_id', $tahunAjaranId)
+            // Kolom branch_id dan tahun_ajaran_id ada di kedua tabel, jadi wajib
+            // diprefiks — tanpa itu MariaDB menolak query dengan "Column
+            // 'branch_id' in WHERE is ambiguous" dan seluruh import gagal.
+            $existingTagihan = Tagihan::where('tagihans.branch_id', $branchId)
+                ->where('tagihans.tahun_ajaran_id', $tahunAjaranId)
                 ->join('jenis_tagihans', 'tagihans.jenis_tagihan_id', '=', 'jenis_tagihans.id')
                 ->select('tagihans.nis', 'jenis_tagihans.nama as jenis_tagihan_nama')
                 ->get()

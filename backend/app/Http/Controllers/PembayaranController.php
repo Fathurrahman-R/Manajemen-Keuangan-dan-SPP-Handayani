@@ -16,6 +16,8 @@ use Dedoc\Scramble\Attributes\HeaderParameter;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -381,7 +383,7 @@ class PembayaranController extends Controller
     #[HeaderParameter('Authorization')]
     #[QueryParameter('search', description: 'Pencarian kode_pembayaran', required: false, example: 'PAY-2025')]
     #[QueryParameter('per_page', description: 'Jumlah data per halaman', required: false, example: 10)]
-    #[QueryParameter('include_pending', description: 'Sertakan transaksi Midtrans status pending sebagai item pseudo. Pembayaran final tetap diutamakan.', required: false, example: 'true')]
+    #[QueryParameter('include_pending', description: 'Sertakan transaksi Midtrans status pending sebagai item pseudo di awal daftar. Ikut dihitung dalam meta.total.', required: false, example: 'true')]
     public function siswaView(Request $request)
     {
         $user = Auth::user();
@@ -413,20 +415,26 @@ class PembayaranController extends Controller
             $query->where('kode_pembayaran', 'like', "%{$search}%");
         }
 
-        $query->orderByDesc('tanggal')->orderByDesc('kode_pembayaran');
+        $perPage = min(max((int) $request->query('per_page', 10), 1), 100);
+        $currentPage = max((int) $request->query('page', 1), 1);
 
-        $perPage = min((int) $request->query('per_page', 10), 100);
-        $pembayaran = $query->paginate($perPage);
-
-        // Sertakan transaksi Midtrans pending (belum jadi Pembayaran final)
-        // sebagai pseudo-row di awal list — hanya pada halaman pertama.
-        if ($request->boolean('include_pending') && $pembayaran->currentPage() === 1) {
-            $pendingTrx = \App\Models\MidtransTransaction::query()
+        // Transaksi Midtrans pending (belum jadi Pembayaran final) ikut jadi
+        // baris list. Keduanya harus dipaginasi sebagai satu daftar gabungan:
+        // kalau pending cuma ditempel di luar paginator, meta.total tidak akan
+        // cocok dengan jumlah baris yang benar-benar dirender.
+        $pendingItems = collect();
+        if ($request->boolean('include_pending')) {
+            $pendingQuery = \App\Models\MidtransTransaction::query()
                 ->where('nis', $siswa->nis)
                 ->whereIn('status', ['pending', 'authorize'])
                 ->with(['tagihan' => fn ($q) => $q->with('jenis_tagihan')])
-                ->orderByDesc('created_at')
-                ->limit(20)
+                ->orderByDesc('created_at');
+
+            if ($search) {
+                $pendingQuery->where('order_id', 'like', "%{$search}%");
+            }
+
+            $pendingItems = $pendingQuery
                 ->get()
                 ->map(fn ($trx) => [
                     'kode_pembayaran' => $trx->order_id,
@@ -444,16 +452,44 @@ class PembayaranController extends Controller
                             'nama' => $trx->tagihan->jenis_tagihan->nama ?? '-',
                         ],
                     ] : null,
-                ])
-                ->toArray();
-
-            $resource = PembayaranResource::collection($pembayaran);
-
-            return $resource->additional([
-                'pending' => $pendingTrx,
-            ]);
+                ]);
         }
 
-        return PembayaranResource::collection($pembayaran);
+        // Hitung total sebelum orderBy/limit dipasang supaya query agregat bersih.
+        $pendingTotal = $pendingItems->count();
+        $pembayaranTotal = (clone $query)->count();
+
+        // Daftar gabungan = seluruh pending di depan, lalu pembayaran final.
+        // Offset global halaman ini dipotong ke masing-masing sumber.
+        $offset = ($currentPage - 1) * $perPage;
+        $pendingSlice = $pendingItems->slice($offset, $perPage)->values();
+        $sisaSlot = $perPage - $pendingSlice->count();
+
+        $pembayaranItems = collect();
+        if ($sisaSlot > 0) {
+            $rows = $query
+                ->orderByDesc('tanggal')
+                ->orderByDesc('kode_pembayaran')
+                ->skip(max(0, $offset - $pendingTotal))
+                ->take($sisaSlot)
+                ->get();
+
+            $pembayaranItems = collect(PembayaranResource::collection($rows)->resolve($request));
+        }
+
+        $items = $pendingSlice->concat($pembayaranItems)->values();
+
+        $paginator = new LengthAwarePaginator(
+            $items,
+            $pendingTotal + $pembayaranTotal,
+            $perPage,
+            $currentPage,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
+
+        return JsonResource::collection($paginator);
     }
 }

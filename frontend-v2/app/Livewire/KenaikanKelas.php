@@ -326,7 +326,10 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
 
         foreach ($this->students as $student) {
             $siswaId = $student['id'];
-            $this->studentActions[$siswaId] = $defaultAction;
+            // Lulusan hanya punya satu aksi valid, jadi langsung diarahkan ke sana.
+            $this->studentActions[$siswaId] = ($student['status'] ?? 'Aktif') === 'Lulus'
+                ? 'pindah_jenjang'
+                : $defaultAction;
             $this->studentTargetKelas[$siswaId] = null;
         }
     }
@@ -422,6 +425,24 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
         }
 
         return $actions;
+    }
+
+    /**
+     * Aksi yang valid untuk satu siswa.
+     *
+     * Siswa yang sudah berstatus "Lulus" hanya bisa dipindah jenjang — menaikkan
+     * atau meluluskannya lagi akan ditolak backend.
+     *
+     * @param  array<string, mixed>  $student
+     * @return array<string, string>
+     */
+    public function getActionsForStudent(array $student): array
+    {
+        if (($student['status'] ?? 'Aktif') === 'Lulus') {
+            return ['pindah_jenjang' => 'Pindah Jenjang'];
+        }
+
+        return $this->getAvailableActions();
     }
 
     /**
@@ -617,6 +638,9 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
                     $response = ApiService::client()->post('/kenaikan-kelas/bulk-promotion', [
                         'kelas_id' => $this->selectedKelasId,
                         'tahun_ajaran_id' => $this->selectedTargetPeriodId,
+                        // Wajib dikirim: tanpa daftar ini backend menaikkan semua
+                        // siswa di kelas, termasuk yang dipilih tinggal kelas/lulus.
+                        'siswa_ids' => $grouped['naik_kelas'],
                     ]);
 
                     if ($response->ok()) {
@@ -747,6 +771,15 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
         try {
             $json = $response->json();
             $errors = $json['errors'] ?? [];
+
+            // Sebagian endpoint (mis. cross-level-transfer) membalas
+            // {"message": "..."} tanpa bungkus "errors". Tanpa cabang ini
+            // pesan aslinya hilang dan user cuma melihat "Terjadi kesalahan."
+            if (empty($errors) && ! empty($json['message'])) {
+                $message = $json['message'];
+
+                return $prefix ? "{$prefix}: {$message}" : $message;
+            }
 
             if (isset($errors['message'])) {
                 $message = is_array($errors['message']) ? $errors['message'][0] : $errors['message'];

@@ -60,9 +60,16 @@ class KenaikanKelasService
      * Returns active students (status = 'Aktif') who have a SiswaKelas
      * record in the specified kelas for the given tahun ajaran.
      */
-    public function getEligibleStudents(int $kelasId, int $sourceTahunAjaranId): Collection
+    public function getEligibleStudents(int $kelasId, int $sourceTahunAjaranId, bool $includeLulus = false): Collection
     {
-        return Siswa::where('status', 'Aktif')
+        // Siswa berstatus "Lulus" ikut disertakan hanya untuk keperluan
+        // tampilan: pindah jenjang justru MENSYARATKAN status Lulus, jadi
+        // kalau mereka disembunyikan dari daftar, aksi itu tidak pernah bisa
+        // dijalankan dari UI. Proses promosi massal tetap memakai default
+        // (hanya "Aktif") supaya lulusan tidak ikut naik kelas.
+        $statuses = $includeLulus ? ['Aktif', 'Lulus'] : ['Aktif'];
+
+        return Siswa::whereIn('status', $statuses)
             ->whereHas('siswaKelas', function ($query) use ($kelasId, $sourceTahunAjaranId) {
                 $query->where('kelas_id', $kelasId)
                     ->where('tahun_ajaran_id', $sourceTahunAjaranId);
@@ -238,7 +245,7 @@ class KenaikanKelasService
      *
      * @throws HttpResponseException
      */
-    public function processBulkPromotion(int $kelasId, int $targetTahunAjaranId, int $userId, int $branchId): array
+    public function processBulkPromotion(int $kelasId, int $targetTahunAjaranId, int $userId, int $branchId, ?array $siswaIds = null): array
     {
         // 1. Find the source Kelas and verify it belongs to the branch
         $kelas = Kelas::where('id', $kelasId)
@@ -286,6 +293,13 @@ class KenaikanKelasService
 
         // 5. Get eligible students
         $eligibleStudents = $this->getEligibleStudents($kelasId, $sourceTahunAjaran->id);
+
+        // Batasi ke siswa yang benar-benar dipilih naik kelas. Tanpa filter ini,
+        // siswa yang ditandai tinggal kelas / lulus ikut terpromosikan dan
+        // tercatat ganda di dua batch yang saling bertentangan.
+        if ($siswaIds !== null) {
+            $eligibleStudents = $eligibleStudents->whereIn('id', $siswaIds)->values();
+        }
 
         // 6. If no eligible students, return early with zeros
         if ($eligibleStudents->isEmpty()) {
@@ -370,6 +384,21 @@ class KenaikanKelasService
                 }
 
                 $totalSuccess++;
+            }
+
+            // Batch yang tidak mengubah apa pun (semua siswa dilewati) hanya
+            // menumpuk baris kosong di Riwayat Proses dan menawarkan tombol
+            // Undo yang tidak melakukan apa-apa.
+            if ($totalSuccess === 0) {
+                $batch->delete();
+
+                return [
+                    'batch_id' => null,
+                    'total_processed' => $eligibleStudents->count(),
+                    'total_success' => 0,
+                    'total_skipped' => $totalSkipped,
+                    'skipped' => $skipped,
+                ];
             }
 
             return [

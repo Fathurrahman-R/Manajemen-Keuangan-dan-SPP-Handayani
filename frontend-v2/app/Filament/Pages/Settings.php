@@ -23,9 +23,6 @@ use Illuminate\Http\Client\ConnectionException;
 
 class Settings extends Page
 {
-    /** Base storage URL — derived from API_URL */
-    private const STORAGE_URL = 'http://127.0.0.1:8080/storage';
-
     use HandlesApiErrors;
     use InteractsWithSchemas;
 
@@ -36,6 +33,16 @@ class Settings extends Page
     protected static ?string $slug = 'setting';
 
     public ?array $setting;
+
+    /**
+     * URL logo sekolah di storage publik backend. Query `v` memaksa browser
+     * mengambil ulang gambar setelah logo diganti (nama file lama bisa dipakai
+     * lagi dan cache browser menahannya).
+     */
+    public static function logoUrl(string $logoPath): string
+    {
+        return rtrim(config('handayani.storage_url'), '/').'/'.ltrim($logoPath, '/').'?v='.time();
+    }
 
     public function mount()
     {
@@ -114,7 +121,7 @@ class Settings extends Page
                     ImageEntry::make('logo')
                         ->label('Logo')
                         ->state(fn (): ?string => $this->setting['logo']
-                            ? self::STORAGE_URL.'/'.$this->setting['logo'].'?v='.time()
+                            ? self::logoUrl($this->setting['logo'])
                             : null)
                         ->defaultImageUrl(url('assets/img/default.png'))
                         ->height(80)

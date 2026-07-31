@@ -8,6 +8,7 @@ source /usr/local/bin/entrypoint-common.sh
 wait_for_mysql
 composer_install_locked
 bootstrap_env_file
+ensure_storage_link
 
 optimize_cache_locked
 

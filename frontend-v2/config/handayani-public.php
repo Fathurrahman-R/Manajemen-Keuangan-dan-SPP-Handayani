@@ -25,9 +25,12 @@ return [
             ['key' => '100%', 'value' => 'Kurikulum Nasional'],
         ],
         'images' => [
-            'images/hero-illustration.jpg',
-            'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=1024&q=80',
-            'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=1024&q=80',
+            'images/hero/hero-1.jpg',
+            'images/hero/hero-2.jpg',
+            'images/hero/hero-3.jpg',
+            'images/hero/hero-4.jpg',
+            'images/hero/hero-5.jpg',
+            'images/hero/hero-6.jpg',
         ],
     ],
 

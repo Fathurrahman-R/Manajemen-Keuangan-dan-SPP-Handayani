@@ -745,7 +745,19 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
 
                     $response = ApiService::client()->post('/tagihan', $data);
                     if ($response->status() === 201) {
-                        Notification::make()->title('Tagihan Berhasil Ditambahkan')->success()->send();
+                        $meta = $response->json('meta') ?? [];
+                        $dibuat = $meta['created_count'] ?? null;
+                        $dilewati = $meta['skipped_count'] ?? 0;
+
+                        $notification = Notification::make()
+                            ->title('Tagihan Berhasil Ditambahkan')
+                            ->success();
+
+                        if ($dilewati > 0) {
+                            $notification->body("{$dibuat} tagihan dibuat, {$dilewati} siswa dilewati karena sudah punya tagihan jenis ini di periode tersebut.");
+                        }
+
+                        $notification->send();
                         $this->loadData();
                     } else {
                         $this->handleApiError($response);

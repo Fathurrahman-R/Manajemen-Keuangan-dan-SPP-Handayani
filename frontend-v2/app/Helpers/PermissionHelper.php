@@ -84,17 +84,19 @@ class PermissionHelper
 
         try {
             $data = ApiService::cachedGet('/rbac/user-resources', [], (int) config('handayani.cache.rbac_ttl', 60));
-
-            if ($data === null) {
-                \Illuminate\Support\Facades\Log::error('RBAC API failed for /rbac/user-resources');
-                self::$userResources = [];
-            } else {
-                self::$userResources = $data;
-            }
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('RBAC API threw exception: '.$e->getMessage());
-            self::$userResources = [];
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            self::abortBackendUnreachable('/rbac/user-resources', $e->getMessage());
         }
+
+        // Daftar kosong berarti "user memang tidak punya resource"; null berarti
+        // permintaannya gagal. Dulu keduanya sama-sama jadi array kosong, jadi
+        // backend yang mati tampil sebagai "403 Forbidden" — seolah-olah user
+        // yang tidak berhak, bukan servernya yang tidak bisa dihubungi.
+        if ($data === null) {
+            self::abortBackendUnreachable('/rbac/user-resources', 'endpoint membalas status galat');
+        }
+
+        self::$userResources = $data;
 
         return self::$userResources;
     }
@@ -111,12 +113,46 @@ class PermissionHelper
 
         try {
             $data = ApiService::cachedGet('/rbac/user-groups', [], (int) config('handayani.cache.rbac_ttl', 60));
-            self::$userGroups = $data ?? [];
-        } catch (\Exception $e) {
-            self::$userGroups = [];
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            self::abortBackendUnreachable('/rbac/user-groups', $e->getMessage());
         }
 
+        if ($data === null) {
+            self::abortBackendUnreachable('/rbac/user-groups', 'endpoint membalas status galat');
+        }
+
+        self::$userGroups = $data;
+
         return self::$userGroups;
+    }
+
+    /**
+     * Hentikan request dengan 503 saat API RBAC tidak bisa dijangkau.
+     *
+     * Tanpa data ini tidak ada satu pun keputusan otorisasi yang bisa diambil,
+     * dan menebak "tidak punya akses" menghasilkan diagnosis yang salah bagi
+     * siapa pun yang menemuinya.
+     */
+    protected static function abortBackendUnreachable(string $endpoint, string $alasan): never
+    {
+        // Backend yang menolak token (401) sudah membersihkan sesi lewat listener
+        // di AppServiceProvider. Hilangnya token adalah penanda "sesi berakhir",
+        // bukan "server mati" — arahkan ke login, jangan tampilkan 503.
+        if (! session()->has('data.token')) {
+            // Bukan redirect()->guest(): Livewire menukar binding `redirect`
+            // dengan Redirector miliknya sendiri yang bukan objek Response,
+            // dan middleware CSRF menolaknya dengan 500.
+            session()->put('url.intended', url()->current());
+
+            abort(new \Illuminate\Http\RedirectResponse('/login'));
+        }
+
+        \Illuminate\Support\Facades\Log::error('RBAC API tidak dapat dihubungi', [
+            'endpoint' => $endpoint,
+            'alasan' => $alasan,
+        ]);
+
+        abort(503, 'Server aplikasi sedang tidak dapat dihubungi. Coba beberapa saat lagi atau hubungi administrator.');
     }
 
     /**

@@ -7,8 +7,15 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PublicPageController::class, 'index'])->name('public.index');
 
-Route::get('/forgot-password', ForgotPassword::class)->name('password.request');
-Route::get('/reset-password', ResetPassword::class)->name('password.reset');
+// Kedua halaman ini hidup di luar route group panel Filament, jadi panelnya tidak
+// pernah di-boot: warna merek tidak terdaftar dan Filament jatuh ke palet
+// bawaannya (amber) sementara halaman login memakai biru dari
+// AdminPanelProvider::resolvePanelColors(). Middleware `panel` mem-boot panel
+// default (id-nya memang string kosong) supaya seluruh alur auth sewarna.
+Route::middleware('panel:')->group(function (): void {
+    Route::get('/forgot-password', ForgotPassword::class)->name('password.request');
+    Route::get('/reset-password', ResetPassword::class)->name('password.reset');
+});
 
 // Fallback for framework-level auth redirects (e.g. AuthenticateSession logout
 // after a password reset mid-session) that resolve the generic 'login' route name.
@@ -21,6 +28,14 @@ Route::get('/reset-password', ResetPassword::class)->name('password.reset');
 Route::get('/login-redirect', function () {
     return redirect()->to(\Filament\Facades\Filament::getDefaultPanel()->getLoginUrl());
 })->name('login');
+
+// Panel portal tidak punya halaman Dashboard, jadi Filament mengarahkan akar
+// '/portal' ke '/portal/dashboard-page' yang tidak ada dan berakhir 404.
+// Arahkan langsung ke beranda portal.
+Route::redirect(
+    '/'.config('handayani.portal.path', 'portal'),
+    '/'.config('handayani.portal.path', 'portal').'/beranda'
+);
 
 Route::get('/logout', function () {
     try {

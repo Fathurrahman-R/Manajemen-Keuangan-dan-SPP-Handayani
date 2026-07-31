@@ -39,7 +39,6 @@ class ReminderJatuhTempoNotification extends Notification implements ShouldQueue
                 'siswa' => $this->siswa,
                 'tagihan' => $this->tagihan,
                 'daysBefore' => $this->daysBefore,
-                'unsubscribeUrl' => '#unsubscribe',
             ]);
     }
 

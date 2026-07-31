@@ -19,6 +19,21 @@ wait_for_backend_http() {
     echo "[$SERVICE_NAME] backend is up"
 }
 
+# public/ dan storage/ sama-sama bind mount dari host, jadi symlink public/storage
+# yang dibuat `php artisan storage:link` di host menyimpan path ABSOLUT host
+# (mis. /mnt/host/d/... atau D:\...) yang tidak ada di dalam container — dan
+# sebaliknya. Akibatnya file hasil upload (logo sekolah) tidak pernah terlayani:
+# request /storage/... jatuh ke index.php dan balik 403. Symlink RELATIF resolve
+# benar di kedua sisi, jadi dipasang ulang di sini kalau link-nya hilang/rusak.
+# `[ -e ]` bernilai false untuk symlink yang targetnya tidak ada (broken link).
+ensure_storage_link() {
+    if [ ! -e public/storage ]; then
+        echo "[$SERVICE_NAME] public/storage hilang atau rusak, membuat ulang symlink relatif..."
+        rm -f public/storage
+        ln -s ../storage/app/public public/storage
+    fi
+}
+
 bootstrap_env_file() {
     if [ ! -f .env ]; then
         echo "[$SERVICE_NAME] .env missing, copying from .env.example..."
@@ -56,6 +71,13 @@ composer_install_locked() {
 # of every test — this happened once already and wiped the dev DB. config:cache is
 # a production-deploy optimization; OPcache's revalidate_freq tuning (php.ini)
 # already covers the actual dev perf win, so it's not worth the risk here.
+#
+# Same reasoning killed view:cache/filament:cache-components (frontend only, gated
+# on AdminPanelProvider existing). Compiled views bypass Blade's own mtime check,
+# so editing a .blade.php file did nothing until someone ran `view:clear` by hand —
+# looked exactly like a broken Vite/HMR setup even though Vite was working fine.
+# view:clear instead just wipes any stale compiled views this container's mount
+# might already have from a previous prod-like run.
 optimize_cache_locked() {
     echo "[$SERVICE_NAME] caching routes (waiting for lock if another service is caching)..."
     (
@@ -63,8 +85,7 @@ optimize_cache_locked() {
         php artisan optimize:clear
         php artisan route:cache
         if [ -f app/Providers/Filament/AdminPanelProvider.php ]; then
-            php artisan view:cache
-            php artisan filament:cache-components
+            php artisan view:clear
         fi
     ) 200>.composer-install.lock
 }

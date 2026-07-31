@@ -19,6 +19,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class TagihanController extends Controller
@@ -256,26 +257,61 @@ class TagihanController extends Controller
                 'errors' => ['message' => ['siswa tidak ditemukan.']],
             ], 404));
         }
-        $created = collect();
-        foreach ($siswa as $s) {
-            $t = Tagihan::create([
-                'kode_tagihan' => GenerateKodeTagihan::generate(),
-                'jenis_tagihan_id' => $data['jenis_tagihan_id'],
-                'nis' => $s->nis,
-                'branch_id' => $user->branch_id,
-                'tahun_ajaran_id' => $tahunAjaranId,
-            ]);
-            $freshTagihan = $t->fresh([
-                'siswa' => fn ($q) => $q->select(['id', 'nis', 'nama', 'jenjang', 'kelas_id', 'kategori_id']),
-                'jenis_tagihan' => fn ($q) => $q->select(['id', 'nama', 'jatuh_tempo', 'jumlah']),
-            ]);
-            $created->push($freshTagihan);
+        // Siswa yang sudah punya tagihan jenis ini di periode yang sama harus
+        // dilewati. Jalur import sudah menolak duplikat NIS+jenis tagihan;
+        // tanpa pengecekan yang sama di sini, pembuatan massal lewat form bisa
+        // menagih siswa dua kali untuk hal yang sama.
+        $sudahPunya = Tagihan::query()
+            ->where('branch_id', $user->branch_id)
+            ->where('tahun_ajaran_id', $tahunAjaranId)
+            ->where('jenis_tagihan_id', $data['jenis_tagihan_id'])
+            ->whereIn('nis', $siswa->pluck('nis'))
+            ->pluck('nis')
+            ->all();
 
-            // Dispatch email notification event
-            TagihanCreated::dispatch(collect([$freshTagihan]), $s);
+        $siswaBaru = $siswa->reject(fn ($s) => in_array($s->nis, $sudahPunya, true))->values();
+
+        if ($siswaBaru->isEmpty()) {
+            throw new HttpResponseException(response([
+                'errors' => ['message' => ['Semua siswa terpilih sudah memiliki tagihan jenis ini pada periode tersebut.']],
+            ], 422));
         }
 
-        return TagihanResource::collection($created)->response()->setStatusCode(201);
+        // Dibungkus transaksi supaya penguncian baris di GenerateKodeTagihan
+        // berlaku — dua admin yang menyimpan bersamaan tidak bisa mendapat
+        // kode tagihan yang sama.
+        $created = DB::transaction(function () use ($siswaBaru, $data, $user, $tahunAjaranId) {
+            $created = collect();
+
+            foreach ($siswaBaru as $s) {
+                $t = Tagihan::create([
+                    'kode_tagihan' => GenerateKodeTagihan::generate(),
+                    'jenis_tagihan_id' => $data['jenis_tagihan_id'],
+                    'nis' => $s->nis,
+                    'branch_id' => $user->branch_id,
+                    'tahun_ajaran_id' => $tahunAjaranId,
+                ]);
+                $freshTagihan = $t->fresh([
+                    'siswa' => fn ($q) => $q->select(['id', 'nis', 'nama', 'jenjang', 'kelas_id', 'kategori_id']),
+                    'jenis_tagihan' => fn ($q) => $q->select(['id', 'nama', 'jatuh_tempo', 'jumlah']),
+                ]);
+                $created->push($freshTagihan);
+
+                // Dispatch email notification event
+                TagihanCreated::dispatch(collect([$freshTagihan]), $s);
+            }
+
+            return $created;
+        });
+
+        return TagihanResource::collection($created)
+            ->additional(['meta' => [
+                'created_count' => $created->count(),
+                'skipped_count' => count($sudahPunya),
+                'skipped_nis' => $sudahPunya,
+            ]])
+            ->response()
+            ->setStatusCode(201);
     }
 
     #[HeaderParameter('Authorization')]

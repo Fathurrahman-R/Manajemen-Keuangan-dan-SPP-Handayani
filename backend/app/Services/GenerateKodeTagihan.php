@@ -7,38 +7,37 @@ use Illuminate\Support\Facades\DB;
 class GenerateKodeTagihan
 {
     /**
-     * Create a new class instance.
+     * Nomor urut kode tagihan berikutnya untuk bulan berjalan.
+     *
+     * Implementasi lama memakai `LOCK TABLES` + `SET autocommit = 0`. Di
+     * MySQL/MariaDB keduanya memicu implicit commit, sehingga transaksi yang
+     * sedang membungkus pemanggilan ini langsung hilang — import tagihan
+     * gagal dengan "There is no active transaction" dan baris yang sudah
+     * sempat masuk tidak bisa di-rollback lagi.
+     *
+     * Gantinya memakai `lockForUpdate()` saat berada di dalam transaksi:
+     * mengunci baris yang dibaca tanpa menyentuh transaksi pemanggil.
+     * `kode_tagihan` sendiri adalah primary key, jadi tabrakan tetap
+     * ditolak database sebagai lapisan terakhir.
      */
-    public static function generate()
+    public static function generate(): string
     {
-        $year = now()->format('y');
-        $month = now()->format('m');
-        $prefix = "TAG-$year$month";
+        $prefix = 'TAG-'.now()->format('ym');
 
-        // LOCK tabel (harus diluar transaction)
-        DB::statement('SET autocommit = 0;');
-        DB::statement('LOCK TABLES tagihans WRITE;');
-
-        $latest = DB::table('tagihans')
+        $query = DB::table('tagihans')
             ->where('kode_tagihan', 'like', "$prefix-%")
-            ->orderBy('kode_tagihan', 'desc')
-            ->first();
+            ->orderBy('kode_tagihan', 'desc');
 
-        if (! $latest) {
-            $increment = 1;
-        } else {
-            $lastNumber = intval(substr($latest->kode_tagihan, -4));
-            $increment = $lastNumber + 1;
+        if (DB::transactionLevel() > 0) {
+            $query->lockForUpdate();
         }
 
-        $increment = str_pad($increment, 4, '0', STR_PAD_LEFT);
+        $latest = $query->first();
 
-        $kode = "$prefix-$increment";
+        $increment = $latest
+            ? intval(substr($latest->kode_tagihan, -4)) + 1
+            : 1;
 
-        // UNLOCK dan enable autocommit kembali
-        DB::statement('UNLOCK TABLES;');
-        DB::statement('SET autocommit = 1;');
-
-        return $kode;
+        return $prefix.'-'.str_pad((string) $increment, 4, '0', STR_PAD_LEFT);
     }
 }

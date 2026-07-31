@@ -7,43 +7,59 @@
 > **Kenapa berubah dari diagram proposal:** proposal cuma gambar RBAC "Spatie" polos dan auth generik. Implementasi nyata pakai Sanctum (bukan token custom), tambah lapisan `resource_key` dinamis (2 tabel terpisah, lihat `document/diagram-3.5-proses-bisnis.md` Gambar 3.5.5), Redis cache-aside buat dashboard, dan seluruh stack sudah di-Dockerisasi (9 service) — semua ini **tambahan di luar rencana proposal** menurut tabel komparasi, jadi diagram lama gak lagi merepresentasikan sistem yang sebenarnya jalan.
 
 ```mermaid
-architecture-beta
-    group client(cloud)[Client]
-    group frontend(cloud)[Frontend]
-    group backend(cloud)[Backend]
-    group external(cloud)[External Services]
+flowchart LR
+    classDef grp fill:#f8fafc,stroke:#94a3b8,stroke-width:1px,color:#0f172a
+    classDef comp fill:#e0f2fe,stroke:#0284c7,stroke-width:1.5px,color:#0c4a6e
+    classDef store fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+    classDef ext fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
 
-    service browser(internet)[Browser Admin Portal Siswa Publik] in client
+    subgraph CLIENT["CLIENT LAYER"]
+        direction TB
+        browser["Browser Pengguna<br/>Kepala Sekolah - Bendahara<br/>Siswa / Wali Siswa"]
+    end
 
-    service webapp(server)[Laravel Filament 4 plus Livewire 3] in frontend
+    subgraph FRONTEND["FRONTEND APPLICATION"]
+        direction TB
+        webapp["Laravel Filament 4 + Livewire 3<br/>Admin Panel - Portal Siswa<br/>Landing Page Publik"]
+    end
 
-    service api(server)[Laravel 12 REST API plus Sanctum] in backend
-    service db(database)[MySQL] in backend
-    service cache(disk)[Redis cache aside] in backend
-    service queue(server)[Queue Worker notifications default] in backend
-    service scheduler(server)[Scheduler cron loop] in backend
+    subgraph BACKEND["BACKEND API - LARAVEL 12"]
+        direction TB
+        auth["Autentikasi Token<br/>Laravel Sanctum"]
+        rbac["RBAC<br/>Spatie Laravel Permission<br/>+ Pemetaan resource key dinamis"]
+        api["REST API<br/>Logika Bisnis Sistem"]
+        queue["Queue Worker<br/>Proses Latar Belakang"]
+        sched["Scheduler<br/>Tugas Berkala"]
+        db[("Database<br/>MySQL")]
+        redis[("Redis<br/>Penyimpanan Sementara")]
+    end
 
-    service midtrans(internet)[Midtrans Snap plus Webhook] in external
-    service mail(internet)[SMTP Google Mailpit dev] in external
+    subgraph EXTERNAL["EXTERNAL LAYER"]
+        direction TB
+        midtrans["Midtrans<br/>Payment Gateway"]
+        smtp["SMTP Google / Mailpit<br/>Notification Service"]
+    end
 
-    junction jcf
-    junction jfb
-    junction jbe
+    browser -- "HTTPS" --> webapp
+    webapp -- "REST API + token" --> auth
+    auth -- "token valid" --> rbac
+    rbac -- "izin akses sesuai" --> api
+    api -- "query data" --> db
+    api -- "cache-aside" --> redis
+    api -- "titip pekerjaan" --> queue
+    sched -- "picu tugas terjadwal" --> api
+    api <-- "permintaan pembayaran / webhook notifikasi" --> midtrans
+    queue -- "kirim surel" --> smtp
 
-    browser:R -- L:jcf
-    jcf:R -- L:webapp
-    webapp:R -- L:jfb
-    jfb:R -- L:api
-    api:T -- B:queue
-    queue:T -- B:scheduler
-    api:B -- T:db
-    db:B -- T:cache
-    api:R -- L:jbe
-    jbe:R -- L:mail
-    mail:B -- T:midtrans
+    class browser,webapp,auth,rbac,api,queue,sched comp
+    class db,redis store
+    class midtrans,smtp ext
+    class CLIENT,FRONTEND,BACKEND,EXTERNAL grp
 ```
 
-**Legenda ikon** (bawaan mermaid `architecture-beta`, bukan makna literal): `internet` = klien HTTP/layanan luar, `server` = proses aplikasi (bukan mesin fisik), `database` = MySQL, `disk` = penyimpanan in-memory Redis.
+**Catatan bentuk diagram:** dipakai `flowchart LR` (bukan `architecture-beta`) karena versi `architecture-beta` menghasilkan label yang saling tumpang tindih begitu jumlah komponen di grup Backend bertambah jadi tujuh. Warna kotak: biru = komponen proses aplikasi, kuning = penyimpanan data, hijau = layanan pihak ketiga. Urutan komponen di grup Backend sengaja disusun mengikuti urutan pemeriksaan tiap permintaan masuk: Sanctum -> RBAC -> REST API, biar diagram terbaca sejalan dengan penjelasan komponen di sub-bab 3.2 laporan.
+
+Render: `docker run --rm -v "$(pwd -W):/data" minlag/mermaid-cli:latest -i /data/sistem.mmd -o /data/export/sistem.png -b white -s 3` (dijalankan dari `document/aset-laporan/mermaid-architecture/`).
 
 ---
 

@@ -23,9 +23,19 @@ class DashboardKasStatsWidget extends BaseWidget
             : ['all_periods' => true];
 
         try {
-            $data = ApiService::dashboardOverviewSlice('kas_summary', $params) ?? [];
+            $data = ApiService::dashboardOverviewSlice('kas_summary', $params);
         } catch (\Throwable $e) {
-            $data = [];
+            $data = null;
+        }
+
+        // Bedakan gagal memuat dari saldo nol — lihat DashboardStatsWidget.
+        if ($data === null) {
+            return collect(['Pemasukan Periode', 'Pengeluaran Periode', 'Saldo Periode'])
+                ->map(fn (string $label): Stat => Stat::make($label, 'Tidak tersedia')
+                    ->description('Data gagal dimuat dari server')
+                    ->descriptionIcon('heroicon-m-exclamation-triangle')
+                    ->color('danger')
+                )->all();
         }
 
         $pemasukan = (int) ($data['total_pemasukan'] ?? 0);

@@ -62,39 +62,25 @@ class DashboardStatsWidget extends BaseWidget
         ];
     }
 
+    /**
+     * Dipakai saat panggilan API gagal. Sengaja TIDAK menampilkan angka 0:
+     * nilai nol adalah data yang valid, sedangkan ini kondisi "data tidak
+     * diketahui" — keduanya tidak boleh terlihat sama.
+     */
     protected function fallbackStats(): array
     {
-        return [
-            Stat::make('Total Tagihan', 'Rp 0')
-                ->description('Seluruh tagihan periode ini')
-                ->descriptionIcon('heroicon-m-document-text')
-                ->color('primary'),
-
-            Stat::make('Total Terbayar', 'Rp 0')
-                ->description('Sudah dibayar')
-                ->descriptionIcon('heroicon-m-check-circle')
-                ->color('success'),
-
-            Stat::make('Total Tunggakan', 'Rp 0')
-                ->description('Belum dibayar')
-                ->descriptionIcon('heroicon-m-exclamation-triangle')
-                ->color('danger'),
-
-            Stat::make('Siswa Punya Tagihan', '0')
-                ->description('Siswa dengan tagihan di periode ini')
-                ->descriptionIcon('heroicon-m-document-text')
-                ->color('primary'),
-
-            Stat::make('Siswa Menunggak', '0')
-                ->description('Memiliki tunggakan')
-                ->descriptionIcon('heroicon-m-user-minus')
-                ->color('warning'),
-
-            Stat::make('Pelunasan', '0%')
-                ->description('Persentase pelunasan')
-                ->descriptionIcon('heroicon-m-chart-bar')
-                ->color('success'),
-        ];
+        return collect([
+            'Total Tagihan',
+            'Total Terbayar',
+            'Total Tunggakan',
+            'Siswa Punya Tagihan',
+            'Siswa Menunggak',
+            'Pelunasan',
+        ])->map(fn (string $label): Stat => Stat::make($label, 'Tidak tersedia')
+            ->description('Data gagal dimuat dari server')
+            ->descriptionIcon('heroicon-m-exclamation-triangle')
+            ->color('danger')
+        )->all();
     }
 
     public static function canView(): bool

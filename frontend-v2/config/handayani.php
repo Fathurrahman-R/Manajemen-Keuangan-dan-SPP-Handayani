@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Str;
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -15,6 +17,17 @@ return [
     // resolves once `config:cache` is enabled — env() outside config files returns null
     // after caching.
     'api_url' => env('API_URL', 'http://127.0.0.1:8080/api'),
+
+    // Base URL file publik backend (storage/app/public, dilayani lewat symlink
+    // public/storage). Dipakai untuk menampilkan logo sekolah hasil upload.
+    // Diturunkan dari api_url — dulu di-hardcode ke http://127.0.0.1:8080/storage
+    // di halaman Pengaturan sehingga logo tidak pernah tampil begitu backend
+    // diakses lewat tunnel/domain lain. Override lewat BACKEND_STORAGE_URL kalau
+    // file publik dilayani dari host yang berbeda (mis. CDN).
+    'storage_url' => env(
+        'BACKEND_STORAGE_URL',
+        rtrim(Str::beforeLast(env('API_URL', 'http://127.0.0.1:8080/api'), '/api'), '/').'/storage',
+    ),
 
     'features' => [
         // Enable parent/student portal at path '/portal'

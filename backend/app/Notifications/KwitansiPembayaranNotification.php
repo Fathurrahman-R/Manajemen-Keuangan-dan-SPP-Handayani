@@ -37,7 +37,6 @@ class KwitansiPembayaranNotification extends Notification implements ShouldQueue
             ->view('emails.notifications.kwitansi-pembayaran', [
                 'siswa' => $this->siswa,
                 'pembayaran' => $this->pembayaran,
-                'unsubscribeUrl' => '#unsubscribe',
             ]);
 
         try {

@@ -49,7 +49,7 @@ class AuthController extends Controller
 
         if (! $user || ! Hash::check($data['password'], $user->password)) {
             throw new HttpResponseException(response()->json([
-                'errors' => ['message' => ['username or password is wrong']],
+                'errors' => ['message' => ['Username/email atau kata sandi salah.']],
             ], 401));
         }
 

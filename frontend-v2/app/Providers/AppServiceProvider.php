@@ -8,6 +8,7 @@ use Filament\Auth\Http\Responses\Contracts\LoginResponse as LoginResponseContrac
 use Filament\Auth\Http\Responses\Contracts\LogoutResponse as LogoutResponseContract;
 use Filament\Support\Colors\Color;
 use Filament\Support\Facades\FilamentColor;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Client\Events\ResponseReceived;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
@@ -83,6 +84,15 @@ class AppServiceProvider extends ServiceProvider
             session()->flush();
             session()->invalidate();
             session()->regenerateToken();
+
+            // Membersihkan sesi saja tidak cukup: middleware auth sudah lewat
+            // untuk request ini, jadi halaman tetap lanjut dirender tanpa
+            // permission dan berakhir sebagai layar "403 Forbidden" telanjang.
+            // Melempar AuthenticationException membuat Laravel mengarahkan
+            // pengguna ke halaman login, yang memang tindakan yang benar.
+            if (! app()->runningInConsole()) {
+                throw new AuthenticationException;
+            }
         });
     }
 }

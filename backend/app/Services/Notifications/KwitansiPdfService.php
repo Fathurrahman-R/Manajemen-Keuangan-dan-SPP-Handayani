@@ -36,7 +36,15 @@ class KwitansiPdfService
         $logo = null;
         if ($logoRelative && \Illuminate\Support\Facades\Storage::disk('public')->exists($logoRelative)) {
             // Absolute filesystem path DomPDF can read
-            $logo = \Illuminate\Support\Facades\Storage::disk('public')->path($logoRelative);
+            $path = \Illuminate\Support\Facades\Storage::disk('public')->path($logoRelative);
+
+            if ($this->isRenderableImage($path)) {
+                $logo = $path;
+            } else {
+                \Illuminate\Support\Facades\Log::warning('Logo dilewati di kwitansi: format tidak didukung GD terpasang', [
+                    'path' => $logoRelative,
+                ]);
+            }
         }
         if (! $logo) {
             $logo = public_path('favicon.ico');
@@ -57,6 +65,25 @@ class KwitansiPdfService
             ->setPaper('A6', 'landscape');
 
         return $pdf->output();
+    }
+
+    /**
+     * Apakah GD yang terpasang benar-benar bisa membaca format gambar ini.
+     *
+     * DomPDF melempar exception (bukan sekadar melewati gambar) kalau formatnya
+     * tidak didukung, dan itu menggagalkan seluruh kwitansi — bukan cuma logonya.
+     */
+    private function isRenderableImage(string $path): bool
+    {
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+        return match ($extension) {
+            'webp' => function_exists('imagecreatefromwebp'),
+            'jpg', 'jpeg' => function_exists('imagecreatefromjpeg'),
+            'png' => function_exists('imagecreatefrompng'),
+            'gif' => function_exists('imagecreatefromgif'),
+            default => true,
+        };
     }
 
     /**

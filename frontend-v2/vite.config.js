@@ -23,6 +23,13 @@ export default defineConfig({
         hmr: {
             host: 'localhost',
         },
+        // Bind mount Windows -> Docker (WSL2) tidak meneruskan native filesystem
+        // events ke chokidar, jadi watcher default diam saja terhadap perubahan
+        // file. Polling paksa Vite cek mtime tiap interval, jadi tetap kedeteksi.
+        watch: {
+            usePolling: true,
+            interval: 300,
+        },
     },
     build: {
         cssCodeSplit: true,
