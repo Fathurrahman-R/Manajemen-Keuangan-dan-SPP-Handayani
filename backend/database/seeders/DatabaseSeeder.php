@@ -15,14 +15,14 @@ class DatabaseSeeder extends Seeder
             AppSettingSeeder::class,
             KategoriSeeder::class,
             KelasSeeder::class,
-            TahunAjaranSeeder::class,
+            // TahunAjaranSeeder::class,
             NotificationSettingSeeder::class,
-            SiswaSeeder::class,
-            JenisTagihanSeeder::class,
-            TagihanSeeder::class,
-            PembayaranSeeder::class,
+            // SiswaSeeder::class,
+            // JenisTagihanSeeder::class,
+            // TagihanSeeder::class,
+            // PembayaranSeeder::class,
             //            PengeluaranSeeder::class,
-            PengeluaranRequestSeeder::class,
+            // PengeluaranRequestSeeder::class,
         ]);
     }
 }

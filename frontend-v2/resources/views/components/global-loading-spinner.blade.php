@@ -19,8 +19,17 @@
     have a local wire:loading indicator don't need this — see CLAUDE.md).
 --}}
 @if($static)
-    <div class="flex min-h-[50vh] w-full items-center justify-center" role="status" aria-live="polite" aria-label="{{ $message }}">
-        <x-spinner-icon :message="$message" />
+    {{--
+        This root element is NOT removed when Livewire swaps in the real
+        #[Lazy] component — Livewire's isolated lazy loading only replaces
+        this element's children, keeping the element itself as a permanent
+        wrapper. It must stay layout-neutral (no flex/centering) or the real
+        component collapses to shrink-to-fit width as a flex child.
+    --}}
+    <div class="w-full" role="status" aria-live="polite" aria-label="{{ $message }}">
+        <div class="flex min-h-[50vh] w-full items-center justify-center">
+            <x-spinner-icon :message="$message" />
+        </div>
     </div>
 @else
     <div

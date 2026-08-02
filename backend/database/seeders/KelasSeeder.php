@@ -20,11 +20,12 @@ class KelasSeeder extends Seeder
                 ['nama' => 'Kelas 6', 'level' => 6],
             ],
             'TK' => [
-                ['nama' => 'TK A', 'level' => 1],
-                ['nama' => 'TK B', 'level' => 2],
+                ['nama' => 'MATAHARI', 'level' => 1],
+                ['nama' => 'BINTANG', 'level' => 1],
+                ['nama' => 'BULAN', 'level' => 1],
             ],
             'KB' => [
-                ['nama' => 'KB', 'level' => 1],
+                ['nama' => 'PAUD', 'level' => 1],
             ],
         ];
 

@@ -57,7 +57,7 @@ Controllernya sengaja tidak cek toggle itu supaya transaksi yang terlanjur jalan
 Atur lewat `MIDTRANS_EXPIRY_MINUTES` (default 1440). Kalau diturunkan buat nguji skenario expired, balikin lagi setelahnya.
 
 **`finish_url` ngikut `FRONTEND_URL`.**
-Habis selesai/batal di Snap, siswa dilempar ke `FRONTEND_URL` + `/portal/beranda`. Set `FRONTEND_URL` ke domain asli waktu deploy. `MIDTRANS_FINISH_URL` cuma perlu diisi kalau tujuannya beda.
+Habis selesai/batal di Snap, siswa dilempar ke `FRONTEND_URL` + `/portal/status-pembayaran`. Set `FRONTEND_URL` ke domain asli waktu deploy. `MIDTRANS_FINISH_URL` cuma perlu diisi kalau tujuannya beda.
 
 **Pakai akun sandbox sendiri.**
 Jangan minta atau pakai `MIDTRANS_SERVER_KEY` orang lain, itu setara password merchant. Cara daftar: [Setup Midtrans](midtrans.md).

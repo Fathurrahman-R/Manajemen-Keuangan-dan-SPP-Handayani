@@ -418,10 +418,10 @@ class MidtransInitiationService
     }
 
     /**
-     * Resolve Snap callback URLs so siswa returns to the portal beranda after
-     * finishing, cancelling, or hitting an error in Snap. Reads
-     * `MIDTRANS_FINISH_URL` from `.env` and falls back to the configured
-     * frontend `APP_URL` + portal path.
+     * Resolve Snap callback URLs so siswa returns to the portal status
+     * pembayaran page after finishing, cancelling, or hitting an error in
+     * Snap. Reads `MIDTRANS_FINISH_URL` from `.env` and falls back to the
+     * configured frontend `APP_URL` + portal path.
      */
     private function resolveSnapCallbacks(): ?array
     {

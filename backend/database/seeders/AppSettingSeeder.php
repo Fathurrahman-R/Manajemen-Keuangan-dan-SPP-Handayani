@@ -19,8 +19,8 @@ class AppSettingSeeder extends Seeder
                     'alamat' => 'Jl. Pendidikan No. '.rand(1, 100).', '.$branch->location,
                     'email' => 'handayani.'.strtolower(str_replace(' ', '', $branch->location)).'@example.com',
                     'telepon' => '0761-'.rand(100000, 999999),
-                    'kepala_sekolah' => fake()->name(),
-                    'bendahara' => fake()->name(),
+                    'kepala_sekolah' => 'Kepala Sekolah '.$branch->location,
+                    'bendahara' => 'Bendahara '.$branch->location,
                     'kode_pos' => (string) rand(28000, 29999),
                     'logo' => 'logo-handayani.png',
                 ]

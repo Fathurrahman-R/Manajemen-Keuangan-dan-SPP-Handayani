@@ -118,13 +118,14 @@ return [
     |--------------------------------------------------------------------------
     |
     | URL yang dibuka di browser siswa setelah selesai / batal / error di
-    | halaman Snap Midtrans. Default: beranda Portal di frontend-v2, mengikuti
-    | `app.frontend_url` (FRONTEND_URL) supaya tidak ikut menunjuk localhost
-    | begitu aplikasi dideploy. Override penuh lewat MIDTRANS_FINISH_URL.
+    | halaman Snap Midtrans. Default: halaman Status Pembayaran Portal di
+    | frontend-v2, mengikuti `app.frontend_url` (FRONTEND_URL) supaya tidak
+    | ikut menunjuk localhost begitu aplikasi dideploy. Override penuh lewat
+    | MIDTRANS_FINISH_URL.
     |
     */
 
-    'finish_url' => env('MIDTRANS_FINISH_URL', rtrim((string) env('FRONTEND_URL', 'http://127.0.0.1:8000'), '/').'/portal/beranda'),
+    'finish_url' => env('MIDTRANS_FINISH_URL', rtrim((string) env('FRONTEND_URL', 'http://127.0.0.1:8000'), '/').'/portal/status-pembayaran'),
 
     'log_retention_days' => (int) env('MIDTRANS_LOG_RETENTION_DAYS', 180),
 

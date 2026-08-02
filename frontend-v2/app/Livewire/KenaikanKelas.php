@@ -46,6 +46,16 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
 
     public array $targetJenjangKelasList = [];
 
+    /**
+     * Kandidat kelas level berikutnya untuk kelas terpilih — hanya terisi
+     * kalau ada lebih dari satu kelas sejajar di level itu (mis. TK level 1
+     * = MATAHARI/BINTANG/BULAN). Backend menolak menebak salah satunya,
+     * jadi admin harus pilih via ambiguousTargetKelasId.
+     */
+    public array $nextLevelCandidates = [];
+
+    public ?int $ambiguousTargetKelasId = null;
+
     public bool $processing = false;
 
     public array $history = [];
@@ -71,7 +81,7 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
             ->icon('heroicon-o-check-circle')
             ->color('primary')
             ->visible(fn (): bool => in_array('process-kenaikan-kelas', session()->get('data.permissions', [])))
-            ->disabled(fn () => $this->processing || count($this->students) === 0 || ! $this->selectedTargetPeriodId)
+            ->disabled(fn () => $this->processing || count($this->students) === 0 || ! $this->selectedTargetPeriodId || $this->hasUnresolvedAmbiguousTarget())
             ->requiresConfirmation()
             ->modalHeading('Konfirmasi Proses Kenaikan Kelas')
             ->modalDescription(fn () => 'Apakah Anda yakin ingin memproses kenaikan kelas untuk '.array_sum($this->summary).' siswa? Tindakan ini akan membuat perubahan pada data siswa.')
@@ -263,12 +273,15 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
             $this->studentTargetKelas = [];
             $this->isKelasTertinggi = false;
             $this->targetJenjangKelasList = [];
+            $this->nextLevelCandidates = [];
+            $this->ambiguousTargetKelasId = null;
             $this->computeSummary();
 
             return;
         }
 
         $this->checkIsKelasTertinggi();
+        $this->computeNextLevelCandidates();
 
         if ($this->isKelasTertinggi) {
             $this->loadTargetJenjangKelas();
@@ -410,6 +423,74 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
     }
 
     /**
+     * Compute the next-level kelas candidates for the selected kelas.
+     *
+     * Level tidak lagi unik per jenjang+branch, jadi bisa ada beberapa kelas
+     * sejajar di level yang sama. Kalau level berikutnya punya lebih dari
+     * satu kandidat, isi nextLevelCandidates supaya UI menampilkan dropdown
+     * pilih manual — backend menolak menebak salah satunya.
+     */
+    protected function computeNextLevelCandidates(): void
+    {
+        $this->nextLevelCandidates = [];
+        $this->ambiguousTargetKelasId = null;
+
+        if (! $this->selectedKelasId) {
+            return;
+        }
+
+        $selectedKelas = null;
+        foreach ($this->kelasList as $kelas) {
+            if ($kelas['id'] == $this->selectedKelasId) {
+                $selectedKelas = $kelas;
+                break;
+            }
+        }
+
+        if (! $selectedKelas || ! isset($selectedKelas['level'])) {
+            return;
+        }
+
+        $higherLevelKelas = array_values(array_filter(
+            $this->kelasList,
+            fn ($kelas) => $kelas['id'] != $this->selectedKelasId
+                && isset($kelas['level'])
+                && $kelas['level'] > $selectedKelas['level']
+        ));
+
+        if (empty($higherLevelKelas)) {
+            return;
+        }
+
+        $minLevel = min(array_column($higherLevelKelas, 'level'));
+        $candidates = array_values(array_filter(
+            $higherLevelKelas,
+            fn ($kelas) => $kelas['level'] === $minLevel
+        ));
+
+        if (count($candidates) > 1) {
+            $this->nextLevelCandidates = $candidates;
+        }
+    }
+
+    /**
+     * True kalau ada siswa ditandai naik_kelas tapi kelas tujuan level
+     * berikutnya masih ambigu dan belum dipilih manual.
+     */
+    public function hasUnresolvedAmbiguousTarget(): bool
+    {
+        if (count($this->nextLevelCandidates) <= 1) {
+            return false;
+        }
+
+        if ($this->ambiguousTargetKelasId) {
+            return false;
+        }
+
+        return in_array('naik_kelas', $this->studentActions, true);
+    }
+
+    /**
      * Get available actions based on whether the kelas is tertinggi.
      */
     public function getAvailableActions(): array
@@ -494,6 +575,8 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
         $this->studentTargetKelas = [];
         $this->isKelasTertinggi = false;
         $this->targetJenjangKelasList = [];
+        $this->nextLevelCandidates = [];
+        $this->ambiguousTargetKelasId = null;
         $this->computeSummary();
         $this->loadKelasList();
     }
@@ -509,6 +592,8 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
         $this->studentTargetKelas = [];
         $this->isKelasTertinggi = false;
         $this->targetJenjangKelasList = [];
+        $this->nextLevelCandidates = [];
+        $this->ambiguousTargetKelasId = null;
         $this->computeSummary();
         $this->loadKelasList();
     }
@@ -634,22 +719,32 @@ class KenaikanKelas extends Component implements HasActions, HasSchemas, HasTabl
 
             // Process naik_kelas
             if (! empty($grouped['naik_kelas'])) {
-                try {
-                    $response = ApiService::client()->post('/kenaikan-kelas/bulk-promotion', [
-                        'kelas_id' => $this->selectedKelasId,
-                        'tahun_ajaran_id' => $this->selectedTargetPeriodId,
-                        // Wajib dikirim: tanpa daftar ini backend menaikkan semua
-                        // siswa di kelas, termasuk yang dipilih tinggal kelas/lulus.
-                        'siswa_ids' => $grouped['naik_kelas'],
-                    ]);
+                if ($this->hasUnresolvedAmbiguousTarget()) {
+                    $errors[] = 'Naik Kelas: Ada lebih dari satu kelas di level berikutnya, pilih kelas tujuan terlebih dahulu.';
+                } else {
+                    try {
+                        $payload = [
+                            'kelas_id' => $this->selectedKelasId,
+                            'tahun_ajaran_id' => $this->selectedTargetPeriodId,
+                            // Wajib dikirim: tanpa daftar ini backend menaikkan semua
+                            // siswa di kelas, termasuk yang dipilih tinggal kelas/lulus.
+                            'siswa_ids' => $grouped['naik_kelas'],
+                        ];
 
-                    if ($response->ok()) {
-                        $results['naik_kelas'] = $response->json()['data'] ?? [];
-                    } else {
-                        $errors[] = $this->extractErrorMessage($response, 'Naik Kelas');
+                        if ($this->ambiguousTargetKelasId) {
+                            $payload['target_kelas_id'] = $this->ambiguousTargetKelasId;
+                        }
+
+                        $response = ApiService::client()->post('/kenaikan-kelas/bulk-promotion', $payload);
+
+                        if ($response->ok()) {
+                            $results['naik_kelas'] = $response->json()['data'] ?? [];
+                        } else {
+                            $errors[] = $this->extractErrorMessage($response, 'Naik Kelas');
+                        }
+                    } catch (\Throwable $e) {
+                        $errors[] = 'Naik Kelas: Gagal menghubungi server.';
                     }
-                } catch (\Throwable $e) {
-                    $errors[] = 'Naik Kelas: Gagal menghubungi server.';
                 }
             }
 
