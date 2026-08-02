@@ -1,24 +1,25 @@
 %%{
     init: {
+        'theme': 'forest',
         'layout': 'elk',
         'themeVariables': {'fontSize': '32px'},
         'themeCSS': '.edgeLabel, .edgeLabel p { font-size: 32px !important; }'
     }
 }%%
 erDiagram
-    direction LR
+    direction RL
     PERMISSIONS {
         bigint id PK
-        string name UK "unique bersama guard_name"
+        string name UK
         string guard_name
-        string group "nullable"
-        string audience "nullable"
-        string label "nullable"
+        string group
+        string audience
+        string label
     }
     ROLES {
         bigint id PK
-        bigint team_foreign_key "opsional"
-        string name UK "unique(name, guard_name)"
+        bigint team_foreign_key
+        string name UK
         string guard_name
     }
     MODEL_HAS_PERMISSIONS {
@@ -37,18 +38,18 @@ erDiagram
     }
     PERMISSION_ENDPOINTS {
         bigint id PK
-        bigint permission_id FK "nullable"
+        bigint permission_id FK
         string resource_key UK
-        string group "nullable"
-        text description "nullable"
+        string group
+        text description
         boolean is_active
     }
     PAGE_PERMISSIONS {
         bigint id PK
-        string permission_name "nullable"
+        string permission_name
         string guard_name
-        string group "nullable"
-        text description "nullable"
+        string group
+        text description
         string resource_key UK
         boolean is_active
     }
@@ -58,9 +59,9 @@ erDiagram
         bigint tokenable_id
         string name
         string token UK
-        text abilities "nullable"
-        timestamp expires_at "nullable"
-        timestamp last_used_at "nullable"
+        text abilities
+        timestamp expires_at
+        timestamp last_used_at
     }
     PASSWORD_RESET_TOKENS {
         bigint id PK
@@ -71,13 +72,22 @@ erDiagram
     }
     USERS {
         bigint id PK
+        string username UK
+        string password
+        string name
+        string email UK
+        timestamp email_verified_at
+        bigint branch_id FK
+        bigint siswa_id FK
+        boolean is_active
+        boolean must_change_password
     }
 
-    PERMISSIONS ||--o{ ROLE_HAS_PERMISSIONS : "diberikan ke role via"
-    ROLES ||--o{ ROLE_HAS_PERMISSIONS : "memiliki permission via"
-    PERMISSIONS ||--o{ MODEL_HAS_PERMISSIONS : "diberikan langsung ke user via"
-    ROLES ||--o{ MODEL_HAS_ROLES : "diberikan ke user via"
-    PERMISSIONS ||--o{ PERMISSION_ENDPOINTS : "dipetakan ke endpoint (nullable)"
-    PERMISSIONS ||--o{ PAGE_PERMISSIONS : "dipetakan lewat resource_key"
-    USERS ||--o{ PERSONAL_ACCESS_TOKENS : "punya token Sanctum"
-    USERS ||--o{ PASSWORD_RESET_TOKENS : "minta reset lewat email"
+    PERMISSIONS ||--o{ ROLE_HAS_PERMISSIONS : ""
+    ROLES ||--o{ ROLE_HAS_PERMISSIONS : ""
+    PERMISSIONS ||--o{ MODEL_HAS_PERMISSIONS : ""
+    ROLES ||--o{ MODEL_HAS_ROLES : ""
+    PERMISSIONS ||--o{ PERMISSION_ENDPOINTS : ""
+    PERMISSIONS ||--o{ PAGE_PERMISSIONS : ""
+    USERS ||--o{ PERSONAL_ACCESS_TOKENS : ""
+    USERS ||--o{ PASSWORD_RESET_TOKENS : ""

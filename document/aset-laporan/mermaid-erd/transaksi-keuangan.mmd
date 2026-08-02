@@ -1,5 +1,6 @@
 %%{
     init: {
+        'theme': 'forest',
         'layout': 'elk',
         'themeVariables': {'fontSize': '32px'},
         'themeCSS': '.edgeLabel, .edgeLabel p { font-size: 32px !important; }'
@@ -9,62 +10,111 @@ erDiagram
     direction BT
     BRANCHES {
         bigint id PK
+        string location
     }
     SISWAS {
         bigint id PK
         string nis UK
+        string nisn UK
+        string nama
+        string jenis_kelamin
+        string tempat_lahir
+        string tanggal_lahir
+        string agama
+        string alamat
+        bigint ayah_id FK
+        bigint ibu_id FK
+        bigint wali_id FK
+        enum jenjang
+        bigint kelas_id FK
+        bigint kategori_id FK
+        string asal_sekolah
+        string kelas_diterima
+        string tahun_diterima
+        enum status
+        text keterangan
+        bigint branch_id FK
+        char batch_reference
     }
     JENIS_TAGIHANS {
         bigint id PK
+        string nama
+        date jatuh_tempo
+        decimal jumlah
         bigint branch_id FK
-        bigint tahun_ajaran_id FK "NOT NULL"
-        string lainnya "nama, jatuh_tempo, jumlah"
+        bigint tahun_ajaran_id FK
     }
     TAGIHANS {
         char kode_tagihan PK
         bigint jenis_tagihan_id FK
-        string nis FK "cascade on delete"
+        string nis FK
+        decimal tmp
         bigint branch_id FK
-        bigint tahun_ajaran_id FK "nullable"
-        enum status "Lunas, Belum Lunas, Belum Dibayar"
-        char batch_reference "nullable"
+        bigint tahun_ajaran_id FK
+        enum status
+        char batch_reference
     }
     PEMBAYARANS {
         char kode_pembayaran PK
         char kode_tagihan FK
+        date tanggal
+        enum metode
+        decimal jumlah
+        string pembayar
         bigint branch_id FK
-        string midtrans_order_id UK "nullable"
-        enum metode "offline, online_midtrans"
-        string lainnya "tanggal, jumlah, pembayar"
+        string midtrans_order_id UK
     }
     APP_SETTINGS {
         bigint id PK
+        string nama_sekolah
+        string lokasi
+        string alamat
+        string email
+        string telepon
+        string kepala_sekolah
+        string bendahara
+        string kode_pos
+        string logo
         bigint branch_id FK
-        string lainnya "profil sekolah"
     }
     PENGELUARANS {
         bigint id PK
+        date tanggal
+        text uraian
+        decimal jumlah
         bigint branch_id FK
-        bigint tahun_ajaran_id FK "nullable"
-        bigint pengeluaran_request_id FK "nullable"
-        string lainnya "tanggal, uraian, jumlah"
+        bigint tahun_ajaran_id FK
+        bigint pengeluaran_request_id FK
     }
     TAHUN_AJARANS {
         bigint id PK
+        string nama
+        date tanggal_mulai
+        date tanggal_selesai
+        enum status
+        bigint branch_id FK
     }
     PENGELUARAN_REQUESTS {
         bigint id PK
+        text uraian
+        decimal jumlah
+        date tanggal_kebutuhan
+        string kategori_pengeluaran
+        string lampiran
+        enum status
+        bigint requester_id FK
+        bigint branch_id FK
     }
 
-    BRANCHES ||--o{ JENIS_TAGIHANS : "memiliki"
-    BRANCHES ||--o{ APP_SETTINGS : "memiliki"
-    BRANCHES ||--o{ PEMBAYARANS : "memiliki"
-    BRANCHES ||--o{ PENGELUARANS : "memiliki"
-    BRANCHES ||--o{ TAGIHANS : "memiliki"
-    SISWAS ||--o{ TAGIHANS : "ditagih lewat nis"
-    JENIS_TAGIHANS ||--o{ TAGIHANS : "menentukan jenis"
-    TAGIHANS ||--o{ PEMBAYARANS : "dibayar lewat kode_tagihan"
-    TAHUN_AJARANS ||--o{ JENIS_TAGIHANS : "berlaku pada periode"
-    TAHUN_AJARANS ||--o{ TAGIHANS : "berlaku pada periode"
-    TAHUN_AJARANS ||--o{ PENGELUARANS : "berlaku pada periode"
-    PENGELUARAN_REQUESTS ||--o{ PENGELUARANS : "direalisasikan sebagai"
+    BRANCHES ||--o{ JENIS_TAGIHANS : ""
+    BRANCHES ||--o{ APP_SETTINGS : ""
+    BRANCHES ||--o{ PEMBAYARANS : ""
+    BRANCHES ||--o{ PENGELUARANS : ""
+    BRANCHES ||--o{ TAGIHANS : ""
+    SISWAS ||--o{ TAGIHANS : ""
+    JENIS_TAGIHANS ||--o{ TAGIHANS : ""
+    TAGIHANS ||--o{ PEMBAYARANS : ""
+    TAHUN_AJARANS ||--o{ JENIS_TAGIHANS : ""
+    TAHUN_AJARANS ||--o{ TAGIHANS : ""
+    TAHUN_AJARANS ||--o{ PENGELUARANS : ""
+    PENGELUARAN_REQUESTS ||--o{ PENGELUARANS : ""

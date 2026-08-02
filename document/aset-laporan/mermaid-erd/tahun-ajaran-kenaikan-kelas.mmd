@@ -1,5 +1,6 @@
 %%{
     init: {
+        'theme': 'forest',
         'layout': 'elk',
         'themeVariables': {'fontSize': '32px'},
         'themeCSS': '.edgeLabel, .edgeLabel p { font-size: 32px !important; }'
@@ -9,51 +10,94 @@ erDiagram
     direction BT
     TAHUN_AJARANS {
         bigint id PK
-        string nama "format YYYY/YYYY"
+        string nama
         date tanggal_mulai
         date tanggal_selesai
-        enum status "Aktif, Non-Aktif"
-        bigint branch_id FK "unique(nama, branch_id)"
+        enum status
+        bigint branch_id FK
     }
     SISWA_KELAS {
         bigint id PK
         bigint siswa_id FK
         bigint kelas_id FK
-        bigint tahun_ajaran_id FK "unique(siswa_id, tahun_ajaran_id)"
+        bigint tahun_ajaran_id FK
     }
     BATCH_PROMOSIS {
-        char id PK "uuid"
-        enum batch_type "bulk_promotion, individual_promotion*, kelulusan, tinggal_kelas, pindah_jenjang"
+        char id PK
+        enum batch_type
         bigint source_tahun_ajaran_id FK
         bigint target_tahun_ajaran_id FK
-        bigint kelas_id FK "nullable"
+        bigint kelas_id FK
         bigint processed_by FK
         timestamp processed_at
-        enum status "completed, undone"
+        enum status
         bigint branch_id FK
     }
     BATCH_PROMOSI_DETAILS {
         bigint id PK
         char batch_id FK
         bigint siswa_id FK
-        enum action "naik_kelas, tinggal_kelas, lulus, pindah_jenjang"
+        enum action
         bigint source_kelas_id FK
-        bigint target_kelas_id FK "nullable"
+        bigint target_kelas_id FK
         string previous_status
-        string previous_jenjang "nullable"
+        string previous_jenjang
     }
-    BRANCHES { bigint id PK }
-    SISWAS { bigint id PK }
-    KELAS { bigint id PK }
-    USERS { bigint id PK }
+    BRANCHES {
+        bigint id PK
+        string location
+    }
+    SISWAS {
+        bigint id PK
+        string nis UK
+        string nisn UK
+        string nama
+        string jenis_kelamin
+        string tempat_lahir
+        string tanggal_lahir
+        string agama
+        string alamat
+        bigint ayah_id FK
+        bigint ibu_id FK
+        bigint wali_id FK
+        enum jenjang
+        bigint kelas_id FK
+        bigint kategori_id FK
+        string asal_sekolah
+        string kelas_diterima
+        string tahun_diterima
+        enum status
+        text keterangan
+        bigint branch_id FK
+        char batch_reference
+    }
+    KELAS {
+        bigint id PK
+        enum jenjang
+        string nama
+        bigint branch_id FK
+        int level
+    }
+    USERS {
+        bigint id PK
+        string username UK
+        string password
+        string name
+        string email UK
+        timestamp email_verified_at
+        bigint branch_id FK
+        bigint siswa_id FK
+        boolean is_active
+        boolean must_change_password
+    }
 
-    BRANCHES ||--o{ TAHUN_AJARANS : "memiliki"
-    SISWAS ||--o{ SISWA_KELAS : "punya histori penempatan"
-    KELAS ||--o{ SISWA_KELAS : "ditempati pada periode"
-    TAHUN_AJARANS ||--o{ SISWA_KELAS : "berlaku pada periode"
-    BRANCHES ||--o{ BATCH_PROMOSIS : "memiliki"
-    TAHUN_AJARANS ||--o{ BATCH_PROMOSIS : "jadi source & target"
-    USERS ||--o{ BATCH_PROMOSIS : "memproses (processed_by)"
-    BATCH_PROMOSIS ||--o{ BATCH_PROMOSI_DETAILS : "punya rincian per siswa"
-    SISWAS ||--o{ BATCH_PROMOSI_DETAILS : "dipromosikan pada"
-    KELAS ||--o{ BATCH_PROMOSI_DETAILS : "jadi kelas source & target"
+    BRANCHES ||--o{ TAHUN_AJARANS : ""
+    SISWAS ||--o{ SISWA_KELAS : ""
+    KELAS ||--o{ SISWA_KELAS : ""
+    TAHUN_AJARANS ||--o{ SISWA_KELAS : ""
+    BRANCHES ||--o{ BATCH_PROMOSIS : ""
+    TAHUN_AJARANS ||--o{ BATCH_PROMOSIS : ""
+    USERS ||--o{ BATCH_PROMOSIS : ""
+    BATCH_PROMOSIS ||--o{ BATCH_PROMOSI_DETAILS : ""
+    SISWAS ||--o{ BATCH_PROMOSI_DETAILS : ""
+    KELAS ||--o{ BATCH_PROMOSI_DETAILS : ""

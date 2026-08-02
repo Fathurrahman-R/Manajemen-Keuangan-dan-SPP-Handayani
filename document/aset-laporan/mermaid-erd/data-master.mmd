@@ -1,5 +1,6 @@
 %%{
     init: {
+        'theme': 'forest',
         'layout': 'elk',
         'themeVariables': {'fontSize': '32px'},
         'themeCSS': '.edgeLabel, .edgeLabel p { font-size: 32px !important; }'
@@ -14,22 +15,40 @@ erDiagram
     USERS {
         bigint id PK
         string username UK
-        string email UK "unique per branch"
+        string password
+        string name
+        string email UK
+        timestamp email_verified_at
         bigint branch_id FK
-        bigint siswa_id FK "nullable, akun portal"
-        string lainnya "password, name, is_active, dst"
+        bigint siswa_id FK
+        boolean is_active
+        boolean must_change_password
     }
     AYAH {
         bigint id PK
-        string lainnya "nama, pendidikan, pekerjaan, email"
+        string nama
+        string pendidikan_terakhir
+        string pekerjaan
+        string email
+        timestamp email_verified_at
     }
     IBU {
         bigint id PK
-        string lainnya "nama, pendidikan, pekerjaan, email"
+        string nama
+        string pendidikan_terakhir
+        string pekerjaan
+        string email
+        timestamp email_verified_at
     }
     WALIS {
         bigint id PK
-        string lainnya "nama, pekerjaan, alamat, no_hp, email"
+        string nama
+        string pekerjaan
+        text alamat
+        string no_hp
+        text keterangan
+        string email
+        timestamp email_verified_at
     }
     KATEGORIS {
         bigint id PK
@@ -38,32 +57,43 @@ erDiagram
     }
     KELAS {
         bigint id PK
-        enum jenjang "MI, TK, KB"
+        enum jenjang
+        string nama
         bigint branch_id FK
-        string lainnya "nama, level"
+        int level
     }
     SISWAS {
         bigint id PK
         string nis UK
-        string nisn UK "nullable"
-        bigint ayah_id FK "nullable"
-        bigint ibu_id FK "nullable"
-        bigint wali_id FK "nullable"
-        bigint kelas_id FK "nullable"
-        bigint kategori_id FK "nullable"
+        string nisn UK
+        string nama
+        string jenis_kelamin
+        string tempat_lahir
+        string tanggal_lahir
+        string agama
+        string alamat
+        bigint ayah_id FK
+        bigint ibu_id FK
+        bigint wali_id FK
+        enum jenjang
+        bigint kelas_id FK
+        bigint kategori_id FK
+        string asal_sekolah
+        string kelas_diterima
+        string tahun_diterima
+        enum status
+        text keterangan
         bigint branch_id FK
-        enum jenjang "TK, MI, KB"
-        enum status "Aktif, Lulus, Pindah, Keluar"
-        string lainnya "nama, ttl, agama, alamat, dst"
+        char batch_reference
     }
 
-    BRANCHES ||--o{ USERS : "memiliki"
-    BRANCHES ||--o{ SISWAS : "memiliki"
-    BRANCHES ||--o{ KELAS : "memiliki"
-    BRANCHES ||--o{ KATEGORIS : "memiliki"
-    AYAH ||--o{ SISWAS : "ayah dari"
-    IBU ||--o{ SISWAS : "ibu dari"
-    WALIS ||--o{ SISWAS : "wali dari"
-    KELAS ||--o{ SISWAS : "menampung"
-    KATEGORIS ||--o{ SISWAS : "mengelompokkan"
-    SISWAS ||--o| USERS : "punya akun portal"
+    BRANCHES ||--o{ USERS : ""
+    BRANCHES ||--o{ SISWAS : ""
+    BRANCHES ||--o{ KELAS : ""
+    BRANCHES ||--o{ KATEGORIS : ""
+    AYAH ||--o{ SISWAS : ""
+    IBU ||--o{ SISWAS : ""
+    WALIS ||--o{ SISWAS : ""
+    KELAS ||--o{ SISWAS : ""
+    KATEGORIS ||--o{ SISWAS : ""
+    SISWAS ||--o| USERS : ""
