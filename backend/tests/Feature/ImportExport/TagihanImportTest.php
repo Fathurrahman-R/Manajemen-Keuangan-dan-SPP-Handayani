@@ -192,6 +192,46 @@ class TagihanImportTest extends TestCase
         $this->assertStringContainsString('Duplikat dalam file', $pesan);
     }
 
+    /**
+     * Laporan per-baris (invalidRows) harus menyertakan identitas NIS +
+     * jenis tagihan, bukan cuma nomor baris — requirement dosen penguji.
+     */
+    public function test_validate_reports_invalid_rows_with_identity(): void
+    {
+        $this->siswa('000001');
+        $this->jenisTagihan('Seragam');
+
+        $preview = $this->service->validate(
+            $this->csv("nis,jenis_tagihan\n999999,Seragam\n"),
+            $this->branchId
+        );
+
+        $this->assertCount(1, $preview->invalidRows);
+        $this->assertSame(2, $preview->invalidRows[0]['row']);
+        $this->assertSame(['nis' => '999999', 'jenis_tagihan' => 'Seragam'], $preview->invalidRows[0]['identity']);
+        $this->assertStringContainsString('999999', $preview->summary);
+        $this->assertStringContainsString('1 dari 1 baris tidak valid', $preview->summary);
+    }
+
+    /**
+     * "Periode aktif belum diatur" sekarang jadi error tingkat-berkas
+     * (dilempar dari validate()), bukan diulang di setiap baris seperti
+     * sebelumnya — pesannya jadi jelas dan tidak menutupi error baris lain.
+     */
+    public function test_validate_throws_when_no_active_period(): void
+    {
+        $branchTanpaPeriode = User::factory()->admin()->create(['username' => 'admin-tanpa-periode'])->branch_id;
+        Siswa::factory()->create(['nis' => '000001', 'branch_id' => $branchTanpaPeriode, 'kelas_id' => null, 'kategori_id' => null]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Periode aktif belum diatur untuk cabang ini.');
+
+        $this->service->validate(
+            $this->csv("nis,jenis_tagihan\n000001,Seragam\n"),
+            $branchTanpaPeriode
+        );
+    }
+
     public function test_rollback_removes_imported_tagihan(): void
     {
         $this->siswa('000001');

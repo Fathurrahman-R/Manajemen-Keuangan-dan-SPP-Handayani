@@ -3,6 +3,9 @@
 namespace App\Services\ImportExport;
 
 use App\DTOs\ImportExport\ImportPreviewDTO;
+use App\DTOs\ImportExport\ImportValidationResult;
+use App\Exceptions\ImportHasInvalidRowsException;
+use App\Imports\Normalizers\TagihanRowNormalizer;
 use App\Models\ImportBatch;
 use App\Models\JenisTagihan;
 use App\Models\Siswa;
@@ -33,10 +36,103 @@ class TagihanImportService
     public function validate(UploadedFile $file, int $branchId): ImportPreviewDTO
     {
         $rows = $this->parseFile($file);
+        $result = $this->validateRows($rows, $branchId);
 
-        // Get Periode Aktif for validation
+        $previewId = Str::uuid()->toString();
+
+        // Cache all rows (not just the valid ones) so the file can never be
+        // partially committed and so patchRow() can revise a specific row
+        // without requiring the user to re-upload.
+        Cache::put("import_preview:{$previewId}", [
+            'importType' => 'tagihan',
+            'branchId' => $branchId,
+            'rows' => $result->rows,
+            'validData' => $result->validData,
+            'totalRows' => count($rows),
+            'validRows' => $result->validCount,
+            'errorRows' => $result->errorCount,
+            'fileName' => $file->getClientOriginalName(),
+        ], self::CACHE_TTL);
+
+        return new ImportPreviewDTO(
+            previewId: $previewId,
+            totalRows: count($rows),
+            validRows: $result->validCount,
+            errorRows: $result->errorCount,
+            errors: $result->errors,
+            validData: $result->validData,
+            requiresQueue: count($rows) > self::QUEUE_THRESHOLD,
+            invalidRows: $result->invalidRows,
+            summary: $result->summary,
+        );
+    }
+
+    /**
+     * Revise a single row within an existing preview session and revalidate
+     * the whole file — a fix to one row can resolve or introduce duplicate
+     * errors on other rows, so the whole file must be rechecked.
+     */
+    public function patchRow(string $previewId, int $rowIndex, array $data, int $branchId): ImportPreviewDTO
+    {
+        $cached = Cache::get("import_preview:{$previewId}");
+
+        if (! $cached) {
+            throw new \InvalidArgumentException('Sesi preview telah kedaluwarsa. Silakan upload ulang file.');
+        }
+
+        if (($cached['branchId'] ?? null) !== $branchId || ($cached['importType'] ?? null) !== 'tagihan') {
+            throw new \InvalidArgumentException('Sesi preview tidak valid untuk cabang ini.');
+        }
+
+        $rows = $cached['rows'];
+
+        if (! array_key_exists($rowIndex, $rows)) {
+            throw new \InvalidArgumentException('Baris tidak ditemukan dalam sesi preview.');
+        }
+
+        $rows[$rowIndex] = TagihanRowNormalizer::normalize(array_merge($rows[$rowIndex], $data));
+
+        $result = $this->validateRows($rows, $branchId);
+
+        Cache::put("import_preview:{$previewId}", [
+            'importType' => 'tagihan',
+            'branchId' => $branchId,
+            'rows' => $result->rows,
+            'validData' => $result->validData,
+            'totalRows' => count($rows),
+            'validRows' => $result->validCount,
+            'errorRows' => $result->errorCount,
+            'fileName' => $cached['fileName'],
+        ], self::CACHE_TTL);
+
+        return new ImportPreviewDTO(
+            previewId: $previewId,
+            totalRows: count($rows),
+            validRows: $result->validCount,
+            errorRows: $result->errorCount,
+            errors: $result->errors,
+            validData: $result->validData,
+            requiresQueue: count($rows) > self::QUEUE_THRESHOLD,
+            invalidRows: $result->invalidRows,
+            summary: $result->summary,
+        );
+    }
+
+    /**
+     * Validate a full set of rows and report errors grouped per row.
+     * Shared by validate(), patchRow(), and confirm()'s revalidation gate.
+     *
+     * Periode aktif belum diatur is treated as a file-level error (thrown),
+     * not a per-row one — previously every row repeated the same message,
+     * misleadingly attributed to the `nis` column.
+     */
+    public function validateRows(array $rows, int $branchId): ImportValidationResult
+    {
         $periodeAktif = TahunAjaran::getAktif($branchId);
-        $tahunAjaranId = $periodeAktif?->id;
+        if (! $periodeAktif) {
+            throw new \InvalidArgumentException('Periode aktif belum diatur untuk cabang ini.');
+        }
+        $tahunAjaranId = $periodeAktif->id;
 
         // Get existing siswa NIS values in this branch
         $existingSiswa = Siswa::where('branch_id', $branchId)
@@ -44,31 +140,29 @@ class TagihanImportService
             ->toArray();
 
         // Get existing JenisTagihan for this branch and tahun_ajaran
-        $jenisTagihanRecords = [];
-        if ($tahunAjaranId) {
-            $jenisTagihanRecords = JenisTagihan::where('branch_id', $branchId)
-                ->where('tahun_ajaran_id', $tahunAjaranId)
-                ->pluck('nama')
-                ->toArray();
-        }
+        $jenisTagihanRecords = JenisTagihan::where('branch_id', $branchId)
+            ->where('tahun_ajaran_id', $tahunAjaranId)
+            ->pluck('nama')
+            ->toArray();
 
         // Get existing tagihan combinations (NIS + jenis_tagihan) for this tahun_ajaran
-        $existingTagihan = [];
-        if ($tahunAjaranId) {
-            // Kolom branch_id dan tahun_ajaran_id ada di kedua tabel, jadi wajib
-            // diprefiks — tanpa itu MariaDB menolak query dengan "Column
-            // 'branch_id' in WHERE is ambiguous" dan seluruh import gagal.
-            $existingTagihan = Tagihan::where('tagihans.branch_id', $branchId)
-                ->where('tagihans.tahun_ajaran_id', $tahunAjaranId)
-                ->join('jenis_tagihans', 'tagihans.jenis_tagihan_id', '=', 'jenis_tagihans.id')
-                ->select('tagihans.nis', 'jenis_tagihans.nama as jenis_tagihan_nama')
-                ->get()
-                ->map(fn ($t) => strtolower($t->nis.'|'.$t->jenis_tagihan_nama))
-                ->toArray();
-        }
+        // Kolom branch_id dan tahun_ajaran_id ada di kedua tabel, jadi wajib
+        // diprefiks — tanpa itu MariaDB menolak query dengan "Column
+        // 'branch_id' in WHERE is ambiguous" dan seluruh import gagal.
+        $existingTagihan = Tagihan::where('tagihans.branch_id', $branchId)
+            ->where('tagihans.tahun_ajaran_id', $tahunAjaranId)
+            ->join('jenis_tagihans', 'tagihans.jenis_tagihan_id', '=', 'jenis_tagihans.id')
+            ->select('tagihans.nis', 'jenis_tagihans.nama as jenis_tagihan_nama')
+            ->get()
+            ->map(fn ($t) => strtolower($t->nis.'|'.$t->jenis_tagihan_nama))
+            ->toArray();
 
         $validRows = [];
-        $errors = [];
+        $report = new ImportErrorReport('tagihan');
+
+        // Registered for every row (valid or not) so a duplicate combination
+        // is still caught even when its first occurrence errored for an
+        // unrelated reason.
         $processedCombinations = [];
 
         foreach ($rows as $index => $row) {
@@ -76,56 +170,42 @@ class TagihanImportService
             $rowErrors = $this->validateRow(
                 $row,
                 $rowNumber,
-                $branchId,
                 $existingSiswa,
                 $jenisTagihanRecords,
                 $existingTagihan,
-                $processedCombinations,
-                $tahunAjaranId
+                $processedCombinations
             );
+
+            if (! empty($row['nis']) && ! empty($row['jenis_tagihan'])) {
+                $processedCombinations[] = strtolower($row['nis'].'|'.$row['jenis_tagihan']);
+            }
 
             if (empty($rowErrors)) {
                 $validRows[] = $row;
-                // Track this combination to detect intra-file duplicates
-                if (! empty($row['nis']) && ! empty($row['jenis_tagihan'])) {
-                    $processedCombinations[] = strtolower($row['nis'].'|'.$row['jenis_tagihan']);
-                }
             } else {
-                foreach ($rowErrors as $error) {
-                    $errors[] = $error;
-                }
+                $report->add($index, $rowNumber, $row, $rowErrors);
             }
         }
 
         $totalRows = count($rows);
         $validCount = count($validRows);
         $errorCount = $totalRows - $validCount;
-        $requiresQueue = $totalRows > self::QUEUE_THRESHOLD;
 
-        $previewId = Str::uuid()->toString();
-
-        // Cache valid data for later confirmation
-        Cache::put("import_preview:{$previewId}", [
-            'validData' => $validRows,
-            'totalRows' => $totalRows,
-            'validRows' => $validCount,
-            'errorRows' => $errorCount,
-            'fileName' => $file->getClientOriginalName(),
-        ], self::CACHE_TTL);
-
-        return new ImportPreviewDTO(
-            previewId: $previewId,
-            totalRows: $totalRows,
-            validRows: $validCount,
-            errorRows: $errorCount,
-            errors: $errors,
+        return new ImportValidationResult(
+            rows: $rows,
             validData: $validRows,
-            requiresQueue: $requiresQueue,
+            errors: $report->flatErrors(),
+            invalidRows: $report->invalidRows(),
+            summary: $report->summary($totalRows),
+            validCount: $validCount,
+            errorCount: $errorCount,
         );
     }
 
     /**
      * Confirm and process the import (synchronous for ≤500 rows).
+     * All-or-nothing: the whole file is revalidated here and rejected if any
+     * row is still invalid, regardless of what the cached preview counts say.
      */
     public function confirm(string $previewId, int $branchId, int $userId): ImportBatch
     {
@@ -135,15 +215,21 @@ class TagihanImportService
             throw new \InvalidArgumentException('Sesi preview telah kedaluwarsa. Silakan upload ulang file.');
         }
 
-        // Check Periode_Aktif exists
-        $periodeAktif = TahunAjaran::getAktif($branchId);
-        if (! $periodeAktif) {
-            throw new \InvalidArgumentException('Periode aktif belum diatur untuk cabang ini.');
+        if (($cached['branchId'] ?? null) !== $branchId) {
+            throw new \InvalidArgumentException('Sesi preview tidak valid untuk cabang ini.');
         }
 
-        $validData = $cached['validData'];
-        $totalRows = $cached['totalRows'];
-        $errorRows = $cached['errorRows'];
+        // validateRows() throws if Periode Aktif is missing.
+        $result = $this->validateRows($cached['rows'], $branchId);
+
+        if ($result->errorCount > 0) {
+            throw new ImportHasInvalidRowsException($result->summary, $result->invalidRows, $result->errors);
+        }
+
+        $periodeAktif = TahunAjaran::getAktif($branchId);
+
+        $validData = $result->validData;
+        $totalRows = count($cached['rows']);
 
         // If requires queue, dispatch job instead
         if (count($validData) > self::QUEUE_THRESHOLD) {
@@ -160,7 +246,7 @@ class TagihanImportService
             'file_name' => $cached['fileName'],
             'total_rows' => $totalRows,
             'success_count' => 0,
-            'error_count' => $errorRows,
+            'error_count' => 0,
             'status' => 'processing',
             'branch_id' => $branchId,
         ]);
@@ -281,12 +367,10 @@ class TagihanImportService
     private function validateRow(
         array $row,
         int $rowNumber,
-        int $branchId,
         array $existingSiswa,
         array $jenisTagihanRecords,
         array $existingTagihan,
-        array $processedCombinations,
-        ?int $tahunAjaranId
+        array $processedCombinations
     ): array {
         $errors = [];
 
@@ -320,11 +404,6 @@ class TagihanImportService
             if (in_array($combination, $processedCombinations)) {
                 $errors[] = ['row' => $rowNumber, 'column' => 'nis', 'message' => "Duplikat dalam file: NIS '{$row['nis']}' dengan jenis '{$row['jenis_tagihan']}'"];
             }
-        }
-
-        // Check if Periode Aktif exists (early validation)
-        if (! $tahunAjaranId) {
-            $errors[] = ['row' => $rowNumber, 'column' => 'nis', 'message' => 'Periode aktif belum diatur'];
         }
 
         return $errors;

@@ -330,8 +330,10 @@ Route::middleware(['auth:sanctum', 'active.branch'])->group(function () {
         // Import routes
         Route::group(['middleware' => 'endpoint.permission:import-data'], function () {
             Route::post('/import/siswa/upload', [ImportExportController::class, 'uploadSiswa']);
+            Route::post('/import/siswa/preview/row', [ImportExportController::class, 'patchSiswaRow']);
             Route::post('/import/siswa/confirm', [ImportExportController::class, 'confirmSiswa']);
             Route::post('/import/tagihan/upload', [ImportExportController::class, 'uploadTagihan']);
+            Route::post('/import/tagihan/preview/row', [ImportExportController::class, 'patchTagihanRow']);
             Route::post('/import/tagihan/confirm', [ImportExportController::class, 'confirmTagihan']);
             Route::get('/import/template/siswa', [ImportExportController::class, 'templateSiswa']);
             Route::get('/import/template/tagihan', [ImportExportController::class, 'templateTagihan']);

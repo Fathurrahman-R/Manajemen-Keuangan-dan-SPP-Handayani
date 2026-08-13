@@ -5,8 +5,8 @@ return [
     'short_name' => env('HANDAYANI_PUBLIC_SHORT_NAME', 'Handayani'),
     'tagline' => env('HANDAYANI_PUBLIC_TAGLINE', "Mandiri, Intelektual, Smart, Hafiz Qur'an"),
     'address' => env('HANDAYANI_PUBLIC_ADDRESS', 'Jl. Selat Panjang No.357, Siantan Hulu, Kec. Pontianak Utara, Kota Pontianak, Kalimantan Barat 78243'),
-    'phone' => env('HANDAYANI_PUBLIC_PHONE', '(021) 1234-5678'),
-    'email' => env('HANDAYANI_PUBLIC_EMAIL', 'info@handayani.sch.id'),
+    'phone' => env('HANDAYANI_PUBLIC_PHONE', '081256944831'),
+    'email' => env('HANDAYANI_PUBLIC_EMAIL', '-'),
     'whatsapp_number' => env('HANDAYANI_PUBLIC_WHATSAPP', '6281234567890'),
     'spp_portal_url' => env('HANDAYANI_PUBLIC_SPP_PORTAL_URL', '/login'),
 
@@ -21,7 +21,7 @@ return [
     'hero' => [
         'stats' => [
             ['key' => '3', 'value' => 'Jenjang Terpadu'],
-            ['key' => '2017', 'value' => 'Tahun Berdiri'],
+            ['key' => '9+', 'value' => 'Tahun Berdiri'],
             ['key' => '100%', 'value' => 'Kurikulum Nasional'],
         ],
         'images' => [

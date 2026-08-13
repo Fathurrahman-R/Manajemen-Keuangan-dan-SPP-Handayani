@@ -7,64 +7,93 @@ use App\Models\Pengeluaran;
 use App\Models\PengeluaranRequest;
 use App\Models\TahunAjaran;
 use App\Models\User;
+use Database\Seeders\Support\TarifDemo;
 use Illuminate\Database\Seeder;
 
+/**
+ * Permintaan pengeluaran dengan campuran status supaya seluruh alur
+ * persetujuan bisa didemokan tanpa perlu membuat data di depan penguji:
+ * ada yang masih draft, ada yang menunggu persetujuan, ada yang disetujui tapi
+ * belum dicairkan, ada yang ditolak, dan ada yang sudah cair.
+ *
+ * Permintaan berstatus `disbursed` selalu memunculkan baris `pengeluarans`
+ * yang tertaut, meniru apa yang dilakukan WorkflowService::disburse(). Tanpa
+ * itu, kas dan daftar permintaan saling bertentangan: permintaan mengaku sudah
+ * cair sementara uangnya tidak pernah tercatat keluar.
+ */
 class PengeluaranRequestSeeder extends Seeder
 {
+    /**
+     * Sebaran status yang wajar: permintaan lama sudah selesai dicairkan, dan
+     * hanya sedikit yang masih menggantung di meja.
+     *
+     * @var list<array{status: string, hari_lalu: int}>
+     */
+    private const ANTREAN = [
+        ['status' => 'draft', 'hari_lalu' => 1],
+        ['status' => 'draft', 'hari_lalu' => 3],
+        ['status' => 'submitted', 'hari_lalu' => 4],
+        ['status' => 'submitted', 'hari_lalu' => 8],
+        ['status' => 'approved', 'hari_lalu' => 11],
+        ['status' => 'approved', 'hari_lalu' => 16],
+        ['status' => 'rejected', 'hari_lalu' => 22],
+        ['status' => 'disbursed', 'hari_lalu' => 29],
+        ['status' => 'disbursed', 'hari_lalu' => 45],
+        ['status' => 'disbursed', 'hari_lalu' => 63],
+    ];
+
     public function run(): void
     {
-        $requests = [
-            ['uraian' => 'Pembelian kertas A4 5 rim',          'jumlah' => 275000,   'status' => 'draft',     'days_ago' => 2],
-            ['uraian' => 'Bayar internet bulan ini',           'jumlah' => 450000,   'status' => 'submitted', 'days_ago' => 5],
-            ['uraian' => 'Pembelian tinta printer',            'jumlah' => 180000,   'status' => 'approved',  'days_ago' => 10],
-            ['uraian' => 'Biaya cleaning service',             'jumlah' => 600000,   'status' => 'disbursed', 'days_ago' => 20],
-            ['uraian' => 'Perbaikan atap bocor',               'jumlah' => 2500000,  'status' => 'rejected',  'days_ago' => 15],
-            ['uraian' => 'Pembelian spidol whiteboard 1 lusin', 'jumlah' => 85000,    'status' => 'draft',     'days_ago' => 1],
-            ['uraian' => 'Transport rapat koordinasi',         'jumlah' => 300000,   'status' => 'submitted', 'days_ago' => 7],
-            ['uraian' => 'Pembelian buku referensi guru',      'jumlah' => 750000,   'status' => 'approved',  'days_ago' => 12],
-        ];
-
         foreach (Branch::all() as $branch) {
-            $adminForBranch = User::where('branch_id', $branch->id)->whereHas('roles', function ($q) {
-                $q->where('name', 'admin')->orWhere('name', 'superadmin');
-            })->first();
+            $pemohon = $this->pemohonUntuk($branch->id);
 
-            if (! $adminForBranch) {
-                $adminForBranch = User::whereHas('roles', function ($q) {
-                    $q->where('name', 'superadmin');
-                })->first();
-            }
-
-            if (! $adminForBranch) {
+            if (! $pemohon) {
                 continue;
             }
 
-            $aktiveTahunAjaran = TahunAjaran::getAktif($branch->id);
+            $tahunAjaranAktif = TahunAjaran::where('branch_id', $branch->id)
+                ->where('status', 'Aktif')
+                ->first();
 
-            foreach ($requests as $data) {
-                $pengeluaranRequest = PengeluaranRequest::create([
-                    'uraian' => $data['uraian'],
-                    'jumlah' => $data['jumlah'],
-                    'tanggal_kebutuhan' => now()->subDays($data['days_ago'])->format('Y-m-d'),
-                    'kategori_pengeluaran' => fake()->randomElement(['ATK', 'Utilitas', 'Perbaikan', 'Kebersihan', null]),
-                    'status' => $data['status'],
-                    'requester_id' => $adminForBranch->id,
+            $daftarItem = fake()->randomElements(
+                TarifDemo::PENGELUARAN_INSIDENTAL,
+                count(self::ANTREAN)
+            );
+
+            foreach (self::ANTREAN as $indeks => $antrean) {
+                $item = $daftarItem[$indeks];
+                $tanggal = now()->subDays($antrean['hari_lalu']);
+
+                $request = PengeluaranRequest::create([
+                    'uraian' => $item['uraian'],
+                    'jumlah' => $item['jumlah'],
+                    'tanggal_kebutuhan' => $tanggal->format('Y-m-d'),
+                    'kategori_pengeluaran' => $item['kategori'],
+                    'status' => $antrean['status'],
+                    'requester_id' => $pemohon->id,
                     'branch_id' => $branch->id,
                 ]);
 
-                // Saat status disbursed, buat record Pengeluaran yang terkait
-                // agar konsisten dengan apa yang dilakukan WorkflowService::disburse().
-                if ($data['status'] === 'disbursed') {
+                if ($antrean['status'] === 'disbursed') {
                     Pengeluaran::create([
-                        'tanggal' => now()->subDays($data['days_ago'])->format('Y-m-d'),
-                        'uraian' => $data['uraian'],
-                        'jumlah' => $data['jumlah'],
+                        'tanggal' => $tanggal->format('Y-m-d'),
+                        'uraian' => $item['uraian'],
+                        'jumlah' => $item['jumlah'],
                         'branch_id' => $branch->id,
-                        'tahun_ajaran_id' => $aktiveTahunAjaran?->id,
-                        'pengeluaran_request_id' => $pengeluaranRequest->id,
+                        'tahun_ajaran_id' => $tahunAjaranAktif?->id,
+                        'pengeluaran_request_id' => $request->id,
                     ]);
                 }
             }
         }
+    }
+
+    private function pemohonUntuk(int $branchId): ?User
+    {
+        $pemohon = User::where('branch_id', $branchId)
+            ->whereHas('roles', fn ($q) => $q->whereIn('name', ['admin', 'superadmin']))
+            ->first();
+
+        return $pemohon ?? User::whereHas('roles', fn ($q) => $q->where('name', 'superadmin'))->first();
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Imports\Normalizers\TagihanRowNormalizer;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -22,7 +23,7 @@ class TagihanImportValidator implements ToCollection, WithHeadingRow
                 continue;
             }
 
-            $this->rows[] = $this->normalizeRow($rowArray);
+            $this->rows[] = TagihanRowNormalizer::normalize($rowArray);
         }
     }
 
@@ -46,32 +47,5 @@ class TagihanImportValidator implements ToCollection, WithHeadingRow
         }
 
         return true;
-    }
-
-    /**
-     * Normalize row data: trim strings, convert numeric values.
-     */
-    private function normalizeRow(array $row): array
-    {
-        $normalized = [];
-        foreach ($row as $key => $value) {
-            $normalizedKey = $this->normalizeKey($key);
-            $normalized[$normalizedKey] = is_string($value) ? trim($value) : $value;
-        }
-
-        // Ensure NIS is string
-        if (isset($normalized['nis'])) {
-            $normalized['nis'] = (string) $normalized['nis'];
-        }
-
-        return $normalized;
-    }
-
-    /**
-     * Normalize column header key (lowercase, underscores).
-     */
-    private function normalizeKey(string $key): string
-    {
-        return str_replace(' ', '_', strtolower(trim($key)));
     }
 }

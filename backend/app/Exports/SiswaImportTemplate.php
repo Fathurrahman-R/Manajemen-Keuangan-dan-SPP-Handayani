@@ -31,7 +31,7 @@ class SiswaImportTemplate implements FromArray, WithHeadings, WithStyles
         'jenjang' => ['jenjang', null, ['TK', 'MI', 'KB']], // sample filled dynamically per branch
         'kelas' => ['kelas', null, null], // sample + dropdown filled dynamically from branch kelas
         'kategori' => ['kategori', 'Reguler', null],
-        'status' => ['status', 'Aktif', ['Aktif', 'Non-Aktif', 'Lulus', 'Pindah']],
+        'status' => ['status', 'Aktif', ['Aktif', 'Lulus', 'Pindah', 'Keluar']],
         'keterangan_siswa' => ['keterangan_siswa', 'Siswa pindahan', null],
     ];
 

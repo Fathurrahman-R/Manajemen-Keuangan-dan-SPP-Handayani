@@ -37,6 +37,18 @@ test('import/export/template/history action names match their camelCase wrapper 
     expect($pembayaran->exportPembayaranAction()->getName())->toBe('exportPembayaran');
 });
 
+/**
+ * Same IE-006 guard as above, for the post-upload preview action added by
+ * the all-or-nothing import rework — importPreviewSiswaAction()/
+ * importPreviewTagihanAction() must resolve to "importPreviewSiswa"/
+ * "importPreviewTagihan", or replaceMountedAction() silently opens nothing.
+ */
+test('import preview action names match their camelCase wrapper methods', function () {
+    $tagihan = new TagihanCardView;
+
+    expect($tagihan->importPreviewTagihanAction()->getName())->toBe('importPreviewTagihan');
+});
+
 test('clicking Import on TagihanCardView actually mounts the action and opens a modal (IE-006)', function () {
     Session::put('data.roles', ['superadmin']);
 

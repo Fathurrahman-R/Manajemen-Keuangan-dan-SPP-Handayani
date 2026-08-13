@@ -15,14 +15,19 @@ class DatabaseSeeder extends Seeder
             AppSettingSeeder::class,
             KategoriSeeder::class,
             KelasSeeder::class,
-            // TahunAjaranSeeder::class,
+            TahunAjaranSeeder::class,
             NotificationSettingSeeder::class,
-            // SiswaSeeder::class,
-            // JenisTagihanSeeder::class,
-            // TagihanSeeder::class,
-            // PembayaranSeeder::class,
-            //            PengeluaranSeeder::class,
-            // PengeluaranRequestSeeder::class,
+            SiswaSeeder::class,
+
+            // Urutannya mengikat: JenisTagihan harus ada sebelum Tagihan,
+            // Tagihan sebelum Pembayaran (pembayaran membaca `tmp` dan jatuh
+            // tempo tagihan), dan PengeluaranRequest terakhir karena ikut
+            // menulis baris Pengeluaran untuk permintaan yang sudah cair.
+            JenisTagihanSeeder::class,
+            TagihanSeeder::class,
+            PembayaranSeeder::class,
+            PengeluaranSeeder::class,
+            PengeluaranRequestSeeder::class,
         ]);
     }
 }

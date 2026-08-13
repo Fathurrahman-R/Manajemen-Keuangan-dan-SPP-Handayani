@@ -9,6 +9,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Str;
+use Livewire\Attributes\On;
 
 trait HasImportExport
 {
@@ -17,6 +18,8 @@ trait HasImportExport
     // snake_case name here (e.g. "import_tagihan") never matches its camelCase
     // wrapper method (importTagihanAction()), so the action silently fails to
     // resolve: no modal, no notification, no error, just a no-op (bug IE-006).
+    // The same applies to importPreviewSiswaAction()/importPreviewTagihanAction()
+    // below — each import type needs its own concrete wrapper method.
     public ?array $importPreviewData = null;
 
     public ?string $importPreviewId = null;
@@ -134,6 +137,60 @@ trait HasImportExport
             ->modalSubmitAction(false)
             ->modalCancelActionLabel('Tutup')
             ->modalContent(fn () => view('livewire.partials.import-history-modal', ['importType' => $importType]));
+    }
+
+    /**
+     * Preview action for the siswa import — see makeImportPreviewAction().
+     */
+    public function importPreviewSiswaAction(): Action
+    {
+        return $this->makeImportPreviewAction('siswa');
+    }
+
+    /**
+     * Preview action for the tagihan import — see makeImportPreviewAction().
+     */
+    public function importPreviewTagihanAction(): Action
+    {
+        return $this->makeImportPreviewAction('tagihan');
+    }
+
+    /**
+     * Modal shown right after upload with the per-row validation report
+     * (see uploadImportFile()). Not added to makeImportExportActions() —
+     * it is only ever mounted programmatically via replaceMountedAction(),
+     * never shown as a header button.
+     */
+    protected function makeImportPreviewAction(string $importType): Action
+    {
+        return Action::make(Str::camel("import_preview_{$importType}"))
+            ->modalHeading('Hasil Pemeriksaan Data Import')
+            ->modalWidth('5xl')
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel('Tutup')
+            ->modalContent(fn () => view('livewire.partials.import-preview-modal', [
+                'importType' => $importType,
+                'previewId' => $this->importPreviewId,
+                'preview' => $this->importPreviewData ?? [],
+            ]));
+    }
+
+    /**
+     * Fired by ImportPreviewTable's importSekarangAction() once the import is
+     * actually committed, so the page that triggered the upload refreshes.
+     */
+    #[On('import-selesai')]
+    public function handleImportSelesai(): void
+    {
+        $this->importPreviewId = null;
+        $this->importPreviewData = null;
+
+        if (method_exists($this, 'resetTable')) {
+            $this->resetTable();
+        }
+        if (method_exists($this, 'loadData')) {
+            $this->loadData();
+        }
     }
 
     /**
@@ -275,27 +332,13 @@ trait HasImportExport
                 $this->importPreviewData = $preview;
                 $this->importPreviewId = $preview['preview_id'] ?? null;
 
-                $validRows = $preview['valid_rows'] ?? 0;
-                $errorRows = $preview['error_rows'] ?? 0;
-
-                if ($errorRows > 0) {
-                    Notification::make()
-                        ->title("Validasi: {$validRows} valid, {$errorRows} error")
-                        ->body('Ada baris yang tidak valid. Hanya baris valid yang akan diimport.')
-                        ->warning()
-                        ->send();
-                }
-
-                if ($validRows > 0) {
-                    // Auto-confirm for simplicity
-                    $this->confirmImportAction($importType);
-                } else {
-                    Notification::make()
-                        ->title('Import Gagal')
-                        ->body('Tidak ada baris valid untuk diimport.')
-                        ->danger()
-                        ->send();
-                }
+                // All-or-nothing: no row is ever committed from here. The
+                // preview modal reports every invalid row (nomor baris +
+                // NIS/NISN + penyebab) and lets the user fix rows inline or
+                // upload a corrected file — confirm only happens from
+                // ImportPreviewTable::importSekarangAction() once every row
+                // is valid.
+                $this->replaceMountedAction(Str::camel("import_preview_{$importType}"));
             } else {
                 $errors = $response->json('errors', []);
                 Notification::make()
@@ -311,62 +354,5 @@ trait HasImportExport
                 ->danger()
                 ->send();
         }
-    }
-
-    /**
-     * Confirm import after preview.
-     */
-    protected function confirmImportAction(string $importType): void
-    {
-        if (! $this->importPreviewId) {
-            return;
-        }
-
-        try {
-            $response = ApiService::client()->post("/import-export/import/{$importType}/confirm", [
-                'preview_id' => $this->importPreviewId,
-            ]);
-
-            if ($response->successful() || $response->status() === 202) {
-                $result = $response->json();
-                $status = $result['status'] ?? 'completed';
-
-                if ($status === 'processing') {
-                    Notification::make()
-                        ->title('Import Diproses')
-                        ->body('File besar sedang diproses di background.')
-                        ->info()
-                        ->send();
-                } else {
-                    $successCount = $result['success_count'] ?? 0;
-                    Notification::make()
-                        ->title('Import Berhasil')
-                        ->body("{$successCount} data berhasil diimport.")
-                        ->success()
-                        ->send();
-
-                    // Refresh table
-                    if (method_exists($this, 'resetTable')) {
-                        $this->resetTable();
-                    }
-                }
-            } else {
-                $errors = $response->json('errors', []);
-                Notification::make()
-                    ->title('Import Gagal')
-                    ->body(is_array($errors) ? implode(', ', \Illuminate\Support\Arr::flatten($errors)) : 'Konfirmasi gagal.')
-                    ->danger()
-                    ->send();
-            }
-        } catch (\Exception $e) {
-            Notification::make()
-                ->title('Error')
-                ->body($e->getMessage())
-                ->danger()
-                ->send();
-        }
-
-        $this->importPreviewId = null;
-        $this->importPreviewData = null;
     }
 }
