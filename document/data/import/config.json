@@ -1,0 +1,19 @@
+{
+  "mi_file": "D:/first project/handayani/document/data/8355 MI Handayani  2026-2027.xlsx",
+  "tk_file": "D:/first project/handayani/document/data/8355 TK HANDAYANI 2026-2027.xlsx",
+  "mi_kelas": {
+    "Kelas 1": "Kelas 1",
+    "Kelas 2": "Kelas 2",
+    "Kelas 3": "Kelas 3",
+    "Kelas 4": "Kelas 4",
+    "Kelas 5": "Kelas 5",
+    "Kelas 6": "Kelas 6"
+  },
+  "tk_kelas": {
+    "BULAN": "Bulan",
+    "BINTANG": "Bintang",
+    "MATAHARI": "Matahari"
+  },
+  "kategori": "Reguler",
+  "tk_nis_start": 2026001
+}

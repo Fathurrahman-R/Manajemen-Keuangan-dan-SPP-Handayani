@@ -1,0 +1,167 @@
+// =============================================================
+// ERD - Modul Impor, Ekspor, dan Pembayaran Midtrans
+// Sistem Informasi Pembayaran SPP Yayasan Handayani
+//
+// Format     : DBML (dbdiagram.io)
+// Cara pakai : buka https://dbdiagram.io/d lalu paste seluruh isi file ini.
+//
+// Catatan penyusunan:
+// - Kolom created_at / updated_at tidak ditampilkan agar diagram tetap
+//   terbaca, mengikuti konvensi versi ERD mermaid.
+// - Tipe data dan constraint diverifikasi terhadap file migrasi di
+//   backend/database/migrations.
+// - midtrans_transactions.branch_id sengaja tanpa foreign key di level
+//   basis data, sesuai migrasi aslinya.
+// =============================================================
+
+Table branches {
+  id bigint [pk, increment]
+  location varchar(255) [not null]
+
+  Note: 'Cabang atau unit yayasan. Menjadi dasar pemisahan data antar unit.'
+}
+
+Table users {
+  id bigint [pk, increment]
+  username varchar(100) [not null, unique]
+  email varchar(255) [null, note: 'Unik per branch, bukan unik global']
+  email_verified_at timestamp [null]
+  name varchar(255) [null]
+  password varchar(100) [not null]
+  branch_id bigint [not null]
+  siswa_id bigint [null, note: 'FK ke siswas.id - lihat ERD Data Master']
+  is_active boolean [not null, default: true]
+  must_change_password boolean [not null, default: false]
+
+  indexes {
+    (email, branch_id) [unique, name: 'users_email_branch_unique']
+  }
+
+  Note: 'Akun pengguna sistem. Menjadi pemicu proses impor, ekspor, dan pembayaran.'
+}
+
+Table tagihans {
+  kode_tagihan char(30) [pk]
+  jenis_tagihan_id bigint [not null, note: 'FK ke jenis_tagihans.id - lihat ERD Transaksi Keuangan']
+  nis varchar(20) [not null, note: 'Merujuk siswas.nis, bukan siswas.id']
+  tmp decimal(12,2) [null, default: 0]
+  status enum [not null, default: 'Belum Dibayar', note: 'Lunas, Belum Lunas, Belum Dibayar']
+  branch_id bigint [not null]
+  batch_reference char(36) [null, note: 'Penanda batch impor']
+  tahun_ajaran_id bigint [null, note: 'FK ke tahun_ajarans.id - lihat ERD Transaksi Keuangan']
+
+  Note: 'Tagihan per siswa. Menjadi objek yang dibayar lewat Midtrans.'
+}
+
+Table pembayarans {
+  kode_pembayaran char(30) [pk]
+  kode_tagihan char(30) [not null]
+  tanggal date [not null]
+  metode enum [not null, default: 'offline', note: 'offline, online_midtrans']
+  jumlah decimal(12,2) [null, default: 0]
+  pembayar varchar(100) [not null]
+  midtrans_order_id varchar(64) [null, unique, note: 'Terisi setelah transaksi Midtrans berstatus lunas']
+  branch_id bigint [not null]
+
+  Note: 'Catatan pembayaran. Baris daring dibuat oleh webhook notifikasi Midtrans.'
+}
+
+Table import_batches {
+  id bigint [pk, increment]
+  batch_reference char(36) [not null, unique]
+  user_id bigint [not null]
+  import_type enum [not null, note: 'siswa, tagihan']
+  file_name varchar(255) [not null]
+  total_rows int [not null, default: 0]
+  success_count int [not null, default: 0]
+  error_count int [not null, default: 0]
+  status enum [not null, default: 'processing', note: 'processing, completed, failed, rolled_back']
+  error_message text [null]
+  rolled_back_at timestamp [null]
+  rolled_back_by bigint [null]
+  branch_id bigint [not null]
+
+  Note: 'Riwayat impor berkas. batch_reference dipakai untuk membatalkan impor.'
+}
+
+Table export_jobs {
+  id bigint [pk, increment]
+  job_reference char(36) [not null, unique]
+  user_id bigint [not null]
+  export_type varchar(50) [not null]
+  filters json [null, note: 'Filter yang aktif saat ekspor dijalankan']
+  format varchar(10) [not null]
+  status enum [not null, default: 'processing', note: 'processing, completed, failed']
+  file_path varchar(500) [null]
+  error_message text [null]
+  expires_at timestamp [null]
+  branch_id bigint [not null]
+
+  indexes {
+    (branch_id, status) [name: 'idx_branch_status']
+  }
+
+  Note: 'Antrean pekerjaan ekspor. Berkas hasil dihapus setelah expires_at.'
+}
+
+Table midtrans_transactions {
+  id bigint [pk, increment]
+  order_id varchar(64) [not null, unique]
+  kode_tagihan varchar(64) [not null]
+  batch_items json [null, note: 'Daftar tagihan bila satu transaksi melunasi banyak tagihan']
+  nis varchar(32) [not null]
+  amount_paid bigint [not null]
+  fee_amount bigint [not null]
+  gross_amount bigint [not null]
+  currency char(3) [not null, default: 'IDR']
+  status enum [not null, default: 'pending', note: 'pending, settlement, capture, deny, cancel, expire, failure, refund, partial_refund']
+  payment_type varchar(64) [null]
+  snap_token varchar(128) [null]
+  snap_redirect_url varchar(255) [null]
+  expired_at datetime [not null]
+  paid_at datetime [null]
+  initiator_user_id bigint [null]
+  branch_id int [null, note: 'Tanpa foreign key di level basis data']
+  last_raw_response json [null]
+
+  indexes {
+    (kode_tagihan, status) [name: 'idx_midtrans_trx_tagihan_status']
+    (status, expired_at) [name: 'idx_midtrans_trx_status_expired']
+  }
+
+  Note: 'Transaksi pembayaran daring lewat Midtrans Snap.'
+}
+
+Table midtrans_transaction_logs {
+  id bigint [pk, increment]
+  order_id varchar(64) [null]
+  direction enum [not null, note: 'outbound_charge, outbound_status, inbound_notification']
+  http_status int [null]
+  raw_payload longtext [null]
+  remote_ip varchar(45) [null]
+  created_at timestamp [not null, note: 'Tabel ini hanya punya created_at, tanpa updated_at']
+
+  Note: 'Log mentah lalu lintas Midtrans. Dipangkas lewat perintah midtrans:prune-logs.'
+}
+
+// -------------------------------------------------------------
+// Relasi
+// -------------------------------------------------------------
+
+Ref: users.branch_id > branches.id [delete: cascade]
+Ref: tagihans.branch_id > branches.id [delete: cascade]
+Ref: pembayarans.branch_id > branches.id [delete: cascade]
+Ref: import_batches.branch_id > branches.id [delete: cascade]
+Ref: export_jobs.branch_id > branches.id
+
+Ref: import_batches.user_id > users.id
+Ref: import_batches.rolled_back_by > users.id
+Ref: export_jobs.user_id > users.id
+
+Ref: pembayarans.kode_tagihan > tagihans.kode_tagihan
+Ref: midtrans_transactions.kode_tagihan > tagihans.kode_tagihan [delete: restrict]
+Ref: midtrans_transactions.initiator_user_id > users.id [delete: set null]
+
+// Relasi logis tanpa foreign key di level basis data
+Ref: midtrans_transaction_logs.order_id > midtrans_transactions.order_id
+Ref: pembayarans.midtrans_order_id - midtrans_transactions.order_id

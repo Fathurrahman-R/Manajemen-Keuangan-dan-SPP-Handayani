@@ -298,13 +298,14 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
         $this->mountAction('deleteTagihan', ['kodeTagihan' => $kodeTagihan]);
     }
 
-    public function batchPay(array $kodeTagihan, string $metode, string $pembayar): void
+    public function batchPay(array $kodeTagihan, string $metode, string $pembayar, ?string $tanggal = null): void
     {
         try {
             $response = ApiService::client()->post('/pembayaran/batch', [
                 'kode_tagihan' => $kodeTagihan,
                 'metode' => $metode,
                 'pembayar' => $pembayar,
+                'tanggal' => $tanggal,
             ]);
 
             if ($response->ok()) {
@@ -356,6 +357,15 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                     ->label('Nama Pembayar')
                     ->required()
                     ->maxLength(100),
+                DatePicker::make('tanggal')
+                    ->label('Tanggal Pembayaran')
+                    ->helperText('Isi tanggal asli bila mencatat pembayaran yang sudah lewat.')
+                    ->native(false)
+                    ->displayFormat('d/m/Y')
+                    ->format('Y-m-d')
+                    ->default(now())
+                    ->maxDate(now())
+                    ->required(),
             ])
             ->action(function (array $data): void {
                 $this->processPayment($data);
@@ -381,6 +391,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                 'kode_tagihan' => $this->selectedTagihanForPayment,
                 'metode' => $data['metode'],
                 'pembayar' => $data['pembayar'],
+                'tanggal' => $data['tanggal'] ?? null,
             ]);
 
             if ($response->successful()) {
@@ -460,6 +471,15 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                     ->label('Nama Pembayar')
                     ->required()
                     ->maxLength(100),
+                DatePicker::make('tanggal')
+                    ->label('Tanggal Pembayaran')
+                    ->helperText('Isi tanggal asli bila mencatat pembayaran yang sudah lewat.')
+                    ->native(false)
+                    ->displayFormat('d/m/Y')
+                    ->format('Y-m-d')
+                    ->default(now())
+                    ->maxDate(now())
+                    ->required(),
             ])
             ->action(function (array $data): void {
                 if (! $this->cicilKodeTagihan) {
@@ -473,6 +493,7 @@ class TagihanCardView extends Component implements HasActions, HasSchemas
                         'jumlah' => (float) $data['jumlah'],
                         'metode' => $data['metode'],
                         'pembayar' => $data['pembayar'],
+                        'tanggal' => $data['tanggal'] ?? null,
                     ]);
 
                     if ($response->ok()) {

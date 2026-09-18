@@ -1,0 +1,84 @@
+@startuml
+left to right direction
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #333333
+  ArrowColor #333333
+  FontSize 13
+}
+skinparam actor {
+  BorderColor #333333
+  FontSize 13
+}
+skinparam rectangle {
+  BorderColor #333333
+  FontSize 14
+  FontStyle bold
+}
+
+actor "Bendahara" as bendahara
+actor "Kepala Sekolah" as kepsek
+actor "Siswa / Wali Siswa" as siswa
+actor "Midtrans" as midtrans
+
+rectangle "Sistem Informasi Keuangan SPP\nLPA Handayani" {
+  usecase "Login" as UC1
+  usecase "Kelola Pengguna &\nHak Akses" as UC2
+  usecase "Kelola Data Akademik\n(Kelas, Kategori, Tahun Ajaran)" as UC3
+  usecase "Kelola Akun Siswa" as UC4
+  usecase "Proses Kenaikan Kelas" as UC5
+  usecase "Kelola Tagihan" as UC6
+  usecase "Input Pembayaran" as UC7
+  usecase "Cetak Kwitansi" as UC8
+  usecase "Ajukan Pengeluaran" as UC9
+  usecase "Setujui Pengeluaran" as UC10
+  usecase "Cairkan Pengeluaran" as UC11
+  usecase "Lihat & Export Laporan" as UC12
+  usecase "Import / Export Data" as UC13
+  usecase "Sinkronisasi Transaksi\nMidtrans" as UC14
+  usecase "Kelola Pengaturan Sistem" as UC15
+  usecase "Kelola Log Notifikasi" as UC16
+  usecase "Bayar Tagihan Online" as UC17
+  usecase "Lihat Status Pembayaran" as UC18
+  usecase "Integrasi Payment\nGateway" as UC19
+  usecase "Terima Callback\nPembayaran" as UC20
+}
+
+bendahara --> UC1
+kepsek --> UC1
+siswa --> UC1
+
+kepsek --> UC2
+kepsek --> UC10
+kepsek --> UC12
+kepsek --> UC15
+
+bendahara --> UC3
+bendahara --> UC4
+bendahara --> UC5
+bendahara --> UC6
+bendahara --> UC7
+bendahara --> UC8
+bendahara --> UC9
+bendahara --> UC11
+bendahara --> UC12
+bendahara --> UC13
+bendahara --> UC14
+bendahara --> UC16
+
+siswa --> UC17
+siswa --> UC18
+siswa --> UC8
+
+UC9 ..> UC10 : <<extend>>
+UC10 ..> UC11 : <<extend>>
+UC7 ..> UC8 : <<include>>
+UC17 ..> UC19 : <<include>>
+UC14 ..> UC19 : <<include>>
+UC19 ..> UC20 : <<extend>>
+midtrans --> UC20
+midtrans --> UC19
+
+@enduml

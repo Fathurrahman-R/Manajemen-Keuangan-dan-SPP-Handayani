@@ -1,0 +1,140 @@
+// =============================================================
+// ERD - Modul Data Master
+// Sistem Informasi Pembayaran SPP Yayasan Handayani
+//
+// Format     : DBML (dbdiagram.io)
+// Cara pakai : buka https://dbdiagram.io/d lalu paste seluruh isi file ini.
+//
+// Catatan penyusunan:
+// - Kolom created_at / updated_at tidak ditampilkan agar diagram tetap
+//   terbaca, mengikuti konvensi versi ERD mermaid.
+// - Tipe data dan constraint diverifikasi terhadap file migrasi di
+//   backend/database/migrations.
+// =============================================================
+
+Table branches {
+  id bigint [pk, increment]
+  location varchar(255) [not null]
+
+  Note: 'Cabang atau unit yayasan. Menjadi dasar pemisahan data antar unit.'
+}
+
+Table users {
+  id bigint [pk, increment]
+  username varchar(100) [not null, unique]
+  email varchar(255) [null, note: 'Unik per branch, bukan unik global']
+  email_verified_at timestamp [null]
+  name varchar(255) [null]
+  password varchar(100) [not null]
+  branch_id bigint [not null]
+  siswa_id bigint [null]
+  is_active boolean [not null, default: true]
+  must_change_password boolean [not null, default: false]
+
+  indexes {
+    (email, branch_id) [unique, name: 'users_email_branch_unique']
+  }
+
+  Note: 'Akun pengguna sistem. Akun portal siswa terhubung ke satu baris siswas.'
+}
+
+Table ayah {
+  id bigint [pk, increment]
+  nama varchar(100) [null]
+  pendidikan_terakhir varchar(50) [null]
+  pekerjaan varchar(100) [null]
+  email varchar(255) [null]
+  email_verified_at timestamp [null]
+
+  Note: 'Data ayah siswa. Nama tabel memang tunggal, bukan jamak.'
+}
+
+Table ibu {
+  id bigint [pk, increment]
+  nama varchar(100) [null]
+  pendidikan_terakhir varchar(50) [null]
+  pekerjaan varchar(100) [null]
+  email varchar(255) [null]
+  email_verified_at timestamp [null]
+
+  Note: 'Data ibu siswa. Nama tabel memang tunggal, bukan jamak.'
+}
+
+Table walis {
+  id bigint [pk, increment]
+  nama varchar(100) [not null]
+  pekerjaan varchar(100) [null]
+  alamat text [not null]
+  no_hp varchar(100) [not null]
+  email varchar(255) [null]
+  email_verified_at timestamp [null]
+  keterangan text [null]
+
+  Note: 'Data wali siswa, dipakai bila siswa tidak tinggal bersama orang tua.'
+}
+
+Table kategoris {
+  id bigint [pk, increment]
+  nama varchar(100) [not null]
+  branch_id bigint [not null]
+
+  Note: 'Kategori siswa, mis. reguler atau penerima keringanan biaya.'
+}
+
+Table kelas {
+  id bigint [pk, increment]
+  jenjang enum [not null, note: 'MI, TK, KB']
+  nama varchar(100) [not null]
+  level int [null, note: 'Urutan tingkat. Dipakai KenaikanKelasService untuk mencari kelas berikutnya.']
+  branch_id bigint [not null]
+
+  indexes {
+    (jenjang, branch_id, level, nama) [unique, name: 'kelas_jenjang_branch_level_nama_unique']
+  }
+
+  Note: 'Rombongan belajar. Beberapa kelas paralel boleh berbagi level yang sama.'
+}
+
+Table siswas {
+  id bigint [pk, increment]
+  batch_reference char(36) [null, note: 'Penanda batch impor']
+  nis varchar(20) [not null, unique, note: 'Menjadi kunci rujukan tagihans.nis']
+  nisn varchar(20) [null, unique]
+  nama varchar(100) [not null]
+  jenis_kelamin enum [not null, note: 'Laki-laki, Perempuan']
+  tempat_lahir varchar(100) [not null]
+  tanggal_lahir date [not null]
+  agama varchar(50) [not null]
+  alamat text [not null]
+  ayah_id bigint [null]
+  ibu_id bigint [null]
+  wali_id bigint [null]
+  jenjang enum [not null, note: 'TK, MI, KB']
+  kelas_id bigint [null]
+  kategori_id bigint [null]
+  asal_sekolah varchar(150) [null]
+  kelas_diterima varchar(10) [null]
+  tahun_diterima year [null]
+  status enum [null, default: 'Aktif', note: 'Aktif, Lulus, Pindah, Keluar']
+  keterangan text [null]
+  branch_id bigint [not null]
+
+  Note: 'Data induk siswa. Kolom nis dipakai sebagai kunci relasi ke tagihan.'
+}
+
+// -------------------------------------------------------------
+// Relasi
+// -------------------------------------------------------------
+
+Ref: users.branch_id > branches.id [delete: cascade]
+Ref: siswas.branch_id > branches.id [delete: cascade]
+Ref: kelas.branch_id > branches.id [delete: cascade]
+Ref: kategoris.branch_id > branches.id [delete: cascade]
+
+Ref: siswas.ayah_id > ayah.id [delete: cascade]
+Ref: siswas.ibu_id > ibu.id [delete: cascade]
+Ref: siswas.wali_id > walis.id
+Ref: siswas.kelas_id > kelas.id
+Ref: siswas.kategori_id > kategoris.id
+
+Ref: users.siswa_id - siswas.id [delete: set null]

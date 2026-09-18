@@ -12,7 +12,7 @@ class NavigationConfig
         'akademik' => [
             'label' => 'Akademik',
             'icon' => 'heroicon-o-academic-cap',
-            'items' => ['siswa', 'kelas', 'kenaikan-kelas', 'tahun-ajaran'],
+            'items' => ['tahun-ajaran', 'kelas', 'siswa', 'kenaikan-kelas'],
         ],
         'keuangan' => [
             'label' => 'Keuangan',

@@ -20,6 +20,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PembayaranController extends Controller
 {
@@ -201,16 +202,24 @@ class PembayaranController extends Controller
         }
 
         try {
-            $pembayaranRecords = DB::transaction(function () use ($tagihanList, $data, $user) {
+            $tanggalBayar = $data['tanggal'] ?? now()->format('Y-m-d');
+            $tagihanList = $tagihanList->values();
+
+            // Kode dibuat sebelum transaksi dibuka: generateMany() memakai LOCK
+            // TABLES, dan LOCK TABLES memicu implicit commit yang memutus
+            // transaksi berjalan.
+            $kodePembayaran = GenerateKodePembayaran::generateMany($tagihanList->count(), $tanggalBayar);
+
+            $pembayaranRecords = DB::transaction(function () use ($tagihanList, $data, $user, $tanggalBayar, $kodePembayaran) {
                 $records = collect();
 
-                foreach ($tagihanList as $tagihan) {
+                foreach ($tagihanList as $index => $tagihan) {
                     $jumlah = $tagihan->jenis_tagihan->jumlah - $tagihan->tmp;
 
                     $pembayaran = Pembayaran::create([
-                        'kode_pembayaran' => GenerateKodePembayaran::generate(),
+                        'kode_pembayaran' => $kodePembayaran[$index],
                         'kode_tagihan' => $tagihan->kode_tagihan,
-                        'tanggal' => now()->format('Y-m-d'),
+                        'tanggal' => $tanggalBayar,
                         'metode' => $data['metode'],
                         'jumlah' => $jumlah,
                         'pembayar' => $data['pembayar'],
@@ -238,6 +247,11 @@ class PembayaranController extends Controller
 
             return PembayaranResource::collection($pembayaranRecords)->response()->setStatusCode(200);
         } catch (\Throwable $e) {
+            Log::error('Batch pembayaran gagal', [
+                'kode_tagihan' => $data['kode_tagihan'],
+                'exception' => $e,
+            ]);
+
             throw new HttpResponseException(response([
                 'errors' => ['message' => ['Terjadi kesalahan saat memproses pembayaran.']],
             ], 500));
@@ -345,10 +359,12 @@ class PembayaranController extends Controller
             ], 400));
         }
 
+        $tanggalBayar = $data['tanggal'] ?? now()->format('Y-m-d');
+
         $pembayaran = Pembayaran::create([
-            'kode_pembayaran' => GenerateKodePembayaran::generate(),
+            'kode_pembayaran' => GenerateKodePembayaran::generate($tanggalBayar),
             'kode_tagihan' => $kode_tagihan,
-            'tanggal' => now()->format('Y-m-d'),
+            'tanggal' => $tanggalBayar,
             'metode' => $data['metode'],
             'jumlah' => $data['jumlah'],
             'pembayar' => $data['pembayar'],

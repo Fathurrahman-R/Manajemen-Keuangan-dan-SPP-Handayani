@@ -45,6 +45,13 @@ class BatchPaymentRequest extends FormRequest
                 'string',
                 'max:100',
             ],
+            // Opsional: dipakai saat mencatat pembayaran yang sudah terjadi di
+            // masa lalu (migrasi pencatatan manual). Kosong = hari ini.
+            'tanggal' => [
+                'nullable',
+                'date_format:Y-m-d',
+                'before_or_equal:today',
+            ],
         ];
     }
 
@@ -63,6 +70,8 @@ class BatchPaymentRequest extends FormRequest
             'pembayar.required' => 'Nama pembayar wajib diisi.',
             'pembayar.string' => 'Nama pembayar harus berupa string.',
             'pembayar.max' => 'Pembayar maksimal 100 karakter.',
+            'tanggal.date_format' => 'Tanggal pembayaran harus berformat YYYY-MM-DD.',
+            'tanggal.before_or_equal' => 'Tanggal pembayaran tidak boleh melewati hari ini.',
         ];
     }
 

@@ -1,0 +1,170 @@
+// =============================================================
+// ERD - Modul Transaksi Keuangan
+// Sistem Informasi Pembayaran SPP Yayasan Handayani
+//
+// Format     : DBML (dbdiagram.io)
+// Cara pakai : buka https://dbdiagram.io/d lalu paste seluruh isi file ini.
+//
+// Catatan penyusunan:
+// - Kolom created_at / updated_at tidak ditampilkan agar diagram tetap
+//   terbaca, mengikuti konvensi versi ERD mermaid.
+// - Tipe data dan constraint diverifikasi terhadap file migrasi di
+//   backend/database/migrations.
+// - Perhatikan relasi tagihans.nis ke siswas.nis. Relasi ini memakai
+//   kolom nis, bukan siswas.id.
+// =============================================================
+
+Table branches {
+  id bigint [pk, increment]
+  location varchar(255) [not null]
+
+  Note: 'Cabang atau unit yayasan. Menjadi dasar pemisahan data antar unit.'
+}
+
+Table siswas {
+  id bigint [pk, increment]
+  batch_reference char(36) [null]
+  nis varchar(20) [not null, unique, note: 'Kunci rujukan tagihans.nis']
+  nisn varchar(20) [null, unique]
+  nama varchar(100) [not null]
+  jenis_kelamin enum [not null, note: 'Laki-laki, Perempuan']
+  tempat_lahir varchar(100) [not null]
+  tanggal_lahir date [not null]
+  agama varchar(50) [not null]
+  alamat text [not null]
+  ayah_id bigint [null]
+  ibu_id bigint [null]
+  wali_id bigint [null]
+  jenjang enum [not null, note: 'TK, MI, KB']
+  kelas_id bigint [null]
+  kategori_id bigint [null]
+  asal_sekolah varchar(150) [null]
+  kelas_diterima varchar(10) [null]
+  tahun_diterima year [null]
+  status enum [null, default: 'Aktif', note: 'Aktif, Lulus, Pindah, Keluar']
+  keterangan text [null]
+  branch_id bigint [not null]
+
+  Note: 'Data induk siswa. Relasi lengkapnya ada di ERD Data Master.'
+}
+
+Table tahun_ajarans {
+  id bigint [pk, increment]
+  nama varchar(9) [not null, note: 'Format YYYY/YYYY']
+  tanggal_mulai date [not null]
+  tanggal_selesai date [not null]
+  status enum [not null, default: 'Non-Aktif', note: 'Aktif, Non-Aktif']
+  branch_id bigint [not null]
+
+  indexes {
+    (nama, branch_id) [unique]
+    (branch_id, status)
+  }
+
+  Note: 'Periode tahun ajaran. Hanya satu yang berstatus Aktif per cabang.'
+}
+
+Table jenis_tagihans {
+  id bigint [pk, increment]
+  nama varchar(100) [not null]
+  jatuh_tempo date [not null]
+  jumlah decimal(12,2) [not null]
+  branch_id bigint [not null]
+  tahun_ajaran_id bigint [not null]
+
+  Note: 'Jenis atau tarif tagihan, mis. SPP bulanan dan uang gedung.'
+}
+
+Table tagihans {
+  kode_tagihan char(30) [pk]
+  jenis_tagihan_id bigint [not null]
+  nis varchar(20) [not null, note: 'Merujuk siswas.nis, bukan siswas.id']
+  tmp decimal(12,2) [null, default: 0, note: 'Akumulasi pembayaran sementara']
+  status enum [not null, default: 'Belum Dibayar', note: 'Lunas, Belum Lunas, Belum Dibayar']
+  branch_id bigint [not null]
+  batch_reference char(36) [null, note: 'Penanda batch impor']
+  tahun_ajaran_id bigint [null]
+
+  Note: 'Tagihan per siswa. Kunci primernya kode_tagihan, bukan id auto increment.'
+}
+
+Table pembayarans {
+  kode_pembayaran char(30) [pk]
+  kode_tagihan char(30) [not null]
+  tanggal date [not null]
+  metode enum [not null, default: 'offline', note: 'offline, online_midtrans']
+  jumlah decimal(12,2) [null, default: 0]
+  pembayar varchar(100) [not null]
+  midtrans_order_id varchar(64) [null, unique, note: 'Terisi hanya untuk pembayaran daring']
+  branch_id bigint [not null]
+
+  Note: 'Catatan pembayaran. Satu tagihan dapat dicicil beberapa kali.'
+}
+
+Table app_settings {
+  id bigint [pk, increment]
+  nama_sekolah varchar(255) [not null]
+  lokasi varchar(100) [not null]
+  alamat text [not null]
+  email varchar(255) [not null]
+  telepon varchar(20) [not null]
+  kepala_sekolah varchar(100) [not null]
+  bendahara varchar(100) [not null]
+  kode_pos varchar(15) [not null]
+  logo varchar(255) [not null]
+  branch_id bigint [not null]
+
+  Note: 'Identitas sekolah per cabang. Dipakai pada kop kwitansi dan laporan.'
+}
+
+Table pengeluaran_requests {
+  id bigint [pk, increment]
+  uraian varchar(255) [not null]
+  jumlah decimal(13,2) [not null]
+  tanggal_kebutuhan date [not null]
+  kategori_pengeluaran varchar(255) [null]
+  lampiran varchar(255) [null]
+  status enum [not null, default: 'draft', note: 'draft, submitted, approved, rejected, disbursed']
+  requester_id bigint [not null, note: 'FK ke users.id - lihat ERD Approval dan Notifikasi']
+  branch_id bigint [not null]
+
+  indexes {
+    (branch_id, status)
+  }
+
+  Note: 'Pengajuan pengeluaran. Alur persetujuannya ada di ERD Approval dan Notifikasi.'
+}
+
+Table pengeluarans {
+  id bigint [pk, increment]
+  tanggal date [not null]
+  uraian text [not null]
+  jumlah decimal(12,2) [not null]
+  tahun_ajaran_id bigint [null]
+  branch_id bigint [not null]
+  pengeluaran_request_id bigint [null]
+
+  Note: 'Realisasi pengeluaran kas yang sudah dicairkan.'
+}
+
+// -------------------------------------------------------------
+// Relasi
+// -------------------------------------------------------------
+
+Ref: tahun_ajarans.branch_id > branches.id [delete: cascade]
+Ref: jenis_tagihans.branch_id > branches.id [delete: cascade]
+Ref: app_settings.branch_id > branches.id [delete: cascade]
+Ref: pembayarans.branch_id > branches.id [delete: cascade]
+Ref: pengeluarans.branch_id > branches.id [delete: cascade]
+Ref: pengeluaran_requests.branch_id > branches.id [delete: cascade]
+Ref: tagihans.branch_id > branches.id [delete: cascade]
+Ref: siswas.branch_id > branches.id [delete: cascade]
+
+Ref: jenis_tagihans.tahun_ajaran_id > tahun_ajarans.id [delete: restrict]
+Ref: tagihans.tahun_ajaran_id > tahun_ajarans.id [delete: set null]
+Ref: pengeluarans.tahun_ajaran_id > tahun_ajarans.id [delete: set null]
+
+Ref: tagihans.jenis_tagihan_id > jenis_tagihans.id
+Ref: tagihans.nis > siswas.nis [delete: cascade]
+Ref: pembayarans.kode_tagihan > tagihans.kode_tagihan
+Ref: pengeluarans.pengeluaran_request_id > pengeluaran_requests.id [delete: set null]

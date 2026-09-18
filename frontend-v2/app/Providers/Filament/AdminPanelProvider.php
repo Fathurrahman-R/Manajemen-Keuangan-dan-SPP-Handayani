@@ -181,19 +181,17 @@ class AdminPanelProvider extends PanelProvider
      */
     protected function buildAkademikItems(): array
     {
+        // Urutan mengikuti alur pemakaian: Tahun Ajaran -> Kategori -> Kelas ->
+        // Siswa -> Kenaikan Kelas, karena tiap langkah jadi prasyarat berikutnya.
         $items = [];
 
-        // Siswa — flat jenjang sub-items
-        if (PermissionHelper::hasResource('siswa.view')) {
-            foreach (NavigationConfig::JENJANG_OPTIONS as $jenjang) {
-                $items[] = NavigationItem::make()
-                    ->label("Siswa - {$jenjang}")
-                    ->icon($this->getJenjangIcon($jenjang))
-                    ->isActiveWhen(fn (): bool => original_request()->routeIs('filament..pages.data-master-siswa')
-                        && request()->query('jenjang') === $jenjang)
-                    ->url(fn (): string => DataMasterSiswa::getUrl().'?jenjang='.$jenjang);
-            }
-        }
+        // Tahun Ajaran
+        $items[] = NavigationItem::make()
+            ->label('Tahun Ajaran')
+            ->icon('heroicon-o-calendar')
+            ->isActiveWhen(fn (): bool => original_request()->routeIs('filament..pages.tahun-ajaran-management'))
+            ->visible(fn (): bool => PermissionHelper::hasResource('tahun-ajaran.view'))
+            ->url(fn (): string => TahunAjaranPage::getUrl());
 
         // Kategori
         $items[] = NavigationItem::make()
@@ -215,13 +213,17 @@ class AdminPanelProvider extends PanelProvider
             }
         }
 
-        // Tahun Ajaran
-        $items[] = NavigationItem::make()
-            ->label('Tahun Ajaran')
-            ->icon('heroicon-o-calendar')
-            ->isActiveWhen(fn (): bool => original_request()->routeIs('filament..pages.tahun-ajaran-management'))
-            ->visible(fn (): bool => PermissionHelper::hasResource('tahun-ajaran.view'))
-            ->url(fn (): string => TahunAjaranPage::getUrl());
+        // Siswa — flat jenjang sub-items
+        if (PermissionHelper::hasResource('siswa.view')) {
+            foreach (NavigationConfig::JENJANG_OPTIONS as $jenjang) {
+                $items[] = NavigationItem::make()
+                    ->label("Siswa - {$jenjang}")
+                    ->icon($this->getJenjangIcon($jenjang))
+                    ->isActiveWhen(fn (): bool => original_request()->routeIs('filament..pages.data-master-siswa')
+                        && request()->query('jenjang') === $jenjang)
+                    ->url(fn (): string => DataMasterSiswa::getUrl().'?jenjang='.$jenjang);
+            }
+        }
 
         // Kenaikan Kelas
         $items[] = NavigationItem::make()
