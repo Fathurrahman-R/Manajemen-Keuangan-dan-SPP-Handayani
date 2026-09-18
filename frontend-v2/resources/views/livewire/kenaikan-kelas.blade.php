@@ -83,6 +83,24 @@
             {{-- Student Table --}}
             <div class="md:col-span-3">
                 @if($selectedKelasId && count($students) > 0)
+                    @if(count($nextLevelCandidates) > 1)
+                        <div class="mb-4 rounded-lg border border-warning-300 bg-warning-50 dark:border-warning-700 dark:bg-warning-900/20 p-3">
+                            <p class="text-sm text-warning-800 dark:text-warning-300 mb-2">
+                                Ada {{ count($nextLevelCandidates) }} kelas sejajar di level berikutnya. Pilih kelas tujuan untuk siswa yang naik kelas:
+                            </p>
+                            <x-filament::input.wrapper>
+                                <x-filament::input.select wire:model.live="ambiguousTargetKelasId">
+                                    <option value="">Pilih Kelas Tujuan</option>
+                                    @foreach($nextLevelCandidates as $candidate)
+                                        <option value="{{ $candidate['id'] }}" {{ $ambiguousTargetKelasId == $candidate['id'] ? 'selected' : '' }}>
+                                            {{ $candidate['nama'] }} (Level {{ $candidate['level'] }})
+                                        </option>
+                                    @endforeach
+                                </x-filament::input.select>
+                            </x-filament::input.wrapper>
+                        </div>
+                    @endif
+
                     <div class="fi-ta-content rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
                         <table class="fi-ta-table w-full table-auto divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-800/50">

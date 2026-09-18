@@ -160,7 +160,7 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                     ->modalFooterActionsAlignment(Alignment::End)
                     ->action(function (array $data, $record): void {
                         $response = ApiService::client()
-                            ->delete('/kelas'.'/'.$record['id']);
+                            ->delete('/kelas/'.$this->activeTab.'/'.$record['id']);
 
                         if (! $response->ok()) {
                             Notification::make()
@@ -194,7 +194,7 @@ class DataKelas extends Component implements HasActions, HasSchemas, HasTable
                         $success = 0;
                         $failed = 0;
                         foreach ($records as $record) {
-                            $response = ApiService::client()->delete('/kelas/'.$record['id']);
+                            $response = ApiService::client()->delete('/kelas/'.$this->activeTab.'/'.$record['id']);
                             $response->ok() ? $success++ : $failed++;
                         }
                         if ($failed > 0) {

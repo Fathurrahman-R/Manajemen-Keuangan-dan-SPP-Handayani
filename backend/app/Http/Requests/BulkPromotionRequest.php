@@ -47,6 +47,15 @@ class BulkPromotionRequest extends FormRequest
                 'integer',
                 'exists:siswas,id',
             ],
+            // Opsional. Wajib diisi kalau level berikutnya punya lebih dari satu
+            // kelas sejajar (mis. TK level 1 = MATAHARI/BINTANG/BULAN) — tanpa
+            // ini KenaikanKelasService::getNextKelas() tidak bisa menebak
+            // tujuan mana yang benar dan akan menolak dengan 422.
+            'target_kelas_id' => [
+                'sometimes',
+                'integer',
+                'exists:kelas,id',
+            ],
         ];
     }
 

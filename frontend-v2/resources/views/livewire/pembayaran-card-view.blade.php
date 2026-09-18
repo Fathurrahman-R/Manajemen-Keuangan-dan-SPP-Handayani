@@ -18,11 +18,23 @@
                 <x-heroicon-o-funnel class="h-4 w-4 text-gray-400" />
                 <span>Filter Pembayaran</span>
             </div>
-            @if(\App\Helpers\PermissionHelper::hasResource('export-data'))
-                <div class="flex flex-wrap items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+                @if($this->canDownloadKwitansi())
+                    <x-filament::button
+                        color="gray"
+                        icon="heroicon-m-printer"
+                        wire:click="downloadSemuaKwitansi"
+                        wire:loading.attr="disabled"
+                        wire:target="downloadSemuaKwitansi"
+                    >
+                        <span wire:loading.remove wire:target="downloadSemuaKwitansi">Download Semua Kwitansi</span>
+                        <span wire:loading wire:target="downloadSemuaKwitansi">Menyiapkan PDF...</span>
+                    </x-filament::button>
+                @endif
+                @if(\App\Helpers\PermissionHelper::hasResource('export-data'))
                     {{ $this->exportPembayaranAction }}
-                </div>
-            @endif
+                @endif
+            </div>
         </div>
 
         {{-- Search full width --}}

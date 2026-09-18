@@ -1,0 +1,164 @@
+// =============================================================
+// ERD - Modul RBAC & Autentikasi
+// Sistem Informasi Pembayaran SPP Yayasan Handayani
+//
+// Format     : DBML (dbdiagram.io)
+// Cara pakai : buka https://dbdiagram.io/d lalu paste seluruh isi file ini.
+//
+// Catatan penyusunan:
+// - Kolom created_at / updated_at tidak ditampilkan agar diagram tetap
+//   terbaca, mengikuti konvensi versi ERD mermaid.
+// - Tipe data dan constraint diverifikasi terhadap file migrasi di
+//   backend/database/migrations.
+// - Kolom FK yang tabel tujuannya berada di ERD modul lain hanya
+//   ditulis sebagai kolom biasa, disertai catatan rujukan.
+// =============================================================
+
+Table users {
+  id bigint [pk, increment]
+  username varchar(100) [not null, unique]
+  email varchar(255) [null, note: 'Unik per branch, bukan unik global']
+  email_verified_at timestamp [null]
+  name varchar(255) [null]
+  password varchar(100) [not null]
+  branch_id bigint [not null, note: 'FK ke branches.id - lihat ERD Data Master']
+  siswa_id bigint [null, note: 'FK ke siswas.id - lihat ERD Data Master']
+  is_active boolean [not null, default: true]
+  must_change_password boolean [not null, default: false]
+
+  indexes {
+    (email, branch_id) [unique, name: 'users_email_branch_unique']
+  }
+
+  Note: 'Akun pengguna sistem: admin, bendahara, kepala sekolah, dan portal siswa.'
+}
+
+Table permissions {
+  id bigint [pk, increment]
+  name varchar(255) [not null, note: 'Nama izin berbahasa Indonesia, mis. view-tagihan']
+  label varchar(255) [null]
+  group varchar(255) [null]
+  audience varchar(255) [null]
+  guard_name varchar(255) [not null]
+
+  indexes {
+    (name, guard_name) [unique]
+  }
+
+  Note: 'Daftar izin akses. Dikelola lewat RoleAndPermissionSeeder, bukan artisan command.'
+}
+
+Table roles {
+  id bigint [pk, increment]
+  team_foreign_key bigint [null]
+  name varchar(255) [not null]
+  guard_name varchar(255) [not null]
+
+  indexes {
+    (team_foreign_key, name, guard_name) [unique]
+  }
+
+  Note: 'Peran pengguna. Aktif dalam mode teams paket spatie/laravel-permission.'
+}
+
+Table role_has_permissions {
+  permission_id bigint [not null]
+  role_id bigint [not null]
+
+  indexes {
+    (permission_id, role_id) [pk]
+  }
+
+  Note: 'Tabel pivot: izin apa saja yang melekat pada sebuah peran.'
+}
+
+Table model_has_roles {
+  role_id bigint [not null]
+  model_type varchar(255) [not null]
+  model_id bigint [not null]
+
+  indexes {
+    (role_id, model_id, model_type) [pk]
+    (model_id, model_type) [name: 'model_has_roles_model_id_model_type_index']
+  }
+
+  Note: 'Tabel pivot polimorfik: peran yang dimiliki sebuah model, umumnya User.'
+}
+
+Table model_has_permissions {
+  permission_id bigint [not null]
+  model_type varchar(255) [not null]
+  model_id bigint [not null]
+
+  indexes {
+    (permission_id, model_id, model_type) [pk]
+    (model_id, model_type) [name: 'model_has_permissions_model_id_model_type_index']
+  }
+
+  Note: 'Tabel pivot polimorfik: izin langsung ke model, di luar jalur peran.'
+}
+
+Table permission_endpoints {
+  id bigint [pk, increment]
+  permission_id bigint [null]
+  resource_key varchar(255) [not null, unique]
+  group varchar(100) [null]
+  description text [null]
+  is_active boolean [not null, default: true]
+
+  Note: 'Pemetaan resource_key endpoint API ke izin. Lapisan RBAC sisi backend.'
+}
+
+Table page_permissions {
+  id bigint [pk, increment]
+  permission_name varchar(255) [null]
+  resource_key varchar(255) [not null, unique]
+  guard_name varchar(255) [not null, default: 'web']
+  group varchar(100) [null]
+  description text [null]
+  is_active boolean [not null, default: true]
+
+  Note: 'Pemetaan resource_key halaman ke izin. Lapisan RBAC sisi frontend.'
+}
+
+Table personal_access_tokens {
+  id bigint [pk, increment]
+  tokenable_type varchar(255) [not null]
+  tokenable_id bigint [not null]
+  name varchar(255) [not null]
+  token varchar(64) [not null, unique]
+  abilities text [null]
+  expires_at timestamp [null]
+  last_used_at timestamp [null]
+
+  indexes {
+    (tokenable_type, tokenable_id) [name: 'personal_access_tokens_tokenable_type_tokenable_id_index']
+  }
+
+  Note: 'Token autentikasi Laravel Sanctum.'
+}
+
+Table password_reset_tokens {
+  id bigint [pk, increment]
+  email varchar(255) [not null]
+  token varchar(64) [not null, unique]
+  used boolean [not null, default: false]
+  expires_at timestamp [not null]
+
+  Note: 'Token sekali pakai untuk pengaturan ulang kata sandi.'
+}
+
+// -------------------------------------------------------------
+// Relasi
+// -------------------------------------------------------------
+
+Ref: role_has_permissions.permission_id > permissions.id [delete: cascade]
+Ref: role_has_permissions.role_id > roles.id [delete: cascade]
+Ref: model_has_permissions.permission_id > permissions.id [delete: cascade]
+Ref: model_has_roles.role_id > roles.id [delete: cascade]
+Ref: permission_endpoints.permission_id > permissions.id [delete: set null]
+
+// Relasi logis tanpa foreign key di level basis data
+Ref: page_permissions.permission_name > permissions.name
+Ref: personal_access_tokens.tokenable_id > users.id
+Ref: password_reset_tokens.email > users.email

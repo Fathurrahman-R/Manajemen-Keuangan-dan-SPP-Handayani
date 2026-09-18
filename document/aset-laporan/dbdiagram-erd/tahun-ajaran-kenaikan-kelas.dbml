@@ -1,0 +1,170 @@
+// =============================================================
+// ERD - Modul Tahun Ajaran dan Kenaikan Kelas
+// Sistem Informasi Pembayaran SPP Yayasan Handayani
+//
+// Format     : DBML (dbdiagram.io)
+// Cara pakai : buka https://dbdiagram.io/d lalu paste seluruh isi file ini.
+//
+// Catatan penyusunan:
+// - Kolom created_at / updated_at tidak ditampilkan agar diagram tetap
+//   terbaca, mengikuti konvensi versi ERD mermaid.
+// - Tipe data dan constraint diverifikasi terhadap file migrasi di
+//   backend/database/migrations.
+// - batch_promosis memakai UUID char(36) sebagai kunci primer, bukan
+//   id auto increment.
+// =============================================================
+
+Table branches {
+  id bigint [pk, increment]
+  location varchar(255) [not null]
+
+  Note: 'Cabang atau unit yayasan. Menjadi dasar pemisahan data antar unit.'
+}
+
+Table users {
+  id bigint [pk, increment]
+  username varchar(100) [not null, unique]
+  email varchar(255) [null, note: 'Unik per branch, bukan unik global']
+  email_verified_at timestamp [null]
+  name varchar(255) [null]
+  password varchar(100) [not null]
+  branch_id bigint [not null]
+  siswa_id bigint [null]
+  is_active boolean [not null, default: true]
+  must_change_password boolean [not null, default: false]
+
+  indexes {
+    (email, branch_id) [unique, name: 'users_email_branch_unique']
+  }
+
+  Note: 'Akun pengguna sistem. Menjadi pelaksana proses kenaikan kelas.'
+}
+
+Table kelas {
+  id bigint [pk, increment]
+  jenjang enum [not null, note: 'MI, TK, KB']
+  nama varchar(100) [not null]
+  level int [null, note: 'Urutan tingkat. Dipakai untuk mencari kelas tujuan berikutnya.']
+  branch_id bigint [not null]
+
+  indexes {
+    (jenjang, branch_id, level, nama) [unique, name: 'kelas_jenjang_branch_level_nama_unique']
+  }
+
+  Note: 'Rombongan belajar. Beberapa kelas paralel boleh berbagi level yang sama.'
+}
+
+Table siswas {
+  id bigint [pk, increment]
+  batch_reference char(36) [null]
+  nis varchar(20) [not null, unique]
+  nisn varchar(20) [null, unique]
+  nama varchar(100) [not null]
+  jenis_kelamin enum [not null, note: 'Laki-laki, Perempuan']
+  tempat_lahir varchar(100) [not null]
+  tanggal_lahir date [not null]
+  agama varchar(50) [not null]
+  alamat text [not null]
+  ayah_id bigint [null]
+  ibu_id bigint [null]
+  wali_id bigint [null]
+  jenjang enum [not null, note: 'TK, MI, KB']
+  kelas_id bigint [null, note: 'Kelas saat ini, ikut berubah setiap kenaikan kelas']
+  kategori_id bigint [null]
+  asal_sekolah varchar(150) [null]
+  kelas_diterima varchar(10) [null]
+  tahun_diterima year [null]
+  status enum [null, default: 'Aktif', note: 'Aktif, Lulus, Pindah, Keluar']
+  keterangan text [null]
+  branch_id bigint [not null]
+
+  Note: 'Data induk siswa. Relasi lengkapnya ada di ERD Data Master.'
+}
+
+Table tahun_ajarans {
+  id bigint [pk, increment]
+  nama varchar(9) [not null, note: 'Format YYYY/YYYY']
+  tanggal_mulai date [not null]
+  tanggal_selesai date [not null]
+  status enum [not null, default: 'Non-Aktif', note: 'Aktif, Non-Aktif']
+  branch_id bigint [not null]
+
+  indexes {
+    (nama, branch_id) [unique]
+    (branch_id, status)
+  }
+
+  Note: 'Periode tahun ajaran. Hanya satu yang berstatus Aktif per cabang.'
+}
+
+Table siswa_kelas {
+  id bigint [pk, increment]
+  siswa_id bigint [not null]
+  kelas_id bigint [not null]
+  tahun_ajaran_id bigint [not null]
+
+  indexes {
+    (siswa_id, tahun_ajaran_id) [unique]
+  }
+
+  Note: 'Riwayat penempatan kelas. Satu siswa hanya boleh satu kelas per tahun ajaran.'
+}
+
+Table batch_promosis {
+  id char(36) [pk, note: 'UUID, bukan id auto increment']
+  batch_type enum [not null, note: 'bulk_promotion, individual_promotion, kelulusan, tinggal_kelas, pindah_jenjang']
+  source_tahun_ajaran_id bigint [not null]
+  target_tahun_ajaran_id bigint [not null]
+  kelas_id bigint [null]
+  processed_by bigint [not null]
+  processed_at timestamp [not null]
+  status enum [not null, default: 'completed', note: 'completed, undone']
+  branch_id bigint [not null]
+
+  indexes {
+    (branch_id, status)
+    (branch_id, processed_at)
+  }
+
+  Note: 'Satu batch proses kenaikan kelas. Status undone menandai batch yang dibatalkan.'
+}
+
+Table batch_promosi_details {
+  id bigint [pk, increment]
+  batch_id char(36) [not null]
+  siswa_id bigint [not null]
+  action enum [not null, note: 'naik_kelas, tinggal_kelas, lulus, pindah_jenjang']
+  source_kelas_id bigint [not null]
+  target_kelas_id bigint [null]
+  previous_status varchar(20) [not null, note: 'Nilai siswas.status sebelum diproses, untuk pembatalan']
+  previous_jenjang varchar(5) [null, note: 'Nilai siswas.jenjang sebelum diproses, untuk pembatalan']
+
+  Note: 'Rincian per siswa dalam satu batch. Menyimpan kondisi lama agar batch bisa dibatalkan.'
+}
+
+// -------------------------------------------------------------
+// Relasi
+// -------------------------------------------------------------
+
+Ref: users.branch_id > branches.id [delete: cascade]
+Ref: siswas.branch_id > branches.id [delete: cascade]
+Ref: kelas.branch_id > branches.id [delete: cascade]
+Ref: tahun_ajarans.branch_id > branches.id [delete: cascade]
+Ref: batch_promosis.branch_id > branches.id [delete: cascade]
+
+Ref: users.siswa_id - siswas.id [delete: set null]
+Ref: siswas.kelas_id > kelas.id
+
+Ref: siswa_kelas.siswa_id > siswas.id [delete: cascade]
+Ref: siswa_kelas.kelas_id > kelas.id [delete: cascade]
+Ref: siswa_kelas.tahun_ajaran_id > tahun_ajarans.id [delete: cascade]
+
+Ref: batch_promosis.source_tahun_ajaran_id > tahun_ajarans.id [delete: cascade]
+Ref: batch_promosis.target_tahun_ajaran_id > tahun_ajarans.id [delete: cascade]
+Ref: batch_promosis.kelas_id > kelas.id [delete: set null]
+Ref: batch_promosis.processed_by > users.id [delete: cascade]
+
+Ref: batch_promosi_details.batch_id > batch_promosis.id [delete: cascade]
+Ref: batch_promosi_details.siswa_id > siswas.id [delete: cascade]
+Ref: batch_promosi_details.source_kelas_id > kelas.id [delete: cascade]
+Ref: batch_promosi_details.target_kelas_id > kelas.id [delete: cascade]

@@ -163,6 +163,70 @@ class KenaikanKelasTest extends TestCase
             ->assertJsonPath('errors.kelas_id.0', 'Tidak ada kelas berikutnya dalam hierarki. Siswa berada di kelas tertinggi, gunakan kelulusan atau pindah jenjang.');
     }
 
+    /**
+     * Level tidak lagi unik per jenjang+branch (lihat migration
+     * include_nama_in_kelas_level_unique). Kalau ada dua kelas sejajar di
+     * level berikutnya, tidak ada cara aman menebak salah satunya sebagai
+     * tujuan promosi otomatis — harus ditolak, bukan diam-diam pilih salah satu.
+     */
+    public function test_bulk_promotion_rejects_ambiguous_next_level(): void
+    {
+        $kelas1 = $this->kelas('TK', 1, 'MATAHARI');
+        $this->kelas('TK', 2, 'BINTANG');
+        $this->kelas('TK', 2, 'BULAN');
+        $this->siswaDi($kelas1);
+
+        $this->api()->postJson('api/kenaikan-kelas/bulk-promotion', [
+            'kelas_id' => $kelas1->id,
+            'tahun_ajaran_id' => $this->periodeTujuan->id,
+        ])->assertStatus(422)
+            ->assertJsonPath('errors.kelas_id.0', 'Ada lebih dari satu kelas di level berikutnya (2): BINTANG, BULAN. Pilih kelas tujuan secara manual.')
+            ->assertJsonPath('candidates.0.nama', 'BINTANG')
+            ->assertJsonPath('candidates.1.nama', 'BULAN');
+    }
+
+    /**
+     * Kalau admin sudah pilih target_kelas_id secara manual (dari dropdown
+     * yang muncul akibat test di atas), promosi harus jalan ke kelas yang
+     * dipilih, bukan ditolak lagi.
+     */
+    public function test_bulk_promotion_accepts_manual_target_kelas_when_ambiguous(): void
+    {
+        $kelas1 = $this->kelas('TK', 1, 'MATAHARI');
+        $this->kelas('TK', 2, 'BINTANG');
+        $bulan = $this->kelas('TK', 2, 'BULAN');
+        $siswa = $this->siswaDi($kelas1);
+
+        $this->api()->postJson('api/kenaikan-kelas/bulk-promotion', [
+            'kelas_id' => $kelas1->id,
+            'tahun_ajaran_id' => $this->periodeTujuan->id,
+            'target_kelas_id' => $bulan->id,
+        ])->assertOk()
+            ->assertJsonPath('data.total_success', 1);
+
+        $this->assertDatabaseHas('siswa_kelas', [
+            'siswa_id' => $siswa->id,
+            'kelas_id' => $bulan->id,
+            'tahun_ajaran_id' => $this->periodeTujuan->id,
+        ]);
+    }
+
+    public function test_bulk_promotion_rejects_manual_target_kelas_not_in_candidates(): void
+    {
+        $kelas1 = $this->kelas('TK', 1, 'MATAHARI');
+        $this->kelas('TK', 2, 'BINTANG');
+        $this->kelas('TK', 2, 'BULAN');
+        $wrongLevel = $this->kelas('TK', 3, 'LAIN LEVEL');
+        $this->siswaDi($kelas1);
+
+        $this->api()->postJson('api/kenaikan-kelas/bulk-promotion', [
+            'kelas_id' => $kelas1->id,
+            'tahun_ajaran_id' => $this->periodeTujuan->id,
+            'target_kelas_id' => $wrongLevel->id,
+        ])->assertStatus(422)
+            ->assertJsonPath('errors.target_kelas_id.0', 'Kelas tujuan tidak valid. Harus salah satu dari: BINTANG, BULAN.');
+    }
+
     public function test_bulk_promotion_rejects_kelas_from_other_branch(): void
     {
         $otherBranch = Branch::factory()->create();

@@ -197,18 +197,27 @@ class RekapBulanan extends Component implements HasActions, HasSchemas, HasTable
     }
 
     /**
-     * Map the localised month name shown in the row back to (bulan, tahun).
-     * The backend service emits localised Indonesian month names like "Januari".
+     * Map the localised month label shown in the row back to (bulan, tahun).
+     * KasController::rekapBulanan emits "F Y" ("Juli 2026"); the bare "F" form
+     * is still accepted, and then the year comes from the active filter.
      */
     private function resolveBulanTahun(string $bulanView): array
     {
         $tahun = (int) (explode('-', $this->currentMonthYear)[0] ?? Carbon::now()->year);
-        try {
-            $bulan = (int) Carbon::createFromLocaleFormat('F', 'id', $bulanView)->month;
-        } catch (\Throwable $e) {
-            $bulan = (int) Carbon::now()->month;
+
+        foreach (['F Y', 'F'] as $format) {
+            try {
+                $parsed = Carbon::createFromLocaleFormat($format, 'id', $bulanView);
+            } catch (\Throwable $e) {
+                continue;
+            }
+
+            return [
+                (int) $parsed->month,
+                $format === 'F Y' ? (int) $parsed->year : $tahun,
+            ];
         }
 
-        return [$bulan, $tahun];
+        return [(int) Carbon::now()->month, $tahun];
     }
 }

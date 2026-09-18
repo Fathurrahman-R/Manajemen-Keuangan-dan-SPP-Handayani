@@ -39,6 +39,13 @@ class BayarTidakLunasRequest extends FormRequest
                 'required',
                 'max:100',
             ],
+            // Opsional: dipakai saat mencatat pembayaran yang sudah terjadi di
+            // masa lalu (migrasi pencatatan manual). Kosong = hari ini.
+            'tanggal' => [
+                'nullable',
+                'date_format:Y-m-d',
+                'before_or_equal:today',
+            ],
         ];
     }
 

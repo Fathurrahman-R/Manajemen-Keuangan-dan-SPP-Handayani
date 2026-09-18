@@ -34,7 +34,8 @@ class KenaikanKelasController extends Controller
             $data['tahun_ajaran_id'],
             $userId,
             $branchId,
-            $data['siswa_ids'] ?? null
+            $data['siswa_ids'] ?? null,
+            $data['target_kelas_id'] ?? null
         );
 
         return response()->json([

@@ -1,8 +1,9 @@
 %%{
     init: {
+        'theme': 'forest',
         'layout': 'elk',
         'themeVariables': {'fontSize': '32px'},
-        'themeCSS': '.edgeLabel, .edgeLabel p { font-size: 32px !important; }'
+        'themeCSS': '.edgeLabel, .edgeLabel p { font-size: 32px !important; } .relationshipLine { stroke-width: 1.5px !important; }'
     }
 }%%
 erDiagram
@@ -12,9 +13,9 @@ erDiagram
         text uraian
         decimal jumlah
         date tanggal_kebutuhan
-        string kategori_pengeluaran "nullable"
-        string lampiran "nullable"
-        enum status "draft, submitted, approved, rejected, disbursed"
+        string kategori_pengeluaran
+        string lampiran
+        enum status
         bigint requester_id FK
         bigint branch_id FK
     }
@@ -24,11 +25,11 @@ erDiagram
         string previous_status
         string new_status
         bigint user_id FK
-        text note "nullable"
+        text note
     }
     BRANCH_APPROVAL_SETTINGS {
         bigint id PK
-        bigint branch_id FK "1:1"
+        bigint branch_id FK
         boolean auto_approval_enabled
         decimal auto_approval_threshold
     }
@@ -38,7 +39,7 @@ erDiagram
         string type
         string title
         text message
-        json data "nullable"
+        json data
         boolean is_read
     }
     NOTIFICATION_SETTINGS {
@@ -48,43 +49,57 @@ erDiagram
         boolean reminder_enabled
         boolean kwitansi_enabled
         boolean overdue_enabled
-        json reminder_days_before "nullable"
+        json reminder_days_before
         int overdue_interval_days
     }
     NOTIFICATION_LOGS {
         bigint id PK
         bigint branch_id FK
         string recipient_email
-        enum notification_type "tagihan_baru, reminder, kwitansi, overdue, workflow"
-        string tagihan_kode "nullable"
-        bigint pengeluaran_request_id FK "nullable"
-        string workflow_event "nullable"
-        enum status "sent, failed, skipped"
-        string reason "nullable"
-        text error_message "nullable"
-        timestamp sent_at "nullable"
+        enum notification_type
+        string tagihan_kode
+        bigint pengeluaran_request_id FK
+        string workflow_event
+        enum status
+        string reason
+        text error_message
+        timestamp sent_at
     }
     EMAIL_OPT_OUTS {
         bigint id PK
         string email
-        enum notification_type "tagihan_baru, reminder, kwitansi, overdue, workflow, all"
+        enum notification_type
         string token UK
     }
     NOTIFICATION_SENT_RECORDS {
         bigint id PK
         string tagihan_kode
-        enum notification_type "tagihan_baru, reminder, kwitansi, overdue"
+        enum notification_type
         date sent_date
     }
-    USERS { bigint id PK }
-    BRANCHES { bigint id PK }
+    USERS {
+        bigint id PK
+        string username UK
+        string password
+        string name
+        string email UK
+        timestamp email_verified_at
+        bigint branch_id FK
+        bigint siswa_id FK
+        boolean is_active
+        boolean must_change_password
+    }
+    BRANCHES {
+        bigint id PK
+        string location
+    }
 
-    USERS ||--o{ PENGELUARAN_REQUESTS : "mengajukan (requester_id)"
-    BRANCHES ||--o{ PENGELUARAN_REQUESTS : "memiliki"
-    PENGELUARAN_REQUESTS ||--o{ APPROVAL_LOGS : "dicatat riwayat statusnya di"
-    USERS ||--o{ APPROVAL_LOGS : "melakukan aksi approval"
-    BRANCHES ||--o| BRANCH_APPROVAL_SETTINGS : "punya pengaturan auto-approval"
-    USERS ||--o{ NOTIFICATIONS : "menerima"
-    BRANCHES ||--o| NOTIFICATION_SETTINGS : "punya pengaturan notifikasi"
-    BRANCHES ||--o{ NOTIFICATION_LOGS : "memiliki"
-    PENGELUARAN_REQUESTS ||--o{ NOTIFICATION_LOGS : "memicu notifikasi (nullable)"
+    USERS ||--o{ PENGELUARAN_REQUESTS : ""
+    BRANCHES ||--o{ PENGELUARAN_REQUESTS : ""
+    PENGELUARAN_REQUESTS ||--o{ APPROVAL_LOGS : ""
+    USERS ||--o{ APPROVAL_LOGS : ""
+    BRANCHES ||--o| BRANCH_APPROVAL_SETTINGS : ""
+    USERS ||--o{ NOTIFICATIONS : ""
+    BRANCHES ||--o| NOTIFICATION_SETTINGS : ""
+    BRANCHES ||--o{ NOTIFICATION_LOGS : ""
+    PENGELUARAN_REQUESTS ||--o{ NOTIFICATION_LOGS : ""

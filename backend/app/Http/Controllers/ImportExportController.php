@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\ImportHasInvalidRowsException;
 use App\Http\Requests\ExportKasRequest;
 use App\Http\Requests\ExportPembayaranRequest;
 use App\Http\Requests\ExportRekapRequest;
 use App\Http\Requests\ExportSiswaRequest;
 use App\Http\Requests\ExportTagihanRequest;
 use App\Http\Requests\ImportConfirmRequest;
+use App\Http\Requests\ImportPatchRowRequest;
 use App\Http\Requests\ImportUploadRequest;
 use App\Services\ImportExport\ImportBatchService;
 use App\Services\ImportExport\KasExportService;
@@ -137,8 +139,41 @@ class ImportExportController extends Controller
                 'error_rows' => $preview->errorRows,
                 'errors' => $preview->errors,
                 'requires_queue' => $preview->requiresQueue,
+                'invalid_rows' => $preview->invalidRows,
+                'summary' => $preview->summary,
+                'all_rows_valid' => $preview->errorRows === 0,
             ]);
         } catch (\Throwable $e) {
+            return response()->json([
+                'errors' => ['message' => [$e->getMessage()]],
+            ], 422);
+        }
+    }
+
+    public function patchSiswaRow(ImportPatchRowRequest $request): JsonResponse
+    {
+        $branchId = auth()->user()->branch_id;
+
+        try {
+            $preview = $this->siswaImportService->patchRow(
+                $request->validated('preview_id'),
+                (int) $request->validated('row_index'),
+                $request->validated('data'),
+                $branchId
+            );
+
+            return response()->json([
+                'preview_id' => $preview->previewId,
+                'total_rows' => $preview->totalRows,
+                'valid_rows' => $preview->validRows,
+                'error_rows' => $preview->errorRows,
+                'errors' => $preview->errors,
+                'requires_queue' => $preview->requiresQueue,
+                'invalid_rows' => $preview->invalidRows,
+                'summary' => $preview->summary,
+                'all_rows_valid' => $preview->errorRows === 0,
+            ]);
+        } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'errors' => ['message' => [$e->getMessage()]],
             ], 422);
@@ -168,6 +203,13 @@ class ImportExportController extends Controller
                     ? 'Import sedang diproses di background.'
                     : 'Import berhasil.',
             ], $statusCode);
+        } catch (ImportHasInvalidRowsException $e) {
+            return response()->json([
+                'errors' => ['message' => [$e->getMessage()]],
+                'summary' => $e->getMessage(),
+                'invalid_rows' => $e->invalidRows,
+                'error_rows' => count($e->invalidRows),
+            ], 422);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'errors' => ['message' => [$e->getMessage()]],
@@ -189,8 +231,41 @@ class ImportExportController extends Controller
                 'error_rows' => $preview->errorRows,
                 'errors' => $preview->errors,
                 'requires_queue' => $preview->requiresQueue,
+                'invalid_rows' => $preview->invalidRows,
+                'summary' => $preview->summary,
+                'all_rows_valid' => $preview->errorRows === 0,
             ]);
         } catch (\Throwable $e) {
+            return response()->json([
+                'errors' => ['message' => [$e->getMessage()]],
+            ], 422);
+        }
+    }
+
+    public function patchTagihanRow(ImportPatchRowRequest $request): JsonResponse
+    {
+        $branchId = auth()->user()->branch_id;
+
+        try {
+            $preview = $this->tagihanImportService->patchRow(
+                $request->validated('preview_id'),
+                (int) $request->validated('row_index'),
+                $request->validated('data'),
+                $branchId
+            );
+
+            return response()->json([
+                'preview_id' => $preview->previewId,
+                'total_rows' => $preview->totalRows,
+                'valid_rows' => $preview->validRows,
+                'error_rows' => $preview->errorRows,
+                'errors' => $preview->errors,
+                'requires_queue' => $preview->requiresQueue,
+                'invalid_rows' => $preview->invalidRows,
+                'summary' => $preview->summary,
+                'all_rows_valid' => $preview->errorRows === 0,
+            ]);
+        } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'errors' => ['message' => [$e->getMessage()]],
             ], 422);
@@ -220,6 +295,13 @@ class ImportExportController extends Controller
                     ? 'Import sedang diproses di background.'
                     : 'Import berhasil.',
             ], $statusCode);
+        } catch (ImportHasInvalidRowsException $e) {
+            return response()->json([
+                'errors' => ['message' => [$e->getMessage()]],
+                'summary' => $e->getMessage(),
+                'invalid_rows' => $e->invalidRows,
+                'error_rows' => count($e->invalidRows),
+            ], 422);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'errors' => ['message' => [$e->getMessage()]],

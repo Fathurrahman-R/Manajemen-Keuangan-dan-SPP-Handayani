@@ -5,42 +5,73 @@ namespace Database\Seeders;
 use App\Models\Branch;
 use App\Models\JenisTagihan;
 use App\Models\TahunAjaran;
-use Carbon\Carbon;
+use Database\Seeders\Support\SkemaTagihan;
+use Database\Seeders\Support\TarifDemo;
 use Illuminate\Database\Seeder;
 
+/**
+ * Jenis tagihan bernama bulan yang sebenarnya ("SPP MI Umum Juli 2026"), bukan
+ * penamaan relatif seperti "SPP 2 Bulan Lagi" yang dipakai versi sebelumnya —
+ * penamaan relatif langsung terbaca sebagai data uji, dan tidak bisa dipakai
+ * menjelaskan laporan bulanan karena namanya berubah makna tiap hari.
+ *
+ * SPP dipecah per jenjang DAN per kategori keringanan karena tabel
+ * `jenis_tagihans` tidak punya kolom untuk keduanya, sementara tarifnya
+ * berbeda-beda: MI Umum 100rb sedangkan MI Yatim 50rb. Memecah per kombinasi
+ * adalah satu-satunya cara menyatakan perbedaan itu di skema yang ada.
+ *
+ * Kategori Yatim Piatu dibebaskan sepenuhnya, jadi jenis tagihan SPP untuknya
+ * memang tidak pernah dibuat.
+ */
 class JenisTagihanSeeder extends Seeder
 {
     public function run(): void
     {
-        $today = Carbon::today();
-        $jenisTagihanData = [
-            ['nama' => 'SPP Bulan Ini',     'jatuh_tempo' => $today->copy()->addDays(3)->format('Y-m-d'),  'jumlah' => 150000],
-            ['nama' => 'SPP Bulan Depan',   'jatuh_tempo' => $today->copy()->addDays(33)->format('Y-m-d'), 'jumlah' => 150000],
-            ['nama' => 'SPP 2 Bulan Lagi',  'jatuh_tempo' => $today->copy()->addDays(63)->format('Y-m-d'), 'jumlah' => 150000],
-            ['nama' => 'SPP 3 Bulan Lagi',  'jatuh_tempo' => $today->copy()->addDays(93)->format('Y-m-d'), 'jumlah' => 150000],
-            ['nama' => 'SPP 4 Bulan Lagi',  'jatuh_tempo' => $today->copy()->addDays(123)->format('Y-m-d'), 'jumlah' => 150000],
-            ['nama' => 'SPP 5 Bulan Lagi',  'jatuh_tempo' => $today->copy()->addDays(153)->format('Y-m-d'), 'jumlah' => 150000],
-            ['nama' => 'Pendaftaran Ulang', 'jatuh_tempo' => $today->copy()->subDays(15)->format('Y-m-d'), 'jumlah' => 500000],
-            ['nama' => 'Seragam',           'jatuh_tempo' => $today->copy()->subDays(30)->format('Y-m-d'), 'jumlah' => 350000],
-            ['nama' => 'Buku Paket',        'jatuh_tempo' => $today->copy()->subDays(45)->format('Y-m-d'), 'jumlah' => 200000],
-        ];
-
         foreach (Branch::all() as $branch) {
-            $tahunAjarans = TahunAjaran::where('branch_id', $branch->id)->get();
-            $aktiveTahunAjaran = $tahunAjarans->firstWhere('status', 'Aktif');
+            $tahunAjarans = TahunAjaran::where('branch_id', $branch->id)
+                ->whereIn('nama', ['2025/2026', '2026/2027'])
+                ->get();
 
-            if (! $aktiveTahunAjaran) {
-                continue;
+            foreach ($tahunAjarans as $tahunAjaran) {
+                $this->buatSppBulanan($branch->id, $tahunAjaran);
+                $this->buatTagihanTahunan($branch->id, $tahunAjaran);
             }
+        }
+    }
 
-            foreach ($jenisTagihanData as $data) {
+    private function buatSppBulanan(int $branchId, TahunAjaran $tahunAjaran): void
+    {
+        foreach (SkemaTagihan::bulanTerbit($tahunAjaran) as $bulan) {
+            foreach (TarifDemo::SPP_BULANAN as $jenjang => $tarifPerKategori) {
+                foreach ($tarifPerKategori as $kategori => $jumlah) {
+                    JenisTagihan::firstOrCreate([
+                        'nama' => SkemaTagihan::namaSpp($jenjang, $kategori, $bulan),
+                        'branch_id' => $branchId,
+                        'tahun_ajaran_id' => $tahunAjaran->id,
+                    ], [
+                        'jatuh_tempo' => SkemaTagihan::jatuhTempoSpp($bulan)->format('Y-m-d'),
+                        'jumlah' => $jumlah,
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Biaya sekali setahun tidak dibedakan per kategori — sekolah hanya
+     * menerapkan keringanan pada SPP.
+     */
+    private function buatTagihanTahunan(int $branchId, TahunAjaran $tahunAjaran): void
+    {
+        foreach (SkemaTagihan::tagihanTahunan($tahunAjaran) as $item) {
+            foreach ($item['tarif'] as $jenjang => $jumlah) {
                 JenisTagihan::firstOrCreate([
-                    'nama' => $data['nama'],
-                    'branch_id' => $branch->id,
-                    'tahun_ajaran_id' => $aktiveTahunAjaran->id,
+                    'nama' => SkemaTagihan::namaTahunan($item['label'], $jenjang, $tahunAjaran->nama),
+                    'branch_id' => $branchId,
+                    'tahun_ajaran_id' => $tahunAjaran->id,
                 ], [
-                    'jatuh_tempo' => $data['jatuh_tempo'],
-                    'jumlah' => $data['jumlah'],
+                    'jatuh_tempo' => $item['tempo']->format('Y-m-d'),
+                    'jumlah' => $jumlah,
                 ]);
             }
         }

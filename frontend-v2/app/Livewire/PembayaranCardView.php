@@ -279,6 +279,72 @@ class PembayaranCardView extends Component implements HasActions, HasSchemas
         ]);
     }
 
+    /**
+     * Unduh seluruh kwitansi yang cocok dengan filter aktif sebagai satu PDF
+     * multi-halaman, supaya admin bisa mencetaknya sekaligus.
+     */
+    public function downloadSemuaKwitansi(): ?StreamedResponse
+    {
+        $params = [];
+
+        if (filled($this->search)) {
+            $params['search'] = $this->search;
+        }
+
+        if (filled($this->filterJenjang)) {
+            $params['jenjang'] = $this->filterJenjang;
+        }
+
+        if (filled($this->filterKelas)) {
+            $params['kelas_id'] = $this->filterKelas;
+        }
+
+        if (filled($this->filterMetode)) {
+            $params['metode'] = $this->filterMetode;
+        }
+
+        if ($this->selectedTahunAjaranId) {
+            $params['tahun_ajaran_id'] = $this->selectedTahunAjaranId;
+        } else {
+            $params['all_periods'] = 1;
+        }
+
+        try {
+            $response = ApiService::client()
+                ->withHeaders(['Accept' => 'application/pdf'])
+                ->timeout(120)
+                ->get('/pembayaran/kwitansi-bulk', $params);
+
+            if (! $response->ok()) {
+                $this->handleApiError($response);
+
+                return null;
+            }
+
+            $body = $response->body();
+            $filename = 'kwitansi-gabungan-'.now()->format('Ymd-His').'.pdf';
+
+            return response()->streamDownload(function () use ($body) {
+                echo $body;
+            }, $filename, [
+                'Content-Type' => 'application/pdf',
+            ]);
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            $this->notifyConnectionError();
+
+            return null;
+        } catch (\Throwable $e) {
+            $this->notifyUnexpectedError();
+
+            return null;
+        }
+    }
+
+    public function canDownloadKwitansi(): bool
+    {
+        return PermissionHelper::hasResource('pembayaran.kwitansi');
+    }
+
     public function render()
     {
         return view('livewire.pembayaran-card-view');

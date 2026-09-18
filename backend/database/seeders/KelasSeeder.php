@@ -19,12 +19,16 @@ class KelasSeeder extends Seeder
                 ['nama' => 'Kelas 5', 'level' => 5],
                 ['nama' => 'Kelas 6', 'level' => 6],
             ],
+            // TK berjenjang, bukan rombel sejajar: BULAN adalah tingkat
+            // terendah dan MATAHARI tingkat tertinggi, jadi siswa naik
+            // BULAN -> BINTANG -> MATAHARI sebelum masuk MI.
             'TK' => [
-                ['nama' => 'TK A', 'level' => 1],
-                ['nama' => 'TK B', 'level' => 2],
+                ['nama' => 'BULAN', 'level' => 1],
+                ['nama' => 'BINTANG', 'level' => 2],
+                ['nama' => 'MATAHARI', 'level' => 3],
             ],
             'KB' => [
-                ['nama' => 'KB', 'level' => 1],
+                ['nama' => 'PAUD', 'level' => 1],
             ],
         ];
 

@@ -1,4 +1,4 @@
-flowchart LR
+flowchart TB
     classDef grp fill:#f8fafc,stroke:#94a3b8,stroke-width:1px,color:#0f172a
     classDef comp fill:#e0f2fe,stroke:#0284c7,stroke-width:1.5px,color:#0c4a6e
     classDef store fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
@@ -22,7 +22,6 @@ flowchart LR
         queue["Queue Worker<br/>Proses Latar Belakang"]
         sched["Scheduler<br/>Tugas Berkala"]
         db[("Database<br/>MySQL")]
-        redis[("Redis<br/>Penyimpanan Sementara")]
     end
 
     subgraph EXTERNAL["EXTERNAL LAYER"]
@@ -36,13 +35,12 @@ flowchart LR
     auth -- "token valid" --> rbac
     rbac -- "izin akses sesuai" --> api
     api -- "query data" --> db
-    api -- "cache-aside" --> redis
     api -- "titip pekerjaan" --> queue
     sched -- "picu tugas terjadwal" --> api
     api <-- "permintaan pembayaran / webhook notifikasi" --> midtrans
     queue -- "kirim surel" --> smtp
 
     class browser,webapp,auth,rbac,api,queue,sched comp
-    class db,redis store
+    class db store
     class midtrans,smtp ext
     class CLIENT,FRONTEND,BACKEND,EXTERNAL grp

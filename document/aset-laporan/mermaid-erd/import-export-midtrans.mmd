@@ -1,8 +1,9 @@
 %%{
     init: {
+        'theme': 'forest',
         'layout': 'elk',
         'themeVariables': {'fontSize': '32px'},
-        'themeCSS': '.edgeLabel, .edgeLabel p { font-size: 32px !important; }'
+        'themeCSS': '.edgeLabel, .edgeLabel p { font-size: 32px !important; } .relationshipLine { stroke-width: 1.5px !important; }'
     }
 }%%
 erDiagram
@@ -11,15 +12,15 @@ erDiagram
         bigint id PK
         char batch_reference UK
         bigint user_id FK
-        enum import_type "siswa, tagihan"
+        enum import_type
         string file_name
         int total_rows
         int success_count
         int error_count
-        enum status "processing, completed, failed, rolled_back"
-        text error_message "nullable"
-        timestamp rolled_back_at "nullable"
-        bigint rolled_back_by FK "nullable"
+        enum status
+        text error_message
+        timestamp rolled_back_at
+        bigint rolled_back_by FK
         bigint branch_id FK
     }
     EXPORT_JOBS {
@@ -27,52 +28,84 @@ erDiagram
         char job_reference UK
         bigint user_id FK
         string export_type
-        json filters "nullable"
+        json filters
         string format
-        enum status "processing, completed, failed"
-        string file_path "nullable"
-        text error_message "nullable"
-        timestamp expires_at "nullable"
+        enum status
+        string file_path
+        text error_message
+        timestamp expires_at
         bigint branch_id FK
     }
     MIDTRANS_TRANSACTIONS {
         bigint id PK
         string order_id UK
-        string kode_tagihan FK "restrict on delete"
-        json batch_items "nullable"
+        string kode_tagihan FK
+        json batch_items
         string nis
         bigint amount_paid
         bigint fee_amount
         bigint gross_amount
-        char currency "default IDR"
-        enum status "pending, settlement, capture, deny, cancel, expire, failure, refund, partial_refund"
-        string payment_type "nullable"
-        string snap_token "nullable"
-        string snap_redirect_url "nullable"
+        char currency
+        enum status
+        string payment_type
+        string snap_token
+        string snap_redirect_url
         datetime expired_at
-        datetime paid_at "nullable"
-        bigint initiator_user_id FK "nullable"
-        int branch_id "nullable"
-        json last_raw_response "nullable"
+        datetime paid_at
+        bigint initiator_user_id FK
+        int branch_id
+        json last_raw_response
     }
     MIDTRANS_TRANSACTION_LOGS {
         bigint id PK
-        string order_id "nullable"
-        enum direction "outbound_charge, outbound_status, inbound_notification"
-        int http_status "nullable"
-        longtext raw_payload "nullable"
-        string remote_ip "nullable"
+        string order_id
+        enum direction
+        int http_status
+        longtext raw_payload
+        string remote_ip
     }
-    USERS { bigint id PK }
-    BRANCHES { bigint id PK }
-    TAGIHANS { char kode_tagihan PK }
-    PEMBAYARANS { char kode_pembayaran PK }
+    USERS {
+        bigint id PK
+        string username UK
+        string password
+        string name
+        string email UK
+        timestamp email_verified_at
+        bigint branch_id FK
+        bigint siswa_id FK
+        boolean is_active
+        boolean must_change_password
+    }
+    BRANCHES {
+        bigint id PK
+        string location
+    }
+    TAGIHANS {
+        char kode_tagihan PK
+        bigint jenis_tagihan_id FK
+        string nis FK
+        decimal tmp
+        bigint branch_id FK
+        bigint tahun_ajaran_id FK
+        enum status
+        char batch_reference
+    }
+    PEMBAYARANS {
+        char kode_pembayaran PK
+        char kode_tagihan FK
+        date tanggal
+        enum metode
+        decimal jumlah
+        string pembayar
+        bigint branch_id FK
+        string midtrans_order_id UK
+    }
 
-    USERS ||--o{ IMPORT_BATCHES : "menjalankan"
-    BRANCHES ||--o{ IMPORT_BATCHES : "memiliki"
-    USERS ||--o{ EXPORT_JOBS : "menjalankan"
-    BRANCHES ||--o{ EXPORT_JOBS : "memiliki"
-    TAGIHANS ||--o{ MIDTRANS_TRANSACTIONS : "dibayar lewat kode_tagihan"
-    USERS ||--o{ MIDTRANS_TRANSACTIONS : "menginisiasi (initiator_user_id)"
-    MIDTRANS_TRANSACTIONS ||--o{ MIDTRANS_TRANSACTION_LOGS : "dicatat lognya via order_id"
-    MIDTRANS_TRANSACTIONS ||--o| PEMBAYARANS : "sinkron ke kolom midtrans_*"
+    USERS ||--o{ IMPORT_BATCHES : ""
+    BRANCHES ||--o{ IMPORT_BATCHES : ""
+    USERS ||--o{ EXPORT_JOBS : ""
+    BRANCHES ||--o{ EXPORT_JOBS : ""
+    TAGIHANS ||--o{ MIDTRANS_TRANSACTIONS : ""
+    USERS ||--o{ MIDTRANS_TRANSACTIONS : ""
+    MIDTRANS_TRANSACTIONS ||--o{ MIDTRANS_TRANSACTION_LOGS : ""
+    MIDTRANS_TRANSACTIONS ||--o| PEMBAYARANS : ""

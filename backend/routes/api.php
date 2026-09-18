@@ -62,6 +62,9 @@ Route::middleware(['auth:sanctum', 'active.branch'])->group(function () {
     Route::get('/pembayaran/siswa', [PembayaranController::class, 'siswaView'])->middleware('endpoint.permission:pembayaran.siswa');
 
     // Shared Pembayaran routes
+    // Segmen literal kwitansi-bulk didaftarkan lebih dulu supaya tidak tertelan
+    // wildcard {kode_pembayaran} di route kwitansi tunggal.
+    Route::get('/pembayaran/kwitansi-bulk', [PdfGeneratorController::class, 'bulkKwitansi'])->middleware('endpoint.permission:pembayaran.kwitansi');
     Route::get('/pembayaran/kwitansi/{kode_pembayaran}', [PdfGeneratorController::class, 'get'])->middleware('endpoint.permission:pembayaran.kwitansi');
 
     // Dashboard routes
@@ -327,8 +330,10 @@ Route::middleware(['auth:sanctum', 'active.branch'])->group(function () {
         // Import routes
         Route::group(['middleware' => 'endpoint.permission:import-data'], function () {
             Route::post('/import/siswa/upload', [ImportExportController::class, 'uploadSiswa']);
+            Route::post('/import/siswa/preview/row', [ImportExportController::class, 'patchSiswaRow']);
             Route::post('/import/siswa/confirm', [ImportExportController::class, 'confirmSiswa']);
             Route::post('/import/tagihan/upload', [ImportExportController::class, 'uploadTagihan']);
+            Route::post('/import/tagihan/preview/row', [ImportExportController::class, 'patchTagihanRow']);
             Route::post('/import/tagihan/confirm', [ImportExportController::class, 'confirmTagihan']);
             Route::get('/import/template/siswa', [ImportExportController::class, 'templateSiswa']);
             Route::get('/import/template/tagihan', [ImportExportController::class, 'templateTagihan']);

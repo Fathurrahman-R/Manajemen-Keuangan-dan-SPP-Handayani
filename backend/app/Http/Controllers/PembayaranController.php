@@ -20,6 +20,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PembayaranController extends Controller
 {
@@ -38,11 +39,11 @@ class PembayaranController extends Controller
         $user = Auth::user();
 
         $query = \App\Models\Siswa::query()
-            ->where('branch_id', $user->branch_id)
+            ->where('siswas.branch_id', $user->branch_id)
             ->whereHas('tagihan.pembayaran');
 
         if ($user && ! $user->hasAnyRole(['superadmin', 'admin'])) {
-            $query->where('nis', $user->siswa?->nis ?? $user->username);
+            $query->where('siswas.nis', $user->siswa?->nis ?? $user->username);
         }
 
         $tahunAjaranId = request('tahun_ajaran_id');
@@ -59,22 +60,25 @@ class PembayaranController extends Controller
             });
         }
 
+        // Kolom di-prefix eksplisit: sort=latest/oldest menambahkan leftJoinSub
+        // 'last_pay' yang juga punya kolom nis, jadi tanpa prefix MariaDB menolak
+        // dengan "Column 'nis' in WHERE is ambiguous".
         $search = request('search');
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('nama', 'like', "%{$search}%")
-                    ->orWhere('nis', 'like', "%{$search}%");
+                $q->where('siswas.nama', 'like', "%{$search}%")
+                    ->orWhere('siswas.nis', 'like', "%{$search}%");
             });
         }
 
         $jenjang = request('jenjang');
         if ($jenjang) {
-            $query->where('jenjang', $jenjang);
+            $query->where('siswas.jenjang', $jenjang);
         }
 
         $kelasId = request('kelas_id');
         if (! is_null($kelasId) && $kelasId !== '') {
-            $query->where('kelas_id', (int) $kelasId);
+            $query->where('siswas.kelas_id', (int) $kelasId);
         }
 
         $metode = request('metode');
@@ -198,16 +202,24 @@ class PembayaranController extends Controller
         }
 
         try {
-            $pembayaranRecords = DB::transaction(function () use ($tagihanList, $data, $user) {
+            $tanggalBayar = $data['tanggal'] ?? now()->format('Y-m-d');
+            $tagihanList = $tagihanList->values();
+
+            // Kode dibuat sebelum transaksi dibuka: generateMany() memakai LOCK
+            // TABLES, dan LOCK TABLES memicu implicit commit yang memutus
+            // transaksi berjalan.
+            $kodePembayaran = GenerateKodePembayaran::generateMany($tagihanList->count(), $tanggalBayar);
+
+            $pembayaranRecords = DB::transaction(function () use ($tagihanList, $data, $user, $tanggalBayar, $kodePembayaran) {
                 $records = collect();
 
-                foreach ($tagihanList as $tagihan) {
+                foreach ($tagihanList as $index => $tagihan) {
                     $jumlah = $tagihan->jenis_tagihan->jumlah - $tagihan->tmp;
 
                     $pembayaran = Pembayaran::create([
-                        'kode_pembayaran' => GenerateKodePembayaran::generate(),
+                        'kode_pembayaran' => $kodePembayaran[$index],
                         'kode_tagihan' => $tagihan->kode_tagihan,
-                        'tanggal' => now()->format('Y-m-d'),
+                        'tanggal' => $tanggalBayar,
                         'metode' => $data['metode'],
                         'jumlah' => $jumlah,
                         'pembayar' => $data['pembayar'],
@@ -235,6 +247,11 @@ class PembayaranController extends Controller
 
             return PembayaranResource::collection($pembayaranRecords)->response()->setStatusCode(200);
         } catch (\Throwable $e) {
+            Log::error('Batch pembayaran gagal', [
+                'kode_tagihan' => $data['kode_tagihan'],
+                'exception' => $e,
+            ]);
+
             throw new HttpResponseException(response([
                 'errors' => ['message' => ['Terjadi kesalahan saat memproses pembayaran.']],
             ], 500));
@@ -342,10 +359,12 @@ class PembayaranController extends Controller
             ], 400));
         }
 
+        $tanggalBayar = $data['tanggal'] ?? now()->format('Y-m-d');
+
         $pembayaran = Pembayaran::create([
-            'kode_pembayaran' => GenerateKodePembayaran::generate(),
+            'kode_pembayaran' => GenerateKodePembayaran::generate($tanggalBayar),
             'kode_tagihan' => $kode_tagihan,
-            'tanggal' => now()->format('Y-m-d'),
+            'tanggal' => $tanggalBayar,
             'metode' => $data['metode'],
             'jumlah' => $data['jumlah'],
             'pembayar' => $data['pembayar'],

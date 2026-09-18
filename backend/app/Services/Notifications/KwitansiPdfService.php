@@ -28,29 +28,37 @@ class KwitansiPdfService
      */
     public function generate(Pembayaran $pembayaran): string
     {
-        $resource = new KwitansiResource($pembayaran);
-        $data = $resource->toArray(request());
+        $pdf = Pdf::loadView('kwitansi', $this->viewDataFor($pembayaran))
+            ->setPaper('A6', 'landscape');
 
-        // Resolve logo absolute path from public disk; fallback to public favicon
-        $logoRelative = $data['setting']['logo'] ?? null;
-        $logo = null;
-        if ($logoRelative && \Illuminate\Support\Facades\Storage::disk('public')->exists($logoRelative)) {
-            // Absolute filesystem path DomPDF can read
-            $path = \Illuminate\Support\Facades\Storage::disk('public')->path($logoRelative);
+        return $pdf->output();
+    }
 
-            if ($this->isRenderableImage($path)) {
-                $logo = $path;
-            } else {
-                \Illuminate\Support\Facades\Log::warning('Logo dilewati di kwitansi: format tidak didukung GD terpasang', [
-                    'path' => $logoRelative,
-                ]);
-            }
-        }
-        if (! $logo) {
-            $logo = public_path('favicon.ico');
-        }
+    /**
+     * Payload untuk blade kwitansi (variabel flat, bukan nested resource).
+     *
+     * Dipakai bersama oleh kwitansi tunggal (PdfGeneratorController::get),
+     * kwitansi gabungan (PdfGeneratorController::bulkKwitansi), dan attachment
+     * email. Satu sumber supaya ketiganya tidak pernah divergen.
+     *
+     * @return array<string, mixed>
+     */
+    public function viewDataFor(Pembayaran $pembayaran): array
+    {
+        return $this->viewDataFromArray((new KwitansiResource($pembayaran))->toArray(request()));
+    }
 
-        $viewData = [
+    /**
+     * Varian viewDataFor untuk pemanggil yang sudah memegang array hasil
+     * KwitansiResource (mis. controller yang me-resolve pembayaran lewat jalur
+     * lain dengan scoping tersendiri).
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    public function viewDataFromArray(array $data): array
+    {
+        return [
             'kode_pembayaran' => $data['kode_pembayaran'],
             'setting' => $data['setting'] ?? [],
             'tanggal' => $data['tanggal'] ?? null,
@@ -58,13 +66,28 @@ class KwitansiPdfService
             'jumlah' => $data['jumlah'] ?? 0,
             'untuk' => $data['untuk'] ?? '-',
             'sejumlah' => $data['sejumlah'] ?? '-',
-            'logo' => $logo,
+            'logo' => $this->resolveLogo($data['setting']['logo'] ?? null),
         ];
+    }
 
-        $pdf = Pdf::loadView('kwitansi', $viewData)
-            ->setPaper('A6', 'landscape');
+    /**
+     * Absolute path logo yang bisa dibaca DomPDF; fallback ke favicon.
+     */
+    public function resolveLogo(?string $logoRelative): string
+    {
+        if ($logoRelative && \Illuminate\Support\Facades\Storage::disk('public')->exists($logoRelative)) {
+            $path = \Illuminate\Support\Facades\Storage::disk('public')->path($logoRelative);
 
-        return $pdf->output();
+            if ($this->isRenderableImage($path)) {
+                return $path;
+            }
+
+            \Illuminate\Support\Facades\Log::warning('Logo dilewati di kwitansi: format tidak didukung GD terpasang', [
+                'path' => $logoRelative,
+            ]);
+        }
+
+        return public_path('favicon.ico');
     }
 
     /**

@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -43,6 +44,22 @@ return Application::configure(basePath: dirname(__DIR__))
             // membuat middleware CSRF gagal dengan "Undefined property:
             // Redirector::$headers" — 500, bukan halaman login. Jadi susun
             // RedirectResponse-nya langsung.
+            session()->put('url.intended', $request->fullUrl());
+
+            return new RedirectResponse('/login');
+        });
+
+        // Sama seperti AccessDeniedHttpException di atas, tapi untuk jalur lain
+        // ke skenario yang sama: AppServiceProvider melempar AuthenticationException
+        // begitu backend menolak token sesi dengan 401. Tanpa handler ini, Laravel
+        // jatuh ke penanganan bawaannya yang juga memanggil helper `redirect()` —
+        // kena Redirector Livewire yang sama, TypeError "Return value must be of
+        // type Response, Redirector returned" di CustomAuthentication::handle().
+        $exceptions->render(function (AuthenticationException $e, Request $request) {
+            if ($request->expectsJson() || session()->has('data.token')) {
+                return null;
+            }
+
             session()->put('url.intended', $request->fullUrl());
 
             return new RedirectResponse('/login');

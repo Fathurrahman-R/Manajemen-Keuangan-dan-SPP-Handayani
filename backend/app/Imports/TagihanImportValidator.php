@@ -2,12 +2,27 @@
 
 namespace App\Imports;
 
+use App\Imports\Normalizers\TagihanRowNormalizer;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
-class TagihanImportValidator implements ToCollection, WithHeadingRow
+class TagihanImportValidator implements ToCollection, WithHeadingRow, WithMultipleSheets
 {
+    /**
+     * Restrict parsing to the first physical sheet ("Data Import").
+     * The official template (TagihanImportTemplate) ships a second
+     * "Referensi" sheet listing valid jenis_tagihan values for the
+     * dropdown; without this, Excel::import() reads collection() once
+     * per sheet and the reference rows get misparsed as bogus data rows
+     * (every one flagged "NIS wajib diisi").
+     */
+    public function sheets(): array
+    {
+        return [0 => $this];
+    }
+
     private array $rows = [];
 
     /**
@@ -22,7 +37,7 @@ class TagihanImportValidator implements ToCollection, WithHeadingRow
                 continue;
             }
 
-            $this->rows[] = $this->normalizeRow($rowArray);
+            $this->rows[] = TagihanRowNormalizer::normalize($rowArray);
         }
     }
 
@@ -46,32 +61,5 @@ class TagihanImportValidator implements ToCollection, WithHeadingRow
         }
 
         return true;
-    }
-
-    /**
-     * Normalize row data: trim strings, convert numeric values.
-     */
-    private function normalizeRow(array $row): array
-    {
-        $normalized = [];
-        foreach ($row as $key => $value) {
-            $normalizedKey = $this->normalizeKey($key);
-            $normalized[$normalizedKey] = is_string($value) ? trim($value) : $value;
-        }
-
-        // Ensure NIS is string
-        if (isset($normalized['nis'])) {
-            $normalized['nis'] = (string) $normalized['nis'];
-        }
-
-        return $normalized;
-    }
-
-    /**
-     * Normalize column header key (lowercase, underscores).
-     */
-    private function normalizeKey(string $key): string
-    {
-        return str_replace(' ', '_', strtolower(trim($key)));
     }
 }

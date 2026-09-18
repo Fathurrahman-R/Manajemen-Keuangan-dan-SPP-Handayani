@@ -21,18 +21,65 @@ class KenaikanKelasService
      * Finds the Kelas with the same jenjang and branch_id that has the
      * smallest level value strictly greater than the current Kelas's level.
      */
-    public function getNextKelas(Kelas $currentKelas): ?Kelas
+    public function getNextKelas(Kelas $currentKelas, ?int $preferredTargetKelasId = null): ?Kelas
     {
         if ($currentKelas->level === null) {
             return null;
         }
 
-        return Kelas::where('jenjang', $currentKelas->jenjang)
+        $candidates = Kelas::where('jenjang', $currentKelas->jenjang)
             ->where('branch_id', $currentKelas->branch_id)
             ->where('level', '>', $currentKelas->level)
             ->whereNotNull('level')
             ->orderBy('level', 'asc')
-            ->first();
+            ->get();
+
+        if ($candidates->isEmpty()) {
+            return null;
+        }
+
+        $minLevel = $candidates->first()->level;
+        $nextLevelCandidates = $candidates->where('level', $minLevel);
+
+        // Level tidak lagi unik per jenjang+branch (bisa ada beberapa kelas
+        // sejajar, mis. TK level 1 = MATAHARI/BINTANG/BULAN). Kalau kelas
+        // tujuan level berikutnya lebih dari satu, tidak ada cara aman untuk
+        // menebak salah satunya secara otomatis — pemanggil wajib kirim
+        // target_kelas_id eksplisit (frontend menampilkan dropdown pilihan).
+        if ($nextLevelCandidates->count() > 1) {
+            if ($preferredTargetKelasId !== null) {
+                $chosen = $nextLevelCandidates->firstWhere('id', $preferredTargetKelasId);
+                if ($chosen) {
+                    return $chosen;
+                }
+
+                throw new HttpResponseException(response()->json([
+                    'errors' => [
+                        'target_kelas_id' => [
+                            'Kelas tujuan tidak valid. Harus salah satu dari: '
+                                .$nextLevelCandidates->pluck('nama')->implode(', ').'.',
+                        ],
+                    ],
+                ], 422));
+            }
+
+            throw new HttpResponseException(response()->json([
+                'errors' => [
+                    'kelas_id' => [
+                        'Ada lebih dari satu kelas di level berikutnya ('.$minLevel.'): '
+                            .$nextLevelCandidates->pluck('nama')->implode(', ')
+                            .'. Pilih kelas tujuan secara manual.',
+                    ],
+                ],
+                'candidates' => $nextLevelCandidates->map(fn (Kelas $k) => [
+                    'id' => $k->id,
+                    'nama' => $k->nama,
+                    'level' => $k->level,
+                ])->values()->all(),
+            ], 422));
+        }
+
+        return $nextLevelCandidates->first();
     }
 
     /**
@@ -245,7 +292,7 @@ class KenaikanKelasService
      *
      * @throws HttpResponseException
      */
-    public function processBulkPromotion(int $kelasId, int $targetTahunAjaranId, int $userId, int $branchId, ?array $siswaIds = null): array
+    public function processBulkPromotion(int $kelasId, int $targetTahunAjaranId, int $userId, int $branchId, ?array $siswaIds = null, ?int $targetKelasId = null): array
     {
         // 1. Find the source Kelas and verify it belongs to the branch
         $kelas = Kelas::where('id', $kelasId)
@@ -281,7 +328,7 @@ class KenaikanKelasService
         }
 
         // 4. Get next kelas in hierarchy
-        $nextKelas = $this->getNextKelas($kelas);
+        $nextKelas = $this->getNextKelas($kelas, $targetKelasId);
 
         if (! $nextKelas) {
             throw new HttpResponseException(

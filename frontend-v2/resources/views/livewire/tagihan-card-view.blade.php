@@ -404,8 +404,13 @@
         </x-filament::section>
     @endforelse
 
-    {{-- Pagination --}}
-    @if(($meta['last_page'] ?? 1) > 1)
+    {{-- Pagination — wrapper selalu ada dengan wire:key supaya Livewire tidak
+         gagal menyisipkan blok ini saat berubah dari kosong jadi ada isi
+         (mis. tepat setelah generate tagihan). Selector per halaman tetap
+         tampil walau data muat satu halaman, supaya jumlah baris bisa
+         dikecilkan lagi. --}}
+    <div wire:key="tagihan-pagination">
+    @if(count($siswaData) > 0)
         <x-filament::section>
             <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
                 {{-- Per Page Selector --}}
@@ -427,6 +432,7 @@
                 </span>
 
                 {{-- Navigation Buttons --}}
+                @if(($meta['last_page'] ?? 1) > 1)
                 <div class="flex items-center gap-1 flex-wrap">
                     <x-filament::button
                         outlined
@@ -461,9 +467,11 @@
                         Next &raquo;
                     </x-filament::button>
                 </div>
+                @endif
             </div>
         </x-filament::section>
     @endif
+    </div>
 
     {{-- Filament Action Modals --}}
     <x-filament-actions::modals />
